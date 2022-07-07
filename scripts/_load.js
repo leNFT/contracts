@@ -11,6 +11,13 @@ let loadEnv = async function () {
   ValidationLogicLib = await ethers.getContractFactory("ValidationLogic");
   validationLogicLib = await ValidationLogicLib.deploy();
   console.log("Validation Logic Lib Address:", validationLogicLib.address);
+  SupplyLogicLib = await ethers.getContractFactory("SupplyLogic", {
+    libraries: {
+      ValidationLogic: validationLogicLib.address,
+    },
+  });
+  supplyLogicLib = await SupplyLogicLib.deploy();
+  console.log("Supply Logic Lib Address:", supplyLogicLib.address);
   BorrowLogicLib = await ethers.getContractFactory("BorrowLogic", {
     libraries: {
       ValidationLogic: validationLogicLib.address,
@@ -25,9 +32,6 @@ let loadEnv = async function () {
   });
   liquidationLogicLib = await LiquidationLogicLib.deploy();
   console.log("Liquidation Logic Lib Address:", liquidationLogicLib.address);
-  SupplyLogicLib = await ethers.getContractFactory("SupplyLogic");
-  supplyLogicLib = await SupplyLogicLib.deploy();
-  console.log("Supply Logic Lib Address:", supplyLogicLib.address);
 
   // Deploy every needed contract
   const TestToken = await ethers.getContractFactory("TestToken");
@@ -122,6 +126,7 @@ let loadEnv = async function () {
     "RESERVETESTTOKEN",
     "RTTOKEN",
     2000,
+    9000,
     200
   );
   await initReserveTx.wait();

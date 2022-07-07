@@ -5,6 +5,8 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {DataTypes} from "../types/DataTypes.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
+import {ValidationLogic} from "./ValidationLogic.sol";
+import {IMarketAddressesProvider} from "../../interfaces/IMarketAddressesProvider.sol";
 
 library SupplyLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -31,6 +33,37 @@ library SupplyLogic {
         reserve.mint(msg.sender, reserveTokenAmount);
     }
 
+    function withdraw(
+        IMarketAddressesProvider addressesProvider,
+        mapping(address => address) storage reserves,
+        address asset,
+        uint256 amount
+    ) external {
+        address reserveAddress = reserves[asset];
+        IReserve reserve = IReserve(reserveAddress);
+
+        // Verify if w9thdrawal conditions are met
+        ValidationLogic.validateWithdrawal(
+            addressesProvider,
+            reserveAddress,
+            amount
+        );
+
+        // Find how many tokens the reserve should burn
+        uint256 reserveTokenAmount;
+        if (reserve.totalSupply() == 0) {
+            reserveTokenAmount = amount;
+        } else {
+            reserveTokenAmount =
+                (amount * reserve.totalSupply()) /
+                (reserve.getUnderlyingBalance() + reserve.getDebt());
+        }
+
+        IReserve(reserveAddress).burn(msg.sender, reserveTokenAmount);
+
+        IReserve(reserveAddress).withdrawUnderlying(msg.sender, amount);
+    }
+
     function maximumWithdrawalAmount(address reserveAddress, address user)
         external
         view
@@ -50,28 +83,5 @@ library SupplyLogic {
         }
 
         return maximumAmount;
-    }
-
-    function withdraw(
-        mapping(address => address) storage reserves,
-        address asset,
-        uint256 amount
-    ) external {
-        address reserveAddress = reserves[asset];
-        IReserve reserve = IReserve(reserveAddress);
-
-        // Find how many tokens the reserve should burn
-        uint256 reserveTokenAmount;
-        if (reserve.totalSupply() == 0) {
-            reserveTokenAmount = amount;
-        } else {
-            reserveTokenAmount =
-                (amount * reserve.totalSupply()) /
-                (reserve.getUnderlyingBalance() + reserve.getDebt());
-        }
-
-        IReserve(reserveAddress).burn(msg.sender, reserveTokenAmount);
-
-        IReserve(reserveAddress).withdrawUnderlying(msg.sender, amount);
     }
 }

@@ -63,7 +63,7 @@ contract Market is Initializable, IMarket, OwnableUpgradeable {
         override
         nonReentrant
     {
-        SupplyLogic.withdraw(_reserves, asset, amount);
+        SupplyLogic.withdraw(_addressesProvider, _reserves, asset, amount);
     }
 
     // Borrow an asset from the reserve while using an NFT collateral

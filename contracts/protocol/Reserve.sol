@@ -24,6 +24,7 @@ contract Reserve is
     uint256 internal _cumulativeBorrowRate;
     uint256 internal _liquidationPenalty;
     uint256 internal _protocolLiquidationFee;
+    uint256 internal _maximumUtilizationRate;
 
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -41,6 +42,7 @@ contract Reserve is
         string calldata name,
         string calldata symbol,
         uint256 liquidationPenalty,
+        uint256 maximumUtilizationRate,
         uint256 protocolLiquidationFee
     ) external initializer {
         __Ownable_init();
@@ -48,6 +50,7 @@ contract Reserve is
         _addressProvider = addressProvider;
         _asset = asset;
         _liquidationPenalty = liquidationPenalty;
+        _maximumUtilizationRate = maximumUtilizationRate;
         _protocolLiquidationFee = protocolLiquidationFee;
     }
 
@@ -140,6 +143,15 @@ contract Reserve is
 
     function getUnderlyingBalance() external view override returns (uint256) {
         return _getUnderlyingBalance();
+    }
+
+    function getMaximumUtilizationRate()
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return _maximumUtilizationRate;
     }
 
     function _getUnderlyingBalance() internal view returns (uint256) {

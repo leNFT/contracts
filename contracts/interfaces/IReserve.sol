@@ -47,6 +47,8 @@ interface IReserve is IERC20Upgradeable {
 
     function getUtilizationRate() external view returns (uint256);
 
+    function getMaximumUtilizationRate() external view returns (uint256);
+
     function getLiquidationPenalty() external view returns (uint256);
 
     function getProtocolLiquidationFee() external view returns (uint256);
