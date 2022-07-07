@@ -35,7 +35,7 @@ let loadEnv = async function () {
 
   // Deploy every needed contract
   const TestToken = await ethers.getContractFactory("TestToken");
-  testToken = await TestToken.deploy("Wrapped ETH", "WETH");
+  testToken = await TestToken.deploy("Wrapped ETH", "wETH");
   await testToken.deployed();
   const TestNFT = await ethers.getContractFactory("TestNFT");
   testNFT = await TestNFT.deploy("TEST NFT", "TNFT");
