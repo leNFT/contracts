@@ -6,7 +6,7 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 interface ILoanCenter {
     function createLoan(
         address borrower,
-        address asset,
+        address reserve,
         uint256 amount,
         address nftAddress,
         uint256 nftTokenID,

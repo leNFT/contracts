@@ -14,7 +14,6 @@ library BorrowLogic {
     function borrow(
         IMarketAddressesProvider addressesProvider,
         mapping(address => address) storage reserves,
-        address borrower,
         address asset,
         uint256 amount,
         address nftAddress,
@@ -24,11 +23,17 @@ library BorrowLogic {
         address reserveAddress = reserves[asset];
 
         // Validate the movement
-        ValidationLogic.validateBorrow(addressesProvider, amount, nftAddress);
+        ValidationLogic.validateBorrow(
+            addressesProvider,
+            reserveAddress,
+            amount,
+            nftAddress,
+            nftTokenID
+        );
 
         // Transfer the collateral
         IERC721Upgradeable(nftAddress).safeTransferFrom(
-            borrower,
+            msg.sender,
             addressesProvider.getLoanCenter(),
             nftTokenID
         );
@@ -38,8 +43,8 @@ library BorrowLogic {
 
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
         uint256 loanId = loanCenter.createLoan(
-            borrower,
-            asset,
+            msg.sender,
+            reserveAddress,
             amount,
             nftAddress,
             nftTokenID,
@@ -47,14 +52,14 @@ library BorrowLogic {
         );
 
         // Mint the token representing the debt
-        IDebtToken(addressesProvider.getDebtToken()).mint(borrower, loanId);
+        IDebtToken(addressesProvider.getDebtToken()).mint(msg.sender, loanId);
 
         //Activate Loan after the principal has been sent
         loanCenter.activateLoan(loanId);
 
         // Send the principal to the borrower
         IReserve(reserveAddress).transferUnderlying(
-            borrower,
+            msg.sender,
             amount,
             borrowRate
         );
@@ -62,14 +67,11 @@ library BorrowLogic {
         return loanId;
     }
 
-    function repay(
-        IMarketAddressesProvider addressesProvider,
-        mapping(address => address) storage reserves,
-        uint256 loanId,
-        address caller
-    ) external {
+    function repay(IMarketAddressesProvider addressesProvider, uint256 loanId)
+        external
+    {
         // Validate the movement
-        ValidationLogic.validateRepay(addressesProvider, loanId, caller);
+        ValidationLogic.validateRepay(addressesProvider, loanId);
 
         // Get the loan
         DataTypes.LoanData memory loanData = (
@@ -77,7 +79,7 @@ library BorrowLogic {
         ).getLoan(loanId);
 
         // Return the principal + interest
-        IReserve(reserves[loanData.reserveAsset]).receiveUnderlying(
+        IReserve(loanData.reserve).receiveUnderlying(
             loanData.borrower,
             loanData.amount,
             loanData.borrowRate,

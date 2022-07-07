@@ -65,4 +65,34 @@ describe("Withdraw", function () {
     expect(await testToken.balanceOf(owner.address)).to.equal(400);
     expect(await testReserve.balanceOf(owner.address)).to.equal(0);
   });
+  it("Should throw an error when withdraw from an overused reserved", async function () {
+    // Mint NFT collateral
+    const mintTestNftTx = await testNFT.mint(owner.address);
+    tokenIDReceipt = await mintTestNftTx.wait();
+    const event = tokenIDReceipt.events.find((event) => event.event === "Mint");
+    tokenID = event.args.tokenId.toNumber();
+    // Approve asset to be used by the market
+    const approveNftTx = await testNFT.approve(market.address, tokenID);
+    await approveNftTx.wait();
+
+    //Deposit more underlying into the reserve
+    const approveTokenTx = await testToken.approve(testReserve.address, 200);
+    await approveTokenTx.wait();
+    const depositTx = await market.deposit(testToken.address, 200);
+    await depositTx.wait();
+
+    // Ask the market to borrow underlying using the collateral
+    const borrowTx = await market.borrow(
+      testToken.address,
+      100,
+      testNFT.address,
+      tokenID
+    );
+    await borrowTx.wait();
+
+    // Withdraw 200 tokens from the market
+    await expect(market.withdraw(testToken.address, 90)).to.be.revertedWith(
+      "Reserve utilization rate too high"
+    );
+  });
 });

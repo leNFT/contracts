@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 interface IReserve is IERC20Upgradeable {
+    function getAsset() external view returns (address);
+
     function getUnderlyingBalance() external view returns (uint256);
 
     function mint(address user, uint256 amount) external;

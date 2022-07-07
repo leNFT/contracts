@@ -16,11 +16,23 @@ import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ER
 library LiquidationLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+    function _getLiquidationPrice(address reserveAddress, uint256 floorPrice)
+        internal
+        view
+        returns (uint256)
+    {
+        return
+            PercentageMath.percentMul(
+                floorPrice,
+                PercentageMath.ONE_HUNDRED_PERCENT -
+                    IReserve(reserveAddress).getLiquidationPenalty() +
+                    IReserve(reserveAddress).getProtocolLiquidationFee()
+            );
+    }
+
     function liquidate(
         IMarketAddressesProvider addressesProvider,
-        mapping(address => address) storage reserves,
-        uint256 loanId,
-        address liquidator
+        uint256 loanId
     ) external {
         // Verify if liquidation conditions are met
         ValidationLogic.validateLiquidation(addressesProvider, loanId);
@@ -30,21 +42,18 @@ library LiquidationLogic {
             ILoanCenter(addressesProvider.getLoanCenter())
         ).getLoan(loanId);
 
-        address reserveAddress = reserves[loanData.reserveAsset];
+        address reserveAsset = IReserve(loanData.reserve).getAsset();
 
         // Find the liquidation price
         uint256 floorPrice = INFTOracle(addressesProvider.getNFTOracle())
             .getNftFloorPrice(loanData.nftAsset);
-        uint256 liquidationPrice = PercentageMath.percentMul(
-            floorPrice,
-            PercentageMath.ONE_HUNDRED_PERCENT -
-                IReserve(reserveAddress).getLiquidationPenalty() +
-                IReserve(reserveAddress).getProtocolLiquidationFee()
+        uint256 liquidationPrice = _getLiquidationPrice(
+            loanData.reserve,
+            floorPrice
         );
-
         // Send the payment from the liquidator
-        IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
-            liquidator,
+        IERC20Upgradeable(reserveAsset).safeTransferFrom(
+            msg.sender,
             address(this),
             liquidationPrice
         );
@@ -56,7 +65,7 @@ library LiquidationLogic {
         uint256 repayLoanAmount = loanData.amount + loanInterest;
         // If we only have funds to pay back part of the loan
         if (fundsLeft < repayLoanAmount) {
-            IReserve(reserveAddress).receiveUnderlyingDefaulted(
+            IReserve(loanData.reserve).receiveUnderlyingDefaulted(
                 address(this),
                 fundsLeft,
                 loanData.borrowRate,
@@ -65,7 +74,7 @@ library LiquidationLogic {
             fundsLeft = 0;
             // If we have funds to cover the whole debt associated with the loan
         } else {
-            IReserve(reserveAddress).receiveUnderlying(
+            IReserve(loanData.reserve).receiveUnderlying(
                 address(this),
                 loanData.amount,
                 loanData.borrowRate,
@@ -77,11 +86,11 @@ library LiquidationLogic {
         // ... then get the protocol liquidation fee (if there are still funds available) ...
 
         uint256 protocolFee = floorPrice *
-            IReserve(reserveAddress).getProtocolLiquidationFee();
+            IReserve(loanData.reserve).getProtocolLiquidationFee();
         if (protocolFee < fundsLeft) {
             protocolFee = fundsLeft;
         }
-        IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
+        IERC20Upgradeable(reserveAsset).safeTransfer(
             addressesProvider.getFeeTreasury(),
             protocolFee
         );
@@ -89,7 +98,7 @@ library LiquidationLogic {
 
         // ... and the rest to the borrower.
         if (fundsLeft > 0) {
-            IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
+            IERC20Upgradeable(reserveAsset).safeTransfer(
                 loanData.borrower,
                 fundsLeft
             );
@@ -101,7 +110,7 @@ library LiquidationLogic {
         // Send collateral to liquidator
         IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
             addressesProvider.getLoanCenter(),
-            liquidator,
+            msg.sender,
             loanData.nftTokenId
         );
 

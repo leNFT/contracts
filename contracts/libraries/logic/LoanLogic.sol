@@ -11,7 +11,7 @@ library LoanLogic {
         DataTypes.LoanData storage loandata,
         uint256 loanId,
         address borrower,
-        address reserveAsset,
+        address reserve,
         uint256 amount,
         address nftAsset,
         uint256 nftTokenId,
@@ -24,7 +24,7 @@ library LoanLogic {
         loandata.nftAsset = nftAsset;
         loandata.nftTokenId = nftTokenId;
         loandata.borrowRate = borrowRate;
-        loandata.reserveAsset = reserveAsset;
+        loandata.reserve = reserve;
         loandata.initTimestamp = block.timestamp;
     }
 

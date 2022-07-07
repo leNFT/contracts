@@ -46,7 +46,7 @@ contract LoanCenter is
 
     function createLoan(
         address borrower,
-        address asset,
+        address reserve,
         uint256 amount,
         address nftAddress,
         uint256 nftTokenID,
@@ -56,7 +56,7 @@ contract LoanCenter is
         _loans[_loansCount].init(
             _loansCount,
             borrower,
-            asset,
+            reserve,
             amount,
             nftAddress,
             nftTokenID,

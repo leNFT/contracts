@@ -54,6 +54,10 @@ contract Reserve is
         _protocolLiquidationFee = protocolLiquidationFee;
     }
 
+    function getAsset() external view override returns (address) {
+        return _asset;
+    }
+
     function mint(address user, uint256 amount) external override onlyMarket {
         _mint(user, amount);
     }

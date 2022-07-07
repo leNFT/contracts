@@ -76,7 +76,6 @@ contract Market is Initializable, IMarket, OwnableUpgradeable {
         BorrowLogic.borrow(
             _addressesProvider,
             _reserves,
-            msg.sender,
             asset,
             amount,
             nftAddress,
@@ -86,17 +85,12 @@ contract Market is Initializable, IMarket, OwnableUpgradeable {
 
     // Repay an asset borrowed from the reserve while using an NFT collateral
     function repay(uint256 loanId) external override nonReentrant {
-        BorrowLogic.repay(_addressesProvider, _reserves, loanId, msg.sender);
+        BorrowLogic.repay(_addressesProvider, loanId);
     }
 
     // Liquidate an asset borrowed from the reserve
     function liquidate(uint256 loanId) external override nonReentrant {
-        LiquidationLogic.liquidate(
-            _addressesProvider,
-            _reserves,
-            loanId,
-            msg.sender
-        );
+        LiquidationLogic.liquidate(_addressesProvider, loanId);
     }
 
     // Init a supply side reserve
