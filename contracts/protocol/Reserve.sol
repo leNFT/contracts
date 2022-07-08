@@ -21,7 +21,7 @@ contract Reserve is
     address internal _asset;
     uint256 internal _debt;
     uint256 internal _borrowRate;
-    uint256 internal _cumulativeBorrowRate;
+    uint256 internal _cumulativeDebtBorrowRate;
     uint256 internal _liquidationPenalty;
     uint256 internal _protocolLiquidationFee;
     uint256 internal _maximumUtilizationRate;
@@ -108,7 +108,7 @@ contract Reserve is
         IERC20Upgradeable(_asset).safeTransfer(to, amount);
 
         // Update the cummulative borrow rate
-        _updateCumulativeBorrowRate(true, amount, borrowRate);
+        _updateCumulativeDebtBorrowRate(true, amount, borrowRate);
 
         // Update the debt
         _debt += amount;
@@ -128,7 +128,7 @@ contract Reserve is
             address(this),
             amount + interest
         );
-        _updateCumulativeBorrowRate(false, amount, borrowRate);
+        _updateCumulativeDebtBorrowRate(false, amount, borrowRate);
         _debt -= amount;
         _updateBorrowRate();
     }
@@ -140,7 +140,7 @@ contract Reserve is
         uint256 defaultedDebt
     ) external override onlyMarket {
         IERC20Upgradeable(_asset).safeTransferFrom(from, address(this), amount);
-        _updateCumulativeBorrowRate(false, defaultedDebt, borrowRate);
+        _updateCumulativeDebtBorrowRate(false, defaultedDebt, borrowRate);
         _debt -= defaultedDebt;
         _updateBorrowRate();
     }
@@ -174,33 +174,31 @@ contract Reserve is
 
     // Updates the cumulative borrow rate
     // newDebt: The new debt after
-    function _updateCumulativeBorrowRate(
+    function _updateCumulativeDebtBorrowRate(
         bool increaseDebt,
         uint256 amount,
         uint256 borrowRate
     ) internal {
         if (increaseDebt) {
-            _cumulativeBorrowRate =
-                ((_debt * _cumulativeBorrowRate) + (amount * borrowRate)) /
+            _cumulativeDebtBorrowRate =
+                ((_debt * _cumulativeDebtBorrowRate) + (amount * borrowRate)) /
                 (_debt + amount);
         } else {
             if ((_debt - amount) == 0) {
-                _cumulativeBorrowRate = 0;
+                _cumulativeDebtBorrowRate = 0;
             } else {
-                _cumulativeBorrowRate =
-                    ((_debt * _cumulativeBorrowRate) - (amount * borrowRate)) /
+                _cumulativeDebtBorrowRate =
+                    ((_debt * _cumulativeDebtBorrowRate) -
+                        (amount * borrowRate)) /
                     (_debt - amount);
             }
         }
     }
 
-    function getCumulativeBorrowRate()
-        external
-        view
-        override
-        returns (uint256)
-    {
-        return _cumulativeBorrowRate;
+    function getSupplyRate() external view override returns (uint256) {
+        return
+            (_cumulativeDebtBorrowRate * _debt) /
+            (_debt + _getUnderlyingBalance());
     }
 
     function getDebt() external view override returns (uint256) {

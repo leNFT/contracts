@@ -1,4 +1,3 @@
-const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 let loadEnv = async function () {
@@ -63,7 +62,7 @@ let loadEnv = async function () {
   testReserve = await TestReserve.deploy();
   await testReserve.deployed();
   const InterestRate = await ethers.getContractFactory("InterestRate");
-  const interestRate = await InterestRate.deploy(8000, 200, 30, 200);
+  interestRate = await InterestRate.deploy(8000, 1000, 2500, 10000);
   await interestRate.deployed();
   console.log("Interest Rate Address:", interestRate.address);
   const NFTOracle = await ethers.getContractFactory("NFTOracle");

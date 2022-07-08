@@ -36,7 +36,7 @@ interface IReserve is IERC20Upgradeable {
         uint256 defaultedDebt
     ) external;
 
-    function getCumulativeBorrowRate() external view returns (uint256);
+    function getSupplyRate() external view returns (uint256);
 
     function getDebt() external view returns (uint256);
 

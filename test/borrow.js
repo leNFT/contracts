@@ -4,11 +4,11 @@ const load = require("../scripts/_load");
 
 describe("Borrow", function () {
   load.loadTest();
-  var tokenId;
+  var tokenID;
   it("Create NFT asset", async function () {
     // Mint NFT collateral
     const mintTestNftTx = await testNFT.mint(owner.address);
-    tokenIDReceipt = await mintTestNftTx.wait();
+    const tokenIDReceipt = await mintTestNftTx.wait();
     const event = tokenIDReceipt.events.find((event) => event.event === "Mint");
     tokenID = event.args.tokenId.toNumber();
 
