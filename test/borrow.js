@@ -51,5 +51,8 @@ describe("Borrow", function () {
 
     // Find if the utilization rate was changed accordingly
     expect(await testReserve.getUtilizationRate()).to.equal(2500);
+
+    //Find if the supply rate has changed accordingly
+    expect(await testReserve.getSupplyRate()).to.equal(250);
   });
 });

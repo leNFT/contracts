@@ -196,9 +196,13 @@ contract Reserve is
     }
 
     function getSupplyRate() external view override returns (uint256) {
-        return
-            (_cumulativeDebtBorrowRate * _debt) /
-            (_debt + _getUnderlyingBalance());
+        uint256 supplyRate = 0;
+        if ((_debt + _getUnderlyingBalance()) > 0) {
+            supplyRate =
+                (_cumulativeDebtBorrowRate * _debt) /
+                (_debt + _getUnderlyingBalance());
+        }
+        return supplyRate;
     }
 
     function getDebt() external view override returns (uint256) {
