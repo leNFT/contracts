@@ -33,9 +33,13 @@ library LoanLogic {
         view
         returns (uint256)
     {
-        uint256 timeSpentInYears = (timestamp - loandata.initTimestamp) /
-            ONE_YEAR;
+        uint256 timeSpentInYears = ((timestamp - loandata.initTimestamp) *
+            PercentageMath.PERCENTAGE_FACTOR) / ONE_YEAR;
+        uint256 accruedInterest = PercentageMath.percentMul(
+            timeSpentInYears,
+            loandata.borrowRate
+        );
 
-        return PercentageMath.percentMul(timeSpentInYears, loandata.borrowRate);
+        return PercentageMath.percentMul(loandata.amount, accruedInterest);
     }
 }
