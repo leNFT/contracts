@@ -1,1 +1,1 @@
-# lenft
+# leNFT Protocol
