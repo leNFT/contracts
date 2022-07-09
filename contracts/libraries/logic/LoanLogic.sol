@@ -4,8 +4,11 @@ pragma solidity 0.8.15;
 import {DataTypes} from "../types/DataTypes.sol";
 import {PercentageMath} from "../math/PercentageMath.sol";
 
+import "hardhat/console.sol";
+
 library LoanLogic {
-    uint256 constant ONE_YEAR = 31536000;
+    uint256 internal constant ONE_YEAR = 31536000;
+    uint256 internal constant PRECISION = 1e8;
 
     function init(
         DataTypes.LoanData storage loandata,
@@ -33,13 +36,14 @@ library LoanLogic {
         view
         returns (uint256)
     {
-        uint256 timeSpentInYears = ((timestamp - loandata.initTimestamp) *
-            PercentageMath.PERCENTAGE_FACTOR) / ONE_YEAR;
-        uint256 accruedInterest = PercentageMath.percentMul(
-            timeSpentInYears,
-            loandata.borrowRate
-        );
+        uint256 timeSpentInYears = (
+            ((timestamp - loandata.initTimestamp) * PRECISION)
+        ) / ONE_YEAR;
+        console.log("timeSpentInYears", timeSpentInYears);
+        uint256 accruedInterest = (loandata.borrowRate * timeSpentInYears) /
+            PercentageMath.PERCENTAGE_FACTOR;
 
-        return PercentageMath.percentMul(loandata.amount, accruedInterest);
+        console.log("accruedInterest", accruedInterest);
+        return (loandata.amount * accruedInterest) / PRECISION;
     }
 }

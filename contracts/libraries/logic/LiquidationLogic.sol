@@ -24,7 +24,7 @@ library LiquidationLogic {
         return
             PercentageMath.percentMul(
                 floorPrice,
-                PercentageMath.ONE_HUNDRED_PERCENT -
+                PercentageMath.PERCENTAGE_FACTOR -
                     IReserve(reserveAddress).getLiquidationPenalty() +
                     IReserve(reserveAddress).getProtocolLiquidationFee()
             );

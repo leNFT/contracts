@@ -10,8 +10,8 @@ pragma solidity 0.8.15;
  **/
 library PercentageMath {
     // Maximum percentage factor (100.00%)
+
     uint256 internal constant PERCENTAGE_FACTOR = 1e4;
-    uint256 internal constant ONE_HUNDRED_PERCENT = 1e4;
 
     // Half percentage factor (50.00%)
     uint256 internal constant HALF_PERCENTAGE_FACTOR = 0.5e4;

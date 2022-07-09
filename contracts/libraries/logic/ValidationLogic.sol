@@ -134,7 +134,7 @@ library ValidationLogic {
             INFTOracle(addressesProvider.getNFTOracle()).getNftFloorPrice(
                 loanData.nftAsset
             ),
-            PercentageMath.ONE_HUNDRED_PERCENT -
+            PercentageMath.PERCENTAGE_FACTOR -
                 IReserve(loanData.reserve).getLiquidationPenalty() +
                 IReserve(loanData.reserve).getProtocolLiquidationFee()
         );
