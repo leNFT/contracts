@@ -106,7 +106,7 @@ contract LoanCenter is
         return _loans[loanId];
     }
 
-    function getNFTLoan(address nftAddress, uint256 nftTokenID)
+    function getNFTLoanId(address nftAddress, uint256 nftTokenID)
         external
         view
         override
