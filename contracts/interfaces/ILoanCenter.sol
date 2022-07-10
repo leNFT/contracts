@@ -34,4 +34,11 @@ interface ILoanCenter {
     function getLoanDebt(uint256 loanId) external view returns (uint256);
 
     function getLoanInterest(uint256 loanId) external view returns (uint256);
+
+    function getLoanTokenId(uint256 loanId) external view returns (uint256);
+
+    function getLoanTokenAddress(uint256 loanId)
+        external
+        view
+        returns (address);
 }

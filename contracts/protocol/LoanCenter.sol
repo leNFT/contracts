@@ -134,6 +134,24 @@ contract LoanCenter is
         return _loans[loanId].getInterest(block.timestamp);
     }
 
+    function getLoanTokenId(uint256 loanId)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return _loans[loanId].nftTokenId;
+    }
+
+    function getLoanTokenAddress(uint256 loanId)
+        external
+        view
+        override
+        returns (address)
+    {
+        return _loans[loanId].nftAsset;
+    }
+
     function onERC721Received(
         address,
         address,
