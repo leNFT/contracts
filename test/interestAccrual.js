@@ -68,7 +68,7 @@ describe("InterestAccrual", function () {
     await ethers.provider.send("evm_mine");
     console.log(await loanCenter.getLoanDebt(tokenID));
     expect(await loanCenter.getLoanDebt(tokenID)).to.equal(
-      "100027397259999980"
+      "100027397000000000"
     );
   });
 });

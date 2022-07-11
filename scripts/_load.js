@@ -140,8 +140,8 @@ let loadEnv = async function () {
   //Add test NFT to oracle
   const addNftToOracleTx = await nftOracle.addSupportedNft(
     testNFT.address,
-    "500000000000000000000",
-    2000
+    "500000000000000000000", //500 tokens floor price
+    2000 //max collaterization (20%)
   );
   await addNftToOracleTx.wait();
 
