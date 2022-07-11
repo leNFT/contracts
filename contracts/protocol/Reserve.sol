@@ -41,16 +41,16 @@ contract Reserve is
         address asset,
         string calldata name,
         string calldata symbol,
-        uint256 liquidationPenalty,
         uint256 maximumUtilizationRate,
+        uint256 liquidationPenalty,
         uint256 protocolLiquidationFee
     ) external initializer {
         __Ownable_init();
         __ERC20_init(name, symbol);
         _addressProvider = addressProvider;
         _asset = asset;
-        _liquidationPenalty = liquidationPenalty;
         _maximumUtilizationRate = maximumUtilizationRate;
+        _liquidationPenalty = liquidationPenalty;
         _protocolLiquidationFee = protocolLiquidationFee;
     }
 

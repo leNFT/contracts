@@ -39,11 +39,10 @@ library LoanLogic {
         uint256 timeSpentInYears = (
             ((timestamp - loandata.initTimestamp) * PRECISION)
         ) / ONE_YEAR;
-        console.log("timeSpentInYears", timeSpentInYears);
+
         uint256 accruedInterest = (loandata.borrowRate * timeSpentInYears) /
             PercentageMath.PERCENTAGE_FACTOR;
 
-        console.log("accruedInterest", accruedInterest);
         return (loandata.amount * accruedInterest) / PRECISION;
     }
 }

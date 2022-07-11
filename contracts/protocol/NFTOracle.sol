@@ -6,6 +6,7 @@ import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {NftLogic} from "../libraries/logic/NftLogic.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import "hardhat/console.sol";
 
 contract NFTOracle is INFTOracle, Ownable {
     mapping(address => DataTypes.NftData) private _nfts;
@@ -98,19 +99,22 @@ contract NFTOracle is INFTOracle, Ownable {
         );
 
         // FInd if the price deviated too much from last price
-        uint256 priceDeviation = (_nfts[collection].floorPrice - floorPrice) /
+        uint256 newFloorPrice = floorPrice;
+        uint256 priceDeviation = (PercentageMath.PERCENTAGE_FACTOR *
+            (_nfts[collection].floorPrice - floorPrice)) /
             _nfts[collection].floorPrice;
-        uint256 newFloorPrice;
 
         if (priceDeviation > _maxPriceDeviation) {
             if (_nfts[collection].floorPrice > floorPrice) {
-                newFloorPrice =
-                    (1 - _maxPriceDeviation) *
-                    _nfts[collection].floorPrice;
+                newFloorPrice = PercentageMath.percentMul(
+                    _nfts[collection].floorPrice,
+                    PercentageMath.PERCENTAGE_FACTOR - _maxPriceDeviation
+                );
             } else if (_nfts[collection].floorPrice < floorPrice) {
-                newFloorPrice =
-                    (1 + _maxPriceDeviation) *
-                    _nfts[collection].floorPrice;
+                newFloorPrice = newFloorPrice = PercentageMath.percentMul(
+                    _nfts[collection].floorPrice,
+                    PercentageMath.PERCENTAGE_FACTOR + _maxPriceDeviation
+                );
             } else {
                 newFloorPrice = _nfts[collection].floorPrice;
             }

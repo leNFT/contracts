@@ -12,6 +12,7 @@ import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "hardhat/console.sol";
 
 library LiquidationLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -47,10 +48,12 @@ library LiquidationLogic {
         // Find the liquidation price
         uint256 floorPrice = INFTOracle(addressesProvider.getNFTOracle())
             .getNftFloorPrice(loanData.nftAsset);
+        console.log("floorPrice", floorPrice);
         uint256 liquidationPrice = _getLiquidationPrice(
             loanData.reserve,
             floorPrice
         );
+        console.log("liquidationPrice", liquidationPrice);
         // Send the payment from the liquidator
         IERC20Upgradeable(reserveAsset).safeTransferFrom(
             msg.sender,
@@ -71,6 +74,7 @@ library LiquidationLogic {
                 loanData.borrowRate,
                 loanData.amount
             );
+            console.log("receiveUnderlyingDefaulted", fundsLeft);
             fundsLeft = 0;
             // If we have funds to cover the whole debt associated with the loan
         } else {
@@ -80,21 +84,25 @@ library LiquidationLogic {
                 loanData.borrowRate,
                 loanInterest
             );
+            console.log("receiveUnderlying", repayLoanAmount);
             fundsLeft -= repayLoanAmount;
         }
 
         // ... then get the protocol liquidation fee (if there are still funds available) ...
-
-        uint256 protocolFee = floorPrice *
-            IReserve(loanData.reserve).getProtocolLiquidationFee();
-        if (protocolFee < fundsLeft) {
-            protocolFee = fundsLeft;
+        if (fundsLeft > 0) {
+            uint256 protocolFee = PercentageMath.percentMul(
+                floorPrice,
+                IReserve(loanData.reserve).getProtocolLiquidationFee()
+            );
+            if (protocolFee > fundsLeft) {
+                protocolFee = fundsLeft;
+            }
+            IERC20Upgradeable(reserveAsset).safeTransfer(
+                addressesProvider.getFeeTreasury(),
+                protocolFee
+            );
+            fundsLeft -= protocolFee;
         }
-        IERC20Upgradeable(reserveAsset).safeTransfer(
-            addressesProvider.getFeeTreasury(),
-            protocolFee
-        );
-        fundsLeft -= protocolFee;
 
         // ... and the rest to the borrower.
         if (fundsLeft > 0) {

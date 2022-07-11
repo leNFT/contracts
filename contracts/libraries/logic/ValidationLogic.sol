@@ -139,6 +139,14 @@ library ValidationLogic {
                 IReserve(loanData.reserve).getProtocolLiquidationFee()
         );
 
+        console.log("liquidationPrice", liquidationPrice);
+        console.log(
+            "floorPrice",
+            INFTOracle(addressesProvider.getNFTOracle()).getNftFloorPrice(
+                loanData.nftAsset
+            )
+        );
+
         require(
             balance >= liquidationPrice,
             "Balance lower than liquidation price"

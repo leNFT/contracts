@@ -3,8 +3,7 @@ const { ethers } = require("hardhat");
 let loadEnv = async function () {
   console.log("Setting up enviroment...");
 
-  const signers = await ethers.getSigners();
-  owner = signers[0];
+  [owner, addr1, addr2] = await ethers.getSigners();
 
   //Deploy libraries
   ValidationLogicLib = await ethers.getContractFactory("ValidationLogic");
@@ -66,7 +65,7 @@ let loadEnv = async function () {
   await interestRate.deployed();
   console.log("Interest Rate Address:", interestRate.address);
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
-  nftOracle = await NFTOracle.deploy(20, 1);
+  nftOracle = await NFTOracle.deploy(2000, 1); //Max Price deviation (20%) and min update time
   await nftOracle.deployed();
   console.log("NFT Oracle Address:", nftOracle.address);
   const AddressesProvider = await ethers.getContractFactory(
@@ -103,8 +102,9 @@ let loadEnv = async function () {
     loanCenter.address
   );
   await setLoanCenterTx.wait();
+  feeTreasuryAddress = "0xa5C6eD5d801417c50f775099BA59C306d4034D4D";
   const setFeeTreasuryTx = await addressesProvider.setFeeTreasury(
-    "0xAE46CbeB042ed76700357c34BB96a7dd33fc543B"
+    feeTreasuryAddress
   );
   await setFeeTreasuryTx.wait();
 
@@ -124,9 +124,9 @@ let loadEnv = async function () {
     testToken.address,
     "RESERVETESTTOKEN",
     "RTTOKEN",
-    2000,
-    9000,
-    200
+    9000, //max utilization rate (90%)
+    2000, // Liquidation penalty (20%)
+    200 // protocol fee (2%)
   );
   await initReserveTx.wait();
 

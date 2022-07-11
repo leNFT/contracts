@@ -10,6 +10,7 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Market is Initializable, IMarket, OwnableUpgradeable {
     mapping(address => address) private _reserves;
@@ -98,6 +99,9 @@ contract Market is Initializable, IMarket, OwnableUpgradeable {
         external
         onlyOwner
     {
+        //Approve reserve use of Market balance
+        IERC20(asset).approve(reserveAddress, 2**256 - 1);
+
         _reserves[asset] = reserveAddress;
     }
 
