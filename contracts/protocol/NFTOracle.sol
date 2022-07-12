@@ -4,17 +4,17 @@ pragma solidity 0.8.15;
 import {INFTOracle} from "../interfaces/INFTOracle.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
-import {NftLogic} from "../libraries/logic/NftLogic.sol";
+import {CollectionLogic} from "../libraries/logic/CollectionLogic.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
 contract NFTOracle is INFTOracle, Ownable {
-    mapping(address => DataTypes.NftData) private _nfts;
+    mapping(address => DataTypes.CollectionData) private _collections;
 
     uint256 public immutable _maxPriceDeviation;
     uint256 public immutable _minUpdateTime;
 
-    using NftLogic for DataTypes.NftData;
+    using CollectionLogic for DataTypes.CollectionData;
 
     constructor(uint256 maxPriceDeviation, uint256 minUpdateTime) {
         _maxPriceDeviation = maxPriceDeviation;
@@ -22,13 +22,13 @@ contract NFTOracle is INFTOracle, Ownable {
     }
 
     // Get the floor price for a collection
-    function getNftFloorPrice(address nftCollection)
+    function getCollectionFloorPrice(address collection)
         external
         view
         override
         returns (uint256)
     {
-        return _nfts[nftCollection].floorPrice;
+        return _collections[collection].floorPrice;
     }
 
     // Get the max collaterization for a certain collectin
@@ -40,35 +40,35 @@ contract NFTOracle is INFTOracle, Ownable {
     {
         return
             PercentageMath.percentMul(
-                _nfts[collection].floorPrice,
-                _nfts[collection].maxCollaterization
+                _collections[collection].floorPrice,
+                _collections[collection].maxCollaterization
             );
     }
 
     // floor price with 18 decimals
-    function addSupportedNft(
+    function addSupportedCollection(
         address collection,
         uint256 floorPrice,
         uint256 maxCollaterization
     ) external onlyOwner {
-        _nfts[collection].init();
+        _collections[collection].init();
         //Set the max collaterization
-        _nfts[collection].setMaxCollaterization(maxCollaterization);
+        _collections[collection].setMaxCollaterization(maxCollaterization);
         // Update the nft floor price data
-        _nfts[collection].setFloorPrice(floorPrice, block.timestamp);
+        _collections[collection].setFloorPrice(floorPrice, block.timestamp);
     }
 
-    function removeSupportedNft(address collection) external onlyOwner {
-        delete _nfts[collection];
+    function removeSupportedCollection(address collection) external onlyOwner {
+        delete _collections[collection];
     }
 
-    function isNftSupported(address collection)
+    function isCollectionSupported(address collection)
         external
         view
         override
         returns (bool)
     {
-        return _nfts[collection].supported;
+        return _collections[collection].supported;
     }
 
     function addFloorPriceData(address collection, uint256 floorPrice)
@@ -90,10 +90,10 @@ contract NFTOracle is INFTOracle, Ownable {
     function _addFloorPriceData(address collection, uint256 floorPrice)
         internal
     {
-        require(_nfts[collection].supported, "Unsupported Collection");
+        require(_collections[collection].supported, "Unsupported Collection");
 
         require(
-            (block.timestamp - _nfts[collection].lastUpdateTimestamp) >
+            (block.timestamp - _collections[collection].lastUpdateTimestamp) >
                 _minUpdateTime,
             "Updating time too short"
         );
@@ -101,26 +101,26 @@ contract NFTOracle is INFTOracle, Ownable {
         // FInd if the price deviated too much from last price
         uint256 newFloorPrice = floorPrice;
         uint256 priceDeviation = (PercentageMath.PERCENTAGE_FACTOR *
-            (_nfts[collection].floorPrice - floorPrice)) /
-            _nfts[collection].floorPrice;
+            (_collections[collection].floorPrice - floorPrice)) /
+            _collections[collection].floorPrice;
 
         if (priceDeviation > _maxPriceDeviation) {
-            if (_nfts[collection].floorPrice > floorPrice) {
+            if (_collections[collection].floorPrice > floorPrice) {
                 newFloorPrice = PercentageMath.percentMul(
-                    _nfts[collection].floorPrice,
+                    _collections[collection].floorPrice,
                     PercentageMath.PERCENTAGE_FACTOR - _maxPriceDeviation
                 );
-            } else if (_nfts[collection].floorPrice < floorPrice) {
+            } else if (_collections[collection].floorPrice < floorPrice) {
                 newFloorPrice = newFloorPrice = PercentageMath.percentMul(
-                    _nfts[collection].floorPrice,
+                    _collections[collection].floorPrice,
                     PercentageMath.PERCENTAGE_FACTOR + _maxPriceDeviation
                 );
             } else {
-                newFloorPrice = _nfts[collection].floorPrice;
+                newFloorPrice = _collections[collection].floorPrice;
             }
         }
 
         // Update the nft floor price data
-        _nfts[collection].setFloorPrice(newFloorPrice, block.number);
+        _collections[collection].setFloorPrice(newFloorPrice, block.number);
     }
 }

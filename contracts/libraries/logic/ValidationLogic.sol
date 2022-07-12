@@ -55,7 +55,7 @@ library ValidationLogic {
 
         // Check if nft collection is supported
         require(
-            nftOracle.isNftSupported(nftAddress),
+            nftOracle.isCollectionSupported(nftAddress),
             "NFT COllection is not supported"
         );
 
@@ -131,9 +131,8 @@ library ValidationLogic {
             IReserve(loanData.reserve).getAsset()
         ).balanceOf(msg.sender);
         uint256 liquidationPrice = PercentageMath.percentMul(
-            INFTOracle(addressesProvider.getNFTOracle()).getNftFloorPrice(
-                loanData.nftAsset
-            ),
+            INFTOracle(addressesProvider.getNFTOracle())
+                .getCollectionFloorPrice(loanData.nftAsset),
             PercentageMath.PERCENTAGE_FACTOR -
                 IReserve(loanData.reserve).getLiquidationPenalty() +
                 IReserve(loanData.reserve).getProtocolLiquidationFee()
@@ -142,9 +141,8 @@ library ValidationLogic {
         console.log("liquidationPrice", liquidationPrice);
         console.log(
             "floorPrice",
-            INFTOracle(addressesProvider.getNFTOracle()).getNftFloorPrice(
-                loanData.nftAsset
-            )
+            INFTOracle(addressesProvider.getNFTOracle())
+                .getCollectionFloorPrice(loanData.nftAsset)
         );
 
         require(

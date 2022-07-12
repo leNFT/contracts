@@ -11,6 +11,5 @@ hardhat.config.js
 mocharc.json
 
 #scripts
-scripts/addNFTToOracle.js
 scripts/addwETHReserve.js
 scripts/mintNFT.js

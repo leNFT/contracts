@@ -2,15 +2,15 @@
 pragma solidity ^0.8.0;
 
 interface INFTOracle {
-    function getNftFloorPrice(address nftCollection)
+    function getCollectionFloorPrice(address collection)
         external
         view
         returns (uint256);
 
-    function getCollectionMaxCollateralization(address nftCollection)
+    function getCollectionMaxCollateralization(address collection)
         external
         view
         returns (uint256);
 
-    function isNftSupported(address collection) external returns (bool);
+    function isCollectionSupported(address collection) external returns (bool);
 }

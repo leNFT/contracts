@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 library DataTypes {
-    struct NftData {
+    struct CollectionData {
         bool supported;
         uint256 floorPrice;
         uint256 maxCollaterization;

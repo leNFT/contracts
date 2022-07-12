@@ -47,7 +47,7 @@ library LiquidationLogic {
 
         // Find the liquidation price
         uint256 floorPrice = INFTOracle(addressesProvider.getNFTOracle())
-            .getNftFloorPrice(loanData.nftAsset);
+            .getCollectionFloorPrice(loanData.nftAsset);
         console.log("floorPrice", floorPrice);
         uint256 liquidationPrice = _getLiquidationPrice(
             loanData.reserve,

@@ -2,7 +2,6 @@
 pragma solidity 0.8.15;
 
 import {IMarket} from "../interfaces/IMarket.sol";
-import {NftLogic} from "../libraries/logic/NftLogic.sol";
 import {SupplyLogic} from "../libraries/logic/SupplyLogic.sol";
 import {LiquidationLogic} from "../libraries/logic/LiquidationLogic.sol";
 import {BorrowLogic} from "../libraries/logic/BorrowLogic.sol";
