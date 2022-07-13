@@ -16,4 +16,6 @@ interface IMarket {
     function repay(uint256 loanId) external;
 
     function liquidate(uint256 loanId) external;
+
+    function lock(uint256 amount, address collection) external;
 }
