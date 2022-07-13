@@ -103,6 +103,15 @@ contract Market is Initializable, IMarket, OwnableUpgradeable {
         LockLogic.lock(_addressesProvider, amount, collection);
     }
 
+    // Unlock native token
+    function unlock(uint256 amount, address collection)
+        external
+        override
+        nonReentrant
+    {
+        LockLogic.unlock(_addressesProvider, amount, collection);
+    }
+
     // Init a supply side reserve
     function addReserve(address asset, address reserveAddress)
         external
