@@ -3,15 +3,13 @@ pragma solidity 0.8.15;
 
 import {IInterestRate} from "../interfaces/IInterestRate.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract InterestRate is Initializable, IInterestRate {
+contract InterestRate is IInterestRate {
     uint256 internal _optimalUtilization;
     uint256 internal _optimalBorrowRate;
     uint256 internal _baseBorrowRate;
     uint256 internal _lowSlope;
     uint256 internal _highSlope;
-    uint256 internal _optimalInterest;
 
     constructor(
         uint256 optimalUtilization,
@@ -53,10 +51,6 @@ contract InterestRate is Initializable, IInterestRate {
         }
 
         return borrowRate;
-    }
-
-    function getOptimalInterest() external view returns (uint256) {
-        return _optimalInterest;
     }
 
     function getOptimalBorrowRate() external view returns (uint256) {

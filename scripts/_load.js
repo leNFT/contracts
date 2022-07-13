@@ -78,11 +78,7 @@ let loadEnv = async function () {
   await addressesProvider.deployed();
   console.log("Addresses Provider Address:", addressesProvider.address);
   const DebtToken = await ethers.getContractFactory("DebtToken");
-  debtToken = await DebtToken.deploy(
-    "DEBT TOKEN",
-    "DEBT",
-    addressesProvider.address
-  );
+  debtToken = await DebtToken.deploy();
   await debtToken.deployed();
   console.log("Debt Token Address:", debtToken.address);
   const setMarketAddressTx = await addressesProvider.setMarketAddress(
@@ -139,6 +135,14 @@ let loadEnv = async function () {
     testReserve.address
   );
   await addReserveTx.wait();
+
+  //Init debt token
+  const initDebtTokenTx = await debtToken.initialize(
+    "DEBT TOKEN",
+    "DEBT",
+    addressesProvider.address
+  );
+  await initDebtTokenTx.wait();
 
   //Add test NFTs to oracle
   const addNftToOracleTx = await nftOracle.addSupportedCollection(

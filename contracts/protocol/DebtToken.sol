@@ -1,19 +1,27 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.15;
 
-import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {IDebtToken} from "../interfaces/IDebtToken.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
 
-contract DebtToken is ERC721, ERC721Enumerable, IDebtToken {
+contract DebtToken is
+    Initializable,
+    ERC721Upgradeable,
+    ERC721EnumerableUpgradeable,
+    IDebtToken
+{
     IMarketAddressesProvider private _addressesProvider;
 
-    constructor(
+    // Initialize the market
+    function initialize(
         string memory name,
         string memory symbol,
         IMarketAddressesProvider addressesProvider
-    ) ERC721(name, symbol) {
+    ) external initializer {
+        __ERC721_init(name, symbol);
         _addressesProvider = addressesProvider;
     }
 

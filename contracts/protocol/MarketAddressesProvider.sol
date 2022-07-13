@@ -1,10 +1,13 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
 
-contract MarketAddressesProvider is Ownable, IMarketAddressesProvider {
+contract MarketAddressesProvider is
+    OwnableUpgradeable,
+    IMarketAddressesProvider
+{
     address private _marketAddress;
     address private _debtToken;
     address private _treasury;
