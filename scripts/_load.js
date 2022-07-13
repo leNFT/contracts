@@ -39,6 +39,9 @@ let loadEnv = async function () {
   testNFT = await TestNFT.deploy("TEST NFT", "TNFT");
   await testNFT.deployed();
   console.log("Test NFT Address:", testNFT.address);
+  testNFT2 = await TestNFT.deploy("TEST NFT2", "TNFT2");
+  await testNFT2.deployed();
+  console.log("Test NFT2 Address:", testNFT2.address);
   const Market = await ethers.getContractFactory("Market", {
     libraries: {
       BorrowLogic: borrowLogicLib.address,
@@ -137,19 +140,29 @@ let loadEnv = async function () {
   );
   await addReserveTx.wait();
 
-  //Add test NFT to oracle
+  //Add test NFTs to oracle
   const addNftToOracleTx = await nftOracle.addSupportedCollection(
     testNFT.address,
     "500000000000000000000", //500 tokens floor price
     2000 //max collaterization (20%)
   );
   await addNftToOracleTx.wait();
+  const addNft2ToOracleTx = await nftOracle.addSupportedCollection(
+    testNFT2.address,
+    "500000000000000000", //0.5 tokens floor price
+    4000 //max collaterization (20%)
+  );
+  await addNft2ToOracleTx.wait();
 
-  //Approve Test loan center nft for use by market
+  //Approve test nfts to be used by market
   const approveNFTCollectionTx = await loanCenter.approveNFTCollection(
     testNFT.address
   );
   await approveNFTCollectionTx.wait();
+  const approveNFT2CollectionTx = await loanCenter.approveNFTCollection(
+    testNFT2.address
+  );
+  await approveNFT2CollectionTx.wait();
 };
 
 function loadTest() {
