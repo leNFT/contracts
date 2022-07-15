@@ -1,4 +1,4 @@
-const { ethers } = require("hardhat");
+require("@nomiclabs/hardhat-ethers");
 
 let loadEnv = async function () {
   console.log("Setting up enviroment...");

@@ -1,6 +1,5 @@
 const { expect } = require("chai");
 const load = require("../scripts/_load");
-const { ethers } = require("hardhat");
 
 describe("InterestAccrual", function () {
   load.loadTest();
