@@ -7,7 +7,7 @@ interface INFTOracle {
         view
         returns (uint256);
 
-    function getCollectionMaxCollateral(address user, address collection)
+    function getMaxCollateral(address user, address collection)
         external
         returns (uint256);
 
