@@ -42,6 +42,7 @@ contract NFTOracle is INFTOracle, Ownable {
     // Get the max collaterization for a certain collectin
     function getMaxCollateral(address user, address collection)
         external
+        view
         override
         returns (uint256)
     {

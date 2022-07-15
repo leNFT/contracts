@@ -16,6 +16,7 @@ interface INativeTokenVault {
 
     function getCollateralizationBoost(address user, address collection)
         external
+        view
         returns (uint256);
 
     function getUserFreeVotes(address user) external view returns (uint256);

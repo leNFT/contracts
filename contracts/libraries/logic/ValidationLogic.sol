@@ -63,7 +63,7 @@ library ValidationLogic {
         uint256 amount,
         address nftAddress,
         uint256 nftTokenID
-    ) external {
+    ) external view {
         INFTOracle nftOracle = INFTOracle(addressesProvider.getNFTOracle());
 
         // Check if nft collection is supported
@@ -119,7 +119,7 @@ library ValidationLogic {
     function validateLiquidation(
         IMarketAddressesProvider addressesProvider,
         uint256 loanId
-    ) external {
+    ) external view {
         //Require that loan exists
         DataTypes.LoanData memory loanData = ILoanCenter(
             addressesProvider.getLoanCenter()
@@ -188,7 +188,7 @@ library ValidationLogic {
         IMarketAddressesProvider addressesProvider,
         uint256 amount,
         address collection
-    ) external {
+    ) external view {
         INFTOracle nftOracle = INFTOracle(addressesProvider.getNFTOracle());
         INativeTokenVault vault = INativeTokenVault(
             addressesProvider.getNativeTokenVault()
@@ -212,7 +212,7 @@ library ValidationLogic {
         IMarketAddressesProvider addressesProvider,
         uint256 amount,
         address collection
-    ) external {
+    ) external view {
         INFTOracle nftOracle = INFTOracle(addressesProvider.getNFTOracle());
         INativeTokenVault vault = INativeTokenVault(
             addressesProvider.getNativeTokenVault()

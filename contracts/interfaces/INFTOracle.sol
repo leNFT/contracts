@@ -9,7 +9,11 @@ interface INFTOracle {
 
     function getMaxCollateral(address user, address collection)
         external
+        view
         returns (uint256);
 
-    function isCollectionSupported(address collection) external returns (bool);
+    function isCollectionSupported(address collection)
+        external
+        view
+        returns (bool);
 }
