@@ -23,7 +23,7 @@ contract NativeTokenVault is
     INativeTokenVault,
     OwnableUpgradeable
 {
-    uint256 internal constant boostMultiplier = 50;
+    uint256 internal constant boostMultiplier = 10;
     IMarketAddressesProvider internal _addressProvider;
     address internal _nativeToken;
     // User + collection to votes
@@ -160,7 +160,7 @@ contract NativeTokenVault is
         return _votes[user][collection];
     }
 
-    function getCollateralizationBoost(address collection)
+    function getCollateralizationBoost(address user, address collection)
         external
         view
         override
@@ -168,9 +168,9 @@ contract NativeTokenVault is
     {
         uint256 boost;
 
-        uint256 collectionActiveLoansCount = ILoanCenter(
+        uint256 userCollectionActiveLoansCount = ILoanCenter(
             _addressProvider.getLoanCenter()
-        ).getCollectionActiveLoansCount(collection);
+        ).getUserCollectionActiveLoansCount(user, collection);
 
         uint256 collectionFloorPrice = INFTOracle(
             _addressProvider.getNFTOracle()
@@ -182,7 +182,7 @@ contract NativeTokenVault is
 
         uint256 votesValue = _collectionVotes[collection] * nativeTokenPrice;
 
-        uint256 activeLoansAssetValue = collectionActiveLoansCount *
+        uint256 activeLoansAssetValue = userCollectionActiveLoansCount *
             collectionFloorPrice;
 
         if (activeLoansAssetValue != 0) {

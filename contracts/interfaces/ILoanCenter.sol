@@ -26,7 +26,7 @@ interface ILoanCenter {
 
     function getLoansCount() external view returns (uint256);
 
-    function getCollectionActiveLoansCount(address collection)
+    function getUserCollectionActiveLoansCount(address user, address collection)
         external
         view
         returns (uint256);

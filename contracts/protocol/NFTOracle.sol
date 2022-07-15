@@ -40,14 +40,14 @@ contract NFTOracle is INFTOracle, Ownable {
     }
 
     // Get the max collaterization for a certain collectin
-    function getCollectionMaxCollateral(address collection)
+    function getCollectionMaxCollateral(address user, address collection)
         external
         override
         returns (uint256)
     {
         uint256 collaterizationBoost = INativeTokenVault(
             _addressProvider.getNativeTokenVault()
-        ).getCollateralizationBoost(collection);
+        ).getCollateralizationBoost(user, collection);
         return
             PercentageMath.percentMul(
                 _collections[collection].floorPrice,

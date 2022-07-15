@@ -74,7 +74,8 @@ library ValidationLogic {
 
         // Check if borrow amount exceeds allowed amount
         require(
-            amount <= nftOracle.getCollectionMaxCollateral(nftAddress),
+            amount <=
+                nftOracle.getCollectionMaxCollateral(msg.sender, nftAddress),
             "Amount exceeds allowed by collateral"
         );
 
@@ -132,7 +133,7 @@ library ValidationLogic {
         // Check if collateral / debt relation allows for liquidation
         require(
             INFTOracle(addressesProvider.getNFTOracle())
-                .getCollectionMaxCollateral(loanData.nftAsset) <
+                .getCollectionMaxCollateral(msg.sender, loanData.nftAsset) <
                 ILoanCenter(addressesProvider.getLoanCenter()).getLoanDebt(
                     loanId
                 ),

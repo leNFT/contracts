@@ -26,7 +26,8 @@ contract LoanCenter is
     IMarketAddressesProvider private _addressesProvider;
 
     // Collection to number of active loans
-    mapping(address => uint256) private _collatectionsActiveLoansCount;
+    mapping(address => mapping(address => uint256))
+        private _userCollectionsActiveLoansCount;
 
     using LoanLogic for DataTypes.LoanData;
 
@@ -79,7 +80,7 @@ contract LoanCenter is
         DataTypes.LoanData storage loan = _loans[loanId];
         loan.state = DataTypes.LoanState.Active;
 
-        _collatectionsActiveLoansCount[loan.nftAsset]++;
+        _userCollectionsActiveLoansCount[loan.borrower][loan.nftAsset]++;
     }
 
     function repayLoan(uint256 loanId) external override onlyMarket {
@@ -88,7 +89,7 @@ contract LoanCenter is
         loan.state = DataTypes.LoanState.Repaid;
 
         _nftToLoanId[loan.nftAsset][loan.nftTokenId] = 0;
-        _collatectionsActiveLoansCount[loan.nftAsset]--;
+        _userCollectionsActiveLoansCount[loan.borrower][loan.nftAsset]--;
     }
 
     function liquidateLoan(uint256 loanId) external override onlyMarket {
@@ -97,20 +98,20 @@ contract LoanCenter is
         loan.state = DataTypes.LoanState.Defaulted;
 
         _nftToLoanId[loan.nftAsset][loan.nftTokenId] = 0;
-        _collatectionsActiveLoansCount[loan.nftAsset]--;
+        _userCollectionsActiveLoansCount[loan.borrower][loan.nftAsset]--;
     }
 
     function getLoansCount() external view override returns (uint256) {
         return _loansCount;
     }
 
-    function getCollectionActiveLoansCount(address collection)
+    function getUserCollectionActiveLoansCount(address user, address collection)
         external
         view
         override
         returns (uint256)
     {
-        return _collatectionsActiveLoansCount[collection];
+        return _userCollectionsActiveLoansCount[user][collection];
     }
 
     function getLoan(uint256 loanId)
