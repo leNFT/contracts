@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.15;
 
+import {INativeTokenVault} from "../interfaces/INativeTokenVault.sol";
 import {INFTOracle} from "../interfaces/INFTOracle.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {CollectionLogic} from "../libraries/logic/CollectionLogic.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
 import "hardhat/console.sol";
 
 contract NFTOracle is INFTOracle, Ownable {
@@ -13,10 +15,16 @@ contract NFTOracle is INFTOracle, Ownable {
 
     uint256 public immutable _maxPriceDeviation;
     uint256 public immutable _minUpdateTime;
+    IMarketAddressesProvider internal _addressProvider;
 
     using CollectionLogic for DataTypes.CollectionData;
 
-    constructor(uint256 maxPriceDeviation, uint256 minUpdateTime) {
+    constructor(
+        IMarketAddressesProvider addressProvider,
+        uint256 maxPriceDeviation,
+        uint256 minUpdateTime
+    ) {
+        _addressProvider = addressProvider;
         _maxPriceDeviation = maxPriceDeviation;
         _minUpdateTime = minUpdateTime;
     }
@@ -32,16 +40,19 @@ contract NFTOracle is INFTOracle, Ownable {
     }
 
     // Get the max collaterization for a certain collectin
-    function getCollectionMaxCollateralization(address collection)
+    function getCollectionMaxCollateral(address collection)
         external
-        view
         override
         returns (uint256)
     {
+        uint256 collaterizationBoost = INativeTokenVault(
+            _addressProvider.getNativeTokenVault()
+        ).getCollateralizationBoost(collection);
         return
             PercentageMath.percentMul(
                 _collections[collection].floorPrice,
-                _collections[collection].maxCollaterization
+                _collections[collection].maxCollaterization +
+                    collaterizationBoost
             );
     }
 

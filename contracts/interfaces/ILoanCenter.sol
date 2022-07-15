@@ -26,6 +26,11 @@ interface ILoanCenter {
 
     function getLoansCount() external view returns (uint256);
 
+    function getCollectionActiveLoansCount(address collection)
+        external
+        view
+        returns (uint256);
+
     function getNFTLoanId(address nftAddress, uint256 nftTokenID)
         external
         view

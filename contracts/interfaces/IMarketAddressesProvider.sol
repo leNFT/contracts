@@ -10,6 +10,10 @@ interface IMarketAddressesProvider {
 
     function getLoanCenter() external view returns (address);
 
+    function setNativeTokenVault(address nativeTokenVault) external;
+
+    function getNativeTokenVault() external view returns (address);
+
     function setInterestRate(address interestRate) external;
 
     function getInterestRate() external view returns (address);
@@ -17,6 +21,10 @@ interface IMarketAddressesProvider {
     function setNFTOracle(address nftOracle) external;
 
     function getNFTOracle() external view returns (address);
+
+    function setTokenOracle(address tokenOracle) external;
+
+    function getTokenOracle() external view returns (address);
 
     function setFeeTreasury(address feeTreasury) external;
 

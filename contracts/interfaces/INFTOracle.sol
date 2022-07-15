@@ -7,9 +7,8 @@ interface INFTOracle {
         view
         returns (uint256);
 
-    function getCollectionMaxCollateralization(address collection)
+    function getCollectionMaxCollateral(address collection)
         external
-        view
         returns (uint256);
 
     function isCollectionSupported(address collection) external returns (bool);

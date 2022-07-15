@@ -5,7 +5,6 @@ import {IMarket} from "../interfaces/IMarket.sol";
 import {SupplyLogic} from "../libraries/logic/SupplyLogic.sol";
 import {LiquidationLogic} from "../libraries/logic/LiquidationLogic.sol";
 import {BorrowLogic} from "../libraries/logic/BorrowLogic.sol";
-import {LockLogic} from "../libraries/logic/LockLogic.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -92,24 +91,6 @@ contract Market is Initializable, IMarket, OwnableUpgradeable {
     // Liquidate an asset borrowed from the reserve
     function liquidate(uint256 loanId) external override nonReentrant {
         LiquidationLogic.liquidate(_addressesProvider, loanId);
-    }
-
-    // Lock native token
-    function lock(uint256 amount, address collection)
-        external
-        override
-        nonReentrant
-    {
-        LockLogic.lock(_addressesProvider, amount, collection);
-    }
-
-    // Unlock native token
-    function unlock(uint256 amount, address collection)
-        external
-        override
-        nonReentrant
-    {
-        LockLogic.unlock(_addressesProvider, amount, collection);
     }
 
     // Init a supply side reserve

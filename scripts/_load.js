@@ -32,6 +32,12 @@ let loadEnv = async function () {
   console.log("Liquidation Logic Lib Address:", liquidationLogicLib.address);
 
   // Deploy every needed contract
+  const AddressesProvider = await ethers.getContractFactory(
+    "MarketAddressesProvider"
+  );
+  const addressesProvider = await AddressesProvider.deploy();
+  await addressesProvider.deployed();
+  console.log("Addresses Provider Address:", addressesProvider.address);
   const TestToken = await ethers.getContractFactory("TestToken");
   testToken = await TestToken.deploy("Wrapped ETH", "wETH");
   await testToken.deployed();
@@ -68,19 +74,41 @@ let loadEnv = async function () {
   await interestRate.deployed();
   console.log("Interest Rate Address:", interestRate.address);
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
-  nftOracle = await NFTOracle.deploy(2000, 1); //Max Price deviation (20%) and min update time
+  nftOracle = await NFTOracle.deploy(addressesProvider.address, 2000, 1); //Max Price deviation (20%) and min update time
   await nftOracle.deployed();
   console.log("NFT Oracle Address:", nftOracle.address);
-  const AddressesProvider = await ethers.getContractFactory(
-    "MarketAddressesProvider"
-  );
-  const addressesProvider = await AddressesProvider.deploy();
-  await addressesProvider.deployed();
-  console.log("Addresses Provider Address:", addressesProvider.address);
+
+  // Deploy Token Oracle
+  const TokenOracle = await ethers.getContractFactory("TokenOracle");
+  tokenOracle = await TokenOracle.deploy();
+  await tokenOracle.deployed();
+  console.log("Token Oracle Address:", tokenOracle.address);
+
+  // Deploy Native Token Vault
+  const NativeTokenVault = await ethers.getContractFactory("NativeTokenVault", {
+    libraries: {
+      ValidationLogic: validationLogicLib.address,
+    },
+  });
+  nativeTokenVault = await NativeTokenVault.deploy();
+  await nativeTokenVault.deployed();
+  console.log("Native Token Vault Address:", nativeTokenVault.address);
+
+  // Deploy Native Token
+  const NativeToken = await ethers.getContractFactory("NativeToken");
+  nativeToken = await NativeToken.deploy();
+  await nativeToken.deployed();
+  console.log("Native Token Address:", nativeToken.address);
+
+  // Deploy Debt Token
   const DebtToken = await ethers.getContractFactory("DebtToken");
   debtToken = await DebtToken.deploy();
   await debtToken.deployed();
   console.log("Debt Token Address:", debtToken.address);
+
+  // Initialize address provider and add every contract address
+  const initAddressesProviderTx = await addressesProvider.initialize();
+  await initAddressesProviderTx.wait();
   const setMarketAddressTx = await addressesProvider.setMarketAddress(
     market.address
   );
@@ -97,6 +125,14 @@ let loadEnv = async function () {
     nftOracle.address
   );
   await setNFTOracleTx.wait();
+  const setTokenOracleTx = await addressesProvider.setTokenOracle(
+    tokenOracle.address
+  );
+  await setTokenOracleTx.wait();
+  const setNativeTokenVaultTx = await addressesProvider.setNativeTokenVault(
+    nativeTokenVault.address
+  );
+  await setNativeTokenVaultTx.wait();
   const setLoanCenterTx = await addressesProvider.setLoanCenter(
     loanCenter.address
   );
@@ -129,20 +165,37 @@ let loadEnv = async function () {
   );
   await initReserveTx.wait();
 
+  //Init debt token
+  const initDebtTokenTx = await debtToken.initialize(
+    addressesProvider.address,
+    "DEBT TOKEN",
+    "DEBT"
+  );
+  await initDebtTokenTx.wait();
+
+  //Init native token
+  const initNativeTokenTx = await nativeToken.initialize(
+    addressesProvider.address,
+    "leNFT Token",
+    "LE"
+  );
+  await initNativeTokenTx.wait();
+
+  //Init native token vault
+  const initNativeTokenVaultTx = await nativeTokenVault.initialize(
+    addressesProvider.address,
+    nativeToken.address,
+    "veleNFT Token",
+    "veLE"
+  );
+  await initNativeTokenVaultTx.wait();
+
   // Add reserve to market
   const addReserveTx = await market.addReserve(
     testToken.address,
     testReserve.address
   );
   await addReserveTx.wait();
-
-  //Init debt token
-  const initDebtTokenTx = await debtToken.initialize(
-    "DEBT TOKEN",
-    "DEBT",
-    addressesProvider.address
-  );
-  await initDebtTokenTx.wait();
 
   //Add test NFTs to oracle
   const addNftToOracleTx = await nftOracle.addSupportedCollection(

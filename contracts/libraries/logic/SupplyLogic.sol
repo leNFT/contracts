@@ -19,6 +19,9 @@ library SupplyLogic {
         address reserveAddress = reserves[asset];
         IReserve reserve = IReserve(reserveAddress);
 
+        // Verify if withdrawal conditions are met
+        ValidationLogic.validateDeposit(asset, amount);
+
         // Find how many tokens the reserve should mint
         uint256 reserveTokenAmount;
         if (reserve.totalSupply() == 0) {
@@ -42,7 +45,7 @@ library SupplyLogic {
         address reserveAddress = reserves[asset];
         IReserve reserve = IReserve(reserveAddress);
 
-        // Verify if w9thdrawal conditions are met
+        // Verify if withdrawal conditions are met
         ValidationLogic.validateWithdrawal(
             addressesProvider,
             reserveAddress,
@@ -60,7 +63,6 @@ library SupplyLogic {
         }
 
         IReserve(reserveAddress).burn(msg.sender, reserveTokenAmount);
-
         IReserve(reserveAddress).withdrawUnderlying(msg.sender, amount);
     }
 

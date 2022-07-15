@@ -18,4 +18,14 @@ contract NativeToken is Initializable, ERC20Upgradeable, OwnableUpgradeable {
         __ERC20_init(name, symbol);
         _addressProvider = addressProvider;
     }
+
+    function distributeRewards(uint256 amount) external onlyOwner {
+        address nativeTokenVaultAddress = _addressProvider
+            .getNativeTokenVault();
+        _mint(nativeTokenVaultAddress, amount);
+    }
+
+    function mint(address account, uint256 amount) external onlyOwner {
+        _mint(account, amount);
+    }
 }

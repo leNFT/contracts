@@ -9,6 +9,12 @@ library DataTypes {
         uint256 lastUpdateTimestamp;
     }
 
+    struct RemoveVoteRequest {
+        address user;
+        uint256 amount;
+        uint256 timestamp;
+    }
+
     /**
      * State change flow:
      * None -> Created -> Active -> Repaid -> Auction -> Defaulted

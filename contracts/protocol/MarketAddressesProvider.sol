@@ -14,7 +14,13 @@ contract MarketAddressesProvider is
     address private _feeTreasury;
     address private _loanCenter;
     address private _nftOracle;
+    address private _tokenOracle;
     address private _interestRate;
+    address private _nativeTokenVault;
+
+    function initialize() external initializer {
+        __Ownable_init();
+    }
 
     function setMarketAddress(address marketAddress)
         external
@@ -26,6 +32,18 @@ contract MarketAddressesProvider is
 
     function getMarketAddress() external view override returns (address) {
         return _marketAddress;
+    }
+
+    function setNativeTokenVault(address nativeTokenVault)
+        external
+        override
+        onlyOwner
+    {
+        _nativeTokenVault = nativeTokenVault;
+    }
+
+    function getNativeTokenVault() external view override returns (address) {
+        return _nativeTokenVault;
     }
 
     function setFeeTreasury(address feeTreasury) external override onlyOwner {
@@ -58,6 +76,14 @@ contract MarketAddressesProvider is
 
     function getNFTOracle() external view override returns (address) {
         return _nftOracle;
+    }
+
+    function setTokenOracle(address tokenOracle) external override onlyOwner {
+        _tokenOracle = tokenOracle;
+    }
+
+    function getTokenOracle() external view override returns (address) {
+        return _tokenOracle;
     }
 
     function setDebtToken(address debtToken) external override onlyOwner {

@@ -8,13 +8,26 @@ import {IInterestRate} from "../../interfaces/IInterestRate.sol";
 import {IMarketAddressesProvider} from "../../interfaces/IMarketAddressesProvider.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
+import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
 import {LoanLogic} from "./LoanLogic.sol";
+import {RemoveVoteRequestLogic} from "./RemoveVoteRequestLogic.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "hardhat/console.sol";
 
 library ValidationLogic {
+    uint256 internal constant ONE_DAY = 86400;
+    uint256 internal constant ONE_WEEK = 86400 * 7;
+    uint256 internal constant UNVOTE_WINDOW = 86400 * 2;
     using LoanLogic for DataTypes.LoanData;
+    using RemoveVoteRequestLogic for DataTypes.RemoveVoteRequest;
+
+    function validateDeposit(address asset, uint256 amount) external view {
+        // Get balance of the user trying the deposit
+        uint256 balance = IERC20Upgradeable(asset).balanceOf(msg.sender);
+
+        require(amount <= balance, "Balance is lower than deposited amount");
+    }
 
     function validateWithdrawal(
         IMarketAddressesProvider addressesProvider,
@@ -61,7 +74,7 @@ library ValidationLogic {
 
         // Check if borrow amount exceeds allowed amount
         require(
-            amount <= nftOracle.getCollectionMaxCollateralization(nftAddress),
+            amount <= nftOracle.getCollectionMaxCollateral(nftAddress),
             "Amount exceeds allowed by collateral"
         );
 
@@ -106,7 +119,7 @@ library ValidationLogic {
     function validateLiquidation(
         IMarketAddressesProvider addressesProvider,
         uint256 loanId
-    ) external view {
+    ) external {
         //Require that loan exists
         DataTypes.LoanData memory loanData = ILoanCenter(
             addressesProvider.getLoanCenter()
@@ -119,7 +132,7 @@ library ValidationLogic {
         // Check if collateral / debt relation allows for liquidation
         require(
             INFTOracle(addressesProvider.getNFTOracle())
-                .getCollectionMaxCollateralization(loanData.nftAsset) <
+                .getCollectionMaxCollateral(loanData.nftAsset) <
                 ILoanCenter(addressesProvider.getLoanCenter()).getLoanDebt(
                     loanId
                 ),
@@ -141,6 +154,97 @@ library ValidationLogic {
         require(
             balance >= liquidationPrice,
             "Balance lower than liquidation price"
+        );
+    }
+
+    function validateNativeTokenDeposit(address nativeAsset, uint256 amount)
+        external
+        view
+    {
+        // Get balance of the user trying the deposit
+        uint256 balance = IERC20Upgradeable(nativeAsset).balanceOf(msg.sender);
+
+        require(amount <= balance, "Balance is lower than deposited amount");
+    }
+
+    function validateNativeTokenWithdraw(
+        IMarketAddressesProvider addressesProvider,
+        uint256 amount
+    ) external view {
+        INativeTokenVault vault = INativeTokenVault(
+            addressesProvider.getNativeTokenVault()
+        );
+
+        require(
+            // Check if the user has enough reserve balance for withdrawal
+            amount <= vault.getMaximumWithdrawalAmount(msg.sender),
+            "Withdrawal amount higher than permitted."
+        );
+    }
+
+    function validateVote(
+        IMarketAddressesProvider addressesProvider,
+        uint256 amount,
+        address collection
+    ) external {
+        INFTOracle nftOracle = INFTOracle(addressesProvider.getNFTOracle());
+        INativeTokenVault vault = INativeTokenVault(
+            addressesProvider.getNativeTokenVault()
+        );
+        uint256 freeVotes = vault.getUserFreeVotes(msg.sender);
+
+        //Check if the user ahs enough free votes
+        require(
+            freeVotes >= amount,
+            "Not enough voting power for requested amount"
+        );
+
+        // Check if nft collection is supported
+        require(
+            nftOracle.isCollectionSupported(collection),
+            "NFT COllection is not supported"
+        );
+    }
+
+    function validateRemoveVote(
+        IMarketAddressesProvider addressesProvider,
+        uint256 amount,
+        address collection
+    ) external {
+        INFTOracle nftOracle = INFTOracle(addressesProvider.getNFTOracle());
+        INativeTokenVault vault = INativeTokenVault(
+            addressesProvider.getNativeTokenVault()
+        );
+        uint256 collectionVotes = vault.getUserCollectionVotes(
+            msg.sender,
+            collection
+        );
+        DataTypes.RemoveVoteRequest memory removeVoteRequest = vault
+            .getRemoveVoteRequest(msg.sender, collection);
+
+        // Check if we are within the unlock request window and amount
+        require(
+            block.timestamp > removeVoteRequest.timestamp + ONE_WEEK &&
+                block.timestamp <
+                removeVoteRequest.timestamp + ONE_WEEK + UNVOTE_WINDOW,
+            "RemoveVote Request is not within valid timeframe"
+        );
+
+        require(
+            removeVoteRequest.amount > amount,
+            "RemoveVote Request amount is smaller than requested amount"
+        );
+
+        // Check if nft collection is supported
+        require(
+            nftOracle.isCollectionSupported(collection),
+            "NFT COllection is not supported"
+        );
+
+        //Check if the user ahs enough free votes
+        require(
+            collectionVotes >= amount,
+            "Not enough votes in selected collection"
         );
     }
 }

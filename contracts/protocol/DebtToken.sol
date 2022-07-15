@@ -17,9 +17,9 @@ contract DebtToken is
 
     // Initialize the market
     function initialize(
+        IMarketAddressesProvider addressesProvider,
         string memory name,
-        string memory symbol,
-        IMarketAddressesProvider addressesProvider
+        string memory symbol
     ) external initializer {
         __ERC721_init(name, symbol);
         _addressesProvider = addressesProvider;
@@ -49,14 +49,14 @@ contract DebtToken is
         address from,
         address to,
         uint256 tokenId
-    ) internal override(ERC721, ERC721Enumerable) {
+    ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC721, ERC721Enumerable)
+        override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
