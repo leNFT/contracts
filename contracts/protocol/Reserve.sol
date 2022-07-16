@@ -52,6 +52,7 @@ contract Reserve is
         _maximumUtilizationRate = maximumUtilizationRate;
         _liquidationPenalty = liquidationPenalty;
         _protocolLiquidationFee = protocolLiquidationFee;
+        _updateBorrowRate();
     }
 
     function getAsset() external view override returns (address) {
