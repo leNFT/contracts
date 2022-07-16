@@ -22,7 +22,9 @@ contract NativeTokenVault is
     INativeTokenVault,
     OwnableUpgradeable
 {
-    uint256 internal constant boostMultiplier = 10;
+    uint256 internal constant BOOST_RATIO = 30;
+    uint256 internal constant MAX_BOOST = 2000; // 20%
+    uint256 internal constant PRICE_PRECISION = 10**18;
     IMarketAddressesProvider private _addressProvider;
     address internal _nativeToken;
     // User + collection to votes
@@ -165,7 +167,7 @@ contract NativeTokenVault is
         override
         returns (uint256)
     {
-        uint256 boost;
+        uint256 boost = 0;
 
         uint256 userCollectionActiveLoansCount = ILoanCenter(
             _addressProvider.getLoanCenter()
@@ -179,7 +181,8 @@ contract NativeTokenVault is
             _addressProvider.getTokenOracle()
         ).getTokenPrice(_nativeToken);
 
-        uint256 votesValue = _collectionVotes[collection] * nativeTokenPrice;
+        uint256 votesValue = (_collectionVotes[collection] * nativeTokenPrice) /
+            PRICE_PRECISION;
 
         uint256 activeLoansAssetValue = userCollectionActiveLoansCount *
             collectionFloorPrice;
@@ -187,9 +190,12 @@ contract NativeTokenVault is
         if (activeLoansAssetValue != 0) {
             boost =
                 (PercentageMath.PERCENTAGE_FACTOR * votesValue) /
-                (activeLoansAssetValue * boostMultiplier);
-        } else {
-            boost = 0;
+                (activeLoansAssetValue * BOOST_RATIO);
+
+            // Max Boost Cap
+            if (boost > MAX_BOOST) {
+                boost = MAX_BOOST;
+            }
         }
 
         return boost;

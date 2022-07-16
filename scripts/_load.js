@@ -225,7 +225,7 @@ let loadEnv = async function () {
   //Add a price to the native token using the token oracle
   const setNativeTokenPriceTx = await tokenOracle.setTokenPrice(
     nativeToken.address,
-    "1000000000000000000" //1 eth token price
+    "10000000000000000" //0.01 nativeToken/ETH
   );
   await setNativeTokenPriceTx.wait();
 };
