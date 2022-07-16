@@ -5,7 +5,6 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
 import {INativeTokenVault} from "../interfaces/INativeTokenVault.sol";
-import {INativeToken} from "../interfaces/INativeToken.sol";
 import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
 import {INFTOracle} from "../interfaces/INFTOracle.sol";
 import {ITokenOracle} from "../interfaces/ITokenOracle.sol";
@@ -24,7 +23,7 @@ contract NativeTokenVault is
     OwnableUpgradeable
 {
     uint256 internal constant boostMultiplier = 10;
-    IMarketAddressesProvider internal _addressProvider;
+    IMarketAddressesProvider private _addressProvider;
     address internal _nativeToken;
     // User + collection to votes
     mapping(address => mapping(address => uint256)) private _votes;

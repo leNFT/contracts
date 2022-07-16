@@ -23,7 +23,7 @@ contract LoanCenter is
     // Loan ID to loan info mapping
     mapping(uint256 => DataTypes.LoanData) private _loans;
     uint256 private _loansCount;
-    IMarketAddressesProvider private _addressesProvider;
+    IMarketAddressesProvider private _addressProvider;
 
     // Collection to number of active loans
     mapping(address => mapping(address => uint256))
@@ -33,7 +33,7 @@ contract LoanCenter is
 
     modifier onlyMarket() {
         require(
-            _msgSender() == address(_addressesProvider.getMarketAddress()),
+            _msgSender() == address(_addressProvider.getMarketAddress()),
             "Caller must be Market contract"
         );
         _;
@@ -45,7 +45,7 @@ contract LoanCenter is
         initializer
     {
         __Ownable_init();
-        _addressesProvider = addressesProvider;
+        _addressProvider = addressesProvider;
     }
 
     function createLoan(
@@ -183,7 +183,7 @@ contract LoanCenter is
 
     function approveNFTCollection(address collection) external onlyOwner {
         IERC721Upgradeable(collection).setApprovalForAll(
-            _addressesProvider.getMarketAddress(),
+            _addressProvider.getMarketAddress(),
             true
         );
     }

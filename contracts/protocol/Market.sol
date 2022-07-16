@@ -13,7 +13,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Market is Initializable, IMarket, OwnableUpgradeable {
     mapping(address => address) private _reserves;
-    IMarketAddressesProvider private _addressesProvider;
+    IMarketAddressesProvider private _addressProvider;
     uint256 internal constant _NOT_ENTERED = 0;
     uint256 internal constant _ENTERED = 1;
     uint256 internal _status;
@@ -45,7 +45,7 @@ contract Market is Initializable, IMarket, OwnableUpgradeable {
         initializer
     {
         __Ownable_init();
-        _addressesProvider = addressesProvider;
+        _addressProvider = addressesProvider;
     }
 
     // Deposit an asset in the reserve
@@ -63,7 +63,7 @@ contract Market is Initializable, IMarket, OwnableUpgradeable {
         override
         nonReentrant
     {
-        SupplyLogic.withdraw(_addressesProvider, _reserves, asset, amount);
+        SupplyLogic.withdraw(_addressProvider, _reserves, asset, amount);
     }
 
     // Borrow an asset from the reserve while using an NFT collateral
@@ -74,7 +74,7 @@ contract Market is Initializable, IMarket, OwnableUpgradeable {
         uint256 nftTokenID
     ) external override nonReentrant {
         BorrowLogic.borrow(
-            _addressesProvider,
+            _addressProvider,
             _reserves,
             asset,
             amount,
@@ -85,12 +85,12 @@ contract Market is Initializable, IMarket, OwnableUpgradeable {
 
     // Repay an asset borrowed from the reserve while using an NFT collateral
     function repay(uint256 loanId) external override nonReentrant {
-        BorrowLogic.repay(_addressesProvider, loanId);
+        BorrowLogic.repay(_addressProvider, loanId);
     }
 
     // Liquidate an asset borrowed from the reserve
     function liquidate(uint256 loanId) external override nonReentrant {
-        LiquidationLogic.liquidate(_addressesProvider, loanId);
+        LiquidationLogic.liquidate(_addressProvider, loanId);
     }
 
     // Init a supply side reserve

@@ -13,7 +13,7 @@ contract DebtToken is
     ERC721EnumerableUpgradeable,
     IDebtToken
 {
-    IMarketAddressesProvider private _addressesProvider;
+    IMarketAddressesProvider private _addressProvider;
 
     // Initialize the market
     function initialize(
@@ -22,12 +22,12 @@ contract DebtToken is
         string memory symbol
     ) external initializer {
         __ERC721_init(name, symbol);
-        _addressesProvider = addressesProvider;
+        _addressProvider = addressesProvider;
     }
 
     modifier onlyMarket() {
         require(
-            _msgSender() == address(_addressesProvider.getMarketAddress()),
+            _msgSender() == address(_addressProvider.getMarketAddress()),
             "Caller must be Market contract"
         );
         _;

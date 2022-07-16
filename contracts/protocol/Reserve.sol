@@ -17,7 +17,7 @@ contract Reserve is
     ERC20Upgradeable,
     OwnableUpgradeable
 {
-    IMarketAddressesProvider internal _addressProvider;
+    IMarketAddressesProvider private _addressProvider;
     address internal _asset;
     uint256 internal _debt;
     uint256 internal _borrowRate;

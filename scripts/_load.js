@@ -177,7 +177,8 @@ let loadEnv = async function () {
   const initNativeTokenTx = await nativeToken.initialize(
     addressesProvider.address,
     "leNFT Token",
-    "LE"
+    "LE",
+    "100000000000000000000000000" //100M Max Cap
   );
   await initNativeTokenTx.wait();
 

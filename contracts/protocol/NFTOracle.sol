@@ -15,7 +15,7 @@ contract NFTOracle is INFTOracle, Ownable {
 
     uint256 public immutable _maxPriceDeviation;
     uint256 public immutable _minUpdateTime;
-    IMarketAddressesProvider internal _addressProvider;
+    IMarketAddressesProvider private _addressProvider;
 
     using CollectionLogic for DataTypes.CollectionData;
 
