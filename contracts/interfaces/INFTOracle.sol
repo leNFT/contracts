@@ -7,6 +7,11 @@ interface INFTOracle {
         view
         returns (uint256);
 
+    function getCollectionMaxCollaterization(address collection)
+        external
+        view
+        returns (uint256);
+
     function getMaxCollateral(address user, address collection)
         external
         view

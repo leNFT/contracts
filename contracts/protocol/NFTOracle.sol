@@ -39,7 +39,17 @@ contract NFTOracle is INFTOracle, Ownable {
         return _collections[collection].floorPrice;
     }
 
-    // Get the max collaterization for a certain collectin
+    // Get the floor price for a collection
+    function getCollectionMaxCollaterization(address collection)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return _collections[collection].maxCollaterization;
+    }
+
+    // Get the max collaterization for a certain collectin and a certain user (includes boost)
     function getMaxCollateral(address user, address collection)
         external
         view
