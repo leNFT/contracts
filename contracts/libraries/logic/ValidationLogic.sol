@@ -264,4 +264,28 @@ library ValidationLogic {
             "Not enough votes in selected collection"
         );
     }
+
+    function validateCreateWithdrawRequest(
+        IMarketAddressesProvider addressesProvider,
+        uint256 amount
+    ) external view {
+        INativeTokenVault vault = INativeTokenVault(
+            addressesProvider.getNativeTokenVault()
+        );
+
+        uint256 maximumWithdrawalAmount = vault.getMaximumWithdrawalAmount(
+            msg.sender
+        );
+        // User needs to have less than or equal balance in the vault to withdraw
+        require(
+            amount <= maximumWithdrawalAmount,
+            "Requested amount is higher than vault balance"
+        );
+
+        // User needs to have more than 0 balance in the vault to create a request
+        require(
+            amount > 0,
+            "TO create an withdraw request the vault balance needs to be higher than 0"
+        );
+    }
 }

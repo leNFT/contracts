@@ -10,7 +10,6 @@ library DataTypes {
     }
 
     struct WithdrawRequest {
-        address user;
         uint256 amount;
         uint256 timestamp;
     }

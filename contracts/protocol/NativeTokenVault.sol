@@ -85,6 +85,7 @@ contract NativeTokenVault is
     }
 
     function createWithdrawRequest(uint256 amount) external override {
+        ValidationLogic.validateCreateWithdrawRequest(_addressProvider, amount);
         //Create request and add it to the list
         _withdrawRequests[msg.sender].init(amount);
     }
