@@ -10,17 +10,17 @@ import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
 import {LoanLogic} from "./LoanLogic.sol";
-import {RemoveVoteRequestLogic} from "./RemoveVoteRequestLogic.sol";
+import {WithdrawRequestLogic} from "./WithdrawRequestLogic.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "hardhat/console.sol";
 
 library ValidationLogic {
     uint256 internal constant ONE_DAY = 86400;
-    uint256 internal constant ONE_WEEK = 86400 * 7;
-    uint256 internal constant UNVOTE_WINDOW = 86400 * 2;
+    uint256 internal constant ONE_WEEK = ONE_DAY * 7;
+    uint256 internal constant UNVOTE_WINDOW = ONE_DAY * 2;
     using LoanLogic for DataTypes.LoanData;
-    using RemoveVoteRequestLogic for DataTypes.RemoveVoteRequest;
+    using WithdrawRequestLogic for DataTypes.WithdrawRequest;
 
     function validateDeposit(address asset, uint256 amount) external view {
         // Get balance of the user trying the deposit
@@ -177,6 +177,36 @@ library ValidationLogic {
             addressesProvider.getNativeTokenVault()
         );
 
+        DataTypes.WithdrawRequest memory withdrawRequest = vault
+            .getWithdrawRequest(msg.sender);
+
+        console.log("block.timestamp", block.timestamp);
+
+        console.log("withdrawRequest", withdrawRequest.amount);
+
+        console.log(
+            "withdrawRequest.timestamp + ONE_WEEK",
+            withdrawRequest.timestamp + ONE_WEEK
+        );
+
+        console.log(
+            "withdrawRequest.timestamp + ONE_WEEK + UNVOTE_WINDOW",
+            withdrawRequest.timestamp + ONE_WEEK + UNVOTE_WINDOW
+        );
+
+        // Check if we are within the unlock request window and amount
+        require(
+            block.timestamp > withdrawRequest.timestamp + ONE_WEEK &&
+                block.timestamp <
+                withdrawRequest.timestamp + ONE_WEEK + UNVOTE_WINDOW,
+            "Withdraw Request is not within valid timeframe"
+        );
+
+        require(
+            withdrawRequest.amount >= amount,
+            "Withdraw Request amount is smaller than requested amount"
+        );
+
         require(
             // Check if the user has enough reserve balance for withdrawal
             amount <= vault.getMaximumWithdrawalAmount(msg.sender),
@@ -220,21 +250,6 @@ library ValidationLogic {
         uint256 collectionVotes = vault.getUserCollectionVotes(
             msg.sender,
             collection
-        );
-        DataTypes.RemoveVoteRequest memory removeVoteRequest = vault
-            .getRemoveVoteRequest(msg.sender, collection);
-
-        // Check if we are within the unlock request window and amount
-        require(
-            block.timestamp > removeVoteRequest.timestamp + ONE_WEEK &&
-                block.timestamp <
-                removeVoteRequest.timestamp + ONE_WEEK + UNVOTE_WINDOW,
-            "RemoveVote Request is not within valid timeframe"
-        );
-
-        require(
-            removeVoteRequest.amount > amount,
-            "RemoveVote Request amount is smaller than requested amount"
         );
 
         // Check if nft collection is supported

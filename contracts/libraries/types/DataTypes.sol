@@ -9,7 +9,7 @@ library DataTypes {
         uint256 lastUpdateTimestamp;
     }
 
-    struct RemoveVoteRequest {
+    struct WithdrawRequest {
         address user;
         uint256 amount;
         uint256 timestamp;

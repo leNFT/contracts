@@ -14,6 +14,13 @@ interface INativeTokenVault {
         view
         returns (uint256);
 
+    function createWithdrawRequest(uint256 amount) external;
+
+    function getWithdrawRequest(address user)
+        external
+        view
+        returns (DataTypes.WithdrawRequest memory);
+
     function getCollateralizationBoost(address user, address collection)
         external
         view
@@ -27,9 +34,4 @@ interface INativeTokenVault {
         external
         view
         returns (uint256);
-
-    function getRemoveVoteRequest(address user, address collection)
-        external
-        view
-        returns (DataTypes.RemoveVoteRequest memory);
 }

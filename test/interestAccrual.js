@@ -62,7 +62,7 @@ describe("InterestAccrual", function () {
     expect(await testNFT.ownerOf(tokenID)).to.equal(loanCenter.address);
   });
   it("Accrue the right amount of interest", async function () {
-    //Simulate 1 year of interest
+    //Simulate 24 hours of interest
     await ethers.provider.send("evm_increaseTime", [86400]);
     await ethers.provider.send("evm_mine");
     console.log(await loanCenter.getLoanDebt(tokenID));

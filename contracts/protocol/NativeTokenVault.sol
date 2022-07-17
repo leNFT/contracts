@@ -12,7 +12,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {ValidationLogic} from "../libraries/logic/ValidationLogic.sol";
-import {RemoveVoteRequestLogic} from "../libraries/logic/RemoveVoteRequestLogic.sol";
+import {WithdrawRequestLogic} from "../libraries/logic/WithdrawRequestLogic.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 
@@ -33,12 +33,11 @@ contract NativeTokenVault is
     mapping(address => uint256) private _freeVotes;
     //Collections to votes
     mapping(address => uint256) private _collectionVotes;
-    //User + collection address to unlock requests
-    mapping(address => mapping(address => DataTypes.RemoveVoteRequest))
-        private _removeVoteRequests;
+    //User to withdraw requests
+    mapping(address => DataTypes.WithdrawRequest) private _withdrawRequests;
 
     using SafeERC20Upgradeable for IERC20Upgradeable;
-    using RemoveVoteRequestLogic for DataTypes.RemoveVoteRequest;
+    using WithdrawRequestLogic for DataTypes.WithdrawRequest;
 
     modifier onlyMarket() {
         require(
@@ -85,6 +84,20 @@ contract NativeTokenVault is
         _freeVotes[msg.sender] += veTokenAmount;
     }
 
+    function createWithdrawRequest(uint256 amount) external override {
+        //Create request and add it to the list
+        _withdrawRequests[msg.sender].init(amount);
+    }
+
+    function getWithdrawRequest(address user)
+        external
+        view
+        override
+        returns (DataTypes.WithdrawRequest memory)
+    {
+        return _withdrawRequests[user];
+    }
+
     function withdraw(uint256 amount) external {
         ValidationLogic.validateNativeTokenWithdraw(_addressProvider, amount);
 
@@ -103,11 +116,7 @@ contract NativeTokenVault is
         _freeVotes[msg.sender] -= veTokenAmount;
 
         // Withdraw the native token from the vault
-        IERC20Upgradeable(_nativeToken).safeTransferFrom(
-            address(this),
-            msg.sender,
-            amount
-        );
+        IERC20Upgradeable(_nativeToken).safeTransfer(msg.sender, amount);
     }
 
     function vote(uint256 amount, address collection) external {
@@ -118,13 +127,6 @@ contract NativeTokenVault is
         _collectionVotes[collection] += amount;
 
         _freeVotes[msg.sender] -= amount;
-    }
-
-    function createRemoveVoteRequest(uint256 amount, address collection)
-        external
-    {
-        //Create rquest and add it to the list
-        _removeVoteRequests[msg.sender][collection].init(msg.sender, amount);
     }
 
     function removeVote(uint256 amount, address collection) external {
@@ -139,14 +141,6 @@ contract NativeTokenVault is
         _collectionVotes[collection] -= amount;
 
         _freeVotes[msg.sender] += amount;
-    }
-
-    function getRemoveVoteRequest(address user, address collection)
-        external
-        view
-        returns (DataTypes.RemoveVoteRequest memory)
-    {
-        return _removeVoteRequests[user][collection];
     }
 
     function getUserFreeVotes(address user) external view returns (uint256) {
