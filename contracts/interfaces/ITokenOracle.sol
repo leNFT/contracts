@@ -2,10 +2,12 @@
 pragma solidity ^0.8.0;
 
 interface ITokenOracle {
-    function getTokenPrice(address tokenAddress)
+    function getTokenETHPrice(address tokenAddress)
         external
         view
         returns (uint256);
 
-    function setTokenPrice(address tokenAddress, uint256 price) external;
+    function setTokenETHPrice(address tokenAddress, uint256 price) external;
+
+    function getPricePrecision() external pure returns (uint256);
 }

@@ -9,6 +9,7 @@ import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
+import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
@@ -27,7 +28,7 @@ library LiquidationLogic {
                 floorPrice,
                 PercentageMath.PERCENTAGE_FACTOR -
                     IReserve(reserveAddress).getLiquidationPenalty() +
-                    IReserve(reserveAddress).getProtocolLiquidationFee()
+                    IReserve(reserveAddress).getLiquidationFee()
             );
     }
 
@@ -45,10 +46,19 @@ library LiquidationLogic {
 
         address reserveAsset = IReserve(loanData.reserve).getAsset();
 
+        console.log("reserveAsset", reserveAsset);
+
         // Find the liquidation price
-        uint256 floorPrice = INFTOracle(addressesProvider.getNFTOracle())
-            .getCollectionFloorPrice(loanData.nftAsset);
-        console.log("floorPrice", floorPrice);
+        ITokenOracle tokenOracle = ITokenOracle(
+            addressesProvider.getTokenOracle()
+        );
+        uint256 tokenETHPrice = tokenOracle.getTokenETHPrice(reserveAsset);
+        uint256 pricePrecision = tokenOracle.getPricePrecision();
+
+        uint256 floorPrice = (
+            (INFTOracle(addressesProvider.getNFTOracle())
+                .getCollectionETHFloorPrice(loanData.nftAsset) * tokenETHPrice)
+        ) / pricePrecision;
         uint256 liquidationPrice = _getLiquidationPrice(
             loanData.reserve,
             floorPrice
@@ -92,7 +102,7 @@ library LiquidationLogic {
         if (fundsLeft > 0) {
             uint256 protocolFee = PercentageMath.percentMul(
                 floorPrice,
-                IReserve(loanData.reserve).getProtocolLiquidationFee()
+                IReserve(loanData.reserve).getLiquidationFee()
             );
             if (protocolFee > fundsLeft) {
                 protocolFee = fundsLeft;

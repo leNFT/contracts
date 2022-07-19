@@ -6,9 +6,10 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
 contract TokenOracle is ITokenOracle, Ownable {
+    uint256 internal constant PRICE_PRECISION = 10**18;
     mapping(address => uint256) private _tokenPrices;
 
-    function getTokenPrice(address tokenAddress)
+    function getTokenETHPrice(address tokenAddress)
         external
         view
         override
@@ -17,10 +18,14 @@ contract TokenOracle is ITokenOracle, Ownable {
         return _tokenPrices[tokenAddress];
     }
 
-    function setTokenPrice(address tokenAddress, uint256 price)
+    function setTokenETHPrice(address tokenAddress, uint256 price)
         external
         override
     {
         _tokenPrices[tokenAddress] = price;
+    }
+
+    function getPricePrecision() external pure returns (uint256) {
+        return PRICE_PRECISION;
     }
 }

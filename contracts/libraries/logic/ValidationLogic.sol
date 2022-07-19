@@ -4,6 +4,7 @@ pragma solidity 0.8.15;
 import {DataTypes} from "../types/DataTypes.sol";
 import {PercentageMath} from "../math/PercentageMath.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
+import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {IInterestRate} from "../../interfaces/IInterestRate.sol";
 import {IMarketAddressesProvider} from "../../interfaces/IMarketAddressesProvider.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
@@ -65,6 +66,12 @@ library ValidationLogic {
         uint256 nftTokenID
     ) external view {
         INFTOracle nftOracle = INFTOracle(addressesProvider.getNFTOracle());
+        address reserveAsset = IReserve(reserveAdress).getAsset();
+        ITokenOracle tokenOracle = ITokenOracle(
+            addressesProvider.getTokenOracle()
+        );
+        uint256 tokenETHPrice = tokenOracle.getTokenETHPrice(reserveAsset);
+        uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         // Check if nft collection is supported
         require(
@@ -74,7 +81,10 @@ library ValidationLogic {
 
         // Check if borrow amount exceeds allowed amount
         require(
-            amount <= nftOracle.getMaxCollateral(msg.sender, nftAddress),
+            amount <=
+                (nftOracle.getMaxETHCollateral(msg.sender, nftAddress) *
+                    tokenETHPrice) /
+                    pricePrecision,
             "Amount exceeds allowed by collateral"
         );
 
@@ -130,11 +140,19 @@ library ValidationLogic {
         );
 
         // Check if collateral / debt relation allows for liquidation
+        address reserveAsset = IReserve(loanData.reserve).getAsset();
+        ITokenOracle tokenOracle = ITokenOracle(
+            addressesProvider.getTokenOracle()
+        );
+        uint256 tokenETHPrice = tokenOracle.getTokenETHPrice(reserveAsset);
+        uint256 pricePrecision = tokenOracle.getPricePrecision();
+
         require(
-            INFTOracle(addressesProvider.getNFTOracle()).getMaxCollateral(
+            (INFTOracle(addressesProvider.getNFTOracle()).getMaxETHCollateral(
                 msg.sender,
                 loanData.nftAsset
-            ) <
+            ) * tokenETHPrice) /
+                pricePrecision <
                 ILoanCenter(addressesProvider.getLoanCenter()).getLoanDebt(
                     loanId
                 ),
@@ -142,15 +160,16 @@ library ValidationLogic {
         );
 
         // Check if caller has enough balance
-        uint256 balance = IERC20Upgradeable(
-            IReserve(loanData.reserve).getAsset()
-        ).balanceOf(msg.sender);
+        uint256 balance = IERC20Upgradeable(reserveAsset).balanceOf(msg.sender);
+        uint256 floorPrice = (INFTOracle(addressesProvider.getNFTOracle())
+            .getCollectionETHFloorPrice(loanData.nftAsset) * tokenETHPrice) /
+            pricePrecision;
+
         uint256 liquidationPrice = PercentageMath.percentMul(
-            INFTOracle(addressesProvider.getNFTOracle())
-                .getCollectionFloorPrice(loanData.nftAsset),
+            floorPrice,
             PercentageMath.PERCENTAGE_FACTOR -
                 IReserve(loanData.reserve).getLiquidationPenalty() +
-                IReserve(loanData.reserve).getProtocolLiquidationFee()
+                IReserve(loanData.reserve).getLiquidationFee()
         );
 
         require(
@@ -179,20 +198,6 @@ library ValidationLogic {
 
         DataTypes.WithdrawRequest memory withdrawRequest = vault
             .getWithdrawRequest(msg.sender);
-
-        console.log("block.timestamp", block.timestamp);
-
-        console.log("withdrawRequest", withdrawRequest.amount);
-
-        console.log(
-            "withdrawRequest.timestamp + ONE_WEEK",
-            withdrawRequest.timestamp + ONE_WEEK
-        );
-
-        console.log(
-            "withdrawRequest.timestamp + ONE_WEEK + UNVOTE_WINDOW",
-            withdrawRequest.timestamp + ONE_WEEK + UNVOTE_WINDOW
-        );
 
         // Check if we are within the unlock request window and amount
         require(

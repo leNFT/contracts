@@ -12,4 +12,5 @@ mocharc.json
 
 #scripts
 scripts/addwETHReserve.js
+scripts/addUSDCReserve.js
 scripts/mintNFT.js

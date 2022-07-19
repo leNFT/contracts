@@ -24,7 +24,6 @@ contract NativeTokenVault is
 {
     uint256 internal constant BOOST_RATIO = 30;
     uint256 internal constant MAX_BOOST = 2000; // 20%
-    uint256 internal constant PRICE_PRECISION = 10**18;
     IMarketAddressesProvider private _addressProvider;
     address internal _nativeToken;
     // User + collection to votes
@@ -170,14 +169,17 @@ contract NativeTokenVault is
 
         uint256 collectionFloorPrice = INFTOracle(
             _addressProvider.getNFTOracle()
-        ).getCollectionFloorPrice(collection);
+        ).getCollectionETHFloorPrice(collection);
 
-        uint256 nativeTokenPrice = ITokenOracle(
+        uint256 nativeTokenETHPrice = ITokenOracle(
             _addressProvider.getTokenOracle()
-        ).getTokenPrice(_nativeToken);
+        ).getTokenETHPrice(_nativeToken);
 
-        uint256 votesValue = (_collectionVotes[collection] * nativeTokenPrice) /
-            PRICE_PRECISION;
+        uint256 pricePrecision = ITokenOracle(_addressProvider.getTokenOracle())
+            .getPricePrecision();
+
+        uint256 votesValue = (_collectionVotes[collection] *
+            nativeTokenETHPrice) / pricePrecision;
 
         uint256 activeLoansAssetValue = userCollectionActiveLoansCount *
             collectionFloorPrice;

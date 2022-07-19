@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface INFTOracle {
-    function getCollectionFloorPrice(address collection)
+    function getCollectionETHFloorPrice(address collection)
         external
         view
         returns (uint256);
@@ -12,7 +12,7 @@ interface INFTOracle {
         view
         returns (uint256);
 
-    function getMaxCollateral(address user, address collection)
+    function getMaxETHCollateral(address user, address collection)
         external
         view
         returns (uint256);

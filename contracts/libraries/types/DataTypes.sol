@@ -44,7 +44,7 @@ library DataTypes {
         address nftAsset;
         //the id of nft token
         uint256 nftTokenId;
-        //address of reserve asset token
+        //address of reserve associated with loan
         address reserve;
         // interest rate to which the loan as written
         uint256 borrowRate;

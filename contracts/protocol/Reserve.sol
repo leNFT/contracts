@@ -224,23 +224,18 @@ contract Reserve is
         return _liquidationPenalty;
     }
 
-    function changeLiquidationPenalty(uint256 liquidationPenalty)
+    function setLiquidationPenalty(uint256 liquidationPenalty)
         external
         onlyOwner
     {
         _liquidationPenalty = liquidationPenalty;
     }
 
-    function getProtocolLiquidationFee()
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function getLiquidationFee() external view override returns (uint256) {
         return _protocolLiquidationFee;
     }
 
-    function changeProtocolLiquidationFee(uint256 protocolLiquidationFee)
+    function setLiquidationFee(uint256 protocolLiquidationFee)
         external
         onlyOwner
     {

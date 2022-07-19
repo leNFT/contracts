@@ -223,11 +223,18 @@ let loadEnv = async function () {
   await approveNFT2CollectionTx.wait();
 
   //Add a price to the native token using the token oracle
-  const setNativeTokenPriceTx = await tokenOracle.setTokenPrice(
+  const setNativeTokenPriceTx = await tokenOracle.setTokenETHPrice(
     nativeToken.address,
     "10000000000000000" //0.01 nativeToken/ETH
   );
   await setNativeTokenPriceTx.wait();
+
+  //Add a price to test token ( test token = 1 weth)
+  const setTestTokenPriceTx = await tokenOracle.setTokenETHPrice(
+    testToken.address,
+    "1000000000000000000" //1 testToken/ETH
+  );
+  await setTestTokenPriceTx.wait();
 };
 
 function loadTest() {
