@@ -10,34 +10,14 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract Market is Initializable, IMarket, OwnableUpgradeable {
+contract Market is Initializable, IMarket, OwnableUpgradeable, ReentrancyGuard {
     mapping(address => address) private _reserves;
     IMarketAddressesProvider private _addressProvider;
     uint256 internal constant _NOT_ENTERED = 0;
     uint256 internal constant _ENTERED = 1;
     uint256 internal _status;
-
-    /**
-     * @dev Prevents a contract from calling itself, directly or indirectly.
-     * Calling a `nonReentrant` function from another `nonReentrant`
-     * function is not supported. It is possible to prevent this from happening
-     * by making the `nonReentrant` function external, and making it call a
-     * `private` function that does the actual work.
-     */
-    modifier nonReentrant() {
-        // On the first call to nonReentrant, _notEntered will be true
-        require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
-
-        // Any calls to nonReentrant after this point will fail
-        _status = _ENTERED;
-
-        _;
-
-        // By storing the original value once again, a refund is triggered (see
-        // https://eips.ethereum.org/EIPS/eip-2200)
-        _status = _NOT_ENTERED;
-    }
 
     // Initialize the market
     function initialize(IMarketAddressesProvider addressesProvider)
@@ -55,6 +35,8 @@ contract Market is Initializable, IMarket, OwnableUpgradeable {
         nonReentrant
     {
         SupplyLogic.deposit(_reserves, asset, amount);
+
+        emit Deposit(msg.sender, asset, amount);
     }
 
     // Withdraw an asset from the reserve
@@ -64,6 +46,8 @@ contract Market is Initializable, IMarket, OwnableUpgradeable {
         nonReentrant
     {
         SupplyLogic.withdraw(_addressProvider, _reserves, asset, amount);
+
+        emit Withdraw(msg.sender, asset, amount);
     }
 
     // Borrow an asset from the reserve while using an NFT collateral
@@ -81,16 +65,22 @@ contract Market is Initializable, IMarket, OwnableUpgradeable {
             nftAddress,
             nftTokenID
         );
+
+        emit Borrow(msg.sender, asset, nftAddress, nftTokenID, amount);
     }
 
     // Repay an asset borrowed from the reserve while using an NFT collateral
     function repay(uint256 loanId) external override nonReentrant {
         BorrowLogic.repay(_addressProvider, loanId);
+
+        emit Repay(msg.sender, loanId);
     }
 
     // Liquidate an asset borrowed from the reserve
     function liquidate(uint256 loanId) external override nonReentrant {
         LiquidationLogic.liquidate(_addressProvider, loanId);
+
+        emit Liquidate(msg.sender, loanId);
     }
 
     // Init a supply side reserve

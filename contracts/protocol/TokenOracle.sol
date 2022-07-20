@@ -21,6 +21,7 @@ contract TokenOracle is ITokenOracle, Ownable {
     function setTokenETHPrice(address tokenAddress, uint256 price)
         external
         override
+        onlyOwner
     {
         _tokenPrices[tokenAddress] = price;
     }

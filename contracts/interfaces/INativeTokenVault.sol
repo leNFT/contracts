@@ -5,6 +5,22 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
 
 interface INativeTokenVault {
+    event Deposit(address indexed user, uint256 amount);
+
+    event Withdraw(address indexed user, uint256 amount);
+
+    event Vote(
+        address indexed user,
+        address indexed collection,
+        uint256 amount
+    );
+
+    event RemoveVote(
+        address indexed user,
+        address indexed collection,
+        uint256 amount
+    );
+
     function deposit(uint256 amount) external;
 
     function withdraw(uint256 amount) external;
@@ -25,6 +41,10 @@ interface INativeTokenVault {
         external
         view
         returns (uint256);
+
+    function vote(uint256 amount, address collection) external;
+
+    function removeVote(uint256 amount, address collection) external;
 
     function getUserFreeVotes(address user) external view returns (uint256);
 

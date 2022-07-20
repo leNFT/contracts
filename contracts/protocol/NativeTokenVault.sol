@@ -15,12 +15,14 @@ import {ValidationLogic} from "../libraries/logic/ValidationLogic.sol";
 import {WithdrawRequestLogic} from "../libraries/logic/WithdrawRequestLogic.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract NativeTokenVault is
     Initializable,
     ERC20Upgradeable,
     INativeTokenVault,
-    OwnableUpgradeable
+    OwnableUpgradeable,
+    ReentrancyGuard
 {
     uint256 internal constant BOOST_RATIO = 30;
     uint256 internal constant MAX_BOOST = 2000; // 20%
@@ -58,7 +60,7 @@ contract NativeTokenVault is
         _nativeToken = nativeToken;
     }
 
-    function deposit(uint256 amount) external {
+    function deposit(uint256 amount) external override nonReentrant {
         ValidationLogic.validateNativeTokenDeposit(_nativeToken, amount);
 
         // Find how many tokens the reserve should mint
@@ -81,9 +83,15 @@ contract NativeTokenVault is
 
         //Update the number of unused votes
         _freeVotes[msg.sender] += veTokenAmount;
+
+        emit Deposit(msg.sender, amount);
     }
 
-    function createWithdrawRequest(uint256 amount) external override {
+    function createWithdrawRequest(uint256 amount)
+        external
+        override
+        nonReentrant
+    {
         ValidationLogic.validateCreateWithdrawRequest(_addressProvider, amount);
         //Create request and add it to the list
         _withdrawRequests[msg.sender].init(amount);
@@ -98,7 +106,7 @@ contract NativeTokenVault is
         return _withdrawRequests[user];
     }
 
-    function withdraw(uint256 amount) external {
+    function withdraw(uint256 amount) external override nonReentrant {
         ValidationLogic.validateNativeTokenWithdraw(_addressProvider, amount);
 
         // Find how many tokens the reserve should mint
@@ -117,9 +125,15 @@ contract NativeTokenVault is
 
         // Withdraw the native token from the vault
         IERC20Upgradeable(_nativeToken).safeTransfer(msg.sender, amount);
+
+        emit Withdraw(msg.sender, amount);
     }
 
-    function vote(uint256 amount, address collection) external {
+    function vote(uint256 amount, address collection)
+        external
+        override
+        nonReentrant
+    {
         ValidationLogic.validateVote(_addressProvider, amount, collection);
 
         // Vote for a collection with the tokens we just minted
@@ -127,9 +141,15 @@ contract NativeTokenVault is
         _collectionVotes[collection] += amount;
 
         _freeVotes[msg.sender] -= amount;
+
+        emit Vote(msg.sender, collection, amount);
     }
 
-    function removeVote(uint256 amount, address collection) external {
+    function removeVote(uint256 amount, address collection)
+        external
+        override
+        nonReentrant
+    {
         ValidationLogic.validateRemoveVote(
             _addressProvider,
             amount,
@@ -141,6 +161,8 @@ contract NativeTokenVault is
         _collectionVotes[collection] -= amount;
 
         _freeVotes[msg.sender] += amount;
+
+        emit RemoveVote(msg.sender, collection, amount);
     }
 
     function getUserFreeVotes(address user) external view returns (uint256) {
