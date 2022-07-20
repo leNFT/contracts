@@ -28,6 +28,6 @@ contract TestNFT is IERC721Metadata, ERC721Enumerable {
         returns (string memory)
     {
         return
-            "https://raw.githubusercontent.com/leNFT/interface/main/public/lettering_logo.png";
+            "https://raw.githubusercontent.com/leNFT/interface/main/public/lettering_logo_square.png";
     }
 }
