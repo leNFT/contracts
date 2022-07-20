@@ -19,17 +19,18 @@ library BorrowLogic {
         address nftAddress,
         uint256 nftTokenID
     ) external returns (uint256) {
-        // Get the reserve providing the loan
-        address reserveAddress = reserves[asset];
-
         // Validate the movement
         ValidationLogic.validateBorrow(
             addressesProvider,
-            reserveAddress,
+            reserves,
+            asset,
             amount,
             nftAddress,
             nftTokenID
         );
+
+        // Get the reserve providing the loan
+        address reserveAddress = reserves[asset];
 
         // Transfer the collateral
         IERC721Upgradeable(nftAddress).safeTransferFrom(

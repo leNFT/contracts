@@ -16,11 +16,10 @@ library SupplyLogic {
         address asset,
         uint256 amount
     ) external {
-        address reserveAddress = reserves[asset];
-        IReserve reserve = IReserve(reserveAddress);
-
         // Verify if withdrawal conditions are met
-        ValidationLogic.validateDeposit(asset, amount);
+        ValidationLogic.validateDeposit(reserves, asset, amount);
+
+        IReserve reserve = IReserve(reserves[asset]);
 
         // Find how many tokens the reserve should mint
         uint256 reserveTokenAmount;
@@ -42,15 +41,15 @@ library SupplyLogic {
         address asset,
         uint256 amount
     ) external {
-        address reserveAddress = reserves[asset];
-        IReserve reserve = IReserve(reserveAddress);
-
         // Verify if withdrawal conditions are met
         ValidationLogic.validateWithdrawal(
             addressesProvider,
-            reserveAddress,
+            reserves,
+            asset,
             amount
         );
+
+        IReserve reserve = IReserve(reserves[asset]);
 
         // Find how many tokens the reserve should burn
         uint256 reserveTokenAmount;
@@ -62,8 +61,8 @@ library SupplyLogic {
                 (reserve.getUnderlyingBalance() + reserve.getDebt());
         }
 
-        IReserve(reserveAddress).burn(msg.sender, reserveTokenAmount);
-        IReserve(reserveAddress).withdrawUnderlying(msg.sender, amount);
+        reserve.burn(msg.sender, reserveTokenAmount);
+        reserve.withdrawUnderlying(msg.sender, amount);
     }
 
     function maximumWithdrawalAmount(address reserveAddress, address user)

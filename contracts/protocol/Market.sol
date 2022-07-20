@@ -98,4 +98,9 @@ contract Market is Initializable, IMarket, OwnableUpgradeable, ReentrancyGuard {
     function getReserveAddress(address asset) external view returns (address) {
         return _reserves[asset];
     }
+
+    // Check if asset is supported
+    function isAssetSupported(address asset) external view returns (bool) {
+        return _reserves[asset] != address(0);
+    }
 }

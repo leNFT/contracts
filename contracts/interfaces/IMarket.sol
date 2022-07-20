@@ -32,4 +32,6 @@ interface IMarket {
     function repay(uint256 loanId) external;
 
     function liquidate(uint256 loanId) external;
+
+    function isAssetSupported(address asset) external view returns (bool);
 }

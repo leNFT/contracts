@@ -7,6 +7,7 @@ import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {IInterestRate} from "../../interfaces/IInterestRate.sol";
 import {IMarketAddressesProvider} from "../../interfaces/IMarketAddressesProvider.sol";
+import {IMarket} from "../../interfaces/IMarket.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
@@ -23,7 +24,14 @@ library ValidationLogic {
     using LoanLogic for DataTypes.LoanData;
     using WithdrawRequestLogic for DataTypes.WithdrawRequest;
 
-    function validateDeposit(address asset, uint256 amount) external view {
+    function validateDeposit(
+        mapping(address => address) storage reserves,
+        address asset,
+        uint256 amount
+    ) external view {
+        // Check if the asset is supported
+        require(reserves[asset] != address(0), "Asset not supported");
+
         // Get balance of the user trying the deposit
         uint256 balance = IERC20Upgradeable(asset).balanceOf(msg.sender);
 
@@ -35,15 +43,19 @@ library ValidationLogic {
 
     function validateWithdrawal(
         IMarketAddressesProvider addressesProvider,
-        address reserveAddress,
+        mapping(address => address) storage reserves,
+        address asset,
         uint256 amount
     ) external view {
+        // Check if the asset is supported
+        require(reserves[asset] != address(0), "Asset not supported");
         // Check if the utilization rate doesn't go above maximum
-        IReserve reserve = IReserve(reserveAddress);
 
-        uint256 maximumUtilizationRate = reserve.getMaximumUtilizationRate();
-        uint256 debt = reserve.getDebt();
-        uint256 underlyingBalance = reserve.getUnderlyingBalance();
+        uint256 maximumUtilizationRate = IReserve(reserves[asset])
+            .getMaximumUtilizationRate();
+        uint256 debt = IReserve(reserves[asset]).getDebt();
+        uint256 underlyingBalance = IReserve(reserves[asset])
+            .getUnderlyingBalance();
         uint256 updatedUtilizationRate = IInterestRate(
             addressesProvider.getInterestRate()
         ).calculateUtilizationRate(underlyingBalance - amount, debt);
@@ -55,7 +67,10 @@ library ValidationLogic {
 
         // Check if the user has enough reserve balance for withdrawal
         require(
-            amount <= reserve.getMaximumWithdrawalAmount(msg.sender),
+            amount <=
+                IReserve(reserves[asset]).getMaximumWithdrawalAmount(
+                    msg.sender
+                ),
             "Amount too high"
         );
 
@@ -66,17 +81,20 @@ library ValidationLogic {
     // Check if borrowing conditions are valid
     function validateBorrow(
         IMarketAddressesProvider addressesProvider,
-        address reserveAdress,
+        mapping(address => address) storage reserves,
+        address asset,
         uint256 amount,
         address nftAddress,
         uint256 nftTokenID
     ) external view {
+        // Check if the asset is supported
+        require(reserves[asset] != address(0), "Asset not supported");
+
         INFTOracle nftOracle = INFTOracle(addressesProvider.getNFTOracle());
-        address reserveAsset = IReserve(reserveAdress).getAsset();
         ITokenOracle tokenOracle = ITokenOracle(
             addressesProvider.getTokenOracle()
         );
-        uint256 tokenETHPrice = tokenOracle.getTokenETHPrice(reserveAsset);
+        uint256 tokenETHPrice = tokenOracle.getTokenETHPrice(asset);
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         // Check if nft collection is supported
@@ -96,7 +114,7 @@ library ValidationLogic {
 
         // Check if the reserve has enough underlying to borrow
         require(
-            amount <= IReserve(reserveAdress).getUnderlyingBalance(),
+            amount <= IReserve(reserves[asset]).getUnderlyingBalance(),
             "Amount exceeds reserve balance"
         );
 
