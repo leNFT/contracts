@@ -39,7 +39,7 @@ let loadEnv = async function () {
   await addressesProvider.deployed();
   console.log("Addresses Provider Address:", addressesProvider.address);
   const TestToken = await ethers.getContractFactory("TestToken");
-  testToken = await TestToken.deploy("Wrapped ETH", "wETH");
+  testToken = await TestToken.deploy("Wrapped ETH", "WETH");
   await testToken.deployed();
   const TestNFT = await ethers.getContractFactory("TestNFT");
   testNFT = await TestNFT.deploy("TEST NFT", "TNFT");
