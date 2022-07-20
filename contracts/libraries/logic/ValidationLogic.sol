@@ -28,6 +28,9 @@ library ValidationLogic {
         uint256 balance = IERC20Upgradeable(asset).balanceOf(msg.sender);
 
         require(amount <= balance, "Balance is lower than deposited amount");
+
+        // Check if deposit amount is bigger than 0
+        require(amount > 0, "Deposit amount must be bigger than 0");
     }
 
     function validateWithdrawal(
@@ -55,6 +58,9 @@ library ValidationLogic {
             amount <= reserve.getMaximumWithdrawalAmount(msg.sender),
             "Amount too high"
         );
+
+        // Check if withdrawal amount is bigger than 0
+        require(amount > 0, "Withdrawal amount must be bigger than 0");
     }
 
     // Check if borrowing conditions are valid
@@ -93,6 +99,9 @@ library ValidationLogic {
             amount <= IReserve(reserveAdress).getUnderlyingBalance(),
             "Amount exceeds reserve balance"
         );
+
+        // Check if borrow amount is bigger than 0
+        require(amount > 0, "Borrow amount must be bigger than 0");
 
         // Check if the borrower owns the asset
         require(
@@ -186,6 +195,8 @@ library ValidationLogic {
         uint256 balance = IERC20Upgradeable(nativeAsset).balanceOf(msg.sender);
 
         require(amount <= balance, "Balance is lower than deposited amount");
+
+        require(amount > 0, "Deposit amount must be bigger than 0");
     }
 
     function validateNativeTokenWithdraw(
@@ -217,6 +228,8 @@ library ValidationLogic {
             amount <= vault.getMaximumWithdrawalAmount(msg.sender),
             "Withdrawal amount higher than permitted."
         );
+
+        require(amount > 0, "Withdrawal amount must be bigger than 0");
     }
 
     function validateVote(
@@ -230,11 +243,14 @@ library ValidationLogic {
         );
         uint256 freeVotes = vault.getUserFreeVotes(msg.sender);
 
-        //Check if the user ahs enough free votes
+        //Check if the user has enough free votes
         require(
             freeVotes >= amount,
             "Not enough voting power for requested amount"
         );
+
+        // Check if the input amount is bigger than 0
+        require(amount > 0, "Vote amount must be bigger than 0");
 
         // Check if nft collection is supported
         require(
@@ -263,7 +279,10 @@ library ValidationLogic {
             "NFT COllection is not supported"
         );
 
-        //Check if the user ahs enough free votes
+        // Check if the input amount is bigger than 0
+        require(amount > 0, "Remove vote amount must be bigger than 0");
+
+        //Check if the user has enough free votes
         require(
             collectionVotes >= amount,
             "Not enough votes in selected collection"
@@ -278,6 +297,9 @@ library ValidationLogic {
             addressesProvider.getNativeTokenVault()
         );
 
+        // Check if the input amount is bigger than 0
+        require(amount > 0, "Withdraw request amount must be bigger than 0");
+
         uint256 maximumWithdrawalAmount = vault.getMaximumWithdrawalAmount(
             msg.sender
         );
@@ -285,12 +307,6 @@ library ValidationLogic {
         require(
             amount <= maximumWithdrawalAmount,
             "Requested amount is higher than vault balance"
-        );
-
-        // User needs to have more than 0 balance in the vault to create a request
-        require(
-            amount > 0,
-            "TO create an withdraw request the vault balance needs to be higher than 0"
         );
     }
 }
