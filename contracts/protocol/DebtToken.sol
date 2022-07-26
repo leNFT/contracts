@@ -5,7 +5,7 @@ import {ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/t
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {IDebtToken} from "../interfaces/IDebtToken.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
+import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 
 contract DebtToken is
     Initializable,
@@ -13,11 +13,11 @@ contract DebtToken is
     ERC721EnumerableUpgradeable,
     IDebtToken
 {
-    IMarketAddressesProvider private _addressProvider;
+    IAddressesProvider private _addressProvider;
 
     // Initialize the market
     function initialize(
-        IMarketAddressesProvider addressesProvider,
+        IAddressesProvider addressesProvider,
         string memory name,
         string memory symbol
     ) external initializer {

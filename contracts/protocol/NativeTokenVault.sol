@@ -3,7 +3,7 @@ pragma solidity 0.8.15;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
+import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {INativeTokenVault} from "../interfaces/INativeTokenVault.sol";
 import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
 import {INFTOracle} from "../interfaces/INFTOracle.sol";
@@ -15,18 +15,18 @@ import {ValidationLogic} from "../libraries/logic/ValidationLogic.sol";
 import {WithdrawRequestLogic} from "../libraries/logic/WithdrawRequestLogic.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 contract NativeTokenVault is
     Initializable,
     ERC20Upgradeable,
     INativeTokenVault,
     OwnableUpgradeable,
-    ReentrancyGuard
+    ReentrancyGuardUpgradeable
 {
     uint256 internal constant BOOST_RATIO = 30;
     uint256 internal constant MAX_BOOST = 2000; // 20%
-    IMarketAddressesProvider private _addressProvider;
+    IAddressesProvider private _addressProvider;
     address internal _nativeToken;
     // User + collection to votes
     mapping(address => mapping(address => uint256)) private _votes;
@@ -49,7 +49,7 @@ contract NativeTokenVault is
     }
 
     function initialize(
-        IMarketAddressesProvider addressProvider,
+        IAddressesProvider addressProvider,
         address nativeToken,
         string calldata name,
         string calldata symbol

@@ -3,15 +3,15 @@ pragma solidity 0.8.15;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
+import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract NativeToken is Initializable, ERC20Upgradeable, OwnableUpgradeable {
-    IMarketAddressesProvider private _addressProvider;
+    IAddressesProvider private _addressProvider;
     uint256 internal _cap;
 
     function initialize(
-        IMarketAddressesProvider addressProvider,
+        IAddressesProvider addressProvider,
         string calldata name,
         string calldata symbol,
         uint256 cap
@@ -40,7 +40,7 @@ contract NativeToken is Initializable, ERC20Upgradeable, OwnableUpgradeable {
         _mint(account, amount);
     }
 
-    // TODO: DELETE THIS BEFORE MAINNET
+    // TODO: DELETE THIS BEFORE PROD
     function testMint(address account, uint256 amount) external {
         require(
             ERC20Upgradeable.totalSupply() + amount <= getCap(),

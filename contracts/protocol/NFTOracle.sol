@@ -7,7 +7,7 @@ import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {CollectionLogic} from "../libraries/logic/CollectionLogic.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
+import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import "hardhat/console.sol";
 
 contract NFTOracle is INFTOracle, Ownable {
@@ -15,12 +15,12 @@ contract NFTOracle is INFTOracle, Ownable {
 
     uint256 public immutable _maxPriceDeviation;
     uint256 public immutable _minUpdateTime;
-    IMarketAddressesProvider private _addressProvider;
+    IAddressesProvider private _addressProvider;
 
     using CollectionLogic for DataTypes.CollectionData;
 
     constructor(
-        IMarketAddressesProvider addressProvider,
+        IAddressesProvider addressProvider,
         uint256 maxPriceDeviation,
         uint256 minUpdateTime
     ) {

@@ -8,19 +8,21 @@ import {BorrowLogic} from "../libraries/logic/BorrowLogic.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
+import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-contract Market is Initializable, IMarket, OwnableUpgradeable, ReentrancyGuard {
+contract Market is
+    Initializable,
+    IMarket,
+    OwnableUpgradeable,
+    ReentrancyGuardUpgradeable
+{
     mapping(address => address) private _reserves;
-    IMarketAddressesProvider private _addressProvider;
-    uint256 internal constant _NOT_ENTERED = 0;
-    uint256 internal constant _ENTERED = 1;
-    uint256 internal _status;
+    IAddressesProvider private _addressProvider;
 
     // Initialize the market
-    function initialize(IMarketAddressesProvider addressesProvider)
+    function initialize(IAddressesProvider addressesProvider)
         external
         initializer
     {

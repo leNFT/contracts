@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const load = require("../scripts/_load");
+const load = require("../scripts/testDeploy/_loadTest.js");
 
 describe("Borrow", function () {
   load.loadTest();

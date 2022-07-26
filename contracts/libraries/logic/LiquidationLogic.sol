@@ -4,7 +4,7 @@ pragma solidity 0.8.15;
 import {DataTypes} from "../types/DataTypes.sol";
 import {PercentageMath} from "../math/PercentageMath.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
-import {IMarketAddressesProvider} from "../../interfaces/IMarketAddressesProvider.sol";
+import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
@@ -32,10 +32,9 @@ library LiquidationLogic {
             );
     }
 
-    function liquidate(
-        IMarketAddressesProvider addressesProvider,
-        uint256 loanId
-    ) external {
+    function liquidate(IAddressesProvider addressesProvider, uint256 loanId)
+        external
+    {
         // Verify if liquidation conditions are met
         ValidationLogic.validateLiquidation(addressesProvider, loanId);
 

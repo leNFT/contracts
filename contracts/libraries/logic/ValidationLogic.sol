@@ -6,7 +6,7 @@ import {PercentageMath} from "../math/PercentageMath.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {IInterestRate} from "../../interfaces/IInterestRate.sol";
-import {IMarketAddressesProvider} from "../../interfaces/IMarketAddressesProvider.sol";
+import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {IMarket} from "../../interfaces/IMarket.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
@@ -42,7 +42,7 @@ library ValidationLogic {
     }
 
     function validateWithdrawal(
-        IMarketAddressesProvider addressesProvider,
+        IAddressesProvider addressesProvider,
         mapping(address => address) storage reserves,
         address asset,
         uint256 amount
@@ -80,7 +80,7 @@ library ValidationLogic {
 
     // Check if borrowing conditions are valid
     function validateBorrow(
-        IMarketAddressesProvider addressesProvider,
+        IAddressesProvider addressesProvider,
         mapping(address => address) storage reserves,
         address asset,
         uint256 amount,
@@ -128,10 +128,10 @@ library ValidationLogic {
         );
     }
 
-    function validateRepay(
-        IMarketAddressesProvider addressesProvider,
-        uint256 loanId
-    ) external view {
+    function validateRepay(IAddressesProvider addressesProvider, uint256 loanId)
+        external
+        view
+    {
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
         //Require that loan exists
         DataTypes.LoanData memory loanData = loanCenter.getLoan(loanId);
@@ -154,7 +154,7 @@ library ValidationLogic {
     }
 
     function validateLiquidation(
-        IMarketAddressesProvider addressesProvider,
+        IAddressesProvider addressesProvider,
         uint256 loanId
     ) external view {
         //Require that loan exists
@@ -218,7 +218,7 @@ library ValidationLogic {
     }
 
     function validateNativeTokenWithdraw(
-        IMarketAddressesProvider addressesProvider,
+        IAddressesProvider addressesProvider,
         uint256 amount
     ) external view {
         INativeTokenVault vault = INativeTokenVault(
@@ -251,7 +251,7 @@ library ValidationLogic {
     }
 
     function validateVote(
-        IMarketAddressesProvider addressesProvider,
+        IAddressesProvider addressesProvider,
         uint256 amount,
         address collection
     ) external view {
@@ -278,7 +278,7 @@ library ValidationLogic {
     }
 
     function validateRemoveVote(
-        IMarketAddressesProvider addressesProvider,
+        IAddressesProvider addressesProvider,
         uint256 amount,
         address collection
     ) external view {
@@ -308,7 +308,7 @@ library ValidationLogic {
     }
 
     function validateCreateWithdrawRequest(
-        IMarketAddressesProvider addressesProvider,
+        IAddressesProvider addressesProvider,
         uint256 amount
     ) external view {
         INativeTokenVault vault = INativeTokenVault(

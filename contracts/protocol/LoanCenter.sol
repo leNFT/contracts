@@ -9,7 +9,7 @@ import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
-import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
+import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 
 contract LoanCenter is
     Initializable,
@@ -23,7 +23,7 @@ contract LoanCenter is
     // Loan ID to loan info mapping
     mapping(uint256 => DataTypes.LoanData) private _loans;
     uint256 private _loansCount;
-    IMarketAddressesProvider private _addressProvider;
+    IAddressesProvider private _addressProvider;
 
     // Collection to number of active loans
     mapping(address => mapping(address => uint256))
@@ -40,7 +40,7 @@ contract LoanCenter is
     }
 
     // Initialize the loancenter
-    function initialize(IMarketAddressesProvider addressesProvider)
+    function initialize(IAddressesProvider addressesProvider)
         external
         initializer
     {

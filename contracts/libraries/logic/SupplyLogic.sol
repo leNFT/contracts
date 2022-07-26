@@ -6,7 +6,7 @@ import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ER
 import {DataTypes} from "../types/DataTypes.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
-import {IMarketAddressesProvider} from "../../interfaces/IMarketAddressesProvider.sol";
+import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 
 library SupplyLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -36,7 +36,7 @@ library SupplyLogic {
     }
 
     function withdraw(
-        IMarketAddressesProvider addressesProvider,
+        IAddressesProvider addressesProvider,
         mapping(address => address) storage reserves,
         address asset,
         uint256 amount

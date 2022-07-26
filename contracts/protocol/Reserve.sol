@@ -4,7 +4,7 @@ pragma solidity 0.8.15;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IReserve} from "../interfaces/IReserve.sol";
 import {SupplyLogic} from "../libraries/logic/SupplyLogic.sol";
-import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
+import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {IInterestRate} from "../interfaces/IInterestRate.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -17,7 +17,7 @@ contract Reserve is
     ERC20Upgradeable,
     OwnableUpgradeable
 {
-    IMarketAddressesProvider private _addressProvider;
+    IAddressesProvider private _addressProvider;
     address internal _asset;
     uint256 internal _debt;
     uint256 internal _borrowRate;
@@ -37,7 +37,7 @@ contract Reserve is
     }
 
     function initialize(
-        IMarketAddressesProvider addressProvider,
+        IAddressesProvider addressProvider,
         address asset,
         string calldata name,
         string calldata symbol,
@@ -169,7 +169,7 @@ contract Reserve is
 
     function _updateBorrowRate() internal {
         _borrowRate = IInterestRate(
-            IMarketAddressesProvider(_addressProvider).getInterestRate()
+            IAddressesProvider(_addressProvider).getInterestRate()
         ).calculateBorrowRate(_getUnderlyingBalance(), _debt);
     }
 

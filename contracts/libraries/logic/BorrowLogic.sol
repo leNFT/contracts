@@ -3,7 +3,7 @@ pragma solidity 0.8.15;
 
 import {DataTypes} from "../types/DataTypes.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
-import {IMarketAddressesProvider} from "../../interfaces/IMarketAddressesProvider.sol";
+import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
@@ -12,7 +12,7 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 
 library BorrowLogic {
     function borrow(
-        IMarketAddressesProvider addressesProvider,
+        IAddressesProvider addressesProvider,
         mapping(address => address) storage reserves,
         address asset,
         uint256 amount,
@@ -68,7 +68,7 @@ library BorrowLogic {
         return loanId;
     }
 
-    function repay(IMarketAddressesProvider addressesProvider, uint256 loanId)
+    function repay(IAddressesProvider addressesProvider, uint256 loanId)
         external
     {
         // Validate the movement

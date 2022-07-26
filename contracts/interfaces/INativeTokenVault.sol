@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {DataTypes} from "../libraries/types/DataTypes.sol";
-import {IMarketAddressesProvider} from "../interfaces/IMarketAddressesProvider.sol";
+import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 
 interface INativeTokenVault {
     event Deposit(address indexed user, uint256 amount);
