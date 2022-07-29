@@ -8,9 +8,10 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {CollectionLogic} from "../libraries/logic/CollectionLogic.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {Trustus} from "./Trustus.sol";
 import "hardhat/console.sol";
 
-contract NFTOracle is INFTOracle, Ownable {
+contract NFTOracle is INFTOracle, Ownable, Trustus {
     mapping(address => DataTypes.CollectionData) private _collections;
 
     uint256 public immutable _maxPriceDeviation;
@@ -29,17 +30,7 @@ contract NFTOracle is INFTOracle, Ownable {
         _minUpdateTime = minUpdateTime;
     }
 
-    // Get the floor price for a collection
-    function getCollectionETHFloorPrice(address collection)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        return _collections[collection].floorPrice;
-    }
-
-    // Get the floor price for a collection
+    // Get the max collaterization price for a collection (10000 = 100%)
     function getCollectionMaxCollaterization(address collection)
         external
         view
@@ -49,35 +40,45 @@ contract NFTOracle is INFTOracle, Ownable {
         return _collections[collection].maxCollaterization;
     }
 
-    // Get the max collaterization for a certain collectin and a certain user (includes boost) in ETH
-    function getMaxETHCollateral(address user, address collection)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        uint256 collaterizationBoost = INativeTokenVault(
+    // Get the price for a certain token
+    function getTokenETHPrice(
+        address collection,
+        uint256 tokenId,
+        bytes32 request,
+        TrustusPacket calldata packet
+    ) external view override verifyPacket(request, packet) returns (uint256) {
+        return _getTokenETHPrice(collection, tokenId, packet);
+    }
+
+    // Get the max collaterization for a certain collection and a certain user (includes boost) in ETH
+    function getTokenMaxETHCollateral(
+        address user,
+        address collection,
+        uint256 tokenId,
+        bytes32 request,
+        TrustusPacket calldata packet
+    ) external view override verifyPacket(request, packet) returns (uint256) {
+        uint256 voteCollaterizationBoost = INativeTokenVault(
             _addressProvider.getNativeTokenVault()
-        ).getCollateralizationBoost(user, collection);
+        ).getVoteCollateralizationBoost(user, collection);
+
+        uint256 tokenPrice = _getTokenETHPrice(collection, tokenId, packet);
+
         return
             PercentageMath.percentMul(
-                _collections[collection].floorPrice,
+                tokenPrice,
                 _collections[collection].maxCollaterization +
-                    collaterizationBoost
+                    voteCollaterizationBoost
             );
     }
 
-    // floor price with 18 decimals
     function addSupportedCollection(
         address collection,
-        uint256 floorPrice,
         uint256 maxCollaterization
     ) external onlyOwner {
         _collections[collection].init();
         //Set the max collaterization
         _collections[collection].setMaxCollaterization(maxCollaterization);
-        // Update the nft floor price data
-        _collections[collection].setFloorPrice(floorPrice, block.timestamp);
     }
 
     function removeSupportedCollection(address collection) external onlyOwner {
@@ -93,56 +94,34 @@ contract NFTOracle is INFTOracle, Ownable {
         return _collections[collection].supported;
     }
 
-    function addFloorPriceData(address collection, uint256 floorPrice)
-        public
-        onlyOwner
-    {
-        _addFloorPriceData(collection, floorPrice);
-    }
-
-    function batchAddFloorPriceData(
-        address[] calldata collection,
-        uint256[] calldata floorPrice
-    ) public onlyOwner {
-        for (uint256 i = 0; i < collection.length; i++) {
-            _addFloorPriceData(collection[i], floorPrice[i]);
-        }
-    }
-
-    function _addFloorPriceData(address collection, uint256 floorPrice)
-        internal
-    {
-        require(_collections[collection].supported, "Unsupported Collection");
-
+    // Gets the token value sent by the off-chain server by unpacking the packet relayed by the caller
+    function _getTokenETHPrice(
+        address collection,
+        uint256 tokenId,
+        TrustusPacket calldata packet
+    ) internal pure returns (uint256) {
+        DataTypes.TokenPrice memory priceParams = abi.decode(
+            packet.payload,
+            (DataTypes.TokenPrice)
+        );
+        // Make sure the request is for the right token
         require(
-            (block.timestamp - _collections[collection].lastUpdateTimestamp) >
-                _minUpdateTime,
-            "Updating time too short"
+            collection == priceParams.collection,
+            "Request collection and collection don't coincide"
+        );
+        require(
+            tokenId == priceParams.tokenId,
+            "Request tokenId and tokenId don't coincide"
         );
 
-        // FInd if the price deviated too much from last price
-        uint256 newFloorPrice = floorPrice;
-        uint256 priceDeviation = (PercentageMath.PERCENTAGE_FACTOR *
-            (_collections[collection].floorPrice - floorPrice)) /
-            _collections[collection].floorPrice;
+        return priceParams.amount;
+    }
 
-        if (priceDeviation > _maxPriceDeviation) {
-            if (_collections[collection].floorPrice > floorPrice) {
-                newFloorPrice = PercentageMath.percentMul(
-                    _collections[collection].floorPrice,
-                    PercentageMath.PERCENTAGE_FACTOR - _maxPriceDeviation
-                );
-            } else if (_collections[collection].floorPrice < floorPrice) {
-                newFloorPrice = newFloorPrice = PercentageMath.percentMul(
-                    _collections[collection].floorPrice,
-                    PercentageMath.PERCENTAGE_FACTOR + _maxPriceDeviation
-                );
-            } else {
-                newFloorPrice = _collections[collection].floorPrice;
-            }
-        }
+    function setTrustedPriceSource(address signer) external {
+        _setIsTrusted(signer, true);
+    }
 
-        // Update the nft floor price data
-        _collections[collection].setFloorPrice(newFloorPrice, block.number);
+    function isSourceTrusted(address signer) external view returns (bool) {
+        return (_isTrusted(signer));
     }
 }

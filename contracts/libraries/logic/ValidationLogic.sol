@@ -15,6 +15,7 @@ import {LoanLogic} from "./LoanLogic.sol";
 import {WithdrawRequestLogic} from "./WithdrawRequestLogic.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {Trustus} from "../../protocol/Trustus.sol";
 import "hardhat/console.sol";
 
 library ValidationLogic {
@@ -85,7 +86,9 @@ library ValidationLogic {
         address asset,
         uint256 amount,
         address nftAddress,
-        uint256 nftTokenID
+        uint256 nftTokenID,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
     ) external view {
         // Check if the asset is supported
         require(reserves[asset] != address(0), "Asset not supported");
@@ -106,8 +109,13 @@ library ValidationLogic {
         // Check if borrow amount exceeds allowed amount
         require(
             amount <=
-                (nftOracle.getMaxETHCollateral(msg.sender, nftAddress) *
-                    tokenETHPrice) /
+                (nftOracle.getTokenMaxETHCollateral(
+                    msg.sender,
+                    nftAddress,
+                    nftTokenID,
+                    request,
+                    packet
+                ) * tokenETHPrice) /
                     pricePrecision,
             "Amount exceeds allowed by collateral"
         );
@@ -155,7 +163,9 @@ library ValidationLogic {
 
     function validateLiquidation(
         IAddressesProvider addressesProvider,
-        uint256 loanId
+        uint256 loanId,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
     ) external view {
         //Require that loan exists
         DataTypes.LoanData memory loanData = ILoanCenter(
@@ -171,14 +181,18 @@ library ValidationLogic {
         ITokenOracle tokenOracle = ITokenOracle(
             addressesProvider.getTokenOracle()
         );
-        uint256 tokenETHPrice = tokenOracle.getTokenETHPrice(reserveAsset);
+        uint256 baseTokenETHPrice = tokenOracle.getTokenETHPrice(reserveAsset);
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         require(
-            (INFTOracle(addressesProvider.getNFTOracle()).getMaxETHCollateral(
-                msg.sender,
-                loanData.nftAsset
-            ) * tokenETHPrice) /
+            (INFTOracle(addressesProvider.getNFTOracle())
+                .getTokenMaxETHCollateral(
+                    msg.sender,
+                    loanData.nftAsset,
+                    loanData.nftTokenId,
+                    request,
+                    packet
+                ) * baseTokenETHPrice) /
                 pricePrecision <
                 ILoanCenter(addressesProvider.getLoanCenter()).getLoanDebt(
                     loanId
@@ -188,12 +202,17 @@ library ValidationLogic {
 
         // Check if caller has enough balance
         uint256 balance = IERC20Upgradeable(reserveAsset).balanceOf(msg.sender);
-        uint256 floorPrice = (INFTOracle(addressesProvider.getNFTOracle())
-            .getCollectionETHFloorPrice(loanData.nftAsset) * tokenETHPrice) /
-            pricePrecision;
+        uint256 tokenPrice = (
+            (INFTOracle(addressesProvider.getNFTOracle()).getTokenETHPrice(
+                loanData.nftAsset,
+                loanData.nftTokenId,
+                request,
+                packet
+            ) * baseTokenETHPrice)
+        ) / pricePrecision;
 
         uint256 liquidationPrice = PercentageMath.percentMul(
-            floorPrice,
+            tokenPrice,
             PercentageMath.PERCENTAGE_FACTOR -
                 IReserve(loanData.reserve).getLiquidationPenalty() +
                 IReserve(loanData.reserve).getLiquidationFee()

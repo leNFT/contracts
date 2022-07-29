@@ -14,13 +14,4 @@ library CollectionLogic {
     ) internal {
         collectionData.maxCollaterization = maxCollaterization;
     }
-
-    function setFloorPrice(
-        DataTypes.CollectionData storage collectionData,
-        uint256 floorPrice,
-        uint256 timestamp
-    ) internal {
-        collectionData.floorPrice = floorPrice;
-        collectionData.lastUpdateTimestamp = timestamp;
-    }
 }

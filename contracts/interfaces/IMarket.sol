@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
+import {Trustus} from "../protocol/Trustus.sol";
+
 interface IMarket {
     event Deposit(address indexed user, address indexed asset, uint256 amount);
 
@@ -26,12 +28,18 @@ interface IMarket {
         address asset,
         uint256 amount,
         address nftAddress,
-        uint256 nftTokenID
+        uint256 nftTokenID,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
     ) external;
 
     function repay(uint256 loanId) external;
 
-    function liquidate(uint256 loanId) external;
+    function liquidate(
+        uint256 loanId,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
+    ) external;
 
     function isAssetSupported(address asset) external view returns (bool);
 }

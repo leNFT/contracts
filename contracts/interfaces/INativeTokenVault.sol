@@ -37,7 +37,7 @@ interface INativeTokenVault {
         view
         returns (DataTypes.WithdrawRequest memory);
 
-    function getCollateralizationBoost(address user, address collection)
+    function getVoteCollateralizationBoost(address user, address collection)
         external
         view
         returns (uint256);

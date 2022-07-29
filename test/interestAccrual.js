@@ -1,7 +1,9 @@
 const { expect } = require("chai");
+const { ethers } = require("hardhat");
 const load = require("../scripts/testDeploy/_loadTest.js");
 
 describe("InterestAccrual", function () {
+  this.timeout(10000);
   load.loadTest();
   var tokenID;
   it("Create NFT asset", async function () {
@@ -44,12 +46,27 @@ describe("InterestAccrual", function () {
     const approveNftTx = await testNFT.approve(market.address, tokenID);
     await approveNftTx.wait();
 
+    const request =
+      "0x0000000000000000000000000000000000000000000000000000000000000000";
+    const serverPacket = {
+      v: 28,
+      r: "0x063dbd7938134346a003f46dd4ff246d323c663e42f8653bea0bb197fdee80da",
+      s: "0x5d4aeae17041daee885ac0d9ab53196cffc31f8a4b436ff6cc4e4777928a5cb9",
+      request:
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+      deadline: "1659961474",
+      payload:
+        "0x0000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001b1ae4d6e2ef500000",
+    };
+
     // Ask the market to borrow underlying using the collateral (0.1 tokens)
     const borrowTx = await market.borrow(
       testToken.address,
       "100000000000000000",
       testNFT.address,
-      tokenID
+      tokenID,
+      request,
+      serverPacket
     );
     await borrowTx.wait();
 

@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 library DataTypes {
     struct CollectionData {
         bool supported;
-        uint256 floorPrice;
         uint256 maxCollaterization;
         uint256 lastUpdateTimestamp;
     }
@@ -12,6 +11,12 @@ library DataTypes {
     struct WithdrawRequest {
         uint256 amount;
         uint256 timestamp;
+    }
+
+    struct TokenPrice {
+        address collection;
+        uint256 tokenId;
+        uint256 amount;
     }
 
     /**

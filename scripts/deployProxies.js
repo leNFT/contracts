@@ -13,8 +13,6 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
 
-  const gnosisSafe = "0xeF3A51512A6aE613609081659F1dA27Db8Be4929";
-
   /****************************************************************
   DEPLOY LIBRARIES
   They will then be linked to the contracts that use them
@@ -188,17 +186,6 @@ async function main() {
     feeTreasuryAddress
   );
   await setFeeTreasuryTx.wait();
-
-  /****************************************************************
-  TRANSFER OWNERSHIP
-  Transfer the admin ownership of the upgradable contracts to gnosis safe
-  ******************************************************************/
-
-  // Transfer ownership to gnosis safe
-  console.log("Transferring ownership of ProxyAdmin...");
-  // The owner of the ProxyAdmin can upgrade our contracts
-  await upgrades.admin.transferProxyAdminOwnership(gnosisSafe);
-  console.log("Transferred ownership of ProxyAdmin to:", gnosisSafe);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

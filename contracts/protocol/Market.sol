@@ -11,6 +11,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {Trustus} from "./Trustus.sol";
 
 contract Market is
     Initializable,
@@ -57,7 +58,9 @@ contract Market is
         address asset,
         uint256 amount,
         address nftAddress,
-        uint256 nftTokenID
+        uint256 nftTokenID,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
     ) external override nonReentrant {
         BorrowLogic.borrow(
             _addressProvider,
@@ -65,7 +68,9 @@ contract Market is
             asset,
             amount,
             nftAddress,
-            nftTokenID
+            nftTokenID,
+            request,
+            packet
         );
 
         emit Borrow(msg.sender, asset, nftAddress, nftTokenID, amount);
@@ -79,8 +84,12 @@ contract Market is
     }
 
     // Liquidate an asset borrowed from the reserve
-    function liquidate(uint256 loanId) external override nonReentrant {
-        LiquidationLogic.liquidate(_addressProvider, loanId);
+    function liquidate(
+        uint256 loanId,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
+    ) external override nonReentrant {
+        LiquidationLogic.liquidate(_addressProvider, loanId, request, packet);
 
         emit Liquidate(msg.sender, loanId);
     }

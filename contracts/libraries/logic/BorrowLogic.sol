@@ -9,6 +9,7 @@ import {IReserve} from "../../interfaces/IReserve.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {Trustus} from "../../protocol/Trustus.sol";
 
 library BorrowLogic {
     function borrow(
@@ -17,7 +18,9 @@ library BorrowLogic {
         address asset,
         uint256 amount,
         address nftAddress,
-        uint256 nftTokenID
+        uint256 nftTokenID,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
     ) external returns (uint256) {
         // Validate the movement
         ValidationLogic.validateBorrow(
@@ -26,7 +29,9 @@ library BorrowLogic {
             asset,
             amount,
             nftAddress,
-            nftTokenID
+            nftTokenID,
+            request,
+            packet
         );
 
         // Get the reserve providing the loan

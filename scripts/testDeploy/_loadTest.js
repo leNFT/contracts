@@ -1,4 +1,4 @@
-require("@nomiclabs/hardhat-ethers");
+const { ethers } = require("hardhat");
 
 let loadEnv = async function () {
   console.log("Setting up enviroment...");
@@ -199,16 +199,20 @@ let loadEnv = async function () {
   //Add test NFTs to oracle
   const addNftToOracleTx = await nftOracle.addSupportedCollection(
     testNFT.address,
-    "500000000000000000000", //500 tokens floor price
     2000 //max collaterization (20%)
   );
   await addNftToOracleTx.wait();
   const addNft2ToOracleTx = await nftOracle.addSupportedCollection(
     testNFT2.address,
-    "500000000000000000", //0.5 tokens floor price
     4000 //max collaterization (40%)
   );
   await addNft2ToOracleTx.wait();
+
+  // Set trusted price source
+  const setTrustedPriceSourceTx = await nftOracle.setTrustedPriceSource(
+    "0xAE46CbeB042ed76700357c34BB96a7dd33fc543B"
+  );
+  await setTrustedPriceSourceTx.wait();
 
   //Approve test nfts to be used by market
   const approveNFTCollectionTx = await loanCenter.approveNFTCollection(

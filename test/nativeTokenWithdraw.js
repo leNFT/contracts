@@ -1,7 +1,9 @@
 const { expect } = require("chai");
+const { ethers } = require("hardhat");
 const load = require("../scripts/testDeploy/_loadTest.js");
 
 describe("Withdraw Native Token", function () {
+  this.timeout(10000);
   load.loadTest();
   it("Should deposit native tokens into the vault", async function () {
     // Mint 10 native tokens to the callers address

@@ -177,7 +177,7 @@ contract NativeTokenVault is
         return _votes[user][collection];
     }
 
-    function getCollateralizationBoost(address user, address collection)
+    function getVoteCollateralizationBoost(address user, address collection)
         external
         view
         override
@@ -189,10 +189,6 @@ contract NativeTokenVault is
             _addressProvider.getLoanCenter()
         ).getUserCollectionActiveLoansCount(user, collection);
 
-        uint256 collectionFloorPrice = INFTOracle(
-            _addressProvider.getNFTOracle()
-        ).getCollectionETHFloorPrice(collection);
-
         uint256 nativeTokenETHPrice = ITokenOracle(
             _addressProvider.getTokenOracle()
         ).getTokenETHPrice(_nativeToken);
@@ -203,13 +199,10 @@ contract NativeTokenVault is
         uint256 votesValue = (_collectionVotes[collection] *
             nativeTokenETHPrice) / pricePrecision;
 
-        uint256 activeLoansAssetValue = userCollectionActiveLoansCount *
-            collectionFloorPrice;
-
-        if (activeLoansAssetValue != 0) {
+        if (userCollectionActiveLoansCount != 0) {
             boost =
                 (PercentageMath.PERCENTAGE_FACTOR * votesValue) /
-                (activeLoansAssetValue * BOOST_RATIO);
+                (userCollectionActiveLoansCount * BOOST_RATIO);
 
             // Max Boost Cap
             if (boost > MAX_BOOST) {
