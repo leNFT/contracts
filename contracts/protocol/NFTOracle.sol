@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.15;
 
-import {INativeTokenVault} from "../interfaces/INativeTokenVault.sol";
 import {INFTOracle} from "../interfaces/INFTOracle.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
