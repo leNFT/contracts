@@ -13,6 +13,8 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
 
+  const feeTreasuryAddress = "0xa5C6eD5d801417c50f775099BA59C306d4034D4D";
+
   /****************************************************************
   DEPLOY LIBRARIES
   They will then be linked to the contracts that use them
@@ -146,7 +148,6 @@ async function main() {
     loanCenter.address
   );
   await setLoanCenterTx.wait();
-  feeTreasuryAddress = "0xa5C6eD5d801417c50f775099BA59C306d4034D4D";
   const setFeeTreasuryTx = await addressesProvider.setFeeTreasury(
     feeTreasuryAddress
   );
