@@ -45,7 +45,7 @@ async function main() {
   const tokenOracle = TokenOracle.attach(addresses.TokenOracle);
   const setUSDCPriceTx = await tokenOracle.addTokenETHDataFeed(
     addresses["USDC"].address,
-    addresses["USDC"].dataFeed
+    addresses["USDC"].priceFeed
   );
   await setUSDCPriceTx.wait();
 

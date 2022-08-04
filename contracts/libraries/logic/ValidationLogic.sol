@@ -114,8 +114,8 @@ library ValidationLogic {
                     nftTokenID,
                     request,
                     packet
-                ) * tokenETHPrice) /
-                    pricePrecision,
+                ) * pricePrecision) /
+                    tokenETHPrice,
             "Amount exceeds allowed by collateral"
         );
 
@@ -190,8 +190,8 @@ library ValidationLogic {
                     loanData.nftTokenId,
                     request,
                     packet
-                ) * baseTokenETHPrice) /
-                pricePrecision <
+                ) * pricePrecision) /
+                baseTokenETHPrice <
                 ILoanCenter(addressesProvider.getLoanCenter()).getLoanDebt(
                     loanId
                 ),

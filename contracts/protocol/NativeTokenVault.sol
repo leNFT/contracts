@@ -196,8 +196,8 @@ contract NativeTokenVault is
         uint256 pricePrecision = ITokenOracle(_addressProvider.getTokenOracle())
             .getPricePrecision();
 
-        uint256 votesValue = (_collectionVotes[collection] *
-            nativeTokenETHPrice) / pricePrecision;
+        uint256 votesValue = (_collectionVotes[collection] * pricePrecision) /
+            nativeTokenETHPrice;
 
         if (userCollectionActiveLoansCount != 0) {
             boost =

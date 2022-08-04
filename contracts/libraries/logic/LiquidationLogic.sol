@@ -69,8 +69,8 @@ library LiquidationLogic {
                 loanData.nftTokenId,
                 request,
                 packet
-            ) * baseTokenETHPrice)
-        ) / pricePrecision;
+            ) * pricePrecision)
+        ) / baseTokenETHPrice;
         uint256 liquidationPrice = _getLiquidationPrice(
             loanData.reserve,
             tokenPrice
