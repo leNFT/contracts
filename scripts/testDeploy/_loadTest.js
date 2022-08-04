@@ -74,7 +74,7 @@ let loadEnv = async function () {
   await interestRate.deployed();
   console.log("Interest Rate Address:", interestRate.address);
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
-  nftOracle = await NFTOracle.deploy(addressesProvider.address, 2000, 1); //Max Price deviation (20%) and min update time
+  nftOracle = await NFTOracle.deploy();
   await nftOracle.deployed();
   console.log("NFT Oracle Address:", nftOracle.address);
   const TokenOracle = await ethers.getContractFactory("TokenOracle");

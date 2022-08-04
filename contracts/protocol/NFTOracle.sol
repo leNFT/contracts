@@ -13,21 +13,7 @@ import "hardhat/console.sol";
 contract NFTOracle is INFTOracle, Ownable, Trustus {
     mapping(address => DataTypes.CollectionData) private _collections;
 
-    uint256 public immutable _maxPriceDeviation;
-    uint256 public immutable _minUpdateTime;
-    IAddressesProvider private _addressProvider;
-
     using CollectionLogic for DataTypes.CollectionData;
-
-    constructor(
-        IAddressesProvider addressProvider,
-        uint256 maxPriceDeviation,
-        uint256 minUpdateTime
-    ) {
-        _addressProvider = addressProvider;
-        _maxPriceDeviation = maxPriceDeviation;
-        _minUpdateTime = minUpdateTime;
-    }
 
     // Get the max collaterization price for a collection (10000 = 100%)
     function getCollectionMaxCollaterization(address collection)
