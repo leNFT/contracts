@@ -10,5 +10,5 @@ artifacts
 hardhat.config.js
 mocharc.json
 
-#scripts
-scripts/
+# local env files
+.env*.local
