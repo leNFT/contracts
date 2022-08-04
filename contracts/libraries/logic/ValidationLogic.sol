@@ -110,7 +110,6 @@ library ValidationLogic {
         require(
             amount <=
                 (nftOracle.getTokenMaxETHCollateral(
-                    msg.sender,
                     nftAddress,
                     nftTokenID,
                     request,
@@ -187,7 +186,6 @@ library ValidationLogic {
         require(
             (INFTOracle(addressesProvider.getNFTOracle())
                 .getTokenMaxETHCollateral(
-                    msg.sender,
                     loanData.nftAsset,
                     loanData.nftTokenId,
                     request,

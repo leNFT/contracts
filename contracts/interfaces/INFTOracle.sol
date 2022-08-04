@@ -17,7 +17,6 @@ interface INFTOracle {
     ) external view returns (uint256);
 
     function getTokenMaxETHCollateral(
-        address user,
         address collection,
         uint256 tokenId,
         bytes32 request,

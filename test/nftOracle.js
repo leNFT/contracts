@@ -18,7 +18,6 @@ describe("NFT Oracle", function () {
         "0x0000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001b1ae4d6e2ef500000",
     };
     const maxCollateral = await nftOracle.getTokenMaxETHCollateral(
-      owner.address,
       testNFT.address,
       0,
       request,
