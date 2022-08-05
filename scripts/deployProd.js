@@ -102,7 +102,7 @@ async function main() {
 
   // Deploy the Interest Rate contract
   const InterestRate = await ethers.getContractFactory("InterestRate");
-  interestRate = await InterestRate.deploy(8000, 1000, 2500, 10000);
+  interestRate = await InterestRate.deploy(7000, 500, 2000, 20000);
   await interestRate.deployed();
   console.log("Interest Rate Address:", interestRate.address);
 
