@@ -2,6 +2,7 @@ import fetch from "node-fetch";
 import abi from "web3-eth-abi";
 import { utils } from "ethers";
 import { getMessage } from "eip-712";
+require("dotenv").config();
 
 const collection = "0x0165878A594ca255338adfa4d48449f69242Eb8F";
 const tokenId = "0";

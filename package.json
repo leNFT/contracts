@@ -23,6 +23,7 @@
     "@chainlink/contracts": "^0.4.2",
     "@openzeppelin/contracts": "^4.6.0",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
-    "bignumber.js": "^9.0.2"
+    "bignumber.js": "^9.0.2",
+    "dotenv": "^16.0.1"
   }
 }

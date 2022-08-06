@@ -31,8 +31,8 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         uint256 tokenId,
         bytes32 request,
         TrustusPacket calldata packet
-    ) external view override verifyPacket(request, packet) returns (uint256) {
-        return _getTokenETHPrice(collection, tokenId, packet);
+    ) external view override returns (uint256) {
+        return _getTokenETHPrice(collection, tokenId, request, packet);
     }
 
     // Get the max collaterization for a certain collection and a certain user (includes boost) in ETH
@@ -41,8 +41,13 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         uint256 tokenId,
         bytes32 request,
         TrustusPacket calldata packet
-    ) external view override verifyPacket(request, packet) returns (uint256) {
-        uint256 tokenPrice = _getTokenETHPrice(collection, tokenId, packet);
+    ) external view override returns (uint256) {
+        uint256 tokenPrice = _getTokenETHPrice(
+            collection,
+            tokenId,
+            request,
+            packet
+        );
 
         return
             PercentageMath.percentMul(
@@ -77,8 +82,9 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
     function _getTokenETHPrice(
         address collection,
         uint256 tokenId,
+        bytes32 request,
         TrustusPacket calldata packet
-    ) internal pure returns (uint256) {
+    ) internal view verifyPacket(request, packet) returns (uint256) {
         DataTypes.TokenPrice memory priceParams = abi.decode(
             packet.payload,
             (DataTypes.TokenPrice)
