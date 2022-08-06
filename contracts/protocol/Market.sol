@@ -13,6 +13,10 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {Trustus} from "./Trustus.sol";
 
+/// @title Market Contract
+/// @author leNFT
+/// @notice This contract is the entrypoint for the leNFT protocol
+/// @dev Call these contrcact functions to interact with the protocol
 contract Market is
     Initializable,
     IMarket,
@@ -31,7 +35,10 @@ contract Market is
         _addressProvider = addressesProvider;
     }
 
-    // Deposit an asset in the reserve
+    /// @notice Deposit an asset in the reserve
+    /// @dev Needs to give approval to the corresponding reserve
+    /// @param asset The address of the asset the be deposited
+    /// @param amount Amount of the asset to be deposited
     function deposit(address asset, uint256 amount)
         external
         override
@@ -42,7 +49,9 @@ contract Market is
         emit Deposit(msg.sender, asset, amount);
     }
 
-    // Withdraw an asset from the reserve
+    /// @notice Withdraw an asset from the reserve
+    /// @param asset The address of the asset the be withdrawn
+    /// @param amount Amount of the asset to be withdrawn
     function withdraw(address asset, uint256 amount)
         external
         override
@@ -53,7 +62,14 @@ contract Market is
         emit Withdraw(msg.sender, asset, amount);
     }
 
-    // Borrow an asset from the reserve while using an NFT collateral
+    /// @notice Borrow an asset from the reserve while an NFT as collateral
+    /// @dev NFT approval needs to be given to the LoanCenter contract
+    /// @param asset The address of the asset the be borrowed
+    /// @param amount Amount of the asset to be borrowed
+    /// @param nftAddress Address of the NFT collateral
+    /// @param nftTokenID Token id of the NFT collateral
+    /// @param request ID of the collateral price request sent by the trusted server
+    /// @param packet Signed collateral price request sent by the trusted server
     function borrow(
         address asset,
         uint256 amount,
@@ -76,14 +92,19 @@ contract Market is
         emit Borrow(msg.sender, asset, nftAddress, nftTokenID, amount);
     }
 
-    // Repay an asset borrowed from the reserve while using an NFT collateral
+    /// @notice Repay an an active loan
+    /// @param loanId The ID of the loan to be paid
     function repay(uint256 loanId) external override nonReentrant {
         BorrowLogic.repay(_addressProvider, loanId);
 
         emit Repay(msg.sender, loanId);
     }
 
-    // Liquidate an asset borrowed from the reserve
+    /// @notice Liquidate an active loan
+    /// @dev Needs to approve WETH transfers from Market address
+    /// @param loanId The ID of the loan to be paid
+    /// @param request ID of the collateral price request sent by the trusted server
+    /// @param packet Signed collateral price request sent by the trusted server
     function liquidate(
         uint256 loanId,
         bytes32 request,
@@ -94,7 +115,9 @@ contract Market is
         emit Liquidate(msg.sender, loanId);
     }
 
-    // Init a supply side reserve
+    /// @notice Add a new reserve to the list of reserves
+    /// @param asset The address of the asset the reserve controls
+    /// @param reserveAddress The address of the reserve
     function addReserve(address asset, address reserveAddress)
         external
         onlyOwner
@@ -105,12 +128,17 @@ contract Market is
         _reserves[asset] = reserveAddress;
     }
 
-    // Get a reserve address
+    /// @notice Get the reserve address responsible to a certain asset
+    /// @param asset The asset the reserve is responsible for
+    /// @return The address of the reserve responsible for the asset
     function getReserveAddress(address asset) external view returns (address) {
         return _reserves[asset];
     }
 
-    // Check if asset is supported
+    /// @notice Check if a certain asset is supported by the protocol as a borrowable asset
+    /// @dev An asset is supported by the protocol if a reserve exists responsible for it
+    /// @param asset The address of the asset
+    /// @return A boolean, true if the asset is supported
     function isAssetSupported(address asset) external view returns (bool) {
         return _reserves[asset] != address(0);
     }
