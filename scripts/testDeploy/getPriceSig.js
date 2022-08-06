@@ -69,7 +69,7 @@ async function main() {
     },
   };
 
-  const signingKey = new utils.SigningKey(process.env.SIGNING_KEY);
+  const signingKey = new utils.SigningKey(process.env.SERVER_SIGNING_KEY);
 
   // Get a signable message from the typed data
   const message = getMessage(typedData, true);
