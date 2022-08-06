@@ -173,8 +173,7 @@ contract Reserve is
         ).calculateBorrowRate(_getUnderlyingBalance(), _debt);
     }
 
-    // Updates the cumulative borrow rate
-    // newDebt: The new debt after
+    // Updates the mean of the borrow rate in our debt
     function _updateCumulativeDebtBorrowRate(
         bool increaseDebt,
         uint256 amount,

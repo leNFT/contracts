@@ -51,7 +51,7 @@ library DataTypes {
         uint256 nftTokenId;
         //address of reserve associated with loan
         address reserve;
-        // interest rate to which the loan as written
+        // interest rate at which the loan was written
         uint256 borrowRate;
         // timestamp of the initial creation of the loan
         uint256 initTimestamp;
