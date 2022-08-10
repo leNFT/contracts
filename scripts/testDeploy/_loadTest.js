@@ -159,7 +159,8 @@ let loadEnv = async function () {
     "RTTOKEN",
     9000, //max utilization rate (90%)
     2000, // Liquidation penalty (20%)
-    200 // protocol fee (2%)
+    200, // protocol liquidation fee (2%)
+    "5000000000000000000" //Underlying safeguard (can deposit up to 5 ETH)
   );
   await initReserveTx.wait();
 

@@ -21,6 +21,7 @@ async function main() {
       8000, //80%
       2000, //20%
       200, //2%
+      100000000, //Underlying safeguard, can deposit up to 100 USDC
     ],
     { unsafeAllow: ["external-library-linking"] }
   );

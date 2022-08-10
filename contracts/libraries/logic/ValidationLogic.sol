@@ -34,12 +34,20 @@ library ValidationLogic {
         require(reserves[asset] != address(0), "Asset not supported");
 
         // Get balance of the user trying the deposit
-        uint256 balance = IERC20Upgradeable(asset).balanceOf(msg.sender);
-
-        require(amount <= balance, "Balance is lower than deposited amount");
+        require(
+            amount <= IERC20Upgradeable(asset).balanceOf(msg.sender),
+            "Balance is lower than deposited amount"
+        );
 
         // Check if deposit amount is bigger than 0
         require(amount > 0, "Deposit amount must be bigger than 0");
+
+        // Check if reserve will exceed maximum permitted amount
+        require(
+            amount + IReserve(reserves[asset]).getUnderlyingBalance() >
+                IReserve(reserves[asset]).getUnderlyingSafeguard(),
+            "Reserve exceeds safeguarded limit"
+        );
     }
 
     function validateWithdrawal(

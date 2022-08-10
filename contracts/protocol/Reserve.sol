@@ -25,6 +25,7 @@ contract Reserve is
     uint256 internal _liquidationPenalty;
     uint256 internal _protocolLiquidationFee;
     uint256 internal _maximumUtilizationRate;
+    uint256 internal _underlyingSafeguard;
 
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -43,7 +44,8 @@ contract Reserve is
         string calldata symbol,
         uint256 maximumUtilizationRate,
         uint256 liquidationPenalty,
-        uint256 protocolLiquidationFee
+        uint256 protocolLiquidationFee,
+        uint256 underlyingSafeguard
     ) external initializer {
         __Ownable_init();
         __ERC20_init(name, symbol);
@@ -52,6 +54,7 @@ contract Reserve is
         _maximumUtilizationRate = maximumUtilizationRate;
         _liquidationPenalty = liquidationPenalty;
         _protocolLiquidationFee = protocolLiquidationFee;
+        _underlyingSafeguard = underlyingSafeguard;
         _updateBorrowRate();
     }
 
@@ -239,5 +242,16 @@ contract Reserve is
         onlyOwner
     {
         _protocolLiquidationFee = protocolLiquidationFee;
+    }
+
+    function getUnderlyingSafeguard() external view override returns (uint256) {
+        return _underlyingSafeguard;
+    }
+
+    function setUnderlyingSafeguard(uint256 underlyingSafeguard)
+        external
+        onlyOwner
+    {
+        _underlyingSafeguard = underlyingSafeguard;
     }
 }
