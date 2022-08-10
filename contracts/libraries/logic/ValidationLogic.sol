@@ -44,7 +44,7 @@ library ValidationLogic {
 
         // Check if reserve will exceed maximum permitted amount
         require(
-            amount + IReserve(reserves[asset]).getUnderlyingBalance() >
+            amount + IReserve(reserves[asset]).getUnderlyingBalance() <
                 IReserve(reserves[asset]).getUnderlyingSafeguard(),
             "Reserve exceeds safeguarded limit"
         );
