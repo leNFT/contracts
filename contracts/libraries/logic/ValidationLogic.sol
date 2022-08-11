@@ -58,8 +58,8 @@ library ValidationLogic {
     ) external view {
         // Check if the asset is supported
         require(reserves[asset] != address(0), "Asset not supported");
-        // Check if the utilization rate doesn't go above maximum
 
+        // Check if the utilization rate doesn't go above maximum
         uint256 maximumUtilizationRate = IReserve(reserves[asset])
             .getMaximumUtilizationRate();
         uint256 debt = IReserve(reserves[asset]).getDebt();
