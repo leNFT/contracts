@@ -4,6 +4,7 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 // const hre = require("hardhat");
+require("dotenv").config();
 
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
@@ -13,7 +14,12 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
 
-  const feeTreasuryAddress = "0xa5C6eD5d801417c50f775099BA59C306d4034D4D";
+  var feeTreasuryAddress;
+  if (hre.network.config.chainId == 1) {
+    feeTreasuryAddress = process.env.MAINNET_FEE_TREASURY;
+  } else if (hre.network.config.chainId == 5) {
+    feeTreasuryAddress = process.env.GOERLI_FEE_TREASURY;
+  }
 
   /****************************************************************
   DEPLOY LIBRARIES

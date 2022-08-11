@@ -1,9 +1,10 @@
 const { ethers } = require("hardhat");
+const hre = require("hardhat");
 
 async function main() {
   let contractAddresses = require("../../lenft-interface/contractAddresses.json");
-  let chainID = "0x5";
-  let addresses = contractAddresses[chainID];
+  let chainID = hre.network.config.chainId;
+  let addresses = contractAddresses["0x" + chainID.toString(16)];
 
   // Deploy and init eth reserve
   const USDCReserve = await ethers.getContractFactory("Reserve", {
