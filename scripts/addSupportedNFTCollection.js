@@ -1,9 +1,10 @@
 const { ethers } = require("hardhat");
+const hre = require("hardhat");
 
 async function main() {
   let contractAddresses = require("../../lenft-interface/contractAddresses.json");
-  let chainID = "0x5";
-  let addresses = contractAddresses[chainID];
+  let chainID = hre.network.config.chainId;
+  let addresses = contractAddresses["0x" + chainID.toString(16)];
 
   // Create TEST NFT contract
   const TestNFT = await ethers.getContractFactory("TestNFT");
@@ -11,25 +12,32 @@ async function main() {
   await testNFT.deployed();
   console.log("Deployed TEST NFT to", testNFT.address);
 
-  // Add NFT to oracle
+  const newSupportedCollectionAddress = testNFT.address;
+  const maxCollaterization = 6000;
+
+  // // Add NFT to oracle
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
   const nftOracle = NFTOracle.attach(addresses.NFTOracle);
 
   const addNftToOracleTx = await nftOracle.addSupportedCollection(
-    testNFT.address,
-    4000 //max collaterization (40%)
+    newSupportedCollectionAddress,
+    maxCollaterization
   );
   await addNftToOracleTx.wait();
-  console.log("Added TEST NFT to Oracle with 40% max collaterization");
+  console.log(
+    "Added TEST NFT to Oracle with " +
+      maxCollaterization / 10000 +
+      "% max collaterization"
+  );
 
   // Approve NFT to be used by loan center
   const LoanCenter = await ethers.getContractFactory("LoanCenter");
   const loanCenter = LoanCenter.attach(addresses.LoanCenter);
   const approveNFTCollectionTx = await loanCenter.approveNFTCollection(
-    testNFT.address
+    newSupportedCollectionAddress
   );
   await approveNFTCollectionTx.wait();
-  console.log("Approved TEST NFT to be used by loan center");
+  console.log("Approved collection to be used by loan center");
 }
 
 // We recommend this pattern to be able to use async/await everywhere
