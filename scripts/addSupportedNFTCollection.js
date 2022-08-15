@@ -7,12 +7,13 @@ async function main() {
   let addresses = contractAddresses["0x" + chainID.toString(16)];
 
   // Create TEST NFT contract
-  const TestNFT = await ethers.getContractFactory("TestNFT");
-  const testNFT = await TestNFT.deploy("TEST NFT", "TNFT");
-  await testNFT.deployed();
-  console.log("Deployed TEST NFT to", testNFT.address);
+  // const TestNFT = await ethers.getContractFactory("TestNFT");
+  // const testNFT = await TestNFT.deploy("TEST NFT", "TNFT");
+  // await testNFT.deployed();
+  // console.log("Deployed TEST NFT to", testNFT.address);
 
-  const newSupportedCollectionAddress = testNFT.address;
+  const newSupportedCollectionAddress =
+    "0x49cF6f5d44E70224e2E23fDcdd2C053F30aDA28B";
   const maxCollaterization = 6000;
 
   // // Add NFT to oracle
@@ -26,7 +27,7 @@ async function main() {
   await addNftToOracleTx.wait();
   console.log(
     "Added TEST NFT to Oracle with " +
-      maxCollaterization / 10000 +
+      maxCollaterization / 100 +
       "% max collaterization"
   );
 

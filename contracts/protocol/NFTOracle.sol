@@ -65,6 +65,19 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         _collections[collection].setMaxCollaterization(maxCollaterization);
     }
 
+    function changeCollectionMaxCollaterization(
+        address collection,
+        uint256 maxCollaterization
+    ) external onlyOwner {
+        require(
+            _collections[collection].supported,
+            "Collection is not supported"
+        );
+
+        //Set the max collaterization
+        _collections[collection].setMaxCollaterization(maxCollaterization);
+    }
+
     function removeSupportedCollection(address collection) external onlyOwner {
         delete _collections[collection];
     }
@@ -102,11 +115,11 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         return priceParams.amount;
     }
 
-    function addTrustedPriceSource(address signer) external {
+    function addTrustedPriceSource(address signer) external onlyOwner {
         _setIsTrusted(signer, true);
     }
 
-    function removeTrustedPriceSource(address signer) external {
+    function removeTrustedPriceSource(address signer) external onlyOwner {
         _setIsTrusted(signer, false);
     }
 
