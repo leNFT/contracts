@@ -13,8 +13,8 @@ async function main() {
   // console.log("Deployed TEST NFT to", testNFT.address);
 
   const newSupportedCollectionAddress =
-    "0x49cF6f5d44E70224e2E23fDcdd2C053F30aDA28B";
-  const maxCollaterization = 6000;
+    "0x42069ABFE407C60cf4ae4112bEDEaD391dBa1cdB";
+  const maxCollaterization = 5000;
 
   // // Add NFT to oracle
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
@@ -26,7 +26,9 @@ async function main() {
   );
   await addNftToOracleTx.wait();
   console.log(
-    "Added TEST NFT to Oracle with " +
+    "Added " +
+      newSupportedCollectionAddress +
+      " to Oracle with " +
       maxCollaterization / 100 +
       "% max collaterization"
   );
