@@ -4,6 +4,7 @@ pragma solidity 0.8.15;
 import {DataTypes} from "../types/DataTypes.sol";
 import {PercentageMath} from "../math/PercentageMath.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
+import {GenericLogic} from "./GenericLogic.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
@@ -14,24 +15,10 @@ import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC7
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {Trustus} from "../../protocol/Trustus.sol";
-import "hardhat/console.sol";
 
 library LiquidationLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
-
-    function _getLiquidationPrice(address reserveAddress, uint256 floorPrice)
-        internal
-        view
-        returns (uint256)
-    {
-        return
-            PercentageMath.percentMul(
-                floorPrice,
-                PercentageMath.PERCENTAGE_FACTOR -
-                    IReserve(reserveAddress).getLiquidationPenalty() +
-                    IReserve(reserveAddress).getLiquidationFee()
-            );
-    }
+    using LoanLogic for DataTypes.LoanData;
 
     function liquidate(
         IAddressesProvider addressesProvider,
@@ -52,31 +39,14 @@ library LiquidationLogic {
             ILoanCenter(addressesProvider.getLoanCenter())
         ).getLoan(loanId);
 
+        // Get the address of this asset's reserve
         address reserveAsset = IReserve(loanData.reserve).getAsset();
 
-        console.log("reserveAsset", reserveAsset);
-
         // Find the liquidation price
-        ITokenOracle tokenOracle = ITokenOracle(
-            addressesProvider.getTokenOracle()
-        );
-        uint256 baseTokenETHPrice = tokenOracle.getTokenETHPrice(reserveAsset);
-        uint256 pricePrecision = tokenOracle.getPricePrecision();
+        (uint256 liquidationPrice, uint256 liquidationReward) = GenericLogic
+            .getLoanLiquidationPrice(loanData.reserve, tokenPrice);
 
-        uint256 tokenPrice = (
-            (INFTOracle(addressesProvider.getNFTOracle()).getTokenETHPrice(
-                loanData.nftAsset,
-                loanData.nftTokenId,
-                request,
-                packet
-            ) * pricePrecision)
-        ) / baseTokenETHPrice;
-        uint256 liquidationPrice = _getLiquidationPrice(
-            loanData.reserve,
-            tokenPrice
-        );
-        console.log("liquidationPrice", liquidationPrice);
-        // Send the payment from the liquidator
+        // Get the payment from the liquidator
         IERC20Upgradeable(reserveAsset).safeTransferFrom(
             msg.sender,
             address(this),
@@ -113,7 +83,7 @@ library LiquidationLogic {
         // ... then get the protocol liquidation fee (if there are still funds available) ...
         if (fundsLeft > 0) {
             uint256 protocolFee = PercentageMath.percentMul(
-                tokenPrice,
+                liquidationPrice,
                 IReserve(loanData.reserve).getLiquidationFee()
             );
             if (protocolFee > fundsLeft) {

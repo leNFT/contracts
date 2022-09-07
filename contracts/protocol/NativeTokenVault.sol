@@ -28,6 +28,8 @@ contract NativeTokenVault is
     uint256 internal constant MAX_BOOST = 2000; // 20%
     IAddressesProvider private _addressProvider;
     address internal _nativeToken;
+    uint256 internal _liquidationRewardFactor; // How much reward should be given for a certain sized liquidation
+    uint256 internal _liquidationRewardLimit; // Max % of the locked supply rewarded in one liquidation
     // User + collection to votes
     mapping(address => mapping(address => uint256)) private _votes;
     // User to votes
@@ -52,12 +54,16 @@ contract NativeTokenVault is
         IAddressesProvider addressProvider,
         address nativeToken,
         string calldata name,
-        string calldata symbol
+        string calldata symbol,
+        uint256 maxLiquidationReward,
+        uint256 rewardThreshold
     ) external initializer {
         __Ownable_init();
         __ERC20_init(name, symbol);
         _addressProvider = addressProvider;
         _nativeToken = nativeToken;
+        _maxLiquidationReward = maxLiquidationReward;
+        _rewardThreshold = rewardThreshold;
     }
 
     function deposit(uint256 amount) external override nonReentrant {
@@ -175,6 +181,71 @@ contract NativeTokenVault is
         returns (uint256)
     {
         return _votes[user][collection];
+    }
+
+    function getLiquidationRewardFactor() external view returns (uint256) {
+        return _liquidationRewardFactor;
+    }
+
+    function setLiquidationRewardFactor(uint256 liquidationRewardFactor)
+        external
+        view
+        onlyOwner
+        returns (uint256)
+    {
+        _liquidationRewardFactor = liquidationRewardFactor;
+    }
+
+    function getLiquidationRewardLimit() external view returns (uint256) {
+        return _liquidationRewardLimit;
+    }
+
+    function setLiquidationRewardLimit(uint256 liquidationRewardLimit)
+        external
+        view
+        onlyOwner
+    {
+        _liquidationRewardLimit = liquidationRewardLimit;
+    }
+
+    function getLiquidationReward(
+        uint256 reserveTokenPrice,
+        uint256 assetPrice,
+        uint256 liquidationPrice
+    ) external view returns (uint256) {
+        uint256 reward;
+        uint256 nativeTokenPrice = TokenOracle(
+            addressesProvider.getTokenOracle()
+        ).getTokenETHPrice(_nativeToken);
+        uint256 pricePrecision = TokenOracle(addressesProvider.getTokenOracle())
+            .getPricePrecision();
+        if (liquidationPrice < assetPrice) {
+            reward =
+                (_liquidationRewardFactor * pricePrecision * pricePrecision) /
+                (reserveTokenPrice *
+                    nativeTokenPrice *
+                    (assetPrice - liquidationPrice));
+        } else {
+            reward =
+                (_liquidationRewardFactor * pricePrecision * pricePrecision) /
+                (reserveTokenPrice *
+                    nativeTokenPrice *
+                    (liquidationPrice - assetPrice));
+        }
+
+        // Set the maximum amount for a liquidation reward
+        if (reward > _liquidationRewardLimit) {
+            reward = _liquidationRewardLimit;
+        }
+
+        return reward;
+    }
+
+    function sendLiquidationReward(address liquidator, uint256 amount)
+        external
+        onlyMarket
+    {
+        IERC20Upgradeable(_nativeToken).safeTransfer(liquidator, amount);
     }
 
     function getVoteCollateralizationBoost(address user, address collection)

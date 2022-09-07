@@ -46,6 +46,14 @@ interface INativeTokenVault {
 
     function removeVote(uint256 amount, address collection) external;
 
+    function getLiquidationReward(
+        uint256 reserveTokenPrice,
+        uint256 assetPrice,
+        uint256 liquidationPrice
+    ) external view returns (uint256);
+
+    function sendLiquidationReward(address liquidator, uint256 amount) external;
+
     function getUserFreeVotes(address user) external view returns (uint256);
 
     function getLockedBalance() external view returns (uint256);

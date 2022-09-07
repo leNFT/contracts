@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.15;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {Initializable} from "@openzeeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ERC20Upgradeable} from "@opnzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -29,19 +29,14 @@ contract NativeToken is Initializable, ERC20Upgradeable, OwnableUpgradeable {
     function distributeRewards(uint256 amount) external onlyOwner {
         address nativeTokenVaultAddress = _addressProvider
             .getNativeTokenVault();
-        _mint(nativeTokenVaultAddress, amount);
+        _safeMint(nativeTokenVaultAddress, amount);
     }
 
     function mint(address account, uint256 amount) external onlyOwner {
-        require(
-            ERC20Upgradeable.totalSupply() + amount <= getCap(),
-            "NativeToken: cap exceeded"
-        );
-        _mint(account, amount);
+        _safeMint(account, amount);
     }
 
-    // TODO: DELETE THIS BEFORE PROD
-    function testMint(address account, uint256 amount) external {
+    function _safeMint(address account, uint256 amount) internal {
         require(
             ERC20Upgradeable.totalSupply() + amount <= getCap(),
             "NativeToken: cap exceeded"

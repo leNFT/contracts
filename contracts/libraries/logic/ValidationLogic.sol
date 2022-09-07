@@ -12,6 +12,7 @@ import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
 import {LoanLogic} from "./LoanLogic.sol";
+import {GenericLogic} from "./GenericLogic.sol";
 import {WithdrawRequestLogic} from "./WithdrawRequestLogic.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -118,6 +119,7 @@ library ValidationLogic {
         require(
             amount <=
                 (nftOracle.getTokenMaxETHCollateral(
+                    msg.sender,
                     nftAddress,
                     nftTokenID,
                     request,
@@ -174,7 +176,7 @@ library ValidationLogic {
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external view {
-        //Require that loan exists
+        //Require that the loan exists
         DataTypes.LoanData memory loanData = ILoanCenter(
             addressesProvider.getLoanCenter()
         ).getLoan(loanId);
@@ -194,6 +196,7 @@ library ValidationLogic {
         require(
             (INFTOracle(addressesProvider.getNFTOracle())
                 .getTokenMaxETHCollateral(
+                    msg.sender,
                     loanData.nftAsset,
                     loanData.nftTokenId,
                     request,
@@ -206,24 +209,11 @@ library ValidationLogic {
             "Collateral / Debt loan relation does not allow for liquidation."
         );
 
+        (uint256 liquidationPrice, uint256 liquidationReward) = GenericLogic
+            .getLoanLiquidationPrice(loanData.reserve, tokenPrice);
+
         // Check if caller has enough balance
         uint256 balance = IERC20Upgradeable(reserveAsset).balanceOf(msg.sender);
-        uint256 tokenPrice = (
-            (INFTOracle(addressesProvider.getNFTOracle()).getTokenETHPrice(
-                loanData.nftAsset,
-                loanData.nftTokenId,
-                request,
-                packet
-            ) * baseTokenETHPrice)
-        ) / pricePrecision;
-
-        uint256 liquidationPrice = PercentageMath.percentMul(
-            tokenPrice,
-            PercentageMath.PERCENTAGE_FACTOR -
-                IReserve(loanData.reserve).getLiquidationPenalty() +
-                IReserve(loanData.reserve).getLiquidationFee()
-        );
-
         require(
             balance >= liquidationPrice,
             "Balance lower than liquidation price"

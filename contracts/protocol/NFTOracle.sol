@@ -8,6 +8,7 @@ import {CollectionLogic} from "../libraries/logic/CollectionLogic.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {Trustus} from "./Trustus.sol";
+import {INativeTokenVault} from "../interfaces/INativeTokenVault.sol";
 import "hardhat/console.sol";
 
 contract NFTOracle is INFTOracle, Ownable, Trustus {
@@ -37,11 +38,16 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
 
     // Get the max collaterization for a certain collection and a certain user (includes boost) in ETH
     function getTokenMaxETHCollateral(
+        address user,
         address collection,
         uint256 tokenId,
         bytes32 request,
         TrustusPacket calldata packet
     ) external view override returns (uint256) {
+        uint256 voteCollaterizationBoost = INativeTokenVault(
+            _addressProvider.getNativeTokenVault()
+        ).getVoteCollateralizationBoost(user, collection);
+
         uint256 tokenPrice = _getTokenETHPrice(
             collection,
             tokenId,
@@ -52,7 +58,8 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         return
             PercentageMath.percentMul(
                 tokenPrice,
-                _collections[collection].maxCollaterization
+                _collections[collection].maxCollaterization +
+                    voteCollaterizationBoost
             );
     }
 

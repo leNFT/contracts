@@ -4,11 +4,13 @@ pragma solidity 0.8.15;
 import {IMarket} from "../interfaces/IMarket.sol";
 import {SupplyLogic} from "../libraries/logic/SupplyLogic.sol";
 import {LiquidationLogic} from "../libraries/logic/LiquidationLogic.sol";
+import {GenericLogic} from "../libraries/logic/GenericLogic.sol";
 import {BorrowLogic} from "../libraries/logic/BorrowLogic.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {Trustus} from "./Trustus.sol";
@@ -141,5 +143,17 @@ contract Market is
     /// @return A boolean, true if the asset is supported
     function isAssetSupported(address asset) external view returns (bool) {
         return _reserves[asset] != address(0);
+    }
+
+    /// @notice Get the price a liquidator would have to pay to liquidate a loan and the rewards associated
+    /// @param loanId The ID of the loan to be liquidated
+    /// @return price The price of the liquidation in borrowed asset token
+    /// @return reward The rewards given to the liquidator in leNFT tokens
+    function getLoanLiquidationPrice(
+        uint256 loanId,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
+    ) external view returns (uint256, uint256) {
+        return GenericLogic.getLoanLiquidationPrice(_addressProvider, loanId);
     }
 }

@@ -101,6 +101,29 @@ async function main() {
   ]);
   console.log("Debt Token Proxy Address:", debtToken.address);
 
+  // Deploy and initialize the native token
+  const NativeToken = await ethers.getContractFactory("NativeToken");
+  const nativeToken = await upgrades.deployProxy(NativeToken, [
+    addressesProvider.address,
+    "leNFT Token",
+    "LE",
+    "100000000000000000000000000", //100M Max Cap
+  ]);
+  console.log("Native Token Proxy Address:", nativeToken.address);
+
+  // Deploy and initialize the native token vault
+  const NativeTokenVault = await ethers.getContractFactory("NativeTokenVault", {
+    libraries: {
+      ValidationLogic: validationLogicLib.address,
+    },
+  });
+  const nativeTokenVault = await upgrades.deployProxy(
+    NativeTokenVault,
+    [addressesProvider.address, nativeToken.address, "veleNFT Token", "veLE"],
+    { unsafeAllow: ["external-library-linking"] }
+  );
+  console.log("Native Token Vault Proxy Address:", nativeTokenVault.address);
+
   /****************************************************************
   DEPLOY NON-PROXY CONTRACTS
   Deploy contracts that are not updatable
@@ -129,6 +152,14 @@ async function main() {
   Broadcast transactions whose purpose is to setup the protocol for use
   ******************************************************************/
 
+  //Add a default price to the native token using the token oracle
+  const setNativeTokenPriceTx = await tokenOracle.setTokenETHPrice(
+    nativeToken.address,
+    "100000000000000" //0.0001 nativeToken/ETH
+  );
+  await setNativeTokenPriceTx.wait();
+  console.log("Set Native Token / ETH to 100000000000000");
+
   //Set every address in the address provider
   const setMarketAddressTx = await addressesProvider.setMarketAddress(
     market.address
@@ -154,6 +185,10 @@ async function main() {
     loanCenter.address
   );
   await setLoanCenterTx.wait();
+  const setNativeTokenVaultTx = await addressesProvider.setNativeTokenVault(
+    nativeTokenVault.address
+  );
+  await setNativeTokenVaultTx.wait();
   const setFeeTreasuryTx = await addressesProvider.setFeeTreasury(
     feeTreasuryAddress
   );

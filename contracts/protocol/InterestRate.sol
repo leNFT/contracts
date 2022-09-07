@@ -21,10 +21,6 @@ contract InterestRate is IInterestRate {
         _baseBorrowRate = baseBorrowRate;
         _lowSlope = lowSlope;
         _highSlope = highSlope;
-
-        _optimalBorrowRate =
-            PercentageMath.percentMul(_optimalUtilization, _lowSlope) +
-            _baseBorrowRate;
     }
 
     function calculateBorrowRate(uint256 assets, uint256 debt)
@@ -39,11 +35,11 @@ contract InterestRate is IInterestRate {
 
         if (utilizationRate < _optimalUtilization) {
             borrowRate =
-                PercentageMath.percentMul(utilizationRate, _lowSlope) +
-                _baseBorrowRate;
+                _baseBorrowRate +
+                PercentageMath.percentMul(utilizationRate, _lowSlope);
         } else {
             borrowRate =
-                _optimalBorrowRate +
+                getOptimalBorrowRate() +
                 PercentageMath.percentMul(
                     utilizationRate - _optimalUtilization,
                     _highSlope
@@ -54,7 +50,9 @@ contract InterestRate is IInterestRate {
     }
 
     function getOptimalBorrowRate() external view returns (uint256) {
-        return _optimalBorrowRate;
+        return
+            PercentageMath.percentMul(_optimalUtilization, _lowSlope) +
+            _baseBorrowRate;
     }
 
     function getLowSlope() external view returns (uint256) {
