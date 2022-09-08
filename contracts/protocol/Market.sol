@@ -154,6 +154,12 @@ contract Market is
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external view returns (uint256, uint256) {
-        return GenericLogic.getLoanLiquidationPrice(_addressProvider, loanId);
+        return
+            GenericLogic.getLoanLiquidationPrice(
+                _addressProvider,
+                loanId,
+                request,
+                packet
+            );
     }
 }

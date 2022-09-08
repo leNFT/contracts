@@ -49,7 +49,7 @@ contract InterestRate is IInterestRate {
         return borrowRate;
     }
 
-    function getOptimalBorrowRate() external view returns (uint256) {
+    function getOptimalBorrowRate() public view returns (uint256) {
         return
             PercentageMath.percentMul(_optimalUtilization, _lowSlope) +
             _baseBorrowRate;

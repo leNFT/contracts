@@ -10,15 +10,16 @@ import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
+import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
 import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {Trustus} from "../../protocol/Trustus.sol";
+import "hardhat/console.sol";
 
 library LiquidationLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
-    using LoanLogic for DataTypes.LoanData;
 
     function liquidate(
         IAddressesProvider addressesProvider,
@@ -44,7 +45,12 @@ library LiquidationLogic {
 
         // Find the liquidation price
         (uint256 liquidationPrice, uint256 liquidationReward) = GenericLogic
-            .getLoanLiquidationPrice(loanData.reserve, tokenPrice);
+            .getLoanLiquidationPrice(
+                addressesProvider,
+                loanId,
+                request,
+                packet
+            );
 
         // Get the payment from the liquidator
         IERC20Upgradeable(reserveAsset).safeTransferFrom(
@@ -57,9 +63,9 @@ library LiquidationLogic {
         uint256 fundsLeft = liquidationPrice;
         uint256 loanInterest = ILoanCenter(addressesProvider.getLoanCenter())
             .getLoanInterest(loanId);
-        uint256 repayLoanAmount = loanData.amount + loanInterest;
+        uint256 loanDebt = loanData.amount + loanInterest;
         // If we only have funds to pay back part of the loan
-        if (fundsLeft < repayLoanAmount) {
+        if (fundsLeft < loanDebt) {
             IReserve(loanData.reserve).receiveUnderlyingDefaulted(
                 address(this),
                 fundsLeft,
@@ -76,8 +82,8 @@ library LiquidationLogic {
                 loanData.borrowRate,
                 loanInterest
             );
-            console.log("receiveUnderlying", repayLoanAmount);
-            fundsLeft -= repayLoanAmount;
+            console.log("receiveUnderlying", loanDebt);
+            fundsLeft -= loanDebt;
         }
 
         // ... then get the protocol liquidation fee (if there are still funds available) ...
@@ -116,5 +122,9 @@ library LiquidationLogic {
 
         // Burn the token representing the debt
         IDebtToken(addressesProvider.getDebtToken()).burn(loanId);
+
+        //Send the liquidation reward to the liquidator
+        INativeTokenVault(addressesProvider.getNativeTokenVault())
+            .sendLiquidationReward(msg.sender, liquidationReward);
     }
 }

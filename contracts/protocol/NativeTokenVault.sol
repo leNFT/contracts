@@ -55,15 +55,15 @@ contract NativeTokenVault is
         address nativeToken,
         string calldata name,
         string calldata symbol,
-        uint256 maxLiquidationReward,
-        uint256 rewardThreshold
+        uint256 liquidationRewardLimit,
+        uint256 liquidationRewardFactor
     ) external initializer {
         __Ownable_init();
         __ERC20_init(name, symbol);
         _addressProvider = addressProvider;
         _nativeToken = nativeToken;
-        _maxLiquidationReward = maxLiquidationReward;
-        _rewardThreshold = rewardThreshold;
+        _liquidationRewardLimit = liquidationRewardLimit;
+        _liquidationRewardFactor = liquidationRewardFactor;
     }
 
     function deposit(uint256 amount) external override nonReentrant {
@@ -189,9 +189,7 @@ contract NativeTokenVault is
 
     function setLiquidationRewardFactor(uint256 liquidationRewardFactor)
         external
-        view
         onlyOwner
-        returns (uint256)
     {
         _liquidationRewardFactor = liquidationRewardFactor;
     }
@@ -202,7 +200,6 @@ contract NativeTokenVault is
 
     function setLiquidationRewardLimit(uint256 liquidationRewardLimit)
         external
-        view
         onlyOwner
     {
         _liquidationRewardLimit = liquidationRewardLimit;
@@ -214,10 +211,10 @@ contract NativeTokenVault is
         uint256 liquidationPrice
     ) external view returns (uint256) {
         uint256 reward;
-        uint256 nativeTokenPrice = TokenOracle(
-            addressesProvider.getTokenOracle()
+        uint256 nativeTokenPrice = ITokenOracle(
+            _addressProvider.getTokenOracle()
         ).getTokenETHPrice(_nativeToken);
-        uint256 pricePrecision = TokenOracle(addressesProvider.getTokenOracle())
+        uint256 pricePrecision = ITokenOracle(_addressProvider.getTokenOracle())
             .getPricePrecision();
         if (liquidationPrice < assetPrice) {
             reward =

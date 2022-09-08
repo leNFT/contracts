@@ -26,8 +26,17 @@ async function main() {
   They will then be linked to the contracts that use them
   ******************************************************************/
 
+  // Deploy generic logic lib
+  GenericLogicLib = await ethers.getContractFactory("GenericLogic");
+  genericLogicLib = await GenericLogicLib.deploy();
+  console.log("Generic Logic Lib Address:", genericLogicLib.address);
+
   // Deploy validation logic lib
-  ValidationLogicLib = await ethers.getContractFactory("ValidationLogic");
+  ValidationLogicLib = await ethers.getContractFactory("ValidationLogic", {
+    libraries: {
+      GenericLogic: genericLogicLib.address,
+    },
+  });
   validationLogicLib = await ValidationLogicLib.deploy();
   console.log("Validation Logic Lib Address:", validationLogicLib.address);
 
@@ -53,6 +62,7 @@ async function main() {
   LiquidationLogicLib = await ethers.getContractFactory("LiquidationLogic", {
     libraries: {
       ValidationLogic: validationLogicLib.address,
+      GenericLogic: genericLogicLib.address,
     },
   });
   liquidationLogicLib = await LiquidationLogicLib.deploy();
@@ -76,6 +86,7 @@ async function main() {
       BorrowLogic: borrowLogicLib.address,
       LiquidationLogic: liquidationLogicLib.address,
       SupplyLogic: supplyLogicLib.address,
+      GenericLogic: genericLogicLib.address,
     },
   });
   const market = await upgrades.deployProxy(
@@ -119,7 +130,14 @@ async function main() {
   });
   const nativeTokenVault = await upgrades.deployProxy(
     NativeTokenVault,
-    [addressesProvider.address, nativeToken.address, "veleNFT Token", "veLE"],
+    [
+      addressesProvider.address,
+      nativeToken.address,
+      "veleNFT Token",
+      "veLE",
+      "100000000000000000", // 0.1 leNFT Reward Limit
+      1000, // Liquidation Reward Multiplying Factor
+    ],
     { unsafeAllow: ["external-library-linking"] }
   );
   console.log("Native Token Vault Proxy Address:", nativeTokenVault.address);
@@ -137,7 +155,7 @@ async function main() {
 
   // Deploy the NFT Oracle contract
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
-  nftOracle = await NFTOracle.deploy();
+  nftOracle = await NFTOracle.deploy(addressesProvider.address);
   await nftOracle.deployed();
   console.log("NFT Oracle Address:", nftOracle.address);
 

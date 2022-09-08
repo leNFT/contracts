@@ -11,7 +11,6 @@ import {IMarket} from "../../interfaces/IMarket.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
-import {LoanLogic} from "./LoanLogic.sol";
 import {GenericLogic} from "./GenericLogic.sol";
 import {WithdrawRequestLogic} from "./WithdrawRequestLogic.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
@@ -23,7 +22,6 @@ library ValidationLogic {
     uint256 internal constant ONE_DAY = 86400;
     uint256 internal constant ONE_WEEK = ONE_DAY * 7;
     uint256 internal constant UNVOTE_WINDOW = ONE_DAY * 2;
-    using LoanLogic for DataTypes.LoanData;
     using WithdrawRequestLogic for DataTypes.WithdrawRequest;
 
     function validateDeposit(
@@ -209,8 +207,12 @@ library ValidationLogic {
             "Collateral / Debt loan relation does not allow for liquidation."
         );
 
-        (uint256 liquidationPrice, uint256 liquidationReward) = GenericLogic
-            .getLoanLiquidationPrice(loanData.reserve, tokenPrice);
+        (uint256 liquidationPrice, ) = GenericLogic.getLoanLiquidationPrice(
+            addressesProvider,
+            loanId,
+            request,
+            packet
+        );
 
         // Check if caller has enough balance
         uint256 balance = IERC20Upgradeable(reserveAsset).balanceOf(msg.sender);
