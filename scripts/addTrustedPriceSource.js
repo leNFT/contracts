@@ -5,7 +5,7 @@ require("dotenv").config();
 async function main() {
   let contractAddresses = require("../../lenft-interface/contractAddresses.json");
   let chainID = hre.network.config.chainId;
-  let addresses = contractAddresses["0x" + chainID.toString(16)];
+  let addresses = contractAddresses[chainID.toString(16)];
 
   // Add NFT to oracle
   const NFTOracle = await ethers.getContractFactory("NFTOracle");

@@ -4,7 +4,7 @@ const hre = require("hardhat");
 async function main() {
   let contractAddresses = require("../../lenft-interface/contractAddresses.json");
   let chainID = hre.network.config.chainId;
-  let addresses = contractAddresses["0x" + chainID.toString(16)];
+  let addresses = contractAddresses[chainID.toString(16)];
 
   // Create TEST NFT contract
   // const TestNFT = await ethers.getContractFactory("TestNFT");
@@ -13,7 +13,7 @@ async function main() {
   // console.log("Deployed TEST NFT to", testNFT.address);
 
   const newSupportedCollectionAddress =
-    "0x42069ABFE407C60cf4ae4112bEDEaD391dBa1cdB";
+    "0x0171dB1e3Cc005d2A6E0BA531509D007a5B8C1a8";
   const maxCollaterization = 5000;
 
   // // Add NFT to oracle
