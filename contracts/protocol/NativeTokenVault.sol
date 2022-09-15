@@ -109,6 +109,10 @@ contract NativeTokenVault is
         override
         returns (DataTypes.WithdrawRequest memory)
     {
+        require(
+            _withdrawRequests[user].created == true,
+            "User hasn't created any withdrawal requests"
+        );
         return _withdrawRequests[user];
     }
 

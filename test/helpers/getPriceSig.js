@@ -1,30 +1,12 @@
-import fetch from "node-fetch";
 import abi from "web3-eth-abi";
 import { utils } from "ethers";
 import { getMessage } from "eip-712";
 require("dotenv").config();
 
-const collection = "0x0165878A594ca255338adfa4d48449f69242Eb8F";
+const collection = "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853";
 const tokenId = "0";
 
 async function main() {
-  const options = {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-      "X-API-KEY": "aa5381da-b86b-4765-84a4-e31743a9ce70",
-    },
-  };
-
-  const tokenBestBidResponse = await fetch(
-    "https://api.modulenft.xyz/api/v1/opensea/token/bestBid?tokenId=" +
-      tokenId +
-      "&collection=" +
-      collection,
-    options
-  ).catch((err) => console.error(err));
-  const tokenBestBid = await tokenBestBidResponse.json();
-
   const payload = abi.encodeParameter(
     {
       TokenPriceBoost: {
@@ -36,7 +18,7 @@ async function main() {
     {
       collection: collection,
       tokenId: tokenId,
-      amount: "500000000000000000000", //tokenBestBid.info.bestBid["price"] * 10000,
+      amount: "100000000000000000000",
     }
   );
 
@@ -60,12 +42,12 @@ async function main() {
       name: "leNFT",
       version: "1",
       chainId: 31337,
-      verifyingContract: "0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0",
+      verifyingContract: "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
     },
     message: {
       request:
         "0x0000000000000000000000000000000000000000000000000000000000000000",
-      deadline: "1659961474",
+      deadline: "1694732504",
       payload: payload,
     },
   };
@@ -84,7 +66,7 @@ async function main() {
     s: s,
     request:
       "0x0000000000000000000000000000000000000000000000000000000000000000",
-    deadline: "1659961474",
+    deadline: "1694732504",
     payload: payload,
   };
 

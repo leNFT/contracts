@@ -9,6 +9,7 @@ library DataTypes {
     }
 
     struct WithdrawRequest {
+        bool created;
         uint256 amount;
         uint256 timestamp;
     }

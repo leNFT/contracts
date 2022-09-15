@@ -6,7 +6,13 @@ let loadEnv = async function () {
   [owner, addr1, addr2] = await ethers.getSigners();
 
   //Deploy libraries
-  ValidationLogicLib = await ethers.getContractFactory("ValidationLogic");
+  GenericLogicLib = await ethers.getContractFactory("GenericLogic");
+  genericLogicLib = await GenericLogicLib.deploy();
+  ValidationLogicLib = await ethers.getContractFactory("ValidationLogic", {
+    libraries: {
+      GenericLogic: genericLogicLib.address,
+    },
+  });
   validationLogicLib = await ValidationLogicLib.deploy();
   console.log("Validation Logic Lib Address:", validationLogicLib.address);
   SupplyLogicLib = await ethers.getContractFactory("SupplyLogic", {
@@ -26,6 +32,7 @@ let loadEnv = async function () {
   LiquidationLogicLib = await ethers.getContractFactory("LiquidationLogic", {
     libraries: {
       ValidationLogic: validationLogicLib.address,
+      GenericLogic: genericLogicLib.address,
     },
   });
   liquidationLogicLib = await LiquidationLogicLib.deploy();
@@ -53,6 +60,7 @@ let loadEnv = async function () {
       BorrowLogic: borrowLogicLib.address,
       LiquidationLogic: liquidationLogicLib.address,
       SupplyLogic: supplyLogicLib.address,
+      GenericLogic: genericLogicLib.address,
     },
   });
   market = await Market.deploy();
@@ -74,7 +82,7 @@ let loadEnv = async function () {
   await interestRate.deployed();
   console.log("Interest Rate Address:", interestRate.address);
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
-  nftOracle = await NFTOracle.deploy();
+  nftOracle = await NFTOracle.deploy(addressesProvider.address);
   await nftOracle.deployed();
   console.log("NFT Oracle Address:", nftOracle.address);
   const TokenOracle = await ethers.getContractFactory("TokenOracle");
@@ -160,7 +168,7 @@ let loadEnv = async function () {
     9000, //max utilization rate (90%)
     2000, // Liquidation penalty (20%)
     200, // protocol liquidation fee (2%)
-    "5000000000000000000" //Underlying safeguard (can deposit up to 5 ETH)
+    "1001000000000000000000" //Underlying safeguard (can deposit up to 1001 ETH)
   );
   await initReserveTx.wait();
 
@@ -186,7 +194,9 @@ let loadEnv = async function () {
     addressesProvider.address,
     nativeToken.address,
     "veleNFT Token",
-    "veLE"
+    "veLE",
+    "100000000000000000", // 0.1 leNFT Reward Limit
+    1000 // Liquidation Reward Multiplying Factor
   );
   await initNativeTokenVaultTx.wait();
 
@@ -210,7 +220,7 @@ let loadEnv = async function () {
   await addNft2ToOracleTx.wait();
 
   // Set trusted price source
-  const setTrustedPriceSourceTx = await nftOracle.setTrustedPriceSource(
+  const setTrustedPriceSourceTx = await nftOracle.addTrustedPriceSource(
     "0xAE46CbeB042ed76700357c34BB96a7dd33fc543B"
   );
   await setTrustedPriceSourceTx.wait();

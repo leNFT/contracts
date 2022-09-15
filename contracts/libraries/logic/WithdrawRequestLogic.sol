@@ -8,6 +8,7 @@ library WithdrawRequestLogic {
         DataTypes.WithdrawRequest storage withdrawRequest,
         uint256 amount
     ) internal {
+        withdrawRequest.created = true;
         withdrawRequest.amount = amount;
         withdrawRequest.timestamp = block.timestamp;
     }

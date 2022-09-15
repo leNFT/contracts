@@ -11,6 +11,7 @@ import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
 import {PercentageMath} from "../math/PercentageMath.sol";
 import {LoanLogic} from "./LoanLogic.sol";
 import {Trustus} from "../../protocol/Trustus.sol";
+import "hardhat/console.sol";
 
 library GenericLogic {
     // Return the liquidation price in the borrowed asset and the token rewards
@@ -47,7 +48,9 @@ library GenericLogic {
             ) * pricePrecision)
         ) / reserveAssetETHPrice;
 
-        // Threshold at which liquidation price starts being equal to debt
+        console.log("tokenPrice", tokenPrice);
+
+        // Threshold in which the liquidation price starts being equal to debt
         uint256 liquidationThreshold = PercentageMath.percentMul(
             tokenPrice,
             PercentageMath.PERCENTAGE_FACTOR -
