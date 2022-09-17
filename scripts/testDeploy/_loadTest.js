@@ -195,7 +195,7 @@ let loadEnv = async function () {
     nativeToken.address,
     "veleNFT Token",
     "veLE",
-    "100000000000000000", // 0.1 leNFT Reward Limit
+    "10000000000000000000", // 10 leNFT Reward Limit
     1000 // Liquidation Reward Multiplying Factor
   );
   await initNativeTokenVaultTx.wait();
@@ -221,7 +221,7 @@ let loadEnv = async function () {
 
   // Set trusted price source
   const setTrustedPriceSourceTx = await nftOracle.addTrustedPriceSource(
-    "0xAE46CbeB042ed76700357c34BB96a7dd33fc543B"
+    "0xfEa2AF8BB65c34ee64A005057b4C749310321Fa0"
   );
   await setTrustedPriceSourceTx.wait();
 

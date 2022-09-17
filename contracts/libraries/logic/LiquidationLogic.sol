@@ -52,6 +52,9 @@ library LiquidationLogic {
                 packet
             );
 
+        console.log("liquidationPrice", liquidationPrice);
+        console.log("liquidationReward", liquidationReward);
+
         // Get the payment from the liquidator
         IERC20Upgradeable(reserveAsset).safeTransferFrom(
             msg.sender,

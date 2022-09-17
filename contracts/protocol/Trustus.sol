@@ -114,8 +114,6 @@ abstract contract Trustus {
             packet.s
         );
 
-        console.log("recoveredAddress", recoveredAddress);
-
         require(
             recoveredAddress != address(0) && isTrusted[recoveredAddress],
             "Recovered address is invalid"

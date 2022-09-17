@@ -48,8 +48,6 @@ library GenericLogic {
             ) * pricePrecision)
         ) / reserveAssetETHPrice;
 
-        console.log("tokenPrice", tokenPrice);
-
         // Threshold in which the liquidation price starts being equal to debt
         uint256 liquidationThreshold = PercentageMath.percentMul(
             tokenPrice,

@@ -1,4 +1,5 @@
 const { expect } = require("chai");
+const { getPriceSig } = require("./helpers/getPriceSig.js");
 const load = require("../scripts/testDeploy/_loadTest.js");
 
 describe("Liquidate", function () {
@@ -45,27 +46,22 @@ describe("Liquidate", function () {
     const approveNftTx = await testNFT.approve(market.address, tokenId);
     await approveNftTx.wait();
 
-    const request =
-      "0x0000000000000000000000000000000000000000000000000000000000000000";
-    const serverPacket = {
-      v: 28,
-      r: "0x063dbd7938134346a003f46dd4ff246d323c663e42f8653bea0bb197fdee80da",
-      s: "0x5d4aeae17041daee885ac0d9ab53196cffc31f8a4b436ff6cc4e4777928a5cb9",
-      request:
-        "0x0000000000000000000000000000000000000000000000000000000000000000",
-      deadline: "1694732504",
-      payload:
-        "0x0000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001b1ae4d6e2ef500000",
-    };
+    const priceSig = getPriceSig(
+      testNFT.address,
+      0,
+      "500000000000000000000", //Price is 500 Tokens
+      "1694784579",
+      nftOracle.address
+    );
 
-    // Ask the market to borrow 100 tokens underlying using the collateral (worth 500 tokens with mex collateral 20%)
+    // Ask the market to borrow 100 tokens underlying using the collateral (worth 500 tokens with max collateral 20%)
     const borrowTx = await market.borrow(
       testToken.address,
       "100000000000000000000",
       testNFT.address,
       tokenId,
-      request,
-      serverPacket
+      priceSig.request,
+      priceSig
     );
     await borrowTx.wait();
 
@@ -78,19 +74,14 @@ describe("Liquidate", function () {
     expect(await testNFT.ownerOf(tokenId)).to.equal(loanCenter.address);
   });
   it("Liquidate loan", async function () {
-    // Change nft collection price to 400 ETH
-    const newRequest =
-      "0x0000000000000000000000000000000000000000000000000000000000000000";
-    const newServerPacket = {
-      v: 28,
-      r: "0x36c8613b4c609103c67dccd29e6d187b448fefa678830ab3abb84ce652617132",
-      s: "0x2d7026dd58a80963ebd2132bda3e9781693724d75b6d183c022640d156cdc3ef",
-      request:
-        "0x0000000000000000000000000000000000000000000000000000000000000000",
-      deadline: "1694732504",
-      payload:
-        "0x0000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000015af1d78b58c400000",
-    };
+    // Change nft collection price to 200
+    const priceSig = getPriceSig(
+      testNFT.address,
+      0,
+      "200000000000000000000",
+      "1694784579",
+      nftOracle.address
+    );
 
     //Mint 328 tokens to liquidator se he can pay the liquidation
     const mintTestTokenTx = await testToken.mint(
@@ -104,32 +95,42 @@ describe("Liquidate", function () {
       .approve(market.address, "328000000000000000000");
     await approveTokenTx.wait();
 
+    //Mint Native Tokens to native token vault
+    console.log("Minting native tokens owned by vault...");
+    const mintNativeTokenTx = await nativeToken.mint(
+      nativeTokenVault.address,
+      "100000000000000000000000000"
+    );
+    await mintNativeTokenTx.wait();
+
     //Liquidate the loan
     console.log("Liquidating...");
     const liquidateTx = await market
       .connect(addr1)
-      .liquidate(0, newRequest, newServerPacket);
+      .liquidate(0, priceSig.request, priceSig);
     await liquidateTx.wait();
 
     // Find if the liquidator received the asset
     expect(await testNFT.ownerOf(tokenId)).to.equal(addr1.address);
 
     // Find if the liquidator sent the token
-    expect(await testToken.balanceOf(addr1.address)).to.equal(0);
+    expect(await testToken.balanceOf(addr1.address)).to.equal(
+      "164000000000000000000"
+    );
 
     //Find if the reserve debt was paid
     expect(await testToken.balanceOf(testReserve.address)).to.equal(
-      "1000000000000000000000"
+      "1000000001000000000000"
     );
 
     // Find if the borrower received the funds left from the liquidations
     expect(await testToken.balanceOf(owner.address)).to.equal(
-      "320000000000000000000"
+      "160719999000000000000"
     );
 
     //Find if the liquidation fee was paid
     expect(await testToken.balanceOf(feeTreasuryAddress)).to.equal(
-      "8000000000000000000"
+      "3280000000000000000"
     );
   });
 });

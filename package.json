@@ -24,6 +24,8 @@
     "@openzeppelin/contracts": "^4.6.0",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
     "bignumber.js": "^9.0.2",
-    "dotenv": "^16.0.1"
+    "dotenv": "^16.0.1",
+    "eip-712": "^1.0.0",
+    "web3-eth-abi": "^1.8.0"
   }
 }

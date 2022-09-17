@@ -1,12 +1,11 @@
-import abi from "web3-eth-abi";
-import { utils } from "ethers";
-import { getMessage } from "eip-712";
-require("dotenv").config();
+const abi = require("web3-eth-abi");
+const { utils } = require("ethers");
+const { getMessage } = require("eip-712");
 
-const collection = "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853";
-const tokenId = "0";
-
-async function main() {
+function getPriceSig(collection, tokenId, amount, deadline, verifyingContract) {
+  const requestID =
+    "0x0000000000000000000000000000000000000000000000000000000000000000";
+  console.log("deadline", deadline);
   const payload = abi.encodeParameter(
     {
       TokenPriceBoost: {
@@ -18,7 +17,7 @@ async function main() {
     {
       collection: collection,
       tokenId: tokenId,
-      amount: "100000000000000000000",
+      amount: amount, //"100000000000000000000",
     }
   );
 
@@ -42,17 +41,18 @@ async function main() {
       name: "leNFT",
       version: "1",
       chainId: 31337,
-      verifyingContract: "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+      verifyingContract: verifyingContract,
     },
     message: {
-      request:
-        "0x0000000000000000000000000000000000000000000000000000000000000000",
-      deadline: "1694732504",
+      request: requestID,
+      deadline: deadline, //"1694732504",
       payload: payload,
     },
   };
 
-  const signingKey = new utils.SigningKey(process.env.SERVER_SIGNING_KEY);
+  const signingKey = new utils.SigningKey(
+    "0x5c630579e78aeb31d9e22d52404ed4f189489aa9ed6d4161995b91b20a002764"
+  );
 
   // Get a signable message from the typed data
   const message = getMessage(typedData, true);
@@ -64,20 +64,12 @@ async function main() {
     v: v,
     r: r,
     s: s,
-    request:
-      "0x0000000000000000000000000000000000000000000000000000000000000000",
-    deadline: "1694732504",
+    request: requestID,
+    deadline: deadline, //"1694732504",
     payload: payload,
   };
 
-  console.log(sigPacket);
+  return sigPacket;
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+module.exports = { getPriceSig };

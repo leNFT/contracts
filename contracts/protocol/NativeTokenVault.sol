@@ -16,6 +16,7 @@ import {WithdrawRequestLogic} from "../libraries/logic/WithdrawRequestLogic.sol"
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "hardhat/console.sol";
 
 contract NativeTokenVault is
     Initializable,
@@ -222,16 +223,16 @@ contract NativeTokenVault is
             .getPricePrecision();
         if (liquidationPrice < assetPrice) {
             reward =
-                (_liquidationRewardFactor * pricePrecision * pricePrecision) /
+                (_liquidationRewardFactor * (pricePrecision**4)) /
                 (reserveTokenPrice *
                     nativeTokenPrice *
-                    (assetPrice - liquidationPrice));
+                    ((2 * assetPrice) - liquidationPrice));
         } else {
             reward =
-                (_liquidationRewardFactor * pricePrecision * pricePrecision) /
+                (_liquidationRewardFactor * (pricePrecision**4)) /
                 (reserveTokenPrice *
                     nativeTokenPrice *
-                    (liquidationPrice - assetPrice));
+                    ((2 * liquidationPrice) - assetPrice));
         }
 
         // Set the maximum amount for a liquidation reward
