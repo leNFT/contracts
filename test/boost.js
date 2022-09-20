@@ -96,6 +96,6 @@ describe("Boost", function () {
         owner.address,
         testNFT.address
       )
-    ).to.equal(2000);
+    ).to.equal(200);
   });
 });

@@ -48,11 +48,11 @@ async function main() {
   const tokenOracle = TokenOracle.attach(addresses.TokenOracle);
   const setwETHPriceTx = await tokenOracle.setTokenETHPrice(
     addresses["WETH"].address,
-    "1000000000000000000" //1 wETH/wETH, 18 digits precision multiplier
+    "1000000000000000000" //1 ETH/wETH, 18 digits precision multiplier
   );
   await setwETHPriceTx.wait();
 
-  console.log("WETH/WETH price set @ 1");
+  console.log("ETH/WETH price set @ 1");
 }
 
 // We recommend this pattern to be able to use async/await everywhere
