@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-
+const { getPriceSig } = require("./helpers/getPriceSig.js");
 const load = require("../scripts/testDeploy/_loadTest.js");
 
 describe("Boost", function () {
@@ -33,18 +33,13 @@ describe("Boost", function () {
     const approveNftTx = await testNFT.approve(market.address, tokenID);
     await approveNftTx.wait();
 
-    const request =
-      "0x0000000000000000000000000000000000000000000000000000000000000000";
-    const serverPacket = {
-      v: 28,
-      r: "0x063dbd7938134346a003f46dd4ff246d323c663e42f8653bea0bb197fdee80da",
-      s: "0x5d4aeae17041daee885ac0d9ab53196cffc31f8a4b436ff6cc4e4777928a5cb9",
-      request:
-        "0x0000000000000000000000000000000000000000000000000000000000000000",
-      deadline: "1659961474",
-      payload:
-        "0x0000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001b1ae4d6e2ef500000",
-    };
+    const priceSig = getPriceSig(
+      testNFT.address,
+      0,
+      "500000000000000000000", //Price is 500 Tokens
+      "1694784579",
+      nftOracle.address
+    );
 
     // Ask the market to borrow underlying using the collateral
     const borrowTx = await market.borrow(
@@ -52,8 +47,8 @@ describe("Boost", function () {
       50,
       testNFT.address,
       tokenID,
-      request,
-      serverPacket
+      priceSig.request,
+      priceSig
     );
     await borrowTx.wait();
 
@@ -69,7 +64,38 @@ describe("Boost", function () {
     //Find if the supply rate has changed accordingly
     expect(await testReserve.getSupplyRate()).to.equal(250);
   });
-  it("Vote for a collection", async function () {});
+  it("Vote for a collection", async function () {
+    // Mint 100 native tokens to the callers address
+    const mintNativeTokenTx = await nativeToken.mint(owner.address, 100);
+    await mintNativeTokenTx.wait();
 
-  it("Increase the max collateral accordingly", async function () {});
+    // Deposit native token into the vault
+    const approveNativeTokenTx = await nativeToken.approve(
+      nativeTokenVault.address,
+      100
+    );
+    await approveNativeTokenTx.wait();
+    const depositNativeTokenTx = await nativeTokenVault.deposit(100);
+    await depositNativeTokenTx.wait();
+
+    //Vote for the test collection with the deposited tokens
+    const voteTx = await nativeTokenVault.vote(100, testNFT.address);
+    await voteTx.wait();
+
+    //Find if the vote count has changed accordingly
+    expect(
+      await nativeTokenVault.getUserCollectionVotes(
+        owner.address,
+        testNFT.address
+      )
+    ).to.equal(100);
+
+    //Find if the collection ltv boost has changed accordingly
+    expect(
+      await nativeTokenVault.getVoteCollateralizationBoost(
+        owner.address,
+        testNFT.address
+      )
+    ).to.equal(2000);
+  });
 });

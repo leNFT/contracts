@@ -53,6 +53,11 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
             _addressProvider.getNativeTokenVault()
         ).getVoteCollateralizationBoost(user, collection);
 
+        console.log(
+            "nft oracle: voteCollaterizationBoost",
+            voteCollaterizationBoost
+        );
+
         uint256 tokenPrice = _getTokenETHPrice(
             collection,
             tokenId,
