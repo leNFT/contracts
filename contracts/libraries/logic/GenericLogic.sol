@@ -56,6 +56,9 @@ library GenericLogic {
                 IReserve(loanData.reserve).getLiquidationFee()
         );
 
+        console.log("liquidationThreshold", liquidationThreshold);
+        console.log("loanDebt", loanDebt);
+
         // Find the cost of liquidation
         uint256 liquidationPrice;
         if (loanDebt < liquidationThreshold) {
@@ -63,6 +66,8 @@ library GenericLogic {
         } else {
             liquidationPrice = loanDebt;
         }
+
+        console.log("liquidationPrice", liquidationPrice);
 
         // Find the liquidation reward
         uint256 liquidationReward = INativeTokenVault(

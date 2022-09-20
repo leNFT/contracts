@@ -25,8 +25,8 @@ contract NativeTokenVault is
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    uint256 internal constant BOOST_RATIO = 30;
-    uint256 internal constant MAX_BOOST = 2000; // 20%
+    uint256 internal _boostFactor;
+    uint256 internal _boostLimit;
     IAddressesProvider private _addressProvider;
     address internal _nativeToken;
     uint256 internal _liquidationRewardFactor; // How much reward should be given for a certain sized liquidation
@@ -57,7 +57,9 @@ contract NativeTokenVault is
         string calldata name,
         string calldata symbol,
         uint256 liquidationRewardLimit,
-        uint256 liquidationRewardFactor
+        uint256 liquidationRewardFactor,
+        uint256 boostLimit,
+        uint256 boostFactor
     ) external initializer {
         __Ownable_init();
         __ERC20_init(name, symbol);
@@ -65,6 +67,8 @@ contract NativeTokenVault is
         _nativeToken = nativeToken;
         _liquidationRewardLimit = liquidationRewardLimit;
         _liquidationRewardFactor = liquidationRewardFactor;
+        _boostLimit = boostLimit;
+        _boostFactor = boostFactor;
     }
 
     function deposit(uint256 amount) external override nonReentrant {
@@ -210,6 +214,22 @@ contract NativeTokenVault is
         _liquidationRewardLimit = liquidationRewardLimit;
     }
 
+    function getBoostFactor() external view returns (uint256) {
+        return _boostFactor;
+    }
+
+    function setBoostFactor(uint256 boostFactor) external onlyOwner {
+        _boostFactor = boostFactor;
+    }
+
+    function getBoostLimit() external view returns (uint256) {
+        return _boostLimit;
+    }
+
+    function setBoostLimit(uint256 boostLimit) external onlyOwner {
+        _boostLimit = boostLimit;
+    }
+
     function getLiquidationReward(
         uint256 reserveTokenPrice,
         uint256 assetPrice,
@@ -269,17 +289,17 @@ contract NativeTokenVault is
         uint256 pricePrecision = ITokenOracle(_addressProvider.getTokenOracle())
             .getPricePrecision();
 
-        uint256 votesValue = (_collectionVotes[collection] * pricePrecision) /
-            nativeTokenETHPrice;
+        uint256 votesValue = (_collectionVotes[collection] *
+            pricePrecision**2) / nativeTokenETHPrice;
 
         if (userCollectionActiveLoansCount != 0) {
             boost =
-                (PercentageMath.PERCENTAGE_FACTOR * votesValue) /
-                (userCollectionActiveLoansCount * BOOST_RATIO);
+                (PercentageMath.PERCENTAGE_FACTOR * votesValue * _boostFactor) /
+                (userCollectionActiveLoansCount * pricePrecision);
 
             // Max Boost Cap
-            if (boost > MAX_BOOST) {
-                boost = MAX_BOOST;
+            if (boost > _boostLimit) {
+                boost = _boostLimit;
             }
         }
 

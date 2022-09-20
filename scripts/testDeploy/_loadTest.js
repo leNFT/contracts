@@ -195,8 +195,10 @@ let loadEnv = async function () {
     nativeToken.address,
     "veleNFT Token",
     "veLE",
-    "10000000000000000000", // 10 leNFT Reward Limit
-    1000 // Liquidation Reward Multiplying Factor
+    "1000000000000000000000", // 1000 leNFT Reward Limit
+    1000, // Liquidation Reward Multiplying Factor
+    2000, //20% Boost Max Limit
+    5 //Boost Multiplying Factor
   );
   await initNativeTokenVaultTx.wait();
 

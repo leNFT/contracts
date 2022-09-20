@@ -135,8 +135,10 @@ async function main() {
       nativeToken.address,
       "veleNFT Token",
       "veLE",
-      "100000000000000000", // 0.1 leNFT Reward Limit
+      "1000000000000000000000", // 1000 leNFT Reward Limit
       1000, // Liquidation Reward Multiplying Factor
+      2000, //20% Boost Max Limit
+      5, //Boost Multiplying Factor
     ],
     { unsafeAllow: ["external-library-linking"] }
   );
