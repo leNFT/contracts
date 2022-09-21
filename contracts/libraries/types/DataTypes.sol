@@ -23,11 +23,11 @@ library DataTypes {
     /**
      * State change flow:
      * None -> Created -> Active -> Repaid -> Auction -> Defaulted
-     * None (Default Value): We need a default that is not 'Created' - this is the zero value
-     * Created: The loan data is stored, but not initiated yet.
-     * Active: The loan has been initialized, funds have been delivered to the borrower and the collateral is held.
-     * Repaid: The loan has been repaid, and the collateral has been returned to the borrower. This is a terminal state.
-     * Defaulted: The loan was delinquent and collateral claimed by the liquidator. This is a terminal state.
+     * 0 - None (Default Value): We need a default that is not 'Created' - this is the zero value
+     * 1 - Created: The loan data is stored, but not initiated yet.
+     * 2 - Active: The loan has been initialized, funds have been delivered to the borrower and the collateral is held.
+     * 3 - Repaid: The loan has been repaid, and the collateral has been returned to the borrower. This is a terminal state.
+     * 4 - Defaulted: The loan was delinquent and collateral claimed by the liquidator. This is a terminal state.
      */
     enum LoanState {
         None,

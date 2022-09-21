@@ -197,8 +197,8 @@ let loadEnv = async function () {
     "veLE",
     "1000000000000000000000", // 1000 leNFT Reward Limit
     1000, // Liquidation Reward Multiplying Factor
-    2000, //20% Boost Max Limit
-    50 //Boost Dividing Factor
+    1500, //15% Boost Limit
+    15 //Boost Dividing Factor
   );
   await initNativeTokenVaultTx.wait();
 
@@ -240,7 +240,7 @@ let loadEnv = async function () {
   //Add a price to the native token using the token oracle
   const setNativeTokenPriceTx = await tokenOracle.setTokenETHPrice(
     nativeToken.address,
-    "10000000000000000" //0.01 nativeToken/ETH
+    "100000000000000" //0.0001 nativeToken/ETH
   );
   await setNativeTokenPriceTx.wait();
 

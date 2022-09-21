@@ -66,20 +66,28 @@ describe("Boost", function () {
   });
   it("Vote for a collection", async function () {
     // Mint 100 native tokens to the callers address
-    const mintNativeTokenTx = await nativeToken.mint(owner.address, 100);
+    const mintNativeTokenTx = await nativeToken.mint(
+      owner.address,
+      "100000000000000000000"
+    );
     await mintNativeTokenTx.wait();
 
     // Deposit native token into the vault
     const approveNativeTokenTx = await nativeToken.approve(
       nativeTokenVault.address,
-      100
+      "100000000000000000000"
     );
     await approveNativeTokenTx.wait();
-    const depositNativeTokenTx = await nativeTokenVault.deposit(100);
+    const depositNativeTokenTx = await nativeTokenVault.deposit(
+      "100000000000000000000"
+    );
     await depositNativeTokenTx.wait();
 
     //Vote for the test collection with the deposited tokens
-    const voteTx = await nativeTokenVault.vote(100, testNFT.address);
+    const voteTx = await nativeTokenVault.vote(
+      "100000000000000000000",
+      testNFT.address
+    );
     await voteTx.wait();
 
     //Find if the vote count has changed accordingly
@@ -88,7 +96,7 @@ describe("Boost", function () {
         owner.address,
         testNFT.address
       )
-    ).to.equal(100);
+    ).to.equal("100000000000000000000");
 
     //Find if the collection ltv boost has changed accordingly
     expect(
@@ -96,6 +104,6 @@ describe("Boost", function () {
         owner.address,
         testNFT.address
       )
-    ).to.equal(200);
+    ).to.equal(3);
   });
 });

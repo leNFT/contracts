@@ -280,7 +280,7 @@ contract NativeTokenVault is
 
         uint256 userCollectionActiveLoansCount = ILoanCenter(
             _addressProvider.getLoanCenter()
-        ).getUserCollectionActiveLoansCount(user, collection);
+        ).getUserCollectionActiveLoansCount(user, collection) + 1;
 
         uint256 nativeTokenETHPrice = ITokenOracle(
             _addressProvider.getTokenOracle()
@@ -289,19 +289,18 @@ contract NativeTokenVault is
         uint256 pricePrecision = ITokenOracle(_addressProvider.getTokenOracle())
             .getPricePrecision();
 
-        uint256 votesValue = _collectionVotes[collection] * nativeTokenETHPrice;
+        uint256 votesValue = (_collectionVotes[collection] *
+            nativeTokenETHPrice) / pricePrecision;
 
-        if (userCollectionActiveLoansCount != 0) {
-            boost =
-                (PercentageMath.PERCENTAGE_FACTOR * votesValue) /
-                (userCollectionActiveLoansCount *
-                    pricePrecision *
-                    _boostFactor);
+        console.log("votesValue", votesValue);
 
-            // Max Boost Cap
-            if (boost > _boostLimit) {
-                boost = _boostLimit;
-            }
+        boost =
+            (PercentageMath.PERCENTAGE_FACTOR * votesValue) /
+            (userCollectionActiveLoansCount * pricePrecision * _boostFactor);
+
+        // Max Boost Cap
+        if (boost > _boostLimit) {
+            boost = _boostLimit;
         }
 
         return boost;

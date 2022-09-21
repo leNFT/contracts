@@ -137,8 +137,8 @@ async function main() {
       "veLE",
       "1000000000000000000000", // 1000 leNFT Reward Limit
       1000, // Liquidation Reward Multiplying Factor
-      2000, //20% Boost Max Limit
-      80, //Boost Dividing Factor
+      1500, //15% Boost Limit
+      15, //Boost Dividing Factor
     ],
     { unsafeAllow: ["external-library-linking"] }
   );
@@ -178,7 +178,7 @@ async function main() {
     "100000000000000" //0.0001 nativeToken/ETH
   );
   await setNativeTokenPriceTx.wait();
-  console.log("Set Native Token / ETH to 100000000000000");
+  console.log("Set Native Token / ETH to 0.0001");
 
   //Set every address in the address provider
   const setMarketAddressTx = await addressesProvider.setMarketAddress(
