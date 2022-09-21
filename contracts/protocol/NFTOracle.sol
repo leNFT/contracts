@@ -43,21 +43,12 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
 
     // Get the max collaterization for a certain collection and a certain user (includes boost) in ETH
     function getTokenMaxETHCollateral(
-        address user,
         address collection,
         uint256 tokenId,
+        uint256 voteCollaterizationBoost,
         bytes32 request,
         TrustusPacket calldata packet
     ) external view override returns (uint256) {
-        uint256 voteCollaterizationBoost = INativeTokenVault(
-            _addressProvider.getNativeTokenVault()
-        ).getVoteCollateralizationBoost(user, collection);
-
-        console.log(
-            "nft oracle: voteCollaterizationBoost",
-            voteCollaterizationBoost
-        );
-
         uint256 tokenPrice = _getTokenETHPrice(
             collection,
             tokenId,

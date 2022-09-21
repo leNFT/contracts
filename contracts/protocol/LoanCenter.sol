@@ -52,6 +52,7 @@ contract LoanCenter is
         address borrower,
         address reserve,
         uint256 amount,
+        uint256 boost,
         address nftAddress,
         uint256 nftTokenID,
         uint256 borrowRate
@@ -62,6 +63,7 @@ contract LoanCenter is
             borrower,
             reserve,
             amount,
+            boost,
             nftAddress,
             nftTokenID,
             borrowRate
@@ -167,6 +169,15 @@ contract LoanCenter is
         returns (address)
     {
         return _loans[loanId].nftAsset;
+    }
+
+    function getLoanBoost(uint256 loanId)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return _loans[loanId].boost;
     }
 
     function onERC721Received(

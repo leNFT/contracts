@@ -46,6 +46,8 @@ library DataTypes {
         address borrower;
         //borrowed amount
         uint256 amount;
+        //ltv boost gotten through vote staking
+        uint256 boost;
         //address of nft asset token
         address nftAsset;
         //the id of nft token

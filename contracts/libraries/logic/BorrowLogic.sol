@@ -7,6 +7,7 @@ import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
+import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {Trustus} from "../../protocol/Trustus.sol";
@@ -44,14 +45,21 @@ library BorrowLogic {
             nftTokenID
         );
 
-        // Get the borrow rate index and create the loan
+        // Get the borrow rate index
         uint256 borrowRate = IReserve(reserveAddress).getBorrowRate();
 
+        // Get boost for this user and collection
+        uint256 boost = INativeTokenVault(
+            addressesProvider.getNativeTokenVault()
+        ).getVoteCollateralizationBoost(msg.sender, nftAddress);
+
+        // Create the loan
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
         uint256 loanId = loanCenter.createLoan(
             msg.sender,
             reserveAddress,
             amount,
+            boost,
             nftAddress,
             nftTokenID,
             borrowRate

@@ -17,9 +17,9 @@ interface INFTOracle {
     ) external view returns (uint256);
 
     function getTokenMaxETHCollateral(
-        address user,
         address collection,
         uint256 tokenId,
+        uint256 voteCollaterizationBoost,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external view returns (uint256);

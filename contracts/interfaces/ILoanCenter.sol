@@ -8,6 +8,7 @@ interface ILoanCenter {
         address borrower,
         address reserve,
         uint256 amount,
+        uint256 boost,
         address nftAddress,
         uint256 nftTokenID,
         uint256 borrowRate
@@ -46,4 +47,6 @@ interface ILoanCenter {
         external
         view
         returns (address);
+
+    function getLoanBoost(uint256 loanId) external view returns (uint256);
 }

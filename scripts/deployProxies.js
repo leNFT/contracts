@@ -138,7 +138,7 @@ async function main() {
       "1000000000000000000000", // 1000 leNFT Reward Limit
       1000, // Liquidation Reward Multiplying Factor
       2000, //20% Boost Max Limit
-      50, //Boost Dividing Factor
+      80, //Boost Dividing Factor
     ],
     { unsafeAllow: ["external-library-linking"] }
   );

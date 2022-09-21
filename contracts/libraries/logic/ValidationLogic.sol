@@ -113,13 +113,18 @@ library ValidationLogic {
             "NFT COllection is not supported"
         );
 
+        // Get boost for this user and collection
+        uint256 boost = INativeTokenVault(
+            addressesProvider.getNativeTokenVault()
+        ).getVoteCollateralizationBoost(msg.sender, nftAddress);
+
         // Check if borrow amount exceeds allowed amount
         require(
             amount <=
                 (nftOracle.getTokenMaxETHCollateral(
-                    msg.sender,
                     nftAddress,
                     nftTokenID,
+                    boost,
                     request,
                     packet
                 ) * pricePrecision) /
@@ -194,9 +199,9 @@ library ValidationLogic {
         require(
             (INFTOracle(addressesProvider.getNFTOracle())
                 .getTokenMaxETHCollateral(
-                    msg.sender,
                     loanData.nftAsset,
                     loanData.nftTokenId,
+                    loanData.boost,
                     request,
                     packet
                 ) * pricePrecision) /

@@ -20,6 +20,7 @@ describe("NFT Oracle", function () {
     const maxCollateral = await nftOracle.getTokenMaxETHCollateral(
       testNFT.address,
       0,
+      0,
       request,
       serverPacket
     );
