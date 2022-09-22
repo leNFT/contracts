@@ -45,6 +45,11 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         address collection,
         uint256 maxCollaterization
     ) external onlyOwner {
+        require(
+            _collections[collection].supported == false,
+            "Collection is already supported"
+        );
+
         _collections[collection].init();
         //Set the max collaterization
         _collections[collection].setMaxCollaterization(maxCollaterization);
@@ -64,6 +69,11 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
     }
 
     function removeSupportedCollection(address collection) external onlyOwner {
+        require(
+            _collections[collection].supported == true,
+            "Collection is not supported"
+        );
+
         delete _collections[collection];
     }
 

@@ -12,6 +12,7 @@ import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC7
 import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {Trustus} from "../protocol/Trustus.sol";
+import "hardhat/console.sol";
 
 contract LoanCenter is
     Initializable,
@@ -126,6 +127,11 @@ contract LoanCenter is
         override
         returns (DataTypes.LoanData memory)
     {
+        require(
+            _loans[loanId].state != DataTypes.LoanState.None,
+            "Loan does not exist."
+        );
+
         return _loans[loanId];
     }
 
@@ -135,6 +141,11 @@ contract LoanCenter is
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external view override returns (uint256) {
+        require(
+            _loans[loanId].state != DataTypes.LoanState.None,
+            "Loan does not exist."
+        );
+
         uint256 tokenPrice = INFTOracle(_addressProvider.getNFTOracle())
             .getTokenETHPrice(
                 _loans[loanId].nftAsset,
@@ -165,6 +176,11 @@ contract LoanCenter is
         override
         returns (uint256)
     {
+        require(
+            _loans[loanId].state != DataTypes.LoanState.None,
+            "Loan does not exist."
+        );
+
         return
             _loans[loanId].getInterest(block.timestamp) + _loans[loanId].amount;
     }
@@ -175,6 +191,11 @@ contract LoanCenter is
         override
         returns (uint256)
     {
+        require(
+            _loans[loanId].state != DataTypes.LoanState.None,
+            "Loan does not exist."
+        );
+
         return _loans[loanId].getInterest(block.timestamp);
     }
 
@@ -184,6 +205,11 @@ contract LoanCenter is
         override
         returns (uint256)
     {
+        require(
+            _loans[loanId].state != DataTypes.LoanState.None,
+            "Loan does not exist."
+        );
+
         return _loans[loanId].nftTokenId;
     }
 
@@ -193,6 +219,11 @@ contract LoanCenter is
         override
         returns (address)
     {
+        require(
+            _loans[loanId].state != DataTypes.LoanState.None,
+            "Loan does not exist."
+        );
+
         return _loans[loanId].nftAsset;
     }
 
@@ -202,6 +233,11 @@ contract LoanCenter is
         override
         returns (uint256)
     {
+        require(
+            _loans[loanId].state != DataTypes.LoanState.None,
+            "Loan does not exist."
+        );
+
         return _loans[loanId].boost;
     }
 
