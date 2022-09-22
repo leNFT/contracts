@@ -104,7 +104,6 @@ library ValidationLogic {
         ITokenOracle tokenOracle = ITokenOracle(
             addressesProvider.getTokenOracle()
         );
-        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
         uint256 assetETHPrice = tokenOracle.getTokenETHPrice(asset);
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
