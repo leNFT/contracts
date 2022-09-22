@@ -104,7 +104,8 @@ library ValidationLogic {
         ITokenOracle tokenOracle = ITokenOracle(
             addressesProvider.getTokenOracle()
         );
-        uint256 tokenETHPrice = tokenOracle.getTokenETHPrice(asset);
+        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
+        uint256 assetETHPrice = tokenOracle.getTokenETHPrice(asset);
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         // Check if nft collection is supported
@@ -118,17 +119,23 @@ library ValidationLogic {
             addressesProvider.getNativeTokenVault()
         ).getVoteCollateralizationBoost(msg.sender, nftAddress);
 
+        // Get maxLTV for this collection
+        uint256 maxLTV = nftOracle.getCollectionMaxCollaterization(nftAddress);
+
+        // Get asset ETH price
+        uint256 collateralETHPrice = nftOracle.getTokenETHPrice(
+            nftAddress,
+            nftTokenID,
+            request,
+            packet
+        );
+
         // Check if borrow amount exceeds allowed amount
         require(
             amount <=
-                (nftOracle.getTokenMaxETHCollateral(
-                    nftAddress,
-                    nftTokenID,
-                    boost,
-                    request,
-                    packet
-                ) * pricePrecision) /
-                    tokenETHPrice,
+                (PercentageMath.percentMul(collateralETHPrice, maxLTV + boost) *
+                    pricePrecision) /
+                    assetETHPrice,
             "Amount exceeds allowed by collateral"
         );
 
@@ -197,14 +204,9 @@ library ValidationLogic {
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         require(
-            (INFTOracle(addressesProvider.getNFTOracle())
-                .getTokenMaxETHCollateral(
-                    loanData.nftAsset,
-                    loanData.nftTokenId,
-                    loanData.boost,
-                    request,
-                    packet
-                ) * pricePrecision) /
+            (ILoanCenter(addressesProvider.getLoanCenter())
+                .getLoanMaxETHCollateral(loanId, request, packet) *
+                pricePrecision) /
                 baseTokenETHPrice <
                 ILoanCenter(addressesProvider.getLoanCenter()).getLoanDebt(
                     loanId

@@ -3,6 +3,7 @@ pragma solidity 0.8.15;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
+import {INFTOracle} from "../interfaces/INFTOracle.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
@@ -10,6 +11,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {Trustus} from "../protocol/Trustus.sol";
 
 contract LoanCenter is
     Initializable,
@@ -125,6 +127,27 @@ contract LoanCenter is
         returns (DataTypes.LoanData memory)
     {
         return _loans[loanId];
+    }
+
+    // Get the max collaterization for a certain collection and a certain user (includes boost) in ETH
+    function getLoanMaxETHCollateral(
+        uint256 loanId,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
+    ) external view override returns (uint256) {
+        uint256 tokenPrice = INFTOracle(_addressProvider.getNFTOracle())
+            .getTokenETHPrice(
+                _loans[loanId].nftAsset,
+                _loans[loanId].nftTokenId,
+                request,
+                packet
+            );
+
+        return
+            PercentageMath.percentMul(
+                tokenPrice,
+                _loans[loanId].maxLTV + _loans[loanId].boost
+            );
     }
 
     function getNFTLoanId(address nftAddress, uint256 nftTokenID)

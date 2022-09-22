@@ -41,29 +41,6 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         return _getTokenETHPrice(collection, tokenId, request, packet);
     }
 
-    // Get the max collaterization for a certain collection and a certain user (includes boost) in ETH
-    function getTokenMaxETHCollateral(
-        address collection,
-        uint256 tokenId,
-        uint256 voteCollaterizationBoost,
-        bytes32 request,
-        TrustusPacket calldata packet
-    ) external view override returns (uint256) {
-        uint256 tokenPrice = _getTokenETHPrice(
-            collection,
-            tokenId,
-            request,
-            packet
-        );
-
-        return
-            PercentageMath.percentMul(
-                tokenPrice,
-                _collections[collection].maxCollaterization +
-                    voteCollaterizationBoost
-            );
-    }
-
     function addSupportedCollection(
         address collection,
         uint256 maxCollaterization
