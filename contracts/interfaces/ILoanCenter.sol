@@ -8,6 +8,7 @@ interface ILoanCenter {
         address borrower,
         address reserve,
         uint256 amount,
+        uint256 maxLTV,
         uint256 boost,
         address nftAddress,
         uint256 nftTokenID,

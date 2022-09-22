@@ -38,21 +38,23 @@ library DataTypes {
     }
 
     struct LoanData {
-        //the id of the loan
+        // the id of the loan
         uint256 loanId;
-        //the current state of the loan
+        // the current state of the loan
         LoanState state;
-        //address of borrower
+        // address of borrower
         address borrower;
-        //borrowed amount
+        // borrowed amount
         uint256 amount;
-        //ltv boost gotten through vote staking
+        // maxLTV
+        uint256 maxLTV;
+        // ltv boost gotten through vote staking
         uint256 boost;
-        //address of nft asset token
+        // address of nft asset token
         address nftAsset;
-        //the id of nft token
+        // the id of nft token
         uint256 nftTokenId;
-        //address of reserve associated with loan
+        // address of reserve associated with loan
         address reserve;
         // interest rate at which the loan was written
         uint256 borrowRate;

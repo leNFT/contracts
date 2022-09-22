@@ -16,6 +16,7 @@ library LoanLogic {
         address borrower,
         address reserve,
         uint256 amount,
+        uint256 maxLTV,
         uint256 boost,
         address nftAsset,
         uint256 nftTokenId,
@@ -25,6 +26,7 @@ library LoanLogic {
         loandata.state = DataTypes.LoanState.Created;
         loandata.borrower = borrower;
         loandata.amount = amount;
+        loandata.maxLTV = maxLTV;
         loandata.boost = boost;
         loandata.nftAsset = nftAsset;
         loandata.nftTokenId = nftTokenId;

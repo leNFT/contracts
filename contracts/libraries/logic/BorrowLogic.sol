@@ -4,6 +4,7 @@ pragma solidity 0.8.15;
 import {DataTypes} from "../types/DataTypes.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
@@ -48,6 +49,10 @@ library BorrowLogic {
         // Get the borrow rate index
         uint256 borrowRate = IReserve(reserveAddress).getBorrowRate();
 
+        // Get max LTV for this collection
+        uint256 maxLTV = INFTOracle(addressesProvider.getNFTOracle())
+            .getCollectionMaxCollaterization(nftAddress);
+
         // Get boost for this user and collection
         uint256 boost = INativeTokenVault(
             addressesProvider.getNativeTokenVault()
@@ -59,6 +64,7 @@ library BorrowLogic {
             msg.sender,
             reserveAddress,
             amount,
+            maxLTV,
             boost,
             nftAddress,
             nftTokenID,
