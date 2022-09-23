@@ -261,6 +261,12 @@ contract NativeTokenVault is
         if (reward > _liquidationRewardLimit) {
             reward = _liquidationRewardLimit;
         }
+        uint256 rewardVaultBalance = IERC20Upgradeable(_nativeToken).balanceOf(
+            address(this)
+        );
+        if (reward > rewardVaultBalance) {
+            reward = rewardVaultBalance;
+        }
 
         return reward;
     }
