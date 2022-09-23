@@ -320,6 +320,13 @@ library ValidationLogic {
             "NFT COllection is not supported"
         );
 
+        // Check if user has no active loans in voted collection
+        require(
+            ILoanCenter(addressesProvider.getLoanCenter())
+                .getUserCollectionActiveLoansCount(msg.sender, collection) == 0,
+            "User has active loans in collection"
+        );
+
         // Check if the input amount is bigger than 0
         require(amount > 0, "Remove vote amount must be bigger than 0");
 
