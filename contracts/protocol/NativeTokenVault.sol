@@ -243,14 +243,16 @@ contract NativeTokenVault is
             .getPricePrecision();
         if (liquidationPrice < assetPrice) {
             reward =
-                (_liquidationRewardFactor * (pricePrecision**4)) /
-                (reserveTokenPrice *
+                (assetPrice * (pricePrecision**3)) /
+                (_liquidationRewardFactor *
+                    reserveTokenPrice *
                     nativeTokenPrice *
                     ((2 * assetPrice) - liquidationPrice));
         } else {
             reward =
-                (_liquidationRewardFactor * (pricePrecision**4)) /
-                (reserveTokenPrice *
+                (liquidationPrice * (pricePrecision**3)) /
+                (_liquidationRewardFactor *
+                    reserveTokenPrice *
                     nativeTokenPrice *
                     ((2 * liquidationPrice) - assetPrice));
         }
