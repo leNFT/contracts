@@ -322,8 +322,10 @@ library ValidationLogic {
 
         // Check if user has no active loans in voted collection
         require(
-            ILoanCenter(addressesProvider.getLoanCenter())
-                .getUserCollectionActiveLoansCount(msg.sender, collection) == 0,
+            ILoanCenter(addressesProvider.getLoanCenter()).getActiveLoansCount(
+                msg.sender,
+                collection
+            ) == 0,
             "User has active loans in collection"
         );
 

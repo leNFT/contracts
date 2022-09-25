@@ -288,7 +288,7 @@ contract NativeTokenVault is
 
         uint256 userCollectionActiveLoansCount = ILoanCenter(
             _addressProvider.getLoanCenter()
-        ).getUserCollectionActiveLoansCount(user, collection) + 1;
+        ).getActiveLoansCount(user, collection) + 1;
 
         uint256 nativeTokenETHPrice = ITokenOracle(
             _addressProvider.getTokenOracle()
