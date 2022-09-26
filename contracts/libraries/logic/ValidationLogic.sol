@@ -11,7 +11,6 @@ import {IMarket} from "../../interfaces/IMarket.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
-import {GenericLogic} from "./GenericLogic.sol";
 import {WithdrawRequestLogic} from "./WithdrawRequestLogic.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -185,10 +184,9 @@ library ValidationLogic {
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external view {
-        //Require that the loan exists
-        DataTypes.LoanData memory loanData = ILoanCenter(
-            addressesProvider.getLoanCenter()
-        ).getLoan(loanId);
+        //Require the loan exists
+        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
+        DataTypes.LoanData memory loanData = loanCenter.getLoan(loanId);
         require(
             loanData.state != DataTypes.LoanState.None,
             "Loan does not exist"
@@ -203,18 +201,14 @@ library ValidationLogic {
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         require(
-            (ILoanCenter(addressesProvider.getLoanCenter())
-                .getLoanMaxETHCollateral(loanId, request, packet) *
+            (loanCenter.getLoanMaxETHCollateral(loanId, request, packet) *
                 pricePrecision) /
                 baseTokenETHPrice <
-                ILoanCenter(addressesProvider.getLoanCenter()).getLoanDebt(
-                    loanId
-                ),
+                loanCenter.getLoanDebt(loanId),
             "Collateral / Debt loan relation does not allow for liquidation."
         );
 
-        (uint256 liquidationPrice, ) = GenericLogic.getLoanLiquidationPrice(
-            addressesProvider,
+        (uint256 liquidationPrice, ) = loanCenter.getLoanLiquidationPrice(
             loanId,
             request,
             packet

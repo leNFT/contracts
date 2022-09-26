@@ -26,17 +26,8 @@ async function main() {
   They will then be linked to the contracts that use them
   ******************************************************************/
 
-  // Deploy generic logic lib
-  GenericLogicLib = await ethers.getContractFactory("GenericLogic");
-  genericLogicLib = await GenericLogicLib.deploy();
-  console.log("Generic Logic Lib Address:", genericLogicLib.address);
-
   // Deploy validation logic lib
-  ValidationLogicLib = await ethers.getContractFactory("ValidationLogic", {
-    libraries: {
-      GenericLogic: genericLogicLib.address,
-    },
-  });
+  ValidationLogicLib = await ethers.getContractFactory("ValidationLogic");
   validationLogicLib = await ValidationLogicLib.deploy();
   console.log("Validation Logic Lib Address:", validationLogicLib.address);
 
@@ -62,7 +53,6 @@ async function main() {
   LiquidationLogicLib = await ethers.getContractFactory("LiquidationLogic", {
     libraries: {
       ValidationLogic: validationLogicLib.address,
-      GenericLogic: genericLogicLib.address,
     },
   });
   liquidationLogicLib = await LiquidationLogicLib.deploy();
@@ -86,7 +76,6 @@ async function main() {
       BorrowLogic: borrowLogicLib.address,
       LiquidationLogic: liquidationLogicLib.address,
       SupplyLogic: supplyLogicLib.address,
-      GenericLogic: genericLogicLib.address,
     },
   });
   const market = await upgrades.deployProxy(
@@ -135,10 +124,11 @@ async function main() {
       nativeToken.address,
       "veleNFT Token",
       "veLE",
-      "2500000000000000000000", // 2500 leNFT Reward Limit
-      25, // Liquidation Reward Multiplying Factor
+      "25000000000000000000000", // 25000 leNFT Reward Limit
+      500, // Liquidation Reward Factor
+      12000, // Liquidation Reward Price Limit (120%)
       1500, //15% Boost Limit
-      15, //Boost Dividing Factor
+      15, //Boost Factor
     ],
     { unsafeAllow: ["external-library-linking"] }
   );

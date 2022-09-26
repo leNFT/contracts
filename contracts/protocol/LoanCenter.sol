@@ -5,8 +5,11 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
 import {INFTOracle} from "../interfaces/INFTOracle.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
+import {ITokenOracle} from "../interfaces/ITokenOracle.sol";
+import {IReserve} from "../interfaces/IReserve.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
+import {INativeTokenVault} from "../interfaces/INativeTokenVault.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
@@ -160,6 +163,68 @@ contract LoanCenter is
             );
     }
 
+    /// @notice Get the price a liquidator would have to pay to liquidate a loan and the rewards associated
+    /// @param loanId The ID of the loan to be liquidated
+    /// @return price The price of the liquidation in borrowed asset token
+    /// @return reward The rewards given to the liquidator in leNFT tokens
+    function getLoanLiquidationPrice(
+        uint256 loanId,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
+    ) external view returns (uint256, uint256) {
+        // Get the address of this asset's reserve
+        address reserveAsset = IReserve(_loans[loanId].reserve).getAsset();
+
+        // Get the price of the collateral asset in the reserve asset. Ex: Punk #42 = 5 USDC
+        ITokenOracle tokenOracle = ITokenOracle(
+            _addressProvider.getTokenOracle()
+        );
+        uint256 reserveAssetETHPrice = tokenOracle.getTokenETHPrice(
+            reserveAsset
+        );
+        uint256 pricePrecision = tokenOracle.getPricePrecision();
+        uint256 tokenPrice = (
+            (INFTOracle(_addressProvider.getNFTOracle()).getTokenETHPrice(
+                _loans[loanId].nftAsset,
+                _loans[loanId].nftTokenId,
+                request,
+                packet
+            ) * pricePrecision)
+        ) / reserveAssetETHPrice;
+
+        // Threshold in which the liquidation price starts being equal to debt
+        uint256 liquidationThreshold = PercentageMath.percentMul(
+            tokenPrice,
+            PercentageMath.PERCENTAGE_FACTOR -
+                IReserve(_loans[loanId].reserve).getLiquidationPenalty() +
+                IReserve(_loans[loanId].reserve).getLiquidationFee()
+        );
+        uint256 loanDebt = _getLoanDebt(loanId);
+        console.log("liquidationThreshold", liquidationThreshold);
+        console.log("loanDebt", loanDebt);
+
+        // Find the cost of liquidation
+        uint256 liquidationPrice;
+        if (loanDebt < liquidationThreshold) {
+            liquidationPrice = liquidationThreshold;
+        } else {
+            liquidationPrice = loanDebt;
+        }
+
+        console.log("liquidationPrice", liquidationPrice);
+
+        // Find the liquidation reward
+        uint256 liquidationReward = INativeTokenVault(
+            _addressProvider.getNativeTokenVault()
+        ).getLiquidationReward(
+                reserveAssetETHPrice,
+                tokenPrice,
+                liquidationPrice
+            );
+
+        return (liquidationPrice, liquidationReward);
+    }
+
     function getNFTLoanId(address nftAddress, uint256 nftTokenID)
         external
         view
@@ -169,8 +234,13 @@ contract LoanCenter is
         return _nftToLoanId[nftAddress][nftTokenID];
     }
 
+    function _getLoanDebt(uint256 loanId) internal view returns (uint256) {
+        return
+            _loans[loanId].getInterest(block.timestamp) + _loans[loanId].amount;
+    }
+
     function getLoanDebt(uint256 loanId)
-        external
+        public
         view
         override
         returns (uint256)
@@ -180,8 +250,7 @@ contract LoanCenter is
             "Loan does not exist."
         );
 
-        return
-            _loans[loanId].getInterest(block.timestamp) + _loans[loanId].amount;
+        return _getLoanDebt(loanId);
     }
 
     function getLoanInterest(uint256 loanId)

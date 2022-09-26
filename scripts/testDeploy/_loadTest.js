@@ -6,13 +6,7 @@ let loadEnv = async function () {
   [owner, addr1, addr2] = await ethers.getSigners();
 
   //Deploy libraries
-  GenericLogicLib = await ethers.getContractFactory("GenericLogic");
-  genericLogicLib = await GenericLogicLib.deploy();
-  ValidationLogicLib = await ethers.getContractFactory("ValidationLogic", {
-    libraries: {
-      GenericLogic: genericLogicLib.address,
-    },
-  });
+  ValidationLogicLib = await ethers.getContractFactory("ValidationLogic");
   validationLogicLib = await ValidationLogicLib.deploy();
   console.log("Validation Logic Lib Address:", validationLogicLib.address);
   SupplyLogicLib = await ethers.getContractFactory("SupplyLogic", {
@@ -32,7 +26,6 @@ let loadEnv = async function () {
   LiquidationLogicLib = await ethers.getContractFactory("LiquidationLogic", {
     libraries: {
       ValidationLogic: validationLogicLib.address,
-      GenericLogic: genericLogicLib.address,
     },
   });
   liquidationLogicLib = await LiquidationLogicLib.deploy();
@@ -60,7 +53,6 @@ let loadEnv = async function () {
       BorrowLogic: borrowLogicLib.address,
       LiquidationLogic: liquidationLogicLib.address,
       SupplyLogic: supplyLogicLib.address,
-      GenericLogic: genericLogicLib.address,
     },
   });
   market = await Market.deploy();
@@ -195,10 +187,11 @@ let loadEnv = async function () {
     nativeToken.address,
     "veleNFT Token",
     "veLE",
-    "2500000000000000000000", // 2500 leNFT Reward Limit
-    25, // Liquidation Reward Multiplying Factor
+    "25000000000000000000000", // 25000 leNFT Reward Limit
+    500, // Liquidation Reward Factor
+    12000, // Liquidation Reward Price Limit (120%)
     1500, //15% Boost Limit
-    15 //Boost Dividing Factor
+    15 //Boost Factor
   );
   await initNativeTokenVaultTx.wait();
 

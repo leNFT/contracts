@@ -4,7 +4,6 @@ pragma solidity 0.8.15;
 import {DataTypes} from "../types/DataTypes.sol";
 import {PercentageMath} from "../math/PercentageMath.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
-import {GenericLogic} from "./GenericLogic.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
@@ -44,13 +43,9 @@ library LiquidationLogic {
         address reserveAsset = IReserve(loanData.reserve).getAsset();
 
         // Find the liquidation price
-        (uint256 liquidationPrice, uint256 liquidationReward) = GenericLogic
-            .getLoanLiquidationPrice(
-                addressesProvider,
-                loanId,
-                request,
-                packet
-            );
+        (uint256 liquidationPrice, uint256 liquidationReward) = ILoanCenter(
+            addressesProvider.getLoanCenter()
+        ).getLoanLiquidationPrice(loanId, request, packet);
 
         console.log("liquidationPrice", liquidationPrice);
         console.log("liquidationReward", liquidationReward);
