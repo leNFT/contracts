@@ -34,7 +34,6 @@ async function main() {
       BorrowLogic: addresses.BorrowLogicLib,
       LiquidationLogic: addresses.LiquidationLogicLib,
       SupplyLogic: addresses.SupplyLogicLib,
-      GenericLogic: addresses.GenericLogicLib,
     },
   });
   const market = Market.attach(addresses.Market);
