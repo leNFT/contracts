@@ -264,11 +264,13 @@ contract NativeTokenVault is
         ) * pricePrecision;
         if (liquidationPrice < rewardsPriceLimit) {
             reward =
-                (liquidationPrice * pricePrecision**2) /
+                (liquidationPrice * pricePrecision**3) /
                 (reserveTokenPrice *
                     nativeTokenPrice *
                     _liquidationRewardFactor);
         }
+
+        console.log("_liquidationRewardFactor", _liquidationRewardFactor);
 
         // Set the maximum amount for a liquidation reward
         if (reward > _maxLiquidationReward) {
@@ -317,7 +319,7 @@ contract NativeTokenVault is
 
         boost =
             (PercentageMath.PERCENTAGE_FACTOR * votesValue) /
-            (userCollectionActiveLoansCount * pricePrecision * _boostFactor);
+            (userCollectionActiveLoansCount * _boostFactor);
 
         // Max Boost Cap
         if (boost > _boostLimit) {
