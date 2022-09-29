@@ -26,6 +26,8 @@ contract NativeToken is
     uint256 internal _rewardsPeriod;
     uint256 internal _maxPeriods;
 
+    event DistributeRewards(uint256 _amount);
+
     function initialize(
         IAddressesProvider addressProvider,
         string calldata name,
@@ -120,10 +122,13 @@ contract NativeToken is
             "Rewards period is over"
         );
 
-        _safeMint(_addressProvider.getNativeTokenVault(), getRewards());
+        uint256 amount = getRewards();
+        _safeMint(_addressProvider.getNativeTokenVault(), amount);
 
         // Update last rewards tracker
         _lastRewardsTimestamp = block.timestamp;
+
+        emit DistributeRewards(amount);
     }
 
     function getDevRewards() public view returns (uint256) {

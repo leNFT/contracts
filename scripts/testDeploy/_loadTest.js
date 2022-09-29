@@ -182,8 +182,8 @@ let loadEnv = async function () {
     "15000000000000000000000000", // 15M Dev Tokens
     "63113851", // 2-year dev vesting
     "604800", // 7-day period between vault rewards
-    "350", // Limit number of periods
-    "280000000000000000000000" // Rewards Factor
+    "312", // Limit number of periods
+    "283000000000000000000000" // Rewards Factor
   );
   await initNativeTokenTx.wait();
 
