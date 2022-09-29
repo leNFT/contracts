@@ -117,10 +117,10 @@ async function main() {
     "100000000000000000000000000", //100M Max Cap
     "31556926", //Epoch duration is 1 year
     devAddress,
-    "15000000000000000000000000", // 15% Dev Tokens
-    "94670777", // 3-year dev vesting
+    "15000000000000000000000000", // 15M Dev Tokens
+    "63113851", // 2-year dev vesting
     "604800", // 7-day period between vault rewards
-    "138000", // Rewards for first epoch
+    "138000000000000000000000", // Rewards for first epoch
   ]);
   console.log("Native Token Proxy Address:", nativeToken.address);
 

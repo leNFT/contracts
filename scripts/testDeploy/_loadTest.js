@@ -178,12 +178,12 @@ let loadEnv = async function () {
     "leNFT Token",
     "LE",
     "100000000000000000000000000", //100M Max Cap
-    "31556926", //Epoch duration is 1 year
     owner.address,
-    "15000000000000000000000000", // 15% Dev Tokens
-    "94670777", // 3-year dev vesting
+    "15000000000000000000000000", // 15M Dev Tokens
+    "63113851", // 2-year dev vesting
     "604800", // 7-day period between vault rewards
-    "138000" // Rewards for first epoch
+    "350", // Limit number of periods
+    "280000000000000000000000" // Rewards Factor
   );
   await initNativeTokenTx.wait();
 
