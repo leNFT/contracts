@@ -68,14 +68,15 @@ contract Market is
     /// @param asset The address of the asset the be borrowed
     /// @param amount Amount of the asset to be borrowed
     /// @param nftAddress Address of the NFT collateral
-    /// @param nftTokenID Token id of the NFT collateral
+    /// @param nftTokenId Token id of the NFT collateral
     /// @param request ID of the collateral price request sent by the trusted server
     /// @param packet Signed collateral price request sent by the trusted server
     function borrow(
         address asset,
         uint256 amount,
         address nftAddress,
-        uint256 nftTokenID,
+        uint256 nftTokenId,
+        uint256 chargeNFTId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external override nonReentrant {
@@ -85,12 +86,13 @@ contract Market is
             asset,
             amount,
             nftAddress,
-            nftTokenID,
+            nftTokenId,
+            chargeNFTId,
             request,
             packet
         );
 
-        emit Borrow(msg.sender, asset, nftAddress, nftTokenID, amount);
+        emit Borrow(msg.sender, asset, nftAddress, nftTokenId, amount);
     }
 
     /// @notice Repay an an active loan

@@ -5,9 +5,11 @@ import {DataTypes} from "../types/DataTypes.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
+import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
+import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -21,6 +23,7 @@ library BorrowLogic {
         uint256 amount,
         address nftAddress,
         uint256 nftTokenID,
+        uint256 genesisNFTId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external returns (uint256) {
@@ -32,6 +35,7 @@ library BorrowLogic {
             amount,
             nftAddress,
             nftTokenID,
+            genesisNFTId,
             request,
             packet
         );
@@ -58,6 +62,16 @@ library BorrowLogic {
             addressesProvider.getNativeTokenVault()
         ).getVoteCollateralizationBoost(msg.sender, nftAddress);
 
+        // Get boost from genesis NFTs
+        IGenesisNFT genesisNFT = IGenesisNFT(addressesProvider.getGenesisNFT());
+        // If a genesis NFT was used with this loan
+        if (genesisNFTId != 0) {
+            boost += genesisNFT.getLTVBoost();
+
+            // Lock genesis NFT to this loan
+            genesisNFT.setActiveState(genesisNFTId, true);
+        }
+
         // Create the loan
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
         uint256 loanId = loanCenter.createLoan(
@@ -66,6 +80,7 @@ library BorrowLogic {
             amount,
             maxLTV,
             boost,
+            genesisNFTId,
             nftAddress,
             nftTokenID,
             borrowRate
@@ -109,6 +124,15 @@ library BorrowLogic {
         );
 
         ILoanCenter(addressesProvider.getLoanCenter()).repayLoan(loanId);
+
+        // Unlock Genesis NFT
+        if (loanData.genesisNFTId != 0) {
+            // Lock genesis NFT to this loan
+            IGenesisNFT(addressesProvider.getGenesisNFT()).setActiveState(
+                loanData.genesisNFTId,
+                false
+            );
+        }
 
         // Transfer the collateral back to the owner
         IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(

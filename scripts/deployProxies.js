@@ -13,6 +13,9 @@ async function main() {
   // If this script is run directly using `node` you may want to call compile
   // manually to make sure everything is compiled
   // await hre.run('compile');
+  let contractAddresses = require("../../lenft-interface/contractAddresses.json");
+  let chainID = hre.network.config.chainId;
+  let addresses = contractAddresses[chainID.toString(16)];
 
   var feeTreasuryAddress;
   if (hre.network.config.chainId == 1) {
@@ -147,6 +150,20 @@ async function main() {
   );
   console.log("Native Token Vault Proxy Address:", nativeTokenVault.address);
 
+  // Deploy and initialize Genesis NFT
+  const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
+  const genesisNFT = await upgrades.deployProxy(GenesisNFT, [
+    addressesProvider.address,
+    "leNFT Genesis",
+    "LNG",
+    "9999",
+    "300000000000000000",
+    addresses["WETH"].address,
+    "250",
+    owner.address,
+  ]);
+  console.log("Genesis NFT Proxy Address:", genesisNFT.address);
+
   /****************************************************************
   DEPLOY NON-PROXY CONTRACTS
   Deploy contracts that are not updatable
@@ -212,6 +229,10 @@ async function main() {
     nativeTokenVault.address
   );
   await setNativeTokenVaultTx.wait();
+  const setGenesisNFT = await addressesProvider.setGenesisNFT(
+    genesisNFT.address
+  );
+  await setGenesisNFT.wait();
   const setFeeTreasuryTx = await addressesProvider.setFeeTreasury(
     feeTreasuryAddress
   );

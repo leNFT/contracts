@@ -50,6 +50,10 @@ library DataTypes {
         uint256 maxLTV;
         // ltv boost gotten through vote staking
         uint256 boost;
+        // The boost given by the use of a genesis NFT
+        uint256 genesisNFTId;
+        // The boost given by the use of a genesis NFT
+        uint256 genesisNFTBoost;
         // address of nft asset token
         address nftAsset;
         // the id of nft token
@@ -60,5 +64,11 @@ library DataTypes {
         uint256 borrowRate;
         // timestamp of the initial creation of the loan
         uint256 initTimestamp;
+    }
+
+    // Mint details for the Genesis NFT mint
+    struct MintDetails {
+        uint256 timestamp;
+        uint256 locktime;
     }
 }

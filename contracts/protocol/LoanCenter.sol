@@ -59,8 +59,9 @@ contract LoanCenter is
         uint256 amount,
         uint256 maxLTV,
         uint256 boost,
+        uint256 genesisNFTId,
         address nftAddress,
-        uint256 nftTokenID,
+        uint256 nftTokenId,
         uint256 borrowRate
     ) external override onlyMarket returns (uint256) {
         // Create the loan and add it to the list
@@ -71,13 +72,14 @@ contract LoanCenter is
             amount,
             maxLTV,
             boost,
+            genesisNFTId,
             nftAddress,
-            nftTokenID,
+            nftTokenId,
             borrowRate
         );
 
         // Add NFT to loanId mapping
-        _nftToLoanId[nftAddress][nftTokenID] = _loansCount;
+        _nftToLoanId[nftAddress][nftTokenId] = _loansCount;
 
         _loansCount++;
 
@@ -225,13 +227,13 @@ contract LoanCenter is
         return (liquidationPrice, liquidationReward);
     }
 
-    function getNFTLoanId(address nftAddress, uint256 nftTokenID)
+    function getNFTLoanId(address nftAddress, uint256 nftTokenId)
         external
         view
         override
         returns (uint256)
     {
-        return _nftToLoanId[nftAddress][nftTokenID];
+        return _nftToLoanId[nftAddress][nftTokenId];
     }
 
     function _getLoanDebt(uint256 loanId) internal view returns (uint256) {
@@ -306,7 +308,7 @@ contract LoanCenter is
             "Loan does not exist."
         );
 
-        return _loans[loanId].boost;
+        return _loans[loanId].boost + _loans[loanId].genesisNFTBoost;
     }
 
     function onERC721Received(

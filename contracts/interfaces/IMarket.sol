@@ -29,6 +29,7 @@ interface IMarket {
         uint256 amount,
         address nftAddress,
         uint256 nftTokenID,
+        uint256 genesisNFTId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external;

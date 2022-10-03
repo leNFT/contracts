@@ -9,6 +9,7 @@ import {IInterestRate} from "../../interfaces/IInterestRate.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {IMarket} from "../../interfaces/IMarket.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
+import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
 import {WithdrawRequestLogic} from "./WithdrawRequestLogic.sol";
@@ -93,6 +94,7 @@ library ValidationLogic {
         uint256 amount,
         address nftAddress,
         uint256 nftTokenID,
+        uint256 genesisNFTId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external view {
@@ -116,6 +118,23 @@ library ValidationLogic {
         uint256 boost = INativeTokenVault(
             addressesProvider.getNativeTokenVault()
         ).getVoteCollateralizationBoost(msg.sender, nftAddress);
+
+        // Get boost from genesis NFTs
+        IGenesisNFT genesisNFT = IGenesisNFT(addressesProvider.getGenesisNFT());
+        if (genesisNFTId != 0) {
+            // Require owner is the borrower
+            require(
+                genesisNFT.ownerOf(genesisNFTId) == msg.sender,
+                "Caller is not owner of Genesis NFT"
+            );
+            //Require that the NFT is not being used
+            require(
+                genesisNFT.getActiveState(genesisNFTId) == false,
+                "Genesis NFT currently being used by another loan"
+            );
+
+            boost += genesisNFT.getLTVBoost();
+        }
 
         // Get maxLTV for this collection
         uint256 maxLTV = nftOracle.getCollectionMaxCollaterization(nftAddress);

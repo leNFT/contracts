@@ -104,6 +104,12 @@ let loadEnv = async function () {
   await debtToken.deployed();
   console.log("Debt Token Address:", debtToken.address);
 
+  // Deploy Genesis NFT
+  const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
+  genesisNFT = await GenesisNFT.deploy();
+  await genesisNFT.deployed();
+  console.log("Genesis NFT Address:", genesisNFT.address);
+
   // Initialize address provider and add every contract address
   const initAddressesProviderTx = await addressesProvider.initialize();
   await initAddressesProviderTx.wait();
@@ -135,6 +141,10 @@ let loadEnv = async function () {
     loanCenter.address
   );
   await setLoanCenterTx.wait();
+  const setGenesisNFT = await addressesProvider.setGenesisNFT(
+    genesisNFT.address
+  );
+  await setGenesisNFT.wait();
   feeTreasuryAddress = "0xa5C6eD5d801417c50f775099BA59C306d4034D4D";
   const setFeeTreasuryTx = await addressesProvider.setFeeTreasury(
     feeTreasuryAddress
@@ -200,6 +210,19 @@ let loadEnv = async function () {
     "15000000000000000000" // 15 Boost Factor
   );
   await initNativeTokenVaultTx.wait();
+
+  //Init Genesis NFT
+  const initGenesisNFTTx = await genesisNFT.initialize(
+    addressesProvider.address,
+    "leNFT Genesis",
+    "LNG",
+    "9999",
+    "300000000000000000",
+    "",
+    "250",
+    owner.address
+  );
+  await initGenesisNFTTx.wait();
 
   // Add reserve to market
   const addReserveTx = await market.addReserve(

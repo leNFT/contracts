@@ -11,8 +11,9 @@ interface ILoanCenter {
         uint256 amount,
         uint256 maxLTV,
         uint256 boost,
+        uint256 genesisNFTId,
         address nftAddress,
-        uint256 nftTokenID,
+        uint256 nftTokenId,
         uint256 borrowRate
     ) external returns (uint256);
 

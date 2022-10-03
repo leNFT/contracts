@@ -25,9 +25,9 @@ contract NativeTokenVault is
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
+    IAddressesProvider private _addressProvider;
     uint256 internal _boostFactor;
     uint256 internal _boostLimit;
-    IAddressesProvider private _addressProvider;
     address internal _nativeToken;
     uint256 internal _liquidationRewardFactor;
     uint256 internal _maxLiquidationReward;

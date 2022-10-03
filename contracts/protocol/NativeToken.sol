@@ -53,15 +53,15 @@ contract NativeToken is
         _rewardsFactor = rewardsFactor;
     }
 
-    function getCap() public view virtual returns (uint256) {
+    function getCap() public view returns (uint256) {
         return _cap;
     }
 
     function mint(address account, uint256 amount) external onlyOwner {
-        _safeMint(account, amount);
+        _mintTokens(account, amount);
     }
 
-    function _safeMint(address account, uint256 amount) internal {
+    function _mintTokens(address account, uint256 amount) internal {
         require(
             ERC20Upgradeable.totalSupply() + amount <= getCap(),
             "NativeToken: cap exceeded"
@@ -123,7 +123,7 @@ contract NativeToken is
         );
 
         uint256 amount = getRewards();
-        _safeMint(_addressProvider.getNativeTokenVault(), amount);
+        _mintTokens(_addressProvider.getNativeTokenVault(), amount);
 
         // Update last rewards tracker
         _lastRewardsTimestamp = block.timestamp;
@@ -152,7 +152,7 @@ contract NativeToken is
             getDevRewards() >= amount,
             "Amount bigger than allowed by vesting"
         );
-        _safeMint(_devAddress, amount);
+        _mintTokens(_devAddress, amount);
         _devWithdrawn += amount;
     }
 }

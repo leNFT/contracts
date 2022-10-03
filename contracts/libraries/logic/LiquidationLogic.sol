@@ -9,6 +9,7 @@ import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
+import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
 import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
@@ -117,6 +118,14 @@ library LiquidationLogic {
             msg.sender,
             loanData.nftTokenId
         );
+
+        // Unlock Genesis NFT
+        if (loanData.genesisNFTId != 0) {
+            IGenesisNFT(addressesProvider.getGenesisNFT()).setActiveState(
+                loanData.genesisNFTId,
+                false
+            );
+        }
 
         // Burn the token representing the debt
         IDebtToken(addressesProvider.getDebtToken()).burn(loanId);
