@@ -93,6 +93,11 @@ contract NativeToken is
         _rewardsPeriod = rewardsPeriod;
     }
 
+    function mintGenesisTokens(address receiver, uint256 amount) external {
+        require(msg.sender == _addressProvider.getGenesisNFT());
+        _mintTokens(receiver, amount);
+    }
+
     function getRewards() public view returns (uint256) {
         uint256 rewards = 0;
 

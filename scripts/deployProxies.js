@@ -137,7 +137,6 @@ async function main() {
     NativeTokenVault,
     [
       addressesProvider.address,
-      nativeToken.address,
       "veleNFT Token",
       "veLE",
       "25000000000000000000000", // 25000 leNFT Reward Limit
@@ -155,11 +154,13 @@ async function main() {
   const genesisNFT = await upgrades.deployProxy(GenesisNFT, [
     addressesProvider.address,
     "leNFT Genesis",
-    "LNG",
+    "LGEN",
     "9999",
     "300000000000000000",
     addresses["WETH"].address,
     "250",
+    20000, // Native Token Mint Factor
+    31556926, // Max locktime (1 year in s)
     owner.address,
   ]);
   console.log("Genesis NFT Proxy Address:", genesisNFT.address);
@@ -229,6 +230,10 @@ async function main() {
     nativeTokenVault.address
   );
   await setNativeTokenVaultTx.wait();
+  const setNativeTokenTx = await addressesProvider.setNativeToken(
+    nativeToken.address
+  );
+  await setNativeTokenTx.wait();
   const setGenesisNFT = await addressesProvider.setGenesisNFT(
     genesisNFT.address
   );

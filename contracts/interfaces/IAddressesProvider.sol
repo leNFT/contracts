@@ -14,6 +14,10 @@ interface IAddressesProvider {
 
     function getNativeTokenVault() external view returns (address);
 
+    function setNativeToken(address nativeToken) external;
+
+    function getNativeToken() external view returns (address);
+
     function setInterestRate(address interestRate) external;
 
     function getInterestRate() external view returns (address);

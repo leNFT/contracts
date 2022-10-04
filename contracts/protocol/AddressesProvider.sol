@@ -14,6 +14,7 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _tokenOracle;
     address private _interestRate;
     address private _nativeTokenVault;
+    address private _nativeToken;
     address private _genesisNFT;
 
     function initialize() external initializer {
@@ -38,6 +39,14 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
         onlyOwner
     {
         _nativeTokenVault = nativeTokenVault;
+    }
+
+    function getNativeToken() external view override returns (address) {
+        return _nativeToken;
+    }
+
+    function setNativeToken(address nativeToken) external override onlyOwner {
+        _nativeToken = nativeToken;
     }
 
     function getNativeTokenVault() external view override returns (address) {

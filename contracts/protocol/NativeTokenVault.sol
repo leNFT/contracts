@@ -28,7 +28,6 @@ contract NativeTokenVault is
     IAddressesProvider private _addressProvider;
     uint256 internal _boostFactor;
     uint256 internal _boostLimit;
-    address internal _nativeToken;
     uint256 internal _liquidationRewardFactor;
     uint256 internal _maxLiquidationReward;
     uint256 internal _liquidationRewardPriceLimit;
@@ -54,7 +53,6 @@ contract NativeTokenVault is
 
     function initialize(
         IAddressesProvider addressProvider,
-        address nativeToken,
         string calldata name,
         string calldata symbol,
         uint256 maxLiquidationReward,
@@ -66,7 +64,6 @@ contract NativeTokenVault is
         __Ownable_init();
         __ERC20_init(name, symbol);
         _addressProvider = addressProvider;
-        _nativeToken = nativeToken;
         _maxLiquidationReward = maxLiquidationReward;
         _liquidationRewardFactor = liquidationRewardFactor;
         _liquidationRewardPriceLimit = liquidationRewardPriceLimit;
@@ -75,7 +72,10 @@ contract NativeTokenVault is
     }
 
     function deposit(uint256 amount) external override nonReentrant {
-        ValidationLogic.validateNativeTokenDeposit(_nativeToken, amount);
+        ValidationLogic.validateNativeTokenDeposit(
+            _addressProvider.getNativeToken(),
+            amount
+        );
 
         // Find how many tokens the reserve should mint
         uint256 veTokenAmount;
@@ -86,7 +86,7 @@ contract NativeTokenVault is
         }
 
         // Send native token from depositor to the vault
-        IERC20Upgradeable(_nativeToken).safeTransferFrom(
+        IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransferFrom(
             msg.sender,
             address(this),
             amount
@@ -142,7 +142,10 @@ contract NativeTokenVault is
         _freeVotes[msg.sender] -= veTokenAmount;
 
         // Withdraw the native token from the vault
-        IERC20Upgradeable(_nativeToken).safeTransfer(msg.sender, amount);
+        IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransfer(
+            msg.sender,
+            amount
+        );
 
         emit Withdraw(msg.sender, amount);
     }
@@ -254,7 +257,9 @@ contract NativeTokenVault is
         ITokenOracle tokenOracle = ITokenOracle(
             _addressProvider.getTokenOracle()
         );
-        uint256 nativeTokenPrice = tokenOracle.getTokenETHPrice(_nativeToken);
+        uint256 nativeTokenPrice = tokenOracle.getTokenETHPrice(
+            _addressProvider.getNativeToken()
+        );
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         // Find the limit until which rewards are given
@@ -278,9 +283,9 @@ contract NativeTokenVault is
         }
 
         // If the vault has not enough balance to cover the reward
-        uint256 rewardVaultBalance = IERC20Upgradeable(_nativeToken).balanceOf(
-            address(this)
-        );
+        uint256 rewardVaultBalance = IERC20Upgradeable(
+            _addressProvider.getNativeToken()
+        ).balanceOf(address(this));
         if (reward > rewardVaultBalance) {
             reward = rewardVaultBalance;
         }
@@ -292,7 +297,10 @@ contract NativeTokenVault is
         external
         onlyMarket
     {
-        IERC20Upgradeable(_nativeToken).safeTransfer(liquidator, amount);
+        IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransfer(
+            liquidator,
+            amount
+        );
     }
 
     function getVoteCollateralizationBoost(address user, address collection)
@@ -309,7 +317,7 @@ contract NativeTokenVault is
 
         uint256 nativeTokenETHPrice = ITokenOracle(
             _addressProvider.getTokenOracle()
-        ).getTokenETHPrice(_nativeToken);
+        ).getTokenETHPrice(_addressProvider.getNativeToken());
 
         uint256 pricePrecision = ITokenOracle(_addressProvider.getTokenOracle())
             .getPricePrecision();
@@ -334,7 +342,10 @@ contract NativeTokenVault is
     }
 
     function _getLockedBalance() internal view returns (uint256) {
-        return IERC20Upgradeable(_nativeToken).balanceOf(address(this));
+        return
+            IERC20Upgradeable(_addressProvider.getNativeToken()).balanceOf(
+                address(this)
+            );
     }
 
     function getMaximumWithdrawalAmount(address user)

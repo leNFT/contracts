@@ -4,6 +4,7 @@ pragma solidity 0.8.15;
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {IMarket} from "../interfaces/IMarket.sol";
 import {IGenesisNFT} from "../interfaces/IGenesisNFT.sol";
+import {INativeToken} from "../interfaces/INativeToken.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -22,6 +23,8 @@ contract GenesisNFT is
     uint256 _cap;
     uint256 _supply;
     uint256 _price;
+    uint256 _maxLocktime;
+    uint256 _nativeTokenFactor;
     address _weth;
     address payable _devAddress;
     uint256 _ltvBoost;
@@ -48,6 +51,8 @@ contract GenesisNFT is
         uint256 price,
         address weth,
         uint256 ltvBoost,
+        uint256 nativeTokenFactor,
+        uint256 maxLocktime,
         address payable devAddress
     ) external initializer {
         __Ownable_init();
@@ -57,6 +62,8 @@ contract GenesisNFT is
         _price = price;
         _weth = weth;
         _ltvBoost = ltvBoost;
+        _nativeTokenFactor = nativeTokenFactor;
+        _maxLocktime = maxLocktime;
         _devAddress = devAddress;
     }
 
@@ -64,11 +71,15 @@ contract GenesisNFT is
         return _cap;
     }
 
+    function getSupply() external view returns (uint256) {
+        return _supply;
+    }
+
     function getLTVBoost() external view returns (uint256) {
         return _ltvBoost;
     }
 
-    function setLTVBoost(uint256 newLTVBoost) external onlyMarket {
+    function setLTVBoost(uint256 newLTVBoost) external onlyOwner {
         _ltvBoost = newLTVBoost;
     }
 
@@ -83,6 +94,10 @@ contract GenesisNFT is
         _active[tokenId] = newState;
     }
 
+    function setNativeTokenFactor(uint256 newFactor) external onlyOwner {
+        _nativeTokenFactor = newFactor;
+    }
+
     function mint(uint256 locktime)
         external
         payable
@@ -91,6 +106,9 @@ contract GenesisNFT is
     {
         // Make sure there's still enough tkens to mint
         require(_supply + 1 <= getCap(), "All NFTs have been minted");
+
+        // Make sure locktime is within limits
+        require(locktime < _maxLocktime, "Locktime is higher than limit");
 
         // Set a buying price
         require(msg.value == _price);
@@ -107,6 +125,14 @@ contract GenesisNFT is
         // Send the rest to the dev fund
         (bool sent, ) = _devAddress.call{value: _price - depositAmount}("");
         require(sent, "Failed to send Ether to dev fund");
+
+        // Send leNFT tokens to the caller
+        uint256 nativeTokenAmount = (locktime * (_cap - _supply)) /
+            _nativeTokenFactor;
+        INativeToken(_addressProvider.getNativeToken()).mintGenesisTokens(
+            msg.sender,
+            nativeTokenAmount
+        );
 
         //Increase supply
         _supply += 1;

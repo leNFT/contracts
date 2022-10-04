@@ -137,6 +137,10 @@ let loadEnv = async function () {
     nativeTokenVault.address
   );
   await setNativeTokenVaultTx.wait();
+  const setNativeTokenTx = await addressesProvider.setNativeToken(
+    nativeToken.address
+  );
+  await setNativeTokenTx.wait();
   const setLoanCenterTx = await addressesProvider.setLoanCenter(
     loanCenter.address
   );
@@ -200,7 +204,6 @@ let loadEnv = async function () {
   //Init native token vault
   const initNativeTokenVaultTx = await nativeTokenVault.initialize(
     addressesProvider.address,
-    nativeToken.address,
     "veleNFT Token",
     "veLE",
     "25000000000000000000000", // 25000 leNFT Reward Limit
@@ -215,11 +218,13 @@ let loadEnv = async function () {
   const initGenesisNFTTx = await genesisNFT.initialize(
     addressesProvider.address,
     "leNFT Genesis",
-    "LNG",
+    "LGEN",
     "9999",
     "300000000000000000",
     "",
     "250",
+    20000, // Native Token Mint Factor
+    31556926, // Max locktime (1 year in s)
     owner.address
   );
   await initGenesisNFTTx.wait();
