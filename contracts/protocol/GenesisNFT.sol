@@ -24,8 +24,8 @@ contract GenesisNFT is
     uint256 _supply;
     uint256 _price;
     uint256 _maxLocktime;
+    uint256 _minLocktime;
     uint256 _nativeTokenFactor;
-    address _weth;
     address payable _devAddress;
     uint256 _ltvBoost;
 
@@ -49,10 +49,10 @@ contract GenesisNFT is
         string calldata symbol,
         uint256 cap,
         uint256 price,
-        address weth,
         uint256 ltvBoost,
         uint256 nativeTokenFactor,
         uint256 maxLocktime,
+        uint256 minLocktime,
         address payable devAddress
     ) external initializer {
         __Ownable_init();
@@ -60,10 +60,10 @@ contract GenesisNFT is
         _addressProvider = addressProvider;
         _cap = cap;
         _price = price;
-        _weth = weth;
         _ltvBoost = ltvBoost;
         _nativeTokenFactor = nativeTokenFactor;
         _maxLocktime = maxLocktime;
+        _minLocktime = minLocktime;
         _devAddress = devAddress;
     }
 
@@ -98,6 +98,14 @@ contract GenesisNFT is
         _nativeTokenFactor = newFactor;
     }
 
+    function getGenesisNativeTokens(uint256 locktime)
+        public
+        view
+        returns (uint256)
+    {
+        return ((locktime * (_cap - _supply)) / _nativeTokenFactor) * 10**18;
+    }
+
     function mint(uint256 locktime)
         external
         payable
@@ -108,30 +116,26 @@ contract GenesisNFT is
         require(_supply + 1 <= getCap(), "All NFTs have been minted");
 
         // Make sure locktime is within limits
+        require(locktime > _minLocktime, "Locktime is lower than threshold");
         require(locktime < _maxLocktime, "Locktime is higher than limit");
 
         // Set a buying price
         require(msg.value == _price);
 
         //Wrap and Deposit 2/3 into the reserve
-        IWETH WETH = IWETH(_weth);
         uint256 depositAmount = (2 * _price) / 3;
-        WETH.deposit{value: depositAmount}();
-        IMarket(_addressProvider.getMarketAddress()).deposit(
-            _weth,
-            depositAmount
-        );
+        IMarket(_addressProvider.getMarketAddress()).depositETH{
+            value: depositAmount
+        }();
 
         // Send the rest to the dev fund
         (bool sent, ) = _devAddress.call{value: _price - depositAmount}("");
         require(sent, "Failed to send Ether to dev fund");
 
         // Send leNFT tokens to the caller
-        uint256 nativeTokenAmount = (locktime * (_cap - _supply)) /
-            _nativeTokenFactor;
         INativeToken(_addressProvider.getNativeToken()).mintGenesisTokens(
             msg.sender,
-            nativeTokenAmount
+            getGenesisNativeTokens(locktime)
         );
 
         //Increase supply
@@ -159,17 +163,10 @@ contract GenesisNFT is
         );
 
         // Withdraw ETH deposited in the reserve
-        IWETH WETH = IWETH(_weth);
         uint256 withdrawAmount = (2 * _price) / 3;
-        IMarket(_addressProvider.getMarketAddress()).withdraw(
-            _weth,
+        IMarket(_addressProvider.getMarketAddress()).withdrawETH(
             withdrawAmount
         );
-        WETH.withdraw(withdrawAmount);
-
-        // Send ETH back to NFT owner
-        (bool sent, ) = msg.sender.call{value: withdrawAmount}("");
-        require(sent, "Failed to send Ether");
 
         // Burn NFT token
         _burn(tokenId);

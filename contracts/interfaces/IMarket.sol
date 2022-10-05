@@ -20,9 +20,22 @@ interface IMarket {
 
     event Liquidate(address indexed user, uint256 loanId);
 
+    function depositETH() external payable;
+
     function deposit(address asset, uint256 amount) external;
 
+    function withdrawETH(uint256 amount) external;
+
     function withdraw(address asset, uint256 amount) external;
+
+    function borrowETH(
+        uint256 amount,
+        address nftAddress,
+        uint256 nftTokenID,
+        uint256 genesisNFTId,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
+    ) external;
 
     function borrow(
         address asset,
@@ -33,6 +46,8 @@ interface IMarket {
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external;
+
+    function repayETH(uint256 loanId) external payable;
 
     function repay(uint256 loanId) external;
 

@@ -2,6 +2,7 @@
 pragma solidity 0.8.15;
 
 import {IMarket} from "../interfaces/IMarket.sol";
+import {IWETH} from "../interfaces/IWETH.sol";
 import {SupplyLogic} from "../libraries/logic/SupplyLogic.sol";
 import {LiquidationLogic} from "../libraries/logic/LiquidationLogic.sol";
 import {BorrowLogic} from "../libraries/logic/BorrowLogic.sol";
@@ -36,7 +37,7 @@ contract Market is
         _addressProvider = addressesProvider;
     }
 
-    /// @notice Deposit an asset in the reserve
+    /// @notice Deposit any ERC-20 asset in the reserve
     /// @dev Needs to give approval to the corresponding reserve
     /// @param asset The address of the asset the be deposited
     /// @param amount Amount of the asset to be deposited
@@ -48,6 +49,19 @@ contract Market is
         SupplyLogic.deposit(_reserves, asset, amount);
 
         emit Deposit(msg.sender, asset, amount);
+    }
+
+    /// @notice Deposit ETH in the wETH reserve
+    /// @dev Needs to give approval to the corresponding reserve
+    function depositETH() external payable override nonReentrant {
+        address wethAddress = _addressProvider.getWETH();
+        IWETH WETH = IWETH(wethAddress);
+
+        WETH.deposit{value: msg.value}();
+
+        SupplyLogic.deposit(_reserves, wethAddress, msg.value);
+
+        emit Deposit(msg.sender, wethAddress, msg.value);
     }
 
     /// @notice Withdraw an asset from the reserve
@@ -63,6 +77,54 @@ contract Market is
         emit Withdraw(msg.sender, asset, amount);
     }
 
+    /// @notice Withdraw an asset from the reserve
+    /// @param amount Amount of the asset to be withdrawn
+    function withdrawETH(uint256 amount) external override nonReentrant {
+        address wethAddress = _addressProvider.getWETH();
+        IWETH WETH = IWETH(wethAddress);
+
+        SupplyLogic.withdraw(_addressProvider, _reserves, wethAddress, amount);
+
+        WETH.withdraw(amount);
+
+        emit Withdraw(msg.sender, wethAddress, amount);
+    }
+
+    /// @notice Borrow an asset from the reserve while an NFT as collateral
+    /// @dev NFT approval needs to be given to the LoanCenter contract
+    /// @param amount Amount of the asset to be borrowed
+    /// @param nftAddress Address of the NFT collateral
+    /// @param nftTokenId Token id of the NFT collateral
+    /// @param request ID of the collateral price request sent by the trusted server
+    /// @param packet Signed collateral price request sent by the trusted server
+    function borrowETH(
+        uint256 amount,
+        address nftAddress,
+        uint256 nftTokenId,
+        uint256 genesisNFTId,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
+    ) external override nonReentrant {
+        address wethAddress = _addressProvider.getWETH();
+        IWETH WETH = IWETH(wethAddress);
+
+        BorrowLogic.borrow(
+            _addressProvider,
+            _reserves,
+            wethAddress,
+            amount,
+            nftAddress,
+            nftTokenId,
+            genesisNFTId,
+            request,
+            packet
+        );
+
+        WETH.withdraw(amount);
+
+        emit Borrow(msg.sender, wethAddress, nftAddress, nftTokenId, amount);
+    }
+
     /// @notice Borrow an asset from the reserve while an NFT as collateral
     /// @dev NFT approval needs to be given to the LoanCenter contract
     /// @param asset The address of the asset the be borrowed
@@ -76,7 +138,7 @@ contract Market is
         uint256 amount,
         address nftAddress,
         uint256 nftTokenId,
-        uint256 chargeNFTId,
+        uint256 genesisNFTId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external override nonReentrant {
@@ -87,12 +149,24 @@ contract Market is
             amount,
             nftAddress,
             nftTokenId,
-            chargeNFTId,
+            genesisNFTId,
             request,
             packet
         );
 
         emit Borrow(msg.sender, asset, nftAddress, nftTokenId, amount);
+    }
+
+    /// @notice Repay an an active loan
+    /// @param loanId The ID of the loan to be paid
+    function repayETH(uint256 loanId) external payable override nonReentrant {
+        address wethAddress = _addressProvider.getWETH();
+        IWETH WETH = IWETH(wethAddress);
+        WETH.deposit{value: msg.value}();
+
+        BorrowLogic.repay(_addressProvider, loanId);
+
+        emit Repay(msg.sender, loanId);
     }
 
     /// @notice Repay an an active loan

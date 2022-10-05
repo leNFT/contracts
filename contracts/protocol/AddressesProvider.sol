@@ -15,6 +15,7 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _interestRate;
     address private _nativeTokenVault;
     address private _nativeToken;
+    address private _weth;
     address private _genesisNFT;
 
     function initialize() external initializer {
@@ -99,6 +100,14 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
 
     function getDebtToken() external view override returns (address) {
         return _debtToken;
+    }
+
+    function setWETH(address weth) external override onlyOwner {
+        _weth = weth;
+    }
+
+    function getWETH() external view override returns (address) {
+        return _weth;
     }
 
     function setGenesisNFT(address genesisNFT) external override onlyOwner {

@@ -20,7 +20,7 @@ async function main() {
       "RESERVEWETH",
       "RWETH",
       8000, //80%
-      2000, //20%
+      1200, //12%
       200, //2%
       "2000000000000000000", //Reserve safeguard, can deposit up to 2 ETH
     ],

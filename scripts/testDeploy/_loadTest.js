@@ -172,7 +172,7 @@ let loadEnv = async function () {
     "RESERVETESTTOKEN",
     "RTTOKEN",
     9000, //max utilization rate (90%)
-    2000, // Liquidation penalty (20%)
+    1200, // Liquidation penalty (12%)
     200, // protocol liquidation fee (2%)
     "1001000000000000000000" //Underlying safeguard (can deposit up to 1001 ETH)
   );
@@ -224,7 +224,9 @@ let loadEnv = async function () {
     "",
     "250",
     20000, // Native Token Mint Factor
-    31556926, // Max locktime (1 year in s)
+    20000, // Native Token Mint Factor
+    31556926, // Max locktime (365 days in s)
+    2592000, // Min locktime (30 days in s)s
     owner.address
   );
   await initGenesisNFTTx.wait();

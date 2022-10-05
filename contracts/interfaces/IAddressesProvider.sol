@@ -38,6 +38,10 @@ interface IAddressesProvider {
 
     function getDebtToken() external view returns (address);
 
+    function getWETH() external view returns (address);
+
+    function setWETH(address weth) external;
+
     function setGenesisNFT(address genesisNFT) external;
 
     function getGenesisNFT() external view returns (address);

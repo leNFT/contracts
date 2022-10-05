@@ -157,11 +157,11 @@ async function main() {
     "LGEN",
     "9999",
     "300000000000000000",
-    addresses["WETH"].address,
     "250",
-    20000, // Native Token Mint Factor
-    31556926, // Max locktime (1 year in s)
-    owner.address,
+    3000000, // Native Token Mint Factor
+    31556926, // Max locktime (365 days in s)
+    2592000, // Min locktime (30 days in s)
+    devAddress,
   ]);
   console.log("Genesis NFT Proxy Address:", genesisNFT.address);
 
@@ -242,6 +242,8 @@ async function main() {
     feeTreasuryAddress
   );
   await setFeeTreasuryTx.wait();
+  const setWETHTx = await addressesProvider.setWETH(addresses["WETH"].address);
+  await setWETHTx.wait();
 }
 
 // We recommend this pattern to be able to use async/await everywhere
