@@ -57,8 +57,8 @@ contract Market is
     function depositETH() external payable override nonReentrant {
         address wethAddress = _addressProvider.getWETH();
         IWETH WETH = IWETH(wethAddress);
-        console.log("wethAddress", wethAddress);
 
+        // Deposit WETH into the callers account
         WETH.deposit{value: msg.value}();
         WETH.transfer(msg.sender, msg.value);
 
