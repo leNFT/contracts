@@ -58,4 +58,6 @@ interface IMarket {
     ) external;
 
     function isAssetSupported(address asset) external view returns (bool);
+
+    function getReserveAddress(address asset) external view returns (address);
 }

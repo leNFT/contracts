@@ -14,6 +14,7 @@ import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {Trustus} from "./Trustus.sol";
+import "hardhat/console.sol";
 
 /// @title Market Contract
 /// @author leNFT
@@ -56,8 +57,10 @@ contract Market is
     function depositETH() external payable override nonReentrant {
         address wethAddress = _addressProvider.getWETH();
         IWETH WETH = IWETH(wethAddress);
+        console.log("wethAddress", wethAddress);
 
         WETH.deposit{value: msg.value}();
+        WETH.transfer(msg.sender, msg.value);
 
         SupplyLogic.deposit(_reserves, wethAddress, msg.value);
 
@@ -84,8 +87,13 @@ contract Market is
         IWETH WETH = IWETH(wethAddress);
 
         SupplyLogic.withdraw(_addressProvider, _reserves, wethAddress, amount);
+        WETH.transferFrom(msg.sender, address(this), amount);
+        console.log(WETH.balanceOf(address(this)));
 
         WETH.withdraw(amount);
+
+        (bool sent, ) = msg.sender.call{value: amount}("");
+        require(sent, "Failed to send Ether");
 
         emit Withdraw(msg.sender, wethAddress, amount);
     }
@@ -219,4 +227,6 @@ contract Market is
     function isAssetSupported(address asset) external view returns (bool) {
         return _reserves[asset] != address(0);
     }
+
+    receive() external payable {}
 }

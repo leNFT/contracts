@@ -38,9 +38,10 @@ let loadEnv = async function () {
   const addressesProvider = await AddressesProvider.deploy();
   await addressesProvider.deployed();
   console.log("Addresses Provider Address:", addressesProvider.address);
-  const TestToken = await ethers.getContractFactory("TestToken");
-  testToken = await TestToken.deploy("Wrapped ETH", "WETH");
-  await testToken.deployed();
+  const WETH = await ethers.getContractFactory("WETH");
+  weth = await WETH.deploy();
+  await weth.deployed();
+  console.log("WETH Address:", weth.address);
   const TestNFT = await ethers.getContractFactory("TestNFT");
   testNFT = await TestNFT.deploy("TEST NFT", "TNFT");
   await testNFT.deployed();
@@ -62,13 +63,13 @@ let loadEnv = async function () {
   loanCenter = await LoanCenter.deploy();
   await loanCenter.deployed();
   console.log("Loan Center Address:", loanCenter.address);
-  const TestReserve = await ethers.getContractFactory("Reserve", {
+  const WETHReserve = await ethers.getContractFactory("Reserve", {
     libraries: {
       SupplyLogic: supplyLogicLib.address,
     },
   });
-  testReserve = await TestReserve.deploy();
-  await testReserve.deployed();
+  wethReserve = await WETHReserve.deploy();
+  await wethReserve.deployed();
   const InterestRate = await ethers.getContractFactory("InterestRate");
   interestRate = await InterestRate.deploy(8000, 1000, 2500, 10000);
   await interestRate.deployed();
@@ -154,6 +155,8 @@ let loadEnv = async function () {
     feeTreasuryAddress
   );
   await setFeeTreasuryTx.wait();
+  const setWETHTx = await addressesProvider.setWETH(weth.address);
+  await setWETHTx.wait();
 
   // Initialize market
   const initMarketTx = await market.initialize(addressesProvider.address);
@@ -166,10 +169,10 @@ let loadEnv = async function () {
   await initLoanCenterTx.wait();
 
   // Initialize Reserve
-  const initReserveTx = await testReserve.initialize(
+  const initReserveTx = await wethReserve.initialize(
     addressesProvider.address,
-    testToken.address,
-    "RESERVETESTTOKEN",
+    weth.address,
+    "RESERVETOKEN",
     "RTTOKEN",
     9000, //max utilization rate (90%)
     1200, // Liquidation penalty (12%)
@@ -221,20 +224,18 @@ let loadEnv = async function () {
     "LGEN",
     "9999",
     "300000000000000000",
-    "",
     "250",
-    20000, // Native Token Mint Factor
-    20000, // Native Token Mint Factor
-    31556926, // Max locktime (365 days in s)
-    2592000, // Min locktime (30 days in s)s
+    3000000, // Native Token Mint Factor
+    10368000, // Max locktime (120 days in s)
+    1209600, // Min locktime (14 days in s)
     owner.address
   );
   await initGenesisNFTTx.wait();
 
   // Add reserve to market
   const addReserveTx = await market.addReserve(
-    testToken.address,
-    testReserve.address
+    weth.address,
+    wethReserve.address
   );
   await addReserveTx.wait();
 
@@ -275,7 +276,7 @@ let loadEnv = async function () {
 
   //Add a price to test token ( test token = 1 weth)
   const setTestTokenPriceTx = await tokenOracle.setTokenETHPrice(
-    testToken.address,
+    weth.address,
     "1000000000000000000" //1 testToken/ETH
   );
   await setTestTokenPriceTx.wait();

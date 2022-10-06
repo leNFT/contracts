@@ -16,7 +16,7 @@ async function main() {
     WETHReserve,
     [
       addresses.AddressesProvider,
-      addresses["WETH"].address,
+      addresses["ETH"].address,
       "RESERVEWETH",
       "RWETH",
       8000, //80%
@@ -38,7 +38,7 @@ async function main() {
   });
   const market = Market.attach(addresses.Market);
 
-  await market.addReserve(addresses["WETH"].address, wethReserve.address);
+  await market.addReserve(addresses["ETH"].address, wethReserve.address);
 
   console.log("Added wETH Reserve", wethReserve.address);
 
@@ -46,7 +46,7 @@ async function main() {
   const TokenOracle = await ethers.getContractFactory("TokenOracle");
   const tokenOracle = TokenOracle.attach(addresses.TokenOracle);
   const setwETHPriceTx = await tokenOracle.setTokenETHPrice(
-    addresses["WETH"].address,
+    addresses["ETH"].address,
     "1000000000000000000" //1 ETH/wETH, 18 digits precision multiplier
   );
   await setwETHPriceTx.wait();

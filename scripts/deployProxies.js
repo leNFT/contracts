@@ -156,11 +156,11 @@ async function main() {
     "leNFT Genesis",
     "LGEN",
     "9999",
-    "300000000000000000",
+    "10000000000000",
     "250",
     3000000, // Native Token Mint Factor
-    31556926, // Max locktime (365 days in s)
-    2592000, // Min locktime (30 days in s)
+    10368000, // Max locktime (120 days in s)
+    1209600, // Min locktime (14 days in s)
     devAddress,
   ]);
   console.log("Genesis NFT Proxy Address:", genesisNFT.address);
@@ -242,7 +242,7 @@ async function main() {
     feeTreasuryAddress
   );
   await setFeeTreasuryTx.wait();
-  const setWETHTx = await addressesProvider.setWETH(addresses["WETH"].address);
+  const setWETHTx = await addressesProvider.setWETH(addresses["ETH"].address);
   await setWETHTx.wait();
 }
 

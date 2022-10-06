@@ -7,6 +7,7 @@ import {DataTypes} from "../types/DataTypes.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import "hardhat/console.sol";
 
 library SupplyLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -30,6 +31,9 @@ library SupplyLogic {
                 (amount * reserve.totalSupply()) /
                 (reserve.getUnderlyingBalance() + reserve.getDebt());
         }
+
+        console.log("msg.sender", msg.sender);
+        console.log("reserveTokenAmount", reserveTokenAmount);
 
         reserve.depositUnderlying(msg.sender, amount);
         reserve.mint(msg.sender, reserveTokenAmount);
