@@ -75,7 +75,13 @@ contract Market is
         override
         nonReentrant
     {
-        SupplyLogic.withdraw(_addressProvider, _reserves, asset, amount);
+        SupplyLogic.withdraw(
+            _addressProvider,
+            _reserves,
+            msg.sender,
+            asset,
+            amount
+        );
 
         emit Withdraw(msg.sender, asset, amount);
     }
@@ -86,10 +92,13 @@ contract Market is
         address wethAddress = _addressProvider.getWETH();
         IWETH WETH = IWETH(wethAddress);
 
-        SupplyLogic.withdraw(_addressProvider, _reserves, wethAddress, amount);
-        WETH.transferFrom(msg.sender, address(this), amount);
-        console.log(WETH.balanceOf(address(this)));
-
+        SupplyLogic.withdraw(
+            _addressProvider,
+            _reserves,
+            address(this),
+            wethAddress,
+            amount
+        );
         WETH.withdraw(amount);
 
         (bool sent, ) = msg.sender.call{value: amount}("");
@@ -119,6 +128,7 @@ contract Market is
         BorrowLogic.borrow(
             _addressProvider,
             _reserves,
+            address(this),
             wethAddress,
             amount,
             nftAddress,
@@ -129,6 +139,9 @@ contract Market is
         );
 
         WETH.withdraw(amount);
+
+        (bool sent, ) = msg.sender.call{value: amount}("");
+        require(sent, "Failed to send Ether");
 
         emit Borrow(msg.sender, wethAddress, nftAddress, nftTokenId, amount);
     }
@@ -153,6 +166,7 @@ contract Market is
         BorrowLogic.borrow(
             _addressProvider,
             _reserves,
+            msg.sender,
             asset,
             amount,
             nftAddress,
@@ -170,7 +184,10 @@ contract Market is
     function repayETH(uint256 loanId) external payable override nonReentrant {
         address wethAddress = _addressProvider.getWETH();
         IWETH WETH = IWETH(wethAddress);
+
+        // Deposit WETH into the callers account
         WETH.deposit{value: msg.value}();
+        WETH.transfer(msg.sender, msg.value);
 
         BorrowLogic.repay(_addressProvider, loanId);
 

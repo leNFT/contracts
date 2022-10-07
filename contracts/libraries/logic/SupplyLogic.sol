@@ -42,6 +42,7 @@ library SupplyLogic {
     function withdraw(
         IAddressesProvider addressesProvider,
         mapping(address => address) storage reserves,
+        address depositor,
         address asset,
         uint256 amount
     ) external {
@@ -66,7 +67,7 @@ library SupplyLogic {
         }
 
         reserve.burn(msg.sender, reserveTokenAmount);
-        reserve.withdrawUnderlying(msg.sender, amount);
+        reserve.withdrawUnderlying(depositor, amount);
     }
 
     function maximumWithdrawalAmount(address reserveAddress, address user)

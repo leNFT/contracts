@@ -19,6 +19,7 @@ library BorrowLogic {
     function borrow(
         IAddressesProvider addressesProvider,
         mapping(address => address) storage reserves,
+        address depositor,
         address asset,
         uint256 amount,
         address nftAddress,
@@ -94,7 +95,7 @@ library BorrowLogic {
 
         // Send the principal to the borrower
         IReserve(reserveAddress).transferUnderlying(
-            msg.sender,
+            depositor,
             amount,
             borrowRate
         );
