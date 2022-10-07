@@ -66,8 +66,10 @@ library SupplyLogic {
                 (reserve.getUnderlyingBalance() + reserve.getDebt());
         }
 
-        reserve.burn(msg.sender, reserveTokenAmount);
-        reserve.withdrawUnderlying(depositor, amount);
+        if (reserveTokenAmount > 0) {
+            reserve.burn(msg.sender, reserveTokenAmount);
+            reserve.withdrawUnderlying(depositor, amount);
+        }
     }
 
     function maximumWithdrawalAmount(address reserveAddress, address user)

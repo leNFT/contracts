@@ -135,17 +135,19 @@ contract NativeTokenVault is
             veTokenAmount = (amount * totalSupply()) / _getLockedBalance();
         }
 
-        // Burn the veToken
-        _burn(msg.sender, amount);
+        if (veTokenAmount > 0) {
+            // Burn the veToken
+            _burn(msg.sender, amount);
 
-        //Update the number of unused votes
-        _freeVotes[msg.sender] -= veTokenAmount;
+            //Update the number of unused votes
+            _freeVotes[msg.sender] -= veTokenAmount;
 
-        // Withdraw the native token from the vault
-        IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransfer(
-            msg.sender,
-            amount
-        );
+            // Withdraw the native token from the vault
+            IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransfer(
+                msg.sender,
+                amount
+            );
+        }
 
         emit Withdraw(msg.sender, amount);
     }
