@@ -297,6 +297,32 @@ contract LoanCenter is
         return _loans[loanId].nftAsset;
     }
 
+    function updateLoanDebtTimestamp(uint256 loanId, uint256 newDebtTimestamp)
+        external
+        override
+        onlyMarket
+    {
+        require(
+            _loans[loanId].state != DataTypes.LoanState.None,
+            "Loan does not exist."
+        );
+
+        _loans[loanId].debtTimestamp = newDebtTimestamp;
+    }
+
+    function updateLoanAmount(uint256 loanId, uint256 newAmount)
+        external
+        override
+        onlyMarket
+    {
+        require(
+            _loans[loanId].state != DataTypes.LoanState.None,
+            "Loan does not exist."
+        );
+
+        _loans[loanId].amount = newAmount;
+    }
+
     function getLoanBoost(uint256 loanId)
         external
         view

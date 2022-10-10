@@ -7,9 +7,6 @@ import {PercentageMath} from "../math/PercentageMath.sol";
 import "hardhat/console.sol";
 
 library LoanLogic {
-    uint256 internal constant ONE_YEAR = 31536000;
-    uint256 internal constant PRECISION = 1e8;
-
     function init(
         DataTypes.LoanData storage loandata,
         uint256 loanId,
@@ -35,6 +32,7 @@ library LoanLogic {
         loandata.borrowRate = borrowRate;
         loandata.reserve = reserve;
         loandata.initTimestamp = block.timestamp;
+        loandata.debtTimestamp = block.timestamp;
     }
 
     function getInterest(DataTypes.LoanData storage loandata, uint256 timestamp)
@@ -42,13 +40,10 @@ library LoanLogic {
         view
         returns (uint256)
     {
-        uint256 timeSpentInYears = (
-            ((timestamp - loandata.initTimestamp) * PRECISION)
-        ) / ONE_YEAR;
-
-        uint256 accruedInterest = (loandata.borrowRate * timeSpentInYears) /
-            PercentageMath.PERCENTAGE_FACTOR;
-
-        return (loandata.amount * accruedInterest) / PRECISION;
+        return
+            (loandata.amount *
+                loandata.borrowRate *
+                ((timestamp - loandata.debtTimestamp))) /
+            (PercentageMath.PERCENTAGE_FACTOR * 365 days);
     }
 }

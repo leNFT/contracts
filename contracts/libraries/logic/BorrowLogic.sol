@@ -2,6 +2,7 @@
 pragma solidity 0.8.15;
 
 import {DataTypes} from "../types/DataTypes.sol";
+import {PercentageMath} from "../math/PercentageMath.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
@@ -103,46 +104,86 @@ library BorrowLogic {
         return loanId;
     }
 
-    function repay(IAddressesProvider addressesProvider, uint256 loanId)
-        external
-    {
+    function repay(
+        IAddressesProvider addressesProvider,
+        uint256 loanId,
+        uint256 amount
+    ) external {
         // Validate the movement
-        ValidationLogic.validateRepay(addressesProvider, loanId);
+        ValidationLogic.validateRepay(addressesProvider, loanId, amount);
 
         // Get the loan
-        DataTypes.LoanData memory loanData = (
-            ILoanCenter(addressesProvider.getLoanCenter())
-        ).getLoan(loanId);
+        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
+        DataTypes.LoanData memory loanData = loanCenter.getLoan(loanId);
+        uint256 interest = loanCenter.getLoanInterest(loanId);
 
-        // Return the principal + interest
-        IReserve(loanData.reserve).receiveUnderlying(
-            loanData.borrower,
-            loanData.amount,
-            loanData.borrowRate,
-            ILoanCenter(addressesProvider.getLoanCenter()).getLoanInterest(
-                loanId
-            )
-        );
-
-        ILoanCenter(addressesProvider.getLoanCenter()).repayLoan(loanId);
-
-        // Unlock Genesis NFT
-        if (loanData.genesisNFTId != 0) {
-            // Lock genesis NFT to this loan
-            IGenesisNFT(addressesProvider.getGenesisNFT()).setActiveState(
-                loanData.genesisNFTId,
-                false
+        // If we are paying the entire loan debt
+        if (amount == loanCenter.getLoanDebt(loanId)) {
+            // Return the principal + interest
+            IReserve(loanData.reserve).receiveUnderlying(
+                loanData.borrower,
+                loanData.amount,
+                loanData.borrowRate,
+                interest
             );
+
+            loanCenter.repayLoan(loanId);
+
+            // Unlock Genesis NFT
+            if (loanData.genesisNFTId != 0) {
+                // Lock genesis NFT to this loan
+                IGenesisNFT(addressesProvider.getGenesisNFT()).setActiveState(
+                    loanData.genesisNFTId,
+                    false
+                );
+            }
+
+            // Transfer the collateral back to the owner
+            IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
+                addressesProvider.getLoanCenter(),
+                loanData.borrower,
+                loanData.nftTokenId
+            );
+
+            // Burn the token representing the debt
+            IDebtToken(addressesProvider.getDebtToken()).burn(loanId);
         }
+        // User is sending less than the total debt
+        else {
+            // User is sending less than the interest
+            if (amount <= interest) {
+                IReserve(loanData.reserve).receiveUnderlying(
+                    loanData.borrower,
+                    0,
+                    loanData.borrowRate,
+                    amount
+                );
 
-        // Transfer the collateral back to the owner
-        IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
-            addressesProvider.getLoanCenter(),
-            loanData.borrower,
-            loanData.nftTokenId
-        );
+                // Calculate how much time the user has paid off with sent amount
+                uint256 paidTime = (365 days *
+                    amount *
+                    PercentageMath.PERCENTAGE_FACTOR) /
+                    (loanData.amount * loanData.borrowRate);
 
-        // Burn the token representing the debt
-        IDebtToken(addressesProvider.getDebtToken()).burn(loanId);
+                loanCenter.updateLoanDebtTimestamp(
+                    loanId,
+                    loanData.debtTimestamp + paidTime
+                );
+            }
+            // User is sending the full interest and closing part of the loan
+            else {
+                IReserve(loanData.reserve).receiveUnderlying(
+                    loanData.borrower,
+                    amount - interest,
+                    loanData.borrowRate,
+                    interest
+                );
+                loanCenter.updateLoanDebtTimestamp(loanId, block.timestamp);
+                loanCenter.updateLoanAmount(
+                    loanId,
+                    loanData.amount - (amount - interest)
+                );
+            }
+        }
     }
 }

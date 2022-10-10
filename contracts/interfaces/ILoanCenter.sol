@@ -64,4 +64,9 @@ interface ILoanCenter {
         returns (address);
 
     function getLoanBoost(uint256 loanId) external view returns (uint256);
+
+    function updateLoanDebtTimestamp(uint256 loanId, uint256 newDebtTimestamp)
+        external;
+
+    function updateLoanAmount(uint256 loanId, uint256 newAmount) external;
 }

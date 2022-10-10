@@ -172,10 +172,11 @@ library ValidationLogic {
         );
     }
 
-    function validateRepay(IAddressesProvider addressesProvider, uint256 loanId)
-        external
-        view
-    {
+    function validateRepay(
+        IAddressesProvider addressesProvider,
+        uint256 loanId,
+        uint256 amount
+    ) external view {
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
         //Require that loan exists
         DataTypes.LoanData memory loanData = loanCenter.getLoan(loanId);
@@ -188,13 +189,15 @@ library ValidationLogic {
         require(msg.sender == loanData.borrower, "Caller is not loan borrower");
 
         // Check the user has enough balance to repay
-        uint256 balance = IERC20Upgradeable(
-            IReserve(loanData.reserve).getAsset()
-        ).balanceOf(msg.sender);
         require(
-            balance >= loanCenter.getLoanDebt(loanId),
-            "Balance is lower than loan debt"
+            IERC20Upgradeable(IReserve(loanData.reserve).getAsset()).balanceOf(
+                msg.sender
+            ) >= amount,
+            "Balance is lower than repay amount"
         );
+
+        // Check if user is over paying
+        require(amount <= loanCenter.getLoanDebt(loanId));
     }
 
     function validateLiquidation(

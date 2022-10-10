@@ -189,15 +189,19 @@ contract Market is
         WETH.deposit{value: msg.value}();
         WETH.transfer(msg.sender, msg.value);
 
-        BorrowLogic.repay(_addressProvider, loanId);
+        BorrowLogic.repay(_addressProvider, loanId, msg.value);
 
         emit Repay(msg.sender, loanId);
     }
 
     /// @notice Repay an an active loan
     /// @param loanId The ID of the loan to be paid
-    function repay(uint256 loanId) external override nonReentrant {
-        BorrowLogic.repay(_addressProvider, loanId);
+    function repay(uint256 loanId, uint256 amount)
+        external
+        override
+        nonReentrant
+    {
+        BorrowLogic.repay(_addressProvider, loanId, amount);
 
         emit Repay(msg.sender, loanId);
     }

@@ -62,8 +62,10 @@ library DataTypes {
         address reserve;
         // interest rate at which the loan was written
         uint256 borrowRate;
-        // timestamp of the initial creation of the loan
+        // timestamp for the initial creation of the loan
         uint256 initTimestamp;
+        // timestamp for debt computation ()
+        uint256 debtTimestamp;
     }
 
     // Mint details for the Genesis NFT mint

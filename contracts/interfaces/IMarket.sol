@@ -49,7 +49,7 @@ interface IMarket {
 
     function repayETH(uint256 loanId) external payable;
 
-    function repay(uint256 loanId) external;
+    function repay(uint256 loanId, uint256 amount) external;
 
     function liquidate(
         uint256 loanId,
