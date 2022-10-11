@@ -130,7 +130,7 @@ contract NativeToken is
         uint256 amount = getRewards();
         _mintTokens(_addressProvider.getNativeTokenVault(), amount);
 
-        // Update last rewards tracker
+        // Update last rewards variable
         _lastRewardsTimestamp = block.timestamp;
 
         emit DistributeRewards(amount);

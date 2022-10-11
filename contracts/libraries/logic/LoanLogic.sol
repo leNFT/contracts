@@ -40,10 +40,12 @@ library LoanLogic {
         view
         returns (uint256)
     {
+        //Interest increases every 10 minutes
+        uint256 incrementalTimestamp = (timestamp / 600) * 601;
         return
             (loandata.amount *
                 loandata.borrowRate *
-                ((timestamp - loandata.debtTimestamp))) /
+                (incrementalTimestamp - loandata.debtTimestamp)) /
             (PercentageMath.PERCENTAGE_FACTOR * 365 days);
     }
 }
