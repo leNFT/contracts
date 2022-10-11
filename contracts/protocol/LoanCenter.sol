@@ -185,7 +185,7 @@ contract LoanCenter is
             reserveAsset
         );
         uint256 pricePrecision = tokenOracle.getPricePrecision();
-        uint256 tokenPrice = (
+        uint256 collateralETHPrice = (
             (INFTOracle(_addressProvider.getNFTOracle()).getTokenETHPrice(
                 _loans[loanId].nftAsset,
                 _loans[loanId].nftTokenId,
@@ -196,7 +196,7 @@ contract LoanCenter is
 
         // Threshold in which the liquidation price starts being equal to debt
         uint256 liquidationThreshold = PercentageMath.percentMul(
-            tokenPrice,
+            collateralETHPrice,
             PercentageMath.PERCENTAGE_FACTOR -
                 IReserve(_loans[loanId].reserve).getLiquidationPenalty() +
                 IReserve(_loans[loanId].reserve).getLiquidationFee()
@@ -220,7 +220,7 @@ contract LoanCenter is
             _addressProvider.getNativeTokenVault()
         ).getLiquidationReward(
                 reserveAssetETHPrice,
-                tokenPrice,
+                collateralETHPrice,
                 liquidationPrice
             );
 

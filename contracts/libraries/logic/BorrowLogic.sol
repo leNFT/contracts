@@ -160,14 +160,13 @@ library BorrowLogic {
                 );
 
                 // Calculate how much time the user has paid off with sent amount
-                uint256 paidTime = (365 days *
-                    amount *
-                    PercentageMath.PERCENTAGE_FACTOR) /
-                    (loanData.amount * loanData.borrowRate);
-
                 loanCenter.updateLoanDebtTimestamp(
                     loanId,
-                    loanData.debtTimestamp + paidTime
+                    loanData.debtTimestamp +
+                        ((365 days *
+                            amount *
+                            PercentageMath.PERCENTAGE_FACTOR) /
+                            (loanData.amount * loanData.borrowRate))
                 );
             }
             // User is sending the full interest and closing part of the loan

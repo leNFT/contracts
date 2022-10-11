@@ -30,6 +30,7 @@ contract NativeTokenVault is
     uint256 internal _boostLimit;
     uint256 internal _liquidationRewardFactor;
     uint256 internal _maxLiquidationReward;
+    uint256 internal _liquidationRewardPriceThreshold;
     uint256 internal _liquidationRewardPriceLimit;
     // User + collection to votes
     mapping(address => mapping(address => uint256)) private _votes;
@@ -57,6 +58,7 @@ contract NativeTokenVault is
         string calldata symbol,
         uint256 maxLiquidationReward,
         uint256 liquidationRewardFactor,
+        uint256 liquidationRewardPriceThreshold,
         uint256 liquidationRewardPriceLimit,
         uint256 boostLimit,
         uint256 boostFactor
@@ -66,6 +68,7 @@ contract NativeTokenVault is
         _addressProvider = addressProvider;
         _maxLiquidationReward = maxLiquidationReward;
         _liquidationRewardFactor = liquidationRewardFactor;
+        _liquidationRewardPriceThreshold = liquidationRewardPriceThreshold;
         _liquidationRewardPriceLimit = liquidationRewardPriceLimit;
         _boostLimit = boostLimit;
         _boostFactor = boostFactor;
@@ -222,6 +225,20 @@ contract NativeTokenVault is
         _maxLiquidationReward = maxLiquidationReward;
     }
 
+    function getLiquidationRewardPriceThreshold()
+        external
+        view
+        returns (uint256)
+    {
+        return _liquidationRewardPriceLimit;
+    }
+
+    function setLiquidationRewardPriceThreshold(
+        uint256 liquidationRewardPriceThreshold
+    ) external onlyOwner {
+        _liquidationRewardPriceThreshold = liquidationRewardPriceThreshold;
+    }
+
     function getLiquidationRewardPriceLimit() external view returns (uint256) {
         return _liquidationRewardPriceLimit;
     }
@@ -259,37 +276,50 @@ contract NativeTokenVault is
         ITokenOracle tokenOracle = ITokenOracle(
             _addressProvider.getTokenOracle()
         );
-        uint256 nativeTokenPrice = tokenOracle.getTokenETHPrice(
-            _addressProvider.getNativeToken()
-        );
-        uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         // Find the limit until which rewards are given
         uint256 rewardsPriceLimit = PercentageMath.percentMul(
             assetPrice,
             _liquidationRewardPriceLimit
-        ) * pricePrecision;
-        if (liquidationPrice < rewardsPriceLimit) {
+        );
+
+        // Find the threshold from which rewards are given
+        uint256 rewardsPriceThreshold = PercentageMath.percentMul(
+            assetPrice,
+            _liquidationRewardPriceThreshold
+        );
+        console.log("rewardsPriceLimit", rewardsPriceLimit);
+        console.log("rewardsPriceThreshold", rewardsPriceThreshold);
+
+        if (
+            liquidationPrice < rewardsPriceLimit &&
+            liquidationPrice > rewardsPriceThreshold
+        ) {
+            console.log(
+                "(liquidationPrice - rewardsPriceThreshold)",
+                (liquidationPrice - rewardsPriceThreshold)
+            );
             reward =
-                (liquidationPrice * pricePrecision**3) /
+                ((liquidationPrice - rewardsPriceThreshold) *
+                    tokenOracle.getPricePrecision()**3) /
                 (reserveTokenPrice *
-                    nativeTokenPrice *
+                    tokenOracle.getTokenETHPrice(
+                        _addressProvider.getNativeToken()
+                    ) *
                     _liquidationRewardFactor);
-        }
 
-        console.log("_liquidationRewardFactor", _liquidationRewardFactor);
+            // Set the maximum amount for a liquidation reward
+            if (reward > _maxLiquidationReward) {
+                reward = _maxLiquidationReward;
+            }
 
-        // Set the maximum amount for a liquidation reward
-        if (reward > _maxLiquidationReward) {
-            reward = _maxLiquidationReward;
-        }
-
-        // If the vault has not enough balance to cover the reward
-        uint256 rewardVaultBalance = IERC20Upgradeable(
-            _addressProvider.getNativeToken()
-        ).balanceOf(address(this));
-        if (reward > rewardVaultBalance) {
-            reward = rewardVaultBalance;
+            // If the vault has not enough balance to cover the reward
+            uint256 rewardVaultBalance = IERC20Upgradeable(
+                _addressProvider.getNativeToken()
+            ).balanceOf(address(this));
+            if (reward > rewardVaultBalance) {
+                reward = rewardVaultBalance;
+            }
         }
 
         return reward;

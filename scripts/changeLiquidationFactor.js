@@ -16,7 +16,7 @@ async function main() {
 
   // Set liquidation rewards factor
   const setLiquidationRewardFactorTx =
-    await nativeTokenVault.setLiquidationRewardFactor("35000000000000000");
+    await nativeTokenVault.setLiquidationRewardFactor("55000000000000000");
   await setLiquidationRewardFactorTx.wait();
 }
 

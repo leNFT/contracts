@@ -140,7 +140,8 @@ async function main() {
       "veleNFT Token",
       "veLE",
       "25000000000000000000000", // 25000 leNFT Reward Limit
-      "35000000000000000", // 0.035 Liquidation Reward Factor
+      "55000000000000000", // 0.055 Liquidation Reward Factor
+      9000, // Liquidation Reward Price Threshold (90%)
       12000, // Liquidation Reward Price Limit (120%)
       1500, //15% Boost Limit
       "15000000000000000000", // 15 Boost Factor
