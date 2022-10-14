@@ -69,4 +69,14 @@ interface ILoanCenter {
         external;
 
     function updateLoanAmount(uint256 loanId, uint256 newAmount) external;
+
+    function getCollectionMaxCollaterization(address collection)
+        external
+        view
+        returns (uint256);
+
+    function changeCollectionMaxCollaterization(
+        address collection,
+        uint256 maxCollaterization
+    ) external;
 }

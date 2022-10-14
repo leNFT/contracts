@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-interface IReserve is IERC20Upgradeable {
+interface IReserve is IERC20 {
     function getAsset() external view returns (address);
 
     function getUnderlyingBalance() external view returns (uint256);

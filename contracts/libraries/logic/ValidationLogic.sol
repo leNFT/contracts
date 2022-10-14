@@ -25,12 +25,16 @@ library ValidationLogic {
     using WithdrawRequestLogic for DataTypes.WithdrawRequest;
 
     function validateDeposit(
-        mapping(address => address) storage reserves,
+        mapping(address => mapping(address => address)) storage reserves,
+        address collection,
         address asset,
         uint256 amount
     ) external view {
         // Check if the asset is supported
-        require(reserves[asset] != address(0), "Asset not supported");
+        require(
+            reserves[collection][asset] != address(0),
+            "Asset not supported in collection"
+        );
 
         // Get balance of the user trying the deposit
         require(
@@ -43,26 +47,31 @@ library ValidationLogic {
 
         // Check if reserve will exceed maximum permitted amount
         require(
-            amount + IReserve(reserves[asset]).getUnderlyingBalance() <
-                IReserve(reserves[asset]).getUnderlyingSafeguard(),
+            amount +
+                IReserve(reserves[collection][asset]).getUnderlyingBalance() <
+                IReserve(reserves[collection][asset]).getUnderlyingSafeguard(),
             "Reserve exceeds safeguarded limit"
         );
     }
 
     function validateWithdrawal(
         IAddressesProvider addressesProvider,
-        mapping(address => address) storage reserves,
+        mapping(address => mapping(address => address)) storage reserves,
+        address collection,
         address asset,
         uint256 amount
     ) external view {
         // Check if the asset is supported
-        require(reserves[asset] != address(0), "Asset not supported");
+        require(
+            reserves[collection][asset] != address(0),
+            "Asset not supported in collection"
+        );
 
         // Check if the utilization rate doesn't go above maximum
-        uint256 maximumUtilizationRate = IReserve(reserves[asset])
+        uint256 maximumUtilizationRate = IReserve(reserves[collection][asset])
             .getMaximumUtilizationRate();
-        uint256 debt = IReserve(reserves[asset]).getDebt();
-        uint256 underlyingBalance = IReserve(reserves[asset])
+        uint256 debt = IReserve(reserves[collection][asset]).getDebt();
+        uint256 underlyingBalance = IReserve(reserves[collection][asset])
             .getUnderlyingBalance();
         uint256 updatedUtilizationRate = IInterestRate(
             addressesProvider.getInterestRate()
@@ -76,9 +85,8 @@ library ValidationLogic {
         // Check if the user has enough reserve balance for withdrawal
         require(
             amount <=
-                IReserve(reserves[asset]).getMaximumWithdrawalAmount(
-                    msg.sender
-                ),
+                IReserve(reserves[collection][asset])
+                    .getMaximumWithdrawalAmount(msg.sender),
             "Amount too high"
         );
 
@@ -89,7 +97,7 @@ library ValidationLogic {
     // Check if borrowing conditions are valid
     function validateBorrow(
         IAddressesProvider addressesProvider,
-        mapping(address => address) storage reserves,
+        mapping(address => mapping(address => address)) storage reserves,
         address asset,
         uint256 amount,
         address nftAddress,
@@ -99,7 +107,10 @@ library ValidationLogic {
         Trustus.TrustusPacket calldata packet
     ) external view {
         // Check if the asset is supported
-        require(reserves[asset] != address(0), "Asset not supported");
+        require(
+            reserves[nftAddress][asset] != address(0),
+            "Asset not supported"
+        );
 
         INFTOracle nftOracle = INFTOracle(addressesProvider.getNFTOracle());
         ITokenOracle tokenOracle = ITokenOracle(
@@ -107,12 +118,6 @@ library ValidationLogic {
         );
         uint256 assetETHPrice = tokenOracle.getTokenETHPrice(asset);
         uint256 pricePrecision = tokenOracle.getPricePrecision();
-
-        // Check if nft collection is supported
-        require(
-            nftOracle.isCollectionSupported(nftAddress),
-            "NFT COllection is not supported"
-        );
 
         // Get boost for this user and collection
         uint256 boost = INativeTokenVault(
@@ -136,9 +141,6 @@ library ValidationLogic {
             boost += genesisNFT.getLTVBoost();
         }
 
-        // Get maxLTV for this collection
-        uint256 maxLTV = nftOracle.getCollectionMaxCollaterization(nftAddress);
-
         // Get asset ETH price
         uint256 collateralETHPrice = nftOracle.getTokenETHPrice(
             nftAddress,
@@ -150,15 +152,19 @@ library ValidationLogic {
         // Check if borrow amount exceeds allowed amount
         require(
             amount <=
-                (PercentageMath.percentMul(collateralETHPrice, maxLTV + boost) *
-                    pricePrecision) /
+                (PercentageMath.percentMul(
+                    collateralETHPrice,
+                    ILoanCenter(addressesProvider.getLoanCenter())
+                        .getCollectionMaxCollaterization(nftAddress) + boost
+                ) * pricePrecision) /
                     assetETHPrice,
             "Amount exceeds allowed by collateral"
         );
 
         // Check if the reserve has enough underlying to borrow
         require(
-            amount <= IReserve(reserves[asset]).getUnderlyingBalance(),
+            amount <=
+                IReserve(reserves[nftAddress][asset]).getUnderlyingBalance(),
             "Amount exceeds reserve balance"
         );
 
@@ -308,12 +314,6 @@ library ValidationLogic {
 
         // Check if the input amount is bigger than 0
         require(amount > 0, "Vote amount must be bigger than 0");
-
-        // Check if nft collection is supported
-        require(
-            nftOracle.isCollectionSupported(collection),
-            "NFT COllection is not supported"
-        );
     }
 
     function validateRemoveVote(
@@ -328,12 +328,6 @@ library ValidationLogic {
         uint256 collectionVotes = vault.getUserCollectionVotes(
             msg.sender,
             collection
-        );
-
-        // Check if nft collection is supported
-        require(
-            nftOracle.isCollectionSupported(collection),
-            "NFT COllection is not supported"
         );
 
         // Check if user has no active loans in voted collection

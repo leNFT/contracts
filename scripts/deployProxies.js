@@ -90,7 +90,13 @@ async function main() {
   });
   const market = await upgrades.deployProxy(
     Market,
-    [addressesProvider.address],
+    [
+      addressesProvider.address,
+      "1800", // defaultLiquidationPenalty
+      "200", // defaultProtocolLiquidationFee
+      "8500", // defaultMaximumUtilizationRate
+      "25000000000000000000", // defaultUnderlyingSafeguard
+    ],
     { unsafeAllow: ["external-library-linking"] }
   );
   console.log("Market Proxy Address:", market.address);
@@ -99,6 +105,7 @@ async function main() {
   const LoanCenter = await ethers.getContractFactory("LoanCenter");
   const loanCenter = await upgrades.deployProxy(LoanCenter, [
     addressesProvider.address,
+    "40000", // DefaultMaxCollaterization
   ]);
   console.log("Loan Center Proxy Address:", loanCenter.address);
 

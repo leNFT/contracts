@@ -1,22 +1,16 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.15;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IReserve} from "../interfaces/IReserve.sol";
 import {SupplyLogic} from "../libraries/logic/SupplyLogic.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {IInterestRate} from "../interfaces/IInterestRate.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract Reserve is
-    Initializable,
-    IReserve,
-    ERC20Upgradeable,
-    OwnableUpgradeable
-{
+contract Reserve is IReserve, ERC20, Ownable {
     IAddressesProvider private _addressProvider;
     address internal _asset;
     uint256 internal _debt;
@@ -27,7 +21,7 @@ contract Reserve is
     uint256 internal _maximumUtilizationRate;
     uint256 internal _underlyingSafeguard;
 
-    using SafeERC20Upgradeable for IERC20Upgradeable;
+    using SafeERC20 for IERC20;
 
     modifier onlyMarket() {
         require(
@@ -37,18 +31,17 @@ contract Reserve is
         _;
     }
 
-    function initialize(
+    constructor(
         IAddressesProvider addressProvider,
+        address owner,
         address asset,
-        string calldata name,
-        string calldata symbol,
+        string memory name,
+        string memory symbol,
         uint256 maximumUtilizationRate,
         uint256 liquidationPenalty,
         uint256 protocolLiquidationFee,
         uint256 underlyingSafeguard
-    ) external initializer {
-        __Ownable_init();
-        __ERC20_init(name, symbol);
+    ) ERC20(name, symbol) {
         _addressProvider = addressProvider;
         _asset = asset;
         _maximumUtilizationRate = maximumUtilizationRate;
@@ -56,6 +49,7 @@ contract Reserve is
         _protocolLiquidationFee = protocolLiquidationFee;
         _underlyingSafeguard = underlyingSafeguard;
         _updateBorrowRate();
+        _transferOwnership(owner);
     }
 
     function getAsset() external view override returns (address) {
@@ -75,11 +69,7 @@ contract Reserve is
         override
         onlyMarket
     {
-        IERC20Upgradeable(_asset).safeTransferFrom(
-            depositor,
-            address(this),
-            amount
-        );
+        IERC20(_asset).safeTransferFrom(depositor, address(this), amount);
 
         _updateBorrowRate();
     }
@@ -98,7 +88,7 @@ contract Reserve is
         override
         onlyMarket
     {
-        IERC20Upgradeable(_asset).safeTransfer(to, amount);
+        IERC20(_asset).safeTransfer(to, amount);
 
         _updateBorrowRate();
     }
@@ -109,7 +99,7 @@ contract Reserve is
         uint256 borrowRate
     ) external override onlyMarket {
         // Send the underlying to user
-        IERC20Upgradeable(_asset).safeTransfer(to, amount);
+        IERC20(_asset).safeTransfer(to, amount);
 
         // Update the cummulative borrow rate
         _updateCumulativeDebtBorrowRate(true, amount, borrowRate);
@@ -127,11 +117,7 @@ contract Reserve is
         uint256 borrowRate,
         uint256 interest
     ) external override onlyMarket {
-        IERC20Upgradeable(_asset).safeTransferFrom(
-            from,
-            address(this),
-            amount + interest
-        );
+        IERC20(_asset).safeTransferFrom(from, address(this), amount + interest);
         _updateCumulativeDebtBorrowRate(false, amount, borrowRate);
         _debt -= amount;
         _updateBorrowRate();
@@ -143,7 +129,7 @@ contract Reserve is
         uint256 borrowRate,
         uint256 defaultedDebt
     ) external override onlyMarket {
-        IERC20Upgradeable(_asset).safeTransferFrom(from, address(this), amount);
+        IERC20(_asset).safeTransferFrom(from, address(this), amount);
         _updateCumulativeDebtBorrowRate(false, defaultedDebt, borrowRate);
         _debt -= defaultedDebt;
         _updateBorrowRate();
@@ -163,7 +149,7 @@ contract Reserve is
     }
 
     function _getUnderlyingBalance() internal view returns (uint256) {
-        return IERC20Upgradeable(_asset).balanceOf(address(this));
+        return IERC20(_asset).balanceOf(address(this));
     }
 
     function getBorrowRate() external view override returns (uint256) {

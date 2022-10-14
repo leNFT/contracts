@@ -128,9 +128,9 @@ contract GenesisNFT is
         uint256 depositAmount = (2 * _price) / 3;
         address weth = _addressProvider.getWETH();
         address market = _addressProvider.getMarketAddress();
-        address wethReserve = IMarket(market).getReserveAddress(weth);
+        address wethReserve = IMarket(market).getReserve(address(this), weth);
         IWETH(weth).approve(wethReserve, depositAmount);
-        IMarket(market).depositETH{value: depositAmount}();
+        IMarket(market).depositETH{value: depositAmount}(address(this));
 
         // Send the rest to the dev fund
         (bool sent, ) = _devAddress.call{value: _price - depositAmount}("");
@@ -186,6 +186,7 @@ contract GenesisNFT is
         address market = _addressProvider.getMarketAddress();
         IWETH(weth).approve(market, withdrawAmount);
         IMarket(_addressProvider.getMarketAddress()).withdrawETH(
+            address(this),
             withdrawAmount
         );
         (bool sent, ) = msg.sender.call{value: withdrawAmount}("");

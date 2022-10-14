@@ -19,7 +19,7 @@ import {Trustus} from "../../protocol/Trustus.sol";
 library BorrowLogic {
     function borrow(
         IAddressesProvider addressesProvider,
-        mapping(address => address) storage reserves,
+        mapping(address => mapping(address => address)) storage reserves,
         address depositor,
         address asset,
         uint256 amount,
@@ -43,7 +43,7 @@ library BorrowLogic {
         );
 
         // Get the reserve providing the loan
-        address reserveAddress = reserves[asset];
+        address reserveAddress = reserves[nftAddress][asset];
 
         // Transfer the collateral
         IERC721Upgradeable(nftAddress).safeTransferFrom(
@@ -56,8 +56,8 @@ library BorrowLogic {
         uint256 borrowRate = IReserve(reserveAddress).getBorrowRate();
 
         // Get max LTV for this collection
-        uint256 maxLTV = INFTOracle(addressesProvider.getNFTOracle())
-            .getCollectionMaxCollaterization(nftAddress);
+        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
+        uint256 maxLTV = loanCenter.getCollectionMaxCollaterization(nftAddress);
 
         // Get boost for this user and collection
         uint256 boost = INativeTokenVault(
@@ -75,7 +75,6 @@ library BorrowLogic {
         }
 
         // Create the loan
-        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
         uint256 loanId = loanCenter.createLoan(
             msg.sender,
             reserveAddress,

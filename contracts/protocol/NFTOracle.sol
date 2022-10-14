@@ -4,7 +4,6 @@ pragma solidity 0.8.15;
 import {INFTOracle} from "../interfaces/INFTOracle.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
-import {CollectionLogic} from "../libraries/logic/CollectionLogic.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {Trustus} from "./Trustus.sol";
@@ -12,23 +11,10 @@ import {INativeTokenVault} from "../interfaces/INativeTokenVault.sol";
 import "hardhat/console.sol";
 
 contract NFTOracle is INFTOracle, Ownable, Trustus {
-    mapping(address => DataTypes.CollectionData) private _collections;
     IAddressesProvider private _addressProvider;
-
-    using CollectionLogic for DataTypes.CollectionData;
 
     constructor(IAddressesProvider addressProvider) {
         _addressProvider = addressProvider;
-    }
-
-    // Get the max collaterization price for a collection (10000 = 100%)
-    function getCollectionMaxCollaterization(address collection)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        return _collections[collection].maxCollaterization;
     }
 
     // Get the price for a certain token
@@ -39,51 +25,6 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         TrustusPacket calldata packet
     ) external view override returns (uint256) {
         return _getTokenETHPrice(collection, tokenId, request, packet);
-    }
-
-    function addSupportedCollection(
-        address collection,
-        uint256 maxCollaterization
-    ) external onlyOwner {
-        require(
-            _collections[collection].supported == false,
-            "Collection is already supported"
-        );
-
-        _collections[collection].init();
-        //Set the max collaterization
-        _collections[collection].setMaxCollaterization(maxCollaterization);
-    }
-
-    function changeCollectionMaxCollaterization(
-        address collection,
-        uint256 maxCollaterization
-    ) external onlyOwner {
-        require(
-            _collections[collection].supported,
-            "Collection is not supported"
-        );
-
-        //Set the max collaterization
-        _collections[collection].setMaxCollaterization(maxCollaterization);
-    }
-
-    function removeSupportedCollection(address collection) external onlyOwner {
-        require(
-            _collections[collection].supported == true,
-            "Collection is not supported"
-        );
-
-        delete _collections[collection];
-    }
-
-    function isCollectionSupported(address collection)
-        external
-        view
-        override
-        returns (bool)
-    {
-        return _collections[collection].supported;
     }
 
     // Gets the token value sent by the off-chain server by unpacking the packet relayed by the caller

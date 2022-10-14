@@ -10,7 +10,10 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {IReserve} from "../interfaces/IReserve.sol";
+import {Reserve} from "./Reserve.sol";
 import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {Trustus} from "./Trustus.sol";
@@ -26,35 +29,52 @@ contract Market is
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    mapping(address => address) private _reserves;
+    // collection + asset = reserve
+    mapping(address => mapping(address => address)) private _reserves;
     IAddressesProvider private _addressProvider;
+    uint256 private _defaultLiquidationPenalty;
+    uint256 private _defaultProtocolLiquidationFee;
+    uint256 private _defaultMaximumUtilizationRate;
+    uint256 private _defaultUnderlyingSafeguard;
 
     // Initialize the market
-    function initialize(IAddressesProvider addressesProvider)
-        external
-        initializer
-    {
+    function initialize(
+        IAddressesProvider addressesProvider,
+        uint256 maximumUtilizationRate,
+        uint256 liquidationPenalty,
+        uint256 protocolLiquidationFee,
+        uint256 underlyingSafeguard
+    ) external initializer {
         __Ownable_init();
         _addressProvider = addressesProvider;
+        _defaultLiquidationPenalty = liquidationPenalty;
+        _defaultProtocolLiquidationFee = protocolLiquidationFee;
+        _defaultMaximumUtilizationRate = maximumUtilizationRate;
+        _defaultUnderlyingSafeguard = underlyingSafeguard;
     }
 
     /// @notice Deposit any ERC-20 asset in the reserve
     /// @dev Needs to give approval to the corresponding reserve
     /// @param asset The address of the asset the be deposited
     /// @param amount Amount of the asset to be deposited
-    function deposit(address asset, uint256 amount)
-        external
-        override
-        nonReentrant
-    {
-        SupplyLogic.deposit(_reserves, asset, amount);
+    function deposit(
+        address collection,
+        address asset,
+        uint256 amount
+    ) external override nonReentrant {
+        SupplyLogic.deposit(_reserves, collection, asset, amount);
 
         emit Deposit(msg.sender, asset, amount);
     }
 
     /// @notice Deposit ETH in the wETH reserve
     /// @dev Needs to give approval to the corresponding reserve
-    function depositETH() external payable override nonReentrant {
+    function depositETH(address collection)
+        external
+        payable
+        override
+        nonReentrant
+    {
         address wethAddress = _addressProvider.getWETH();
         IWETH WETH = IWETH(wethAddress);
 
@@ -62,7 +82,7 @@ contract Market is
         WETH.deposit{value: msg.value}();
         WETH.transfer(msg.sender, msg.value);
 
-        SupplyLogic.deposit(_reserves, wethAddress, msg.value);
+        SupplyLogic.deposit(_reserves, collection, wethAddress, msg.value);
 
         emit Deposit(msg.sender, wethAddress, msg.value);
     }
@@ -70,14 +90,15 @@ contract Market is
     /// @notice Withdraw an asset from the reserve
     /// @param asset The address of the asset the be withdrawn
     /// @param amount Amount of the asset to be withdrawn
-    function withdraw(address asset, uint256 amount)
-        external
-        override
-        nonReentrant
-    {
+    function withdraw(
+        address collection,
+        address asset,
+        uint256 amount
+    ) external override nonReentrant {
         SupplyLogic.withdraw(
             _addressProvider,
             _reserves,
+            collection,
             msg.sender,
             asset,
             amount
@@ -88,13 +109,18 @@ contract Market is
 
     /// @notice Withdraw an asset from the reserve
     /// @param amount Amount of the asset to be withdrawn
-    function withdrawETH(uint256 amount) external override nonReentrant {
+    function withdrawETH(address collection, uint256 amount)
+        external
+        override
+        nonReentrant
+    {
         address wethAddress = _addressProvider.getWETH();
         IWETH WETH = IWETH(wethAddress);
 
         SupplyLogic.withdraw(
             _addressProvider,
             _reserves,
+            collection,
             address(this),
             wethAddress,
             amount
@@ -221,33 +247,95 @@ contract Market is
         emit Liquidate(msg.sender, loanId);
     }
 
-    /// @notice Add a new reserve to the list of reserves
+    /// @notice Create a new reserve for a certain collection
+    /// @param collection The collection using this reserve
     /// @param asset The address of the asset the reserve controls
-    /// @param reserveAddress The address of the reserve
-    function addReserve(address asset, address reserveAddress)
-        external
-        onlyOwner
-    {
-        //Approve reserve use of Market balance
-        IERC20(asset).approve(reserveAddress, 2**256 - 1);
+    function createReserve(address collection, address asset) external {
+        require(
+            _reserves[collection][asset] == address(0),
+            "Reserve already exists"
+        );
+        IReserve newReserve = new Reserve(
+            _addressProvider,
+            owner(),
+            asset,
+            string.concat("RESERVE", IERC20Metadata(asset).name()),
+            string.concat("R", IERC20Metadata(asset).symbol()),
+            _defaultMaximumUtilizationRate,
+            _defaultLiquidationPenalty,
+            _defaultProtocolLiquidationFee,
+            _defaultUnderlyingSafeguard
+        );
 
-        _reserves[asset] = reserveAddress;
+        //Approve reserve use of Market balance
+        IERC20(asset).approve(address(newReserve), 2**256 - 1);
+
+        _reserves[collection][asset] = address(newReserve);
     }
 
     /// @notice Get the reserve address responsible to a certain asset
     /// @param asset The asset the reserve is responsible for
     /// @return The address of the reserve responsible for the asset
-    function getReserveAddress(address asset) external view returns (address) {
-        return _reserves[asset];
+    function getReserve(address collection, address asset)
+        external
+        view
+        returns (address)
+    {
+        return _reserves[collection][asset];
     }
 
-    /// @notice Check if a certain asset is supported by the protocol as a borrowable asset
-    /// @dev An asset is supported by the protocol if a reserve exists responsible for it
-    /// @param asset The address of the asset
-    /// @return A boolean, true if the asset is supported
-    function isAssetSupported(address asset) external view returns (bool) {
-        return _reserves[asset] != address(0);
+    function setReserve(
+        address collection,
+        address asset,
+        address reserve
+    ) external onlyOwner {
+        _reserves[collection][asset] = reserve;
     }
 
+    function setDefaultLiquidationPenalty(uint256 liquidationPenalty)
+        external
+        onlyOwner
+    {
+        _defaultLiquidationPenalty = liquidationPenalty;
+    }
+
+    function setDefaultProtocolLiquidationFee(uint256 protocolLiquidationFee)
+        external
+        onlyOwner
+    {
+        _defaultProtocolLiquidationFee = protocolLiquidationFee;
+    }
+
+    function setDefaultMaximumUtilizationRate(uint256 maximumUtilizationRate)
+        external
+        onlyOwner
+    {
+        _defaultMaximumUtilizationRate = maximumUtilizationRate;
+    }
+
+    function setDefaultUnderlyingSafeguard(uint256 underlyingSafeguard)
+        external
+        onlyOwner
+    {
+        _defaultUnderlyingSafeguard = underlyingSafeguard;
+    }
+
+    function getDefaultLiquidationPenalty() external returns (uint256) {
+        return _defaultLiquidationPenalty;
+    }
+
+    function getDefaultProtocolLiquidationFee() external returns (uint256) {
+        return _defaultProtocolLiquidationFee;
+    }
+
+    function getDefaultMaximumUtilizationRate() external returns (uint256) {
+        return _defaultMaximumUtilizationRate;
+    }
+
+    function getDefaultUnderlyingSafeguard() external returns (uint256) {
+        return _defaultUnderlyingSafeguard;
+    }
+
+    // Add receive ETH function
     receive() external payable {}
 }

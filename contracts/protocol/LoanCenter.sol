@@ -34,6 +34,10 @@ contract LoanCenter is
     // Collection to number of active loans
     mapping(address => mapping(address => uint256)) private _activeLoansCount;
 
+    // Collection to max collaterization
+    mapping(address => uint256) private _collectionsMaxCollaterization;
+    uint256 _defaultMaxCollaterization;
+
     using LoanLogic for DataTypes.LoanData;
 
     modifier onlyMarket() {
@@ -45,12 +49,13 @@ contract LoanCenter is
     }
 
     // Initialize the loancenter
-    function initialize(IAddressesProvider addressesProvider)
-        external
-        initializer
-    {
+    function initialize(
+        IAddressesProvider addressesProvider,
+        uint256 maxCollaterization
+    ) external initializer {
         __Ownable_init();
         _addressProvider = addressesProvider;
+        _defaultMaxCollaterization = maxCollaterization;
     }
 
     function createLoan(
@@ -335,6 +340,27 @@ contract LoanCenter is
         );
 
         return _loans[loanId].boost + _loans[loanId].genesisNFTBoost;
+    }
+
+    // Get the max collaterization price for a collection (10000 = 100%)
+    function getCollectionMaxCollaterization(address collection)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        if (_collectionsMaxCollaterization[collection] == 0) {
+            return _defaultMaxCollaterization;
+        }
+        return _collectionsMaxCollaterization[collection];
+    }
+
+    function changeCollectionMaxCollaterization(
+        address collection,
+        uint256 maxCollaterization
+    ) external onlyOwner {
+        //Set the max collaterization
+        _collectionsMaxCollaterization[collection] = maxCollaterization;
     }
 
     function onERC721Received(

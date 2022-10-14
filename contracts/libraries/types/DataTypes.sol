@@ -2,12 +2,6 @@
 pragma solidity ^0.8.0;
 
 library DataTypes {
-    struct CollectionData {
-        bool supported;
-        uint256 maxCollaterization;
-        uint256 lastUpdateTimestamp;
-    }
-
     struct WithdrawRequest {
         bool created;
         uint256 amount;

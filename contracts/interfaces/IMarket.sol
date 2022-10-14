@@ -20,22 +20,21 @@ interface IMarket {
 
     event Liquidate(address indexed user, uint256 loanId);
 
-    function depositETH() external payable;
-
-    function deposit(address asset, uint256 amount) external;
-
-    function withdrawETH(uint256 amount) external;
-
-    function withdraw(address asset, uint256 amount) external;
-
-    function borrowETH(
-        uint256 amount,
-        address nftAddress,
-        uint256 nftTokenID,
-        uint256 genesisNFTId,
-        bytes32 request,
-        Trustus.TrustusPacket calldata packet
+    function deposit(
+        address collection,
+        address asset,
+        uint256 amount
     ) external;
+
+    function depositETH(address collection) external payable;
+
+    function withdraw(
+        address collection,
+        address asset,
+        uint256 amount
+    ) external;
+
+    function withdrawETH(address collection, uint256 amount) external;
 
     function borrow(
         address asset,
@@ -47,9 +46,18 @@ interface IMarket {
         Trustus.TrustusPacket calldata packet
     ) external;
 
-    function repayETH(uint256 loanId) external payable;
+    function borrowETH(
+        uint256 amount,
+        address nftAddress,
+        uint256 nftTokenID,
+        uint256 genesisNFTId,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
+    ) external;
 
     function repay(uint256 loanId, uint256 amount) external;
+
+    function repayETH(uint256 loanId) external payable;
 
     function liquidate(
         uint256 loanId,
@@ -57,7 +65,8 @@ interface IMarket {
         Trustus.TrustusPacket calldata packet
     ) external;
 
-    function isAssetSupported(address asset) external view returns (bool);
-
-    function getReserveAddress(address asset) external view returns (address);
+    function getReserve(address collection, address asset)
+        external
+        view
+        returns (address);
 }

@@ -13,14 +13,15 @@ library SupplyLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     function deposit(
-        mapping(address => address) storage reserves,
+        mapping(address => mapping(address => address)) storage reserves,
+        address collection,
         address asset,
         uint256 amount
     ) external {
         // Verify if withdrawal conditions are met
-        ValidationLogic.validateDeposit(reserves, asset, amount);
+        ValidationLogic.validateDeposit(reserves, collection, asset, amount);
 
-        IReserve reserve = IReserve(reserves[asset]);
+        IReserve reserve = IReserve(reserves[collection][asset]);
 
         // Find how many tokens the reserve should mint
         uint256 reserveTokenAmount;
@@ -41,8 +42,9 @@ library SupplyLogic {
 
     function withdraw(
         IAddressesProvider addressesProvider,
-        mapping(address => address) storage reserves,
+        mapping(address => mapping(address => address)) storage reserves,
         address depositor,
+        address collection,
         address asset,
         uint256 amount
     ) external {
@@ -50,11 +52,12 @@ library SupplyLogic {
         ValidationLogic.validateWithdrawal(
             addressesProvider,
             reserves,
+            collection,
             asset,
             amount
         );
 
-        IReserve reserve = IReserve(reserves[asset]);
+        IReserve reserve = IReserve(reserves[collection][asset]);
 
         // Find how many tokens the reserve should burn
         uint256 reserveTokenAmount;
