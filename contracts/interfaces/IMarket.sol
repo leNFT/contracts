@@ -4,9 +4,17 @@ pragma solidity ^0.8.0;
 import {Trustus} from "../protocol/Trustus.sol";
 
 interface IMarket {
-    event Deposit(address indexed user, address indexed asset, uint256 amount);
+    event Deposit(
+        address indexed user,
+        address indexed reserve,
+        uint256 amount
+    );
 
-    event Withdraw(address indexed user, address indexed asset, uint256 amount);
+    event Withdraw(
+        address indexed user,
+        address indexed reserve,
+        uint256 amount
+    );
 
     event Borrow(
         address indexed user,
@@ -20,21 +28,15 @@ interface IMarket {
 
     event Liquidate(address indexed user, uint256 loanId);
 
-    function deposit(
-        address collection,
-        address asset,
-        uint256 amount
-    ) external;
+    event CreateReserve(address indexed collection, address indexed asset);
+
+    function deposit(address reserve, uint256 amount) external;
 
     function depositETH(address collection) external payable;
 
-    function withdraw(
-        address collection,
-        address asset,
-        uint256 amount
-    ) external;
+    function withdraw(address reserve, uint256 amount) external;
 
-    function withdrawETH(address collection, uint256 amount) external;
+    function withdrawETH(address reserve, uint256 amount) external;
 
     function borrow(
         address asset,

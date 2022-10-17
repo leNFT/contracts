@@ -24,21 +24,13 @@ library ValidationLogic {
     uint256 internal constant UNVOTE_WINDOW = ONE_DAY * 2;
     using WithdrawRequestLogic for DataTypes.WithdrawRequest;
 
-    function validateDeposit(
-        mapping(address => mapping(address => address)) storage reserves,
-        address collection,
-        address asset,
-        uint256 amount
-    ) external view {
-        // Check if the asset is supported
-        require(
-            reserves[collection][asset] != address(0),
-            "Asset not supported in collection"
-        );
-
+    function validateDeposit(address reserve, uint256 amount) external view {
         // Get balance of the user trying the deposit
         require(
-            amount <= IERC20Upgradeable(asset).balanceOf(msg.sender),
+            amount <=
+                IERC20Upgradeable(IReserve(reserve).getAsset()).balanceOf(
+                    msg.sender
+                ),
             "Balance is lower than deposited amount"
         );
 
@@ -47,32 +39,22 @@ library ValidationLogic {
 
         // Check if reserve will exceed maximum permitted amount
         require(
-            amount +
-                IReserve(reserves[collection][asset]).getUnderlyingBalance() <
-                IReserve(reserves[collection][asset]).getUnderlyingSafeguard(),
+            amount + IReserve(reserve).getUnderlyingBalance() <
+                IReserve(reserve).getUnderlyingSafeguard(),
             "Reserve exceeds safeguarded limit"
         );
     }
 
     function validateWithdrawal(
         IAddressesProvider addressesProvider,
-        mapping(address => mapping(address => address)) storage reserves,
-        address collection,
-        address asset,
+        address reserve,
         uint256 amount
     ) external view {
-        // Check if the asset is supported
-        require(
-            reserves[collection][asset] != address(0),
-            "Asset not supported in collection"
-        );
-
         // Check if the utilization rate doesn't go above maximum
-        uint256 maximumUtilizationRate = IReserve(reserves[collection][asset])
+        uint256 maximumUtilizationRate = IReserve(reserve)
             .getMaximumUtilizationRate();
-        uint256 debt = IReserve(reserves[collection][asset]).getDebt();
-        uint256 underlyingBalance = IReserve(reserves[collection][asset])
-            .getUnderlyingBalance();
+        uint256 debt = IReserve(reserve).getDebt();
+        uint256 underlyingBalance = IReserve(reserve).getUnderlyingBalance();
         uint256 updatedUtilizationRate = IInterestRate(
             addressesProvider.getInterestRate()
         ).calculateUtilizationRate(underlyingBalance - amount, debt);
@@ -84,9 +66,7 @@ library ValidationLogic {
 
         // Check if the user has enough reserve balance for withdrawal
         require(
-            amount <=
-                IReserve(reserves[collection][asset])
-                    .getMaximumWithdrawalAmount(msg.sender),
+            amount <= IReserve(reserve).getMaximumWithdrawalAmount(msg.sender),
             "Amount too high"
         );
 
@@ -109,7 +89,7 @@ library ValidationLogic {
         // Check if the asset is supported
         require(
             reserves[nftAddress][asset] != address(0),
-            "Asset not supported"
+            "No reserve for asset and collection"
         );
 
         INFTOracle nftOracle = INFTOracle(addressesProvider.getNFTOracle());

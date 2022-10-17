@@ -12,76 +12,60 @@ import "hardhat/console.sol";
 library SupplyLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    function deposit(
-        mapping(address => mapping(address => address)) storage reserves,
-        address collection,
-        address asset,
-        uint256 amount
-    ) external {
+    function deposit(address reserve, uint256 amount) external {
         // Verify if withdrawal conditions are met
-        ValidationLogic.validateDeposit(reserves, collection, asset, amount);
-
-        IReserve reserve = IReserve(reserves[collection][asset]);
+        ValidationLogic.validateDeposit(reserve, amount);
 
         // Find how many tokens the reserve should mint
         uint256 reserveTokenAmount;
-        if (reserve.totalSupply() == 0) {
+        if (IReserve(reserve).totalSupply() == 0) {
             reserveTokenAmount = amount;
         } else {
             reserveTokenAmount =
-                (amount * reserve.totalSupply()) /
-                (reserve.getUnderlyingBalance() + reserve.getDebt());
+                (amount * IReserve(reserve).totalSupply()) /
+                (IReserve(reserve).getUnderlyingBalance() +
+                    IReserve(reserve).getDebt());
         }
 
         console.log("msg.sender", msg.sender);
         console.log("reserveTokenAmount", reserveTokenAmount);
 
-        reserve.depositUnderlying(msg.sender, amount);
-        reserve.mint(msg.sender, reserveTokenAmount);
+        IReserve(reserve).depositUnderlying(msg.sender, amount);
+        IReserve(reserve).mint(msg.sender, reserveTokenAmount);
     }
 
     function withdraw(
         IAddressesProvider addressesProvider,
-        mapping(address => mapping(address => address)) storage reserves,
+        address reserve,
         address depositor,
-        address collection,
-        address asset,
         uint256 amount
     ) external {
         // Verify if withdrawal conditions are met
-        ValidationLogic.validateWithdrawal(
-            addressesProvider,
-            reserves,
-            collection,
-            asset,
-            amount
-        );
-
-        IReserve reserve = IReserve(reserves[collection][asset]);
+        ValidationLogic.validateWithdrawal(addressesProvider, reserve, amount);
 
         // Find how many tokens the reserve should burn
         uint256 reserveTokenAmount;
-        if (reserve.totalSupply() == 0) {
+        if (IReserve(reserve).totalSupply() == 0) {
             reserveTokenAmount = amount;
         } else {
             reserveTokenAmount =
-                (amount * reserve.totalSupply()) /
-                (reserve.getUnderlyingBalance() + reserve.getDebt());
+                (amount * IReserve(reserve).totalSupply()) /
+                (IReserve(reserve).getUnderlyingBalance() +
+                    IReserve(reserve).getDebt());
         }
 
         assert(reserveTokenAmount > 0);
 
-        reserve.burn(msg.sender, reserveTokenAmount);
-        reserve.withdrawUnderlying(depositor, amount);
+        IReserve(reserve).burn(msg.sender, reserveTokenAmount);
+        IReserve(reserve).withdrawUnderlying(depositor, amount);
     }
 
-    function maximumWithdrawalAmount(address reserveAddress, address user)
+    function maximumWithdrawalAmount(address reserve, address user)
         external
         view
         returns (uint256)
     {
-        IReserve reserve = IReserve(reserveAddress);
-        uint256 reserveTokenAmount = reserve.balanceOf(user);
+        uint256 reserveTokenAmount = IReserve(reserve).balanceOf(user);
         uint256 maximumAmount;
 
         if (reserveTokenAmount == 0) {
@@ -89,8 +73,9 @@ library SupplyLogic {
         } else {
             maximumAmount =
                 (reserveTokenAmount *
-                    (reserve.getUnderlyingBalance() + reserve.getDebt())) /
-                reserve.totalSupply();
+                    (IReserve(reserve).getUnderlyingBalance() +
+                        IReserve(reserve).getDebt())) /
+                IReserve(reserve).totalSupply();
         }
 
         return maximumAmount;

@@ -31,6 +31,9 @@ contract Market is
 {
     // collection + asset = reserve
     mapping(address => mapping(address => address)) private _reserves;
+    // reserve = valid (bool)
+    mapping(address => bool) private _validReserves;
+
     IAddressesProvider private _addressProvider;
     uint256 private _defaultLiquidationPenalty;
     uint256 private _defaultProtocolLiquidationFee;
@@ -55,82 +58,82 @@ contract Market is
 
     /// @notice Deposit any ERC-20 asset in the reserve
     /// @dev Needs to give approval to the corresponding reserve
-    /// @param asset The address of the asset the be deposited
-    /// @param amount Amount of the asset to be deposited
-    function deposit(
-        address collection,
-        address asset,
-        uint256 amount
-    ) external override nonReentrant {
-        SupplyLogic.deposit(_reserves, collection, asset, amount);
+    /// @param reserve The address of the reserve we are depositing into
+    /// @param amount Amount of the asset to be depositedreserve
+    function deposit(address reserve, uint256 amount)
+        external
+        override
+        nonReentrant
+    {
+        require(_validReserves[reserve] == true, "Invalid Reserve");
+        SupplyLogic.deposit(reserve, amount);
 
-        emit Deposit(msg.sender, asset, amount);
+        emit Deposit(msg.sender, reserve, amount);
     }
 
     /// @notice Deposit ETH in the wETH reserve
     /// @dev Needs to give approval to the corresponding reserve
-    function depositETH(address collection)
+    function depositETH(address reserve)
         external
         payable
         override
         nonReentrant
     {
         address wethAddress = _addressProvider.getWETH();
-        IWETH WETH = IWETH(wethAddress);
+
+        require(_validReserves[reserve] == true, "Invalid Reserve");
+        require(
+            IReserve(reserve).getAsset() == wethAddress,
+            "Reserve underlying is not WETH"
+        );
 
         // Deposit WETH into the callers account
+        IWETH WETH = IWETH(wethAddress);
         WETH.deposit{value: msg.value}();
         WETH.transfer(msg.sender, msg.value);
 
-        SupplyLogic.deposit(_reserves, collection, wethAddress, msg.value);
+        SupplyLogic.deposit(reserve, msg.value);
 
-        emit Deposit(msg.sender, wethAddress, msg.value);
+        emit Deposit(msg.sender, reserve, msg.value);
     }
 
     /// @notice Withdraw an asset from the reserve
-    /// @param asset The address of the asset the be withdrawn
+    /// @param reserve The reserve to be withdrawn from
     /// @param amount Amount of the asset to be withdrawn
-    function withdraw(
-        address collection,
-        address asset,
-        uint256 amount
-    ) external override nonReentrant {
-        SupplyLogic.withdraw(
-            _addressProvider,
-            _reserves,
-            collection,
-            msg.sender,
-            asset,
-            amount
-        );
+    function withdraw(address reserve, uint256 amount)
+        external
+        override
+        nonReentrant
+    {
+        require(_validReserves[reserve] == true, "Invalid Reserve");
 
-        emit Withdraw(msg.sender, asset, amount);
+        SupplyLogic.withdraw(_addressProvider, reserve, msg.sender, amount);
+
+        emit Withdraw(msg.sender, reserve, amount);
     }
 
     /// @notice Withdraw an asset from the reserve
     /// @param amount Amount of the asset to be withdrawn
-    function withdrawETH(address collection, uint256 amount)
+    function withdrawETH(address reserve, uint256 amount)
         external
         override
         nonReentrant
     {
         address wethAddress = _addressProvider.getWETH();
-        IWETH WETH = IWETH(wethAddress);
 
-        SupplyLogic.withdraw(
-            _addressProvider,
-            _reserves,
-            collection,
-            address(this),
-            wethAddress,
-            amount
+        require(_validReserves[reserve] == true, "Invalid Reserve");
+        require(
+            IReserve(reserve).getAsset() == wethAddress,
+            "Reserve underlying is not WETH"
         );
-        WETH.withdraw(amount);
+
+        SupplyLogic.withdraw(_addressProvider, reserve, address(this), amount);
+        IWETH(wethAddress).withdraw(amount);
 
         (bool sent, ) = msg.sender.call{value: amount}("");
         require(sent, "Failed to send Ether");
 
-        emit Withdraw(msg.sender, wethAddress, amount);
+        emit Withdraw(msg.sender, reserve, amount);
     }
 
     /// @notice Borrow an asset from the reserve while an NFT as collateral
@@ -271,6 +274,9 @@ contract Market is
         IERC20(asset).approve(address(newReserve), 2**256 - 1);
 
         _reserves[collection][asset] = address(newReserve);
+        _validReserves[address(newReserve)] = true;
+
+        emit CreateReserve(collection, asset);
     }
 
     /// @notice Get the reserve address responsible to a certain asset
@@ -320,19 +326,27 @@ contract Market is
         _defaultUnderlyingSafeguard = underlyingSafeguard;
     }
 
-    function getDefaultLiquidationPenalty() external returns (uint256) {
+    function getDefaultLiquidationPenalty() external view returns (uint256) {
         return _defaultLiquidationPenalty;
     }
 
-    function getDefaultProtocolLiquidationFee() external returns (uint256) {
+    function getDefaultProtocolLiquidationFee()
+        external
+        view
+        returns (uint256)
+    {
         return _defaultProtocolLiquidationFee;
     }
 
-    function getDefaultMaximumUtilizationRate() external returns (uint256) {
+    function getDefaultMaximumUtilizationRate()
+        external
+        view
+        returns (uint256)
+    {
         return _defaultMaximumUtilizationRate;
     }
 
-    function getDefaultUnderlyingSafeguard() external returns (uint256) {
+    function getDefaultUnderlyingSafeguard() external view returns (uint256) {
         return _defaultUnderlyingSafeguard;
     }
 
