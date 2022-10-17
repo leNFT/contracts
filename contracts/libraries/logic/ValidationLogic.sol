@@ -275,12 +275,10 @@ library ValidationLogic {
         require(amount > 0, "Withdrawal amount must be bigger than 0");
     }
 
-    function validateVote(
-        IAddressesProvider addressesProvider,
-        uint256 amount,
-        address collection
-    ) external view {
-        INFTOracle nftOracle = INFTOracle(addressesProvider.getNFTOracle());
+    function validateVote(IAddressesProvider addressesProvider, uint256 amount)
+        external
+        view
+    {
         INativeTokenVault vault = INativeTokenVault(
             addressesProvider.getNativeTokenVault()
         );
@@ -301,7 +299,6 @@ library ValidationLogic {
         uint256 amount,
         address collection
     ) external view {
-        INFTOracle nftOracle = INFTOracle(addressesProvider.getNFTOracle());
         INativeTokenVault vault = INativeTokenVault(
             addressesProvider.getNativeTokenVault()
         );

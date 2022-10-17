@@ -160,7 +160,7 @@ contract NativeTokenVault is
         override
         nonReentrant
     {
-        ValidationLogic.validateVote(_addressProvider, amount, collection);
+        ValidationLogic.validateVote(_addressProvider, amount);
 
         // Vote for a collection with the tokens we just minted
         _votes[msg.sender][collection] += amount;

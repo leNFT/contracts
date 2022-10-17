@@ -28,7 +28,11 @@ interface IMarket {
 
     event Liquidate(address indexed user, uint256 loanId);
 
-    event CreateReserve(address indexed collection, address indexed asset);
+    event CreateReserve(
+        address indexed reserve,
+        address indexed collection,
+        address indexed asset
+    );
 
     function deposit(address reserve, uint256 amount) external;
 

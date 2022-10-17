@@ -276,7 +276,7 @@ contract Market is
         _reserves[collection][asset] = address(newReserve);
         _validReserves[address(newReserve)] = true;
 
-        emit CreateReserve(collection, asset);
+        emit CreateReserve(address(newReserve), collection, asset);
     }
 
     /// @notice Get the reserve address responsible to a certain asset
