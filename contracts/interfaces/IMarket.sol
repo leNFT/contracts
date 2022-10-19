@@ -24,11 +24,11 @@ interface IMarket {
         uint256 amount
     );
 
-    event Repay(address indexed user, uint256 loanId);
+    event Repay(address indexed user, uint256 indexed loanId);
 
-    event Liquidate(address indexed user, uint256 loanId);
+    event Liquidate(address indexed user, uint256 indexed loanId);
 
-    event CreateReserve(address reserve);
+    event CreateReserve(address indexed reserve);
 
     event SetReserve(
         address indexed collection,

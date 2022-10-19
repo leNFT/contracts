@@ -105,7 +105,7 @@ async function main() {
   const LoanCenter = await ethers.getContractFactory("LoanCenter");
   const loanCenter = await upgrades.deployProxy(LoanCenter, [
     addressesProvider.address,
-    "40000", // DefaultMaxCollaterization
+    "4000", // DefaultMaxCollaterization 40%
   ]);
   console.log("Loan Center Proxy Address:", loanCenter.address);
 
