@@ -2,6 +2,7 @@
 pragma solidity 0.8.15;
 
 import {IMarket} from "../interfaces/IMarket.sol";
+import {ITokenOracle} from "../interfaces/ITokenOracle.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
 import {SupplyLogic} from "../libraries/logic/SupplyLogic.sol";
 import {LiquidationLogic} from "../libraries/logic/LiquidationLogic.sol";
@@ -250,10 +251,26 @@ contract Market is
         emit Liquidate(msg.sender, loanId);
     }
 
+    function _setReserve(
+        address collection,
+        address asset,
+        address reserve
+    ) internal {
+        _reserves[collection][asset] = reserve;
+
+        emit SetReserve(collection, asset, reserve);
+    }
+
     /// @notice Create a new reserve for a certain collection
     /// @param collection The collection using this reserve
     /// @param asset The address of the asset the reserve controls
     function createReserve(address collection, address asset) external {
+        require(
+            ITokenOracle(_addressProvider.getTokenOracle()).isTokenSupported(
+                asset
+            ),
+            "Underlying Asset is not supported"
+        );
         require(
             _reserves[collection][asset] == address(0),
             "Reserve already exists"
@@ -270,13 +287,13 @@ contract Market is
             _defaultUnderlyingSafeguard
         );
 
-        //Approve reserve use of Market balance
+        // Approve reserve use of Market balance
         IERC20(asset).approve(address(newReserve), 2**256 - 1);
 
-        _reserves[collection][asset] = address(newReserve);
         _validReserves[address(newReserve)] = true;
+        _setReserve(collection, asset, address(newReserve));
 
-        emit CreateReserve(address(newReserve), collection, asset);
+        emit CreateReserve(address(newReserve));
     }
 
     /// @notice Get the reserve address responsible to a certain asset
@@ -295,7 +312,7 @@ contract Market is
         address asset,
         address reserve
     ) external onlyOwner {
-        _reserves[collection][asset] = reserve;
+        _setReserve(collection, asset, reserve);
     }
 
     function setDefaultLiquidationPenalty(uint256 liquidationPenalty)

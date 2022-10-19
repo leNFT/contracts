@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 interface ITokenOracle {
+    function isTokenSupported(address token) external view returns (bool);
+
     function getTokenETHPrice(address tokenAddress)
         external
         view

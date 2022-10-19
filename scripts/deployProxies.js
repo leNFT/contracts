@@ -97,7 +97,7 @@ async function main() {
       "8500", // defaultMaximumUtilizationRate
       "25000000000000000000", // defaultUnderlyingSafeguard
     ],
-    { unsafeAllow: ["external-library-linking"] }
+    { unsafeAllow: ["external-library-linking"], timeout: 0 }
   );
   console.log("Market Proxy Address:", market.address);
 
@@ -153,7 +153,7 @@ async function main() {
       1500, //15% Boost Limit
       "15000000000000000000", // 15 Boost Factor
     ],
-    { unsafeAllow: ["external-library-linking"] }
+    { unsafeAllow: ["external-library-linking"], timeout: 0 }
   );
   console.log("Native Token Vault Proxy Address:", nativeTokenVault.address);
 
