@@ -16,6 +16,8 @@ import {Reserve} from "./Reserve.sol";
 import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {Trustus} from "./Trustus.sol";
 import "hardhat/console.sol";
@@ -30,6 +32,8 @@ contract Market is
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
+    using ERC165Checker for address;
+
     // collection + asset = reserve
     mapping(address => mapping(address => address)) private _reserves;
     // reserve = valid (bool)
@@ -265,6 +269,10 @@ contract Market is
     /// @param collection The collection using this reserve
     /// @param asset The address of the asset the reserve controls
     function createReserve(address collection, address asset) external {
+        require(
+            collection.supportsInterface(type(IERC721).interfaceId),
+            "Collection address is not ERC721 compliant."
+        );
         require(
             ITokenOracle(_addressProvider.getTokenOracle()).isTokenSupported(
                 asset
