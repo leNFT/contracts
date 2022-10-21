@@ -130,7 +130,7 @@ contract GenesisNFT is
         address market = _addressProvider.getMarketAddress();
         address wethReserve = IMarket(market).getReserve(address(this), weth);
         IWETH(weth).approve(wethReserve, depositAmount);
-        IMarket(market).depositETH{value: depositAmount}(address(this));
+        IMarket(market).depositETH{value: depositAmount}(wethReserve);
 
         // Send the rest to the dev fund
         (bool sent, ) = _devAddress.call{value: _price - depositAmount}("");
