@@ -48,9 +48,9 @@ contract Market is
     // Initialize the market
     function initialize(
         IAddressesProvider addressesProvider,
-        uint256 maximumUtilizationRate,
         uint256 liquidationPenalty,
         uint256 protocolLiquidationFee,
+        uint256 maximumUtilizationRate,
         uint256 underlyingSafeguard
     ) external initializer {
         __Ownable_init();
