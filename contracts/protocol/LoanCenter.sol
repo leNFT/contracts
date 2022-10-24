@@ -375,7 +375,7 @@ contract LoanCenter is
             );
     }
 
-    function approveNFTCollection(address collection) external onlyOwner {
+    function approveNFTCollection(address collection) external onlyMarket {
         IERC721Upgradeable(collection).setApprovalForAll(
             _addressProvider.getMarketAddress(),
             true

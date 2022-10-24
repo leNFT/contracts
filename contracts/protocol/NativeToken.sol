@@ -121,7 +121,7 @@ contract NativeToken is
             "Not enough time since last rewards distribution."
         );
 
-        // Only give rewards until the max periods are over
+        // Only give rewards until there are remaining periods
         require(
             _maxPeriods * _rewardsPeriod > block.timestamp - _deployTimestamp,
             "Rewards period is over"

@@ -79,4 +79,6 @@ interface ILoanCenter {
         address collection,
         uint256 maxCollaterization
     ) external;
+
+    function approveNFTCollection(address collection) external;
 }

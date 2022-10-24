@@ -37,16 +37,16 @@ contract Reserve is IReserve, ERC20, Ownable {
         address asset,
         string memory name,
         string memory symbol,
-        uint256 maximumUtilizationRate,
         uint256 liquidationPenalty,
         uint256 protocolLiquidationFee,
+        uint256 maximumUtilizationRate,
         uint256 underlyingSafeguard
     ) ERC20(name, symbol) {
         _addressProvider = addressProvider;
         _asset = asset;
-        _maximumUtilizationRate = maximumUtilizationRate;
         _liquidationPenalty = liquidationPenalty;
         _protocolLiquidationFee = protocolLiquidationFee;
+        _maximumUtilizationRate = maximumUtilizationRate;
         _underlyingSafeguard = underlyingSafeguard;
         _updateBorrowRate();
         _transferOwnership(owner);

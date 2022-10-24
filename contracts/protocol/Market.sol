@@ -11,6 +11,7 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
 import {IReserve} from "../interfaces/IReserve.sol";
 import {Reserve} from "./Reserve.sol";
 import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
@@ -289,14 +290,26 @@ contract Market is
             asset,
             string.concat("RESERVE", IERC20Metadata(asset).name()),
             string.concat("R", IERC20Metadata(asset).symbol()),
-            _defaultMaximumUtilizationRate,
             _defaultLiquidationPenalty,
             _defaultProtocolLiquidationFee,
+            _defaultMaximumUtilizationRate,
             _defaultUnderlyingSafeguard
         );
 
         // Approve reserve use of Market balance
         IERC20(asset).approve(address(newReserve), 2**256 - 1);
+
+        // Approve Market use of loan center NFT's (for returning the collateral)
+        if (
+            IERC721(collection).isApprovedForAll(
+                _addressProvider.getLoanCenter(),
+                address(this)
+            ) == false
+        ) {
+            ILoanCenter(_addressProvider.getLoanCenter()).approveNFTCollection(
+                collection
+            );
+        }
 
         _validReserves[address(newReserve)] = true;
         _setReserve(collection, asset, address(newReserve));
