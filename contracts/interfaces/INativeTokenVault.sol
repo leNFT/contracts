@@ -47,6 +47,7 @@ interface INativeTokenVault {
     function removeVote(uint256 amount, address collection) external;
 
     function getLiquidationReward(
+        address reserve,
         uint256 reserveTokenPrice,
         uint256 assetPrice,
         uint256 liquidationPrice

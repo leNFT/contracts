@@ -40,6 +40,8 @@ contract NativeTokenVault is
     mapping(address => uint256) private _collectionVotes;
     //User to withdraw requests
     mapping(address => DataTypes.WithdrawRequest) private _withdrawRequests;
+    //Reserves that have their liquidations incentivized
+    mapping(address => bool) private _reserveIncentives;
 
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using WithdrawRequestLogic for DataTypes.WithdrawRequest;
@@ -266,12 +268,33 @@ contract NativeTokenVault is
         _boostLimit = boostLimit;
     }
 
+    function isReserveIncentivized(address reserve)
+        external
+        view
+        returns (bool)
+    {
+        return _reserveIncentives[reserve];
+    }
+
+    function setReserveIncentives(address reserve, bool mode)
+        external
+        onlyOwner
+    {
+        _reserveIncentives[reserve] = mode;
+    }
+
     function getLiquidationReward(
+        address reserve,
         uint256 reserveTokenPrice,
         uint256 assetPrice,
         uint256 liquidationPrice
     ) external view returns (uint256) {
         uint256 reward = 0;
+
+        // If the reserve is not in the list of incentived reserves it gets no reward
+        if (_reserveIncentives[reserve] == false) {
+            return reward;
+        }
 
         ITokenOracle tokenOracle = ITokenOracle(
             _addressProvider.getTokenOracle()

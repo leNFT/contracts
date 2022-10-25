@@ -224,6 +224,7 @@ contract LoanCenter is
         uint256 liquidationReward = INativeTokenVault(
             _addressProvider.getNativeTokenVault()
         ).getLiquidationReward(
+                _loans[loanId].reserve,
                 reserveAssetETHPrice,
                 collateralETHPrice,
                 liquidationPrice
