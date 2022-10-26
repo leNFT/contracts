@@ -299,14 +299,6 @@ library ValidationLogic {
         uint256 amount,
         address collection
     ) external view {
-        INativeTokenVault vault = INativeTokenVault(
-            addressesProvider.getNativeTokenVault()
-        );
-        uint256 collectionVotes = vault.getUserCollectionVotes(
-            msg.sender,
-            collection
-        );
-
         // Check if user has no active loans in voted collection
         require(
             ILoanCenter(addressesProvider.getLoanCenter()).getActiveLoansCount(
@@ -321,7 +313,8 @@ library ValidationLogic {
 
         //Check if the user has enough free votes
         require(
-            collectionVotes >= amount,
+            INativeTokenVault(addressesProvider.getNativeTokenVault())
+                .getUserCollectionVotes(msg.sender, collection) >= amount,
             "Not enough votes in selected collection"
         );
     }
