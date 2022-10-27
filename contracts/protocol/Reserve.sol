@@ -202,6 +202,10 @@ contract Reserve is IReserve, ERC20, Ownable {
         return _debt;
     }
 
+    function getTVL() external view returns (uint256) {
+        return _getDebt() + _getUnderlyingBalance();
+    }
+
     function getUtilizationRate() external view override returns (uint256) {
         return
             IInterestRate(_addressProvider.getInterestRate())
