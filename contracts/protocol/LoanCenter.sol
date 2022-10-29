@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.15;
+pragma solidity 0.8.17;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
@@ -178,7 +178,7 @@ contract LoanCenter is
         uint256 loanId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
-    ) external view returns (uint256, uint256) {
+    ) external view override returns (uint256, uint256) {
         // Get the address of this asset's reserve
         address reserveAsset = IReserve(_loans[loanId].reserve).getAsset();
 
@@ -359,7 +359,7 @@ contract LoanCenter is
     function changeCollectionMaxCollaterization(
         address collection,
         uint256 maxCollaterization
-    ) external onlyOwner {
+    ) external override onlyOwner {
         //Set the max collaterization
         _collectionsMaxCollaterization[collection] = maxCollaterization;
     }
@@ -376,7 +376,11 @@ contract LoanCenter is
             );
     }
 
-    function approveNFTCollection(address collection) external onlyMarket {
+    function approveNFTCollection(address collection)
+        external
+        override
+        onlyMarket
+    {
         IERC721Upgradeable(collection).setApprovalForAll(
             _addressProvider.getMarketAddress(),
             true

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.15;
+pragma solidity 0.8.17;
 
 import {IInterestRate} from "../interfaces/IInterestRate.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
@@ -66,6 +66,7 @@ contract InterestRate is IInterestRate {
     function calculateUtilizationRate(uint256 assets, uint256 debt)
         external
         pure
+        override
         returns (uint256)
     {
         return _calculateUtilizationRate(assets, debt);

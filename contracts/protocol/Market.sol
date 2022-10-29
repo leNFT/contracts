@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.15;
+pragma solidity 0.8.17;
 
 import {IMarket} from "../interfaces/IMarket.sol";
 import {ITokenOracle} from "../interfaces/ITokenOracle.sol";
@@ -288,7 +288,7 @@ contract Market is
             _addressProvider,
             owner(),
             asset,
-            string.concat("RESERVE", IERC20Metadata(asset).name()),
+            string.concat(IERC20Metadata(asset).name(), " leNFT Reserve"),
             string.concat("R", IERC20Metadata(asset).symbol()),
             _defaultLiquidationPenalty,
             _defaultProtocolLiquidationFee,
@@ -323,6 +323,7 @@ contract Market is
     function getReserve(address collection, address asset)
         external
         view
+        override
         returns (address)
     {
         return _reserves[collection][asset];

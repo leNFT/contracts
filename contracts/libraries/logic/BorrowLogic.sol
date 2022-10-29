@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.15;
+pragma solidity 0.8.17;
 
 import {DataTypes} from "../types/DataTypes.sol";
 import {PercentageMath} from "../math/PercentageMath.sol";
@@ -42,9 +42,6 @@ library BorrowLogic {
             packet
         );
 
-        // Get the reserve providing the loan
-        address reserveAddress = reserves[nftAddress][asset];
-
         // Transfer the collateral
         IERC721Upgradeable(nftAddress).safeTransferFrom(
             msg.sender,
@@ -53,7 +50,8 @@ library BorrowLogic {
         );
 
         // Get the borrow rate index
-        uint256 borrowRate = IReserve(reserveAddress).getBorrowRate();
+        uint256 borrowRate = IReserve(reserves[nftAddress][asset])
+            .getBorrowRate();
 
         // Get max LTV for this collection
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
@@ -64,20 +62,22 @@ library BorrowLogic {
             addressesProvider.getNativeTokenVault()
         ).getVoteCollateralizationBoost(msg.sender, nftAddress);
 
-        // Get boost from genesis NFTs
-        IGenesisNFT genesisNFT = IGenesisNFT(addressesProvider.getGenesisNFT());
         // If a genesis NFT was used with this loan
         if (genesisNFTId != 0) {
-            boost += genesisNFT.getLTVBoost();
+            boost += IGenesisNFT(addressesProvider.getGenesisNFT())
+                .getLTVBoost();
 
             // Lock genesis NFT to this loan
-            genesisNFT.setActiveState(genesisNFTId, true);
+            IGenesisNFT(addressesProvider.getGenesisNFT()).setActiveState(
+                genesisNFTId,
+                true
+            );
         }
 
         // Create the loan
         uint256 loanId = loanCenter.createLoan(
             msg.sender,
-            reserveAddress,
+            reserves[nftAddress][asset],
             amount,
             maxLTV,
             boost,
@@ -94,7 +94,7 @@ library BorrowLogic {
         loanCenter.activateLoan(loanId);
 
         // Send the principal to the borrower
-        IReserve(reserveAddress).transferUnderlying(
+        IReserve(reserves[nftAddress][asset]).transferUnderlying(
             depositor,
             amount,
             borrowRate

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.15;
+pragma solidity 0.8.17;
 
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {ITokenOracle} from "../interfaces/ITokenOracle.sol";
@@ -11,7 +11,12 @@ contract TokenOracle is ITokenOracle, Ownable {
     mapping(address => uint256) private _tokenPrices;
     mapping(address => address) private _priceFeeds;
 
-    function isTokenSupported(address token) external view returns (bool) {
+    function isTokenSupported(address token)
+        external
+        view
+        override
+        returns (bool)
+    {
         return _isTokenSupported(token);
     }
 
@@ -62,7 +67,7 @@ contract TokenOracle is ITokenOracle, Ownable {
         _tokenPrices[token] = price;
     }
 
-    function getPricePrecision() external pure returns (uint256) {
+    function getPricePrecision() external pure override returns (uint256) {
         return PRICE_PRECISION;
     }
 }

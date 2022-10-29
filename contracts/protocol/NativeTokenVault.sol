@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.15;
+pragma solidity 0.8.17;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
@@ -193,13 +193,19 @@ contract NativeTokenVault is
         emit RemoveVote(msg.sender, collection, amount);
     }
 
-    function getUserFreeVotes(address user) external view returns (uint256) {
+    function getUserFreeVotes(address user)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return _freeVotes[user];
     }
 
     function getUserCollectionVotes(address user, address collection)
         external
         view
+        override
         returns (uint256)
     {
         return _votes[user][collection];
@@ -288,7 +294,7 @@ contract NativeTokenVault is
         uint256 reserveTokenPrice,
         uint256 assetPrice,
         uint256 liquidationPrice
-    ) external view returns (uint256) {
+    ) external view override returns (uint256) {
         uint256 reward = 0;
 
         // If the reserve is not in the list of incentived reserves it gets no reward
@@ -350,6 +356,7 @@ contract NativeTokenVault is
 
     function sendLiquidationReward(address liquidator, uint256 amount)
         external
+        override
         onlyMarket
     {
         IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransfer(
@@ -406,6 +413,7 @@ contract NativeTokenVault is
     function getMaximumWithdrawalAmount(address user)
         external
         view
+        override
         returns (uint256)
     {
         uint256 veTokenFreeAmount = _freeVotes[user];

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.15;
+pragma solidity 0.8.17;
 
 import {DataTypes} from "../types/DataTypes.sol";
 import {PercentageMath} from "../math/PercentageMath.sol";
