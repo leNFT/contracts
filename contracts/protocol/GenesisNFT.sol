@@ -10,6 +10,7 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {ERC721URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import {ERC721BurnableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
 import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import {ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
@@ -23,6 +24,7 @@ contract GenesisNFT is
     ERC721Upgradeable,
     ERC721EnumerableUpgradeable,
     ERC721BurnableUpgradeable,
+    ERC721URIStorageUpgradeable,
     OwnableUpgradeable,
     IGenesisNFT,
     ReentrancyGuardUpgradeable
@@ -85,7 +87,16 @@ contract GenesisNFT is
     }
 
     function _baseURI() internal pure override returns (string memory) {
-        return "https://";
+        return "ipfs://";
+    }
+
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
+        returns (string memory)
+    {
+        return super.tokenURI(tokenId);
     }
 
     function getCap() public view returns (uint256) {
@@ -131,7 +142,7 @@ contract GenesisNFT is
                 _nativeTokenFactor) * 10**18;
     }
 
-    function mint(uint256 locktime)
+    function mint(uint256 locktime, string memory uri)
         external
         payable
         nonReentrant
@@ -172,6 +183,9 @@ contract GenesisNFT is
         //Mint token
         _safeMint(msg.sender, tokenId);
 
+        //Set URI
+        _setTokenURI(tokenId, uri);
+
         // Add mint details
         _mintDetails[tokenId] = DataTypes.MintDetails(
             block.timestamp,
@@ -191,6 +205,13 @@ contract GenesisNFT is
         return _mintDetails[tokenId].timestamp + _mintDetails[tokenId].locktime;
     }
 
+    function _burn(uint256 tokenId)
+        internal
+        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
+    {
+        super._burn(tokenId);
+    }
+
     function burn(uint256 tokenId) public override nonReentrant {
         // Token can only be burned after locktime is over
         require(
@@ -199,7 +220,7 @@ contract GenesisNFT is
         );
 
         // Burn NFT token
-        super.burn(tokenId);
+        _burn(tokenId);
         emit Burn(tokenId);
 
         // Withdraw ETH deposited in the reserve
@@ -230,9 +251,9 @@ contract GenesisNFT is
         public
         view
         override(
-            ERC721EnumerableUpgradeable,
+            IERC165Upgradeable,
             ERC721Upgradeable,
-            IERC165Upgradeable
+            ERC721EnumerableUpgradeable
         )
         returns (bool)
     {
