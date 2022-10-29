@@ -12,52 +12,53 @@ import "hardhat/console.sol";
 library SupplyLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    function deposit(address reserve, uint256 amount) external {
+    function deposit(DataTypes.DepositParams memory params) external {
         // Verify if withdrawal conditions are met
-        ValidationLogic.validateDeposit(reserve, amount);
+        ValidationLogic.validateDeposit(params);
 
         // Find how many tokens the reserve should mint
         uint256 reserveTokenAmount;
-        if (IReserve(reserve).totalSupply() == 0) {
-            reserveTokenAmount = amount;
+        if (IReserve(params.reserve).totalSupply() == 0) {
+            reserveTokenAmount = params.amount;
         } else {
             reserveTokenAmount =
-                (amount * IReserve(reserve).totalSupply()) /
-                (IReserve(reserve).getUnderlyingBalance() +
-                    IReserve(reserve).getDebt());
+                (params.amount * IReserve(params.reserve).totalSupply()) /
+                (IReserve(params.reserve).getUnderlyingBalance() +
+                    IReserve(params.reserve).getDebt());
         }
 
         console.log("msg.sender", msg.sender);
         console.log("reserveTokenAmount", reserveTokenAmount);
 
-        IReserve(reserve).depositUnderlying(msg.sender, amount);
-        IReserve(reserve).mint(msg.sender, reserveTokenAmount);
+        IReserve(params.reserve).depositUnderlying(msg.sender, params.amount);
+        IReserve(params.reserve).mint(msg.sender, reserveTokenAmount);
     }
 
     function withdraw(
         IAddressesProvider addressesProvider,
-        address reserve,
-        address depositor,
-        uint256 amount
+        DataTypes.WithdrawalParams memory params
     ) external {
         // Verify if withdrawal conditions are met
-        ValidationLogic.validateWithdrawal(addressesProvider, reserve, amount);
+        ValidationLogic.validateWithdrawal(addressesProvider, params);
 
         // Find how many tokens the reserve should burn
         uint256 reserveTokenAmount;
-        if (IReserve(reserve).totalSupply() == 0) {
-            reserveTokenAmount = amount;
+        if (IReserve(params.reserve).totalSupply() == 0) {
+            reserveTokenAmount = params.amount;
         } else {
             reserveTokenAmount =
-                (amount * IReserve(reserve).totalSupply()) /
-                (IReserve(reserve).getUnderlyingBalance() +
-                    IReserve(reserve).getDebt());
+                (params.amount * IReserve(params.reserve).totalSupply()) /
+                (IReserve(params.reserve).getUnderlyingBalance() +
+                    IReserve(params.reserve).getDebt());
         }
 
         assert(reserveTokenAmount > 0);
 
-        IReserve(reserve).burn(msg.sender, reserveTokenAmount);
-        IReserve(reserve).withdrawUnderlying(depositor, amount);
+        IReserve(params.reserve).burn(msg.sender, reserveTokenAmount);
+        IReserve(params.reserve).withdrawUnderlying(
+            params.depositor,
+            params.amount
+        );
     }
 
     function maximumWithdrawalAmount(address reserve, address user)

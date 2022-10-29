@@ -1,5 +1,7 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+pragma solidity 0.8.17;
+
+import {Trustus} from "../../protocol/Trustus.sol";
 
 library DataTypes {
     struct WithdrawRequest {
@@ -18,9 +20,9 @@ library DataTypes {
      * State change flow:
      * None -> Created -> Active -> Repaid -> Auction -> Defaulted
      * 0 - None (Default Value): We need a default that is not 'Created' - this is the zero value
-     * 1 - Created: The loan data is stored, but not initiated yet.
-     * 2 - Active: The loan has been initialized, funds have been delivered to the borrower and the collateral is held.
-     * 3 - Repaid: The loan has been repaid, and the collateral has been returned to the borrower. This is a terminal state.
+     * 1 - Created: The loan data is stored; but not initiated yet.
+     * 2 - Active: The loan has been initialized; funds have been delivered to the borrower and the collateral is held.
+     * 3 - Repaid: The loan has been repaid; and the collateral has been returned to the borrower. This is a terminal state.
      * 4 - Defaulted: The loan was delinquent and collateral claimed by the liquidator. This is a terminal state.
      */
     enum LoanState {
@@ -66,5 +68,38 @@ library DataTypes {
     struct MintDetails {
         uint256 timestamp;
         uint256 locktime;
+    }
+
+    struct BorrowParams {
+        address depositor;
+        address asset;
+        uint256 amount;
+        address nftAddress;
+        uint256 nftTokenID;
+        uint256 genesisNFTId;
+        bytes32 request;
+        Trustus.TrustusPacket packet;
+    }
+
+    struct RepayParams {
+        uint256 loanId;
+        uint256 amount;
+    }
+
+    struct DepositParams {
+        address reserve;
+        uint256 amount;
+    }
+
+    struct WithdrawalParams {
+        address reserve;
+        address depositor;
+        uint256 amount;
+    }
+
+    struct LiquidationParams {
+        uint256 loanId;
+        bytes32 request;
+        Trustus.TrustusPacket packet;
     }
 }

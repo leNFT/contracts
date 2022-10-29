@@ -72,7 +72,9 @@ contract Market is
         nonReentrant
     {
         require(_validReserves[reserve] == true, "Invalid Reserve");
-        SupplyLogic.deposit(reserve, amount);
+        SupplyLogic.deposit(
+            DataTypes.DepositParams({reserve: reserve, amount: amount})
+        );
 
         emit Deposit(msg.sender, reserve, amount);
     }
@@ -98,7 +100,9 @@ contract Market is
         WETH.deposit{value: msg.value}();
         WETH.transfer(msg.sender, msg.value);
 
-        SupplyLogic.deposit(reserve, msg.value);
+        SupplyLogic.deposit(
+            DataTypes.DepositParams({reserve: reserve, amount: msg.value})
+        );
 
         emit Deposit(msg.sender, reserve, msg.value);
     }
@@ -113,7 +117,14 @@ contract Market is
     {
         require(_validReserves[reserve] == true, "Invalid Reserve");
 
-        SupplyLogic.withdraw(_addressProvider, reserve, msg.sender, amount);
+        SupplyLogic.withdraw(
+            _addressProvider,
+            DataTypes.WithdrawalParams({
+                reserve: reserve,
+                depositor: msg.sender,
+                amount: amount
+            })
+        );
 
         emit Withdraw(msg.sender, reserve, amount);
     }
@@ -133,7 +144,14 @@ contract Market is
             "Reserve underlying is not WETH"
         );
 
-        SupplyLogic.withdraw(_addressProvider, reserve, address(this), amount);
+        SupplyLogic.withdraw(
+            _addressProvider,
+            DataTypes.WithdrawalParams({
+                reserve: reserve,
+                depositor: address(this),
+                amount: amount
+            })
+        );
         IWETH(wethAddress).withdraw(amount);
 
         (bool sent, ) = msg.sender.call{value: amount}("");
@@ -163,14 +181,16 @@ contract Market is
         BorrowLogic.borrow(
             _addressProvider,
             _reserves,
-            address(this),
-            wethAddress,
-            amount,
-            nftAddress,
-            nftTokenId,
-            genesisNFTId,
-            request,
-            packet
+            DataTypes.BorrowParams({
+                depositor: address(this),
+                asset: wethAddress,
+                amount: amount,
+                nftAddress: nftAddress,
+                nftTokenID: nftTokenId,
+                genesisNFTId: genesisNFTId,
+                request: request,
+                packet: packet
+            })
         );
 
         WETH.withdraw(amount);
@@ -201,14 +221,16 @@ contract Market is
         BorrowLogic.borrow(
             _addressProvider,
             _reserves,
-            msg.sender,
-            asset,
-            amount,
-            nftAddress,
-            nftTokenId,
-            genesisNFTId,
-            request,
-            packet
+            DataTypes.BorrowParams({
+                depositor: msg.sender,
+                asset: asset,
+                amount: amount,
+                nftAddress: nftAddress,
+                nftTokenID: nftTokenId,
+                genesisNFTId: genesisNFTId,
+                request: request,
+                packet: packet
+            })
         );
 
         emit Borrow(msg.sender, asset, nftAddress, nftTokenId, amount);
@@ -224,7 +246,10 @@ contract Market is
         WETH.deposit{value: msg.value}();
         WETH.transfer(msg.sender, msg.value);
 
-        BorrowLogic.repay(_addressProvider, loanId, msg.value);
+        BorrowLogic.repay(
+            _addressProvider,
+            DataTypes.RepayParams({loanId: loanId, amount: msg.value})
+        );
 
         emit Repay(msg.sender, loanId);
     }
@@ -236,7 +261,10 @@ contract Market is
         override
         nonReentrant
     {
-        BorrowLogic.repay(_addressProvider, loanId, amount);
+        BorrowLogic.repay(
+            _addressProvider,
+            DataTypes.RepayParams({loanId: loanId, amount: amount})
+        );
 
         emit Repay(msg.sender, loanId);
     }
@@ -251,7 +279,14 @@ contract Market is
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external override nonReentrant {
-        LiquidationLogic.liquidate(_addressProvider, loanId, request, packet);
+        LiquidationLogic.liquidate(
+            _addressProvider,
+            DataTypes.LiquidationParams({
+                loanId: loanId,
+                request: request,
+                packet: packet
+            })
+        );
 
         emit Liquidate(msg.sender, loanId);
     }

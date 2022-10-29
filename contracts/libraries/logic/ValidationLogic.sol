@@ -24,40 +24,42 @@ library ValidationLogic {
     uint256 internal constant UNVOTE_WINDOW = ONE_DAY * 2;
     using WithdrawRequestLogic for DataTypes.WithdrawRequest;
 
-    function validateDeposit(address reserve, uint256 amount) external view {
+    function validateDeposit(DataTypes.DepositParams memory params)
+        external
+        view
+    {
         // Get balance of the user trying the deposit
         require(
-            amount <=
-                IERC20Upgradeable(IReserve(reserve).getAsset()).balanceOf(
-                    msg.sender
-                ),
+            params.amount <=
+                IERC20Upgradeable(IReserve(params.reserve).getAsset())
+                    .balanceOf(msg.sender),
             "Balance is lower than deposited amount"
         );
 
         // Check if deposit amount is bigger than 0
-        require(amount > 0, "Deposit amount must be bigger than 0");
+        require(params.amount > 0, "Deposit amount must be bigger than 0");
 
         // Check if reserve will exceed maximum permitted amount
         require(
-            amount + IReserve(reserve).getUnderlyingBalance() <
-                IReserve(reserve).getUnderlyingSafeguard(),
+            params.amount + IReserve(params.reserve).getUnderlyingBalance() <
+                IReserve(params.reserve).getUnderlyingSafeguard(),
             "Reserve exceeds safeguarded limit"
         );
     }
 
     function validateWithdrawal(
         IAddressesProvider addressesProvider,
-        address reserve,
-        uint256 amount
+        DataTypes.WithdrawalParams memory params
     ) external view {
         // Check if the utilization rate doesn't go above maximum
-        uint256 maximumUtilizationRate = IReserve(reserve)
+        uint256 maximumUtilizationRate = IReserve(params.reserve)
             .getMaximumUtilizationRate();
-        uint256 debt = IReserve(reserve).getDebt();
-        uint256 underlyingBalance = IReserve(reserve).getUnderlyingBalance();
+        uint256 debt = IReserve(params.reserve).getDebt();
+        uint256 underlyingBalance = IReserve(params.reserve)
+            .getUnderlyingBalance();
         uint256 updatedUtilizationRate = IInterestRate(
             addressesProvider.getInterestRate()
-        ).calculateUtilizationRate(underlyingBalance - amount, debt);
+        ).calculateUtilizationRate(underlyingBalance - params.amount, debt);
 
         require(
             updatedUtilizationRate <= maximumUtilizationRate,
@@ -66,55 +68,49 @@ library ValidationLogic {
 
         // Check if the user has enough reserve balance for withdrawal
         require(
-            amount <= IReserve(reserve).getMaximumWithdrawalAmount(msg.sender),
+            params.amount <=
+                IReserve(params.reserve).getMaximumWithdrawalAmount(msg.sender),
             "Amount too high"
         );
 
         // Check if withdrawal amount is bigger than 0
-        require(amount > 0, "Withdrawal amount must be bigger than 0");
+        require(params.amount > 0, "Withdrawal amount must be bigger than 0");
     }
 
     // Check if borrowing conditions are valid
     function validateBorrow(
         IAddressesProvider addressesProvider,
         mapping(address => mapping(address => address)) storage reserves,
-        address asset,
-        uint256 amount,
-        address nftAddress,
-        uint256 nftTokenID,
-        uint256 genesisNFTId,
-        bytes32 request,
-        Trustus.TrustusPacket calldata packet
+        DataTypes.BorrowParams memory params
     ) external view {
         // Check if the asset is supported
         require(
-            reserves[nftAddress][asset] != address(0),
+            reserves[params.nftAddress][params.asset] != address(0),
             "No reserve for asset and collection"
         );
 
-        INFTOracle nftOracle = INFTOracle(addressesProvider.getNFTOracle());
         ITokenOracle tokenOracle = ITokenOracle(
             addressesProvider.getTokenOracle()
         );
-        uint256 assetETHPrice = tokenOracle.getTokenETHPrice(asset);
+        uint256 assetETHPrice = tokenOracle.getTokenETHPrice(params.asset);
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         // Get boost for this user and collection
         uint256 boost = INativeTokenVault(
             addressesProvider.getNativeTokenVault()
-        ).getVoteCollateralizationBoost(msg.sender, nftAddress);
+        ).getVoteCollateralizationBoost(msg.sender, params.nftAddress);
 
         // Get boost from genesis NFTs
         IGenesisNFT genesisNFT = IGenesisNFT(addressesProvider.getGenesisNFT());
-        if (genesisNFTId != 0) {
+        if (params.genesisNFTId != 0) {
             // Require owner is the borrower
             require(
-                genesisNFT.ownerOf(genesisNFTId) == msg.sender,
+                genesisNFT.ownerOf(params.genesisNFTId) == msg.sender,
                 "Caller is not owner of Genesis NFT"
             );
             //Require that the NFT is not being used
             require(
-                genesisNFT.getActiveState(genesisNFTId) == false,
+                genesisNFT.getActiveState(params.genesisNFTId) == false,
                 "Genesis NFT currently being used by another loan"
             );
 
@@ -122,20 +118,23 @@ library ValidationLogic {
         }
 
         // Get asset ETH price
-        uint256 collateralETHPrice = nftOracle.getTokenETHPrice(
-            nftAddress,
-            nftTokenID,
-            request,
-            packet
-        );
+        uint256 collateralETHPrice = INFTOracle(
+            addressesProvider.getNFTOracle()
+        ).getTokenETHPrice(
+                params.nftAddress,
+                params.nftTokenID,
+                params.request,
+                params.packet
+            );
 
         // Check if borrow amount exceeds allowed amount
         require(
-            amount <=
+            params.amount <=
                 (PercentageMath.percentMul(
                     collateralETHPrice,
                     ILoanCenter(addressesProvider.getLoanCenter())
-                        .getCollectionMaxCollaterization(nftAddress) + boost
+                        .getCollectionMaxCollaterization(params.nftAddress) +
+                        boost
                 ) * pricePrecision) /
                     assetETHPrice,
             "Amount exceeds allowed by collateral"
@@ -143,29 +142,30 @@ library ValidationLogic {
 
         // Check if the reserve has enough underlying to borrow
         require(
-            amount <=
-                IReserve(reserves[nftAddress][asset]).getUnderlyingBalance(),
+            params.amount <=
+                IReserve(reserves[params.nftAddress][params.asset])
+                    .getUnderlyingBalance(),
             "Amount exceeds reserve balance"
         );
 
         // Check if borrow amount is bigger than 0
-        require(amount > 0, "Borrow amount must be bigger than 0");
+        require(params.amount > 0, "Borrow amount must be bigger than 0");
 
         // Check if the borrower owns the asset
         require(
-            IERC721Upgradeable(nftAddress).ownerOf(nftTokenID) == msg.sender,
+            IERC721Upgradeable(params.nftAddress).ownerOf(params.nftTokenID) ==
+                msg.sender,
             "Asset not owned by user"
         );
     }
 
     function validateRepay(
         IAddressesProvider addressesProvider,
-        uint256 loanId,
-        uint256 amount
+        DataTypes.RepayParams memory params
     ) external view {
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
         //Require that loan exists
-        DataTypes.LoanData memory loanData = loanCenter.getLoan(loanId);
+        DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
         require(
             loanData.state != DataTypes.LoanState.None,
             "Loan does not exist"
@@ -178,23 +178,21 @@ library ValidationLogic {
         require(
             IERC20Upgradeable(IReserve(loanData.reserve).getAsset()).balanceOf(
                 msg.sender
-            ) >= amount,
+            ) >= params.amount,
             "Balance is lower than repay amount"
         );
 
         // Check if user is over paying
-        require(amount <= loanCenter.getLoanDebt(loanId));
+        require(params.amount <= loanCenter.getLoanDebt(params.loanId));
     }
 
     function validateLiquidation(
         IAddressesProvider addressesProvider,
-        uint256 loanId,
-        bytes32 request,
-        Trustus.TrustusPacket calldata packet
+        DataTypes.LiquidationParams memory params
     ) external view {
         //Require the loan exists
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
-        DataTypes.LoanData memory loanData = loanCenter.getLoan(loanId);
+        DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
         require(
             loanData.state != DataTypes.LoanState.None,
             "Loan does not exist"
@@ -209,17 +207,20 @@ library ValidationLogic {
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         require(
-            (loanCenter.getLoanMaxETHCollateral(loanId, request, packet) *
-                pricePrecision) /
+            (loanCenter.getLoanMaxETHCollateral(
+                params.loanId,
+                params.request,
+                params.packet
+            ) * pricePrecision) /
                 baseTokenETHPrice <
-                loanCenter.getLoanDebt(loanId),
+                loanCenter.getLoanDebt(params.loanId),
             "Collateral / Debt loan relation does not allow for liquidation."
         );
 
         (uint256 liquidationPrice, ) = loanCenter.getLoanLiquidationPrice(
-            loanId,
-            request,
-            packet
+            params.loanId,
+            params.request,
+            params.packet
         );
 
         // Check if caller has enough balance

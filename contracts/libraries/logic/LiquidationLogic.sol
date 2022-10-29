@@ -23,22 +23,15 @@ library LiquidationLogic {
 
     function liquidate(
         IAddressesProvider addressesProvider,
-        uint256 loanId,
-        bytes32 request,
-        Trustus.TrustusPacket calldata packet
+        DataTypes.LiquidationParams memory params
     ) external {
         // Verify if liquidation conditions are met
-        ValidationLogic.validateLiquidation(
-            addressesProvider,
-            loanId,
-            request,
-            packet
-        );
+        ValidationLogic.validateLiquidation(addressesProvider, params);
 
         // Get the loan
         DataTypes.LoanData memory loanData = (
             ILoanCenter(addressesProvider.getLoanCenter())
-        ).getLoan(loanId);
+        ).getLoan(params.loanId);
 
         // Get the address of this asset's reserve
         address reserveAsset = IReserve(loanData.reserve).getAsset();
@@ -46,7 +39,7 @@ library LiquidationLogic {
         // Find the liquidation price
         (uint256 liquidationPrice, uint256 liquidationReward) = ILoanCenter(
             addressesProvider.getLoanCenter()
-        ).getLoanLiquidationPrice(loanId, request, packet);
+        ).getLoanLiquidationPrice(params.loanId, params.request, params.packet);
 
         console.log("liquidationPrice", liquidationPrice);
         console.log("liquidationReward", liquidationReward);
@@ -61,7 +54,7 @@ library LiquidationLogic {
         // Repay loan...
         uint256 fundsLeft = liquidationPrice;
         uint256 loanInterest = ILoanCenter(addressesProvider.getLoanCenter())
-            .getLoanInterest(loanId);
+            .getLoanInterest(params.loanId);
         uint256 loanDebt = loanData.amount + loanInterest;
         // If we only have funds to pay back part of the loan
         if (fundsLeft < loanDebt) {
@@ -110,7 +103,9 @@ library LiquidationLogic {
         }
 
         // Update the state of the loan
-        ILoanCenter(addressesProvider.getLoanCenter()).liquidateLoan(loanId);
+        ILoanCenter(addressesProvider.getLoanCenter()).liquidateLoan(
+            params.loanId
+        );
 
         // Send collateral to liquidator
         IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
@@ -128,7 +123,7 @@ library LiquidationLogic {
         }
 
         // Burn the token representing the debt
-        IDebtToken(addressesProvider.getDebtToken()).burn(loanId);
+        IDebtToken(addressesProvider.getDebtToken()).burn(params.loanId);
 
         //Send the liquidation reward to the liquidator
         INativeTokenVault(addressesProvider.getNativeTokenVault())

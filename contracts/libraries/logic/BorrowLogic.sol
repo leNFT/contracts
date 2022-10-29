@@ -20,56 +20,41 @@ library BorrowLogic {
     function borrow(
         IAddressesProvider addressesProvider,
         mapping(address => mapping(address => address)) storage reserves,
-        address depositor,
-        address asset,
-        uint256 amount,
-        address nftAddress,
-        uint256 nftTokenID,
-        uint256 genesisNFTId,
-        bytes32 request,
-        Trustus.TrustusPacket calldata packet
+        DataTypes.BorrowParams memory params
     ) external returns (uint256) {
         // Validate the movement
-        ValidationLogic.validateBorrow(
-            addressesProvider,
-            reserves,
-            asset,
-            amount,
-            nftAddress,
-            nftTokenID,
-            genesisNFTId,
-            request,
-            packet
-        );
+        ValidationLogic.validateBorrow(addressesProvider, reserves, params);
 
         // Transfer the collateral
-        IERC721Upgradeable(nftAddress).safeTransferFrom(
+        IERC721Upgradeable(params.nftAddress).safeTransferFrom(
             msg.sender,
             addressesProvider.getLoanCenter(),
-            nftTokenID
+            params.nftTokenID
         );
 
         // Get the borrow rate index
-        uint256 borrowRate = IReserve(reserves[nftAddress][asset])
+        uint256 borrowRate = IReserve(reserves[params.nftAddress][params.asset])
             .getBorrowRate();
 
         // Get max LTV for this collection
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
-        uint256 maxLTV = loanCenter.getCollectionMaxCollaterization(nftAddress);
+        uint256 maxLTV = loanCenter.getCollectionMaxCollaterization(
+            params.nftAddress
+        );
 
         // Get boost for this user and collection
         uint256 boost = INativeTokenVault(
             addressesProvider.getNativeTokenVault()
-        ).getVoteCollateralizationBoost(msg.sender, nftAddress);
+        ).getVoteCollateralizationBoost(msg.sender, params.nftAddress);
 
         // If a genesis NFT was used with this loan
-        if (genesisNFTId != 0) {
+        if (params.genesisNFTId != 0) {
             boost += IGenesisNFT(addressesProvider.getGenesisNFT())
                 .getLTVBoost();
 
             // Lock genesis NFT to this loan
             IGenesisNFT(addressesProvider.getGenesisNFT()).setActiveState(
-                genesisNFTId,
+                params.genesisNFTId,
                 true
             );
         }
@@ -77,13 +62,13 @@ library BorrowLogic {
         // Create the loan
         uint256 loanId = loanCenter.createLoan(
             msg.sender,
-            reserves[nftAddress][asset],
-            amount,
+            reserves[params.nftAddress][params.asset],
+            params.amount,
             maxLTV,
             boost,
-            genesisNFTId,
-            nftAddress,
-            nftTokenID,
+            params.genesisNFTId,
+            params.nftAddress,
+            params.nftTokenID,
             borrowRate
         );
 
@@ -94,9 +79,9 @@ library BorrowLogic {
         loanCenter.activateLoan(loanId);
 
         // Send the principal to the borrower
-        IReserve(reserves[nftAddress][asset]).transferUnderlying(
-            depositor,
-            amount,
+        IReserve(reserves[params.nftAddress][params.asset]).transferUnderlying(
+            params.depositor,
+            params.amount,
             borrowRate
         );
 
@@ -105,19 +90,18 @@ library BorrowLogic {
 
     function repay(
         IAddressesProvider addressesProvider,
-        uint256 loanId,
-        uint256 amount
+        DataTypes.RepayParams memory params
     ) external {
         // Validate the movement
-        ValidationLogic.validateRepay(addressesProvider, loanId, amount);
+        ValidationLogic.validateRepay(addressesProvider, params);
 
         // Get the loan
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
-        DataTypes.LoanData memory loanData = loanCenter.getLoan(loanId);
-        uint256 interest = loanCenter.getLoanInterest(loanId);
+        DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
+        uint256 interest = loanCenter.getLoanInterest(params.loanId);
 
         // If we are paying the entire loan debt
-        if (amount == loanCenter.getLoanDebt(loanId)) {
+        if (params.amount == loanCenter.getLoanDebt(params.loanId)) {
             // Return the principal + interest
             IReserve(loanData.reserve).receiveUnderlying(
                 loanData.borrower,
@@ -126,7 +110,7 @@ library BorrowLogic {
                 interest
             );
 
-            loanCenter.repayLoan(loanId);
+            loanCenter.repayLoan(params.loanId);
 
             // Unlock Genesis NFT
             if (loanData.genesisNFTId != 0) {
@@ -145,25 +129,25 @@ library BorrowLogic {
             );
 
             // Burn the token representing the debt
-            IDebtToken(addressesProvider.getDebtToken()).burn(loanId);
+            IDebtToken(addressesProvider.getDebtToken()).burn(params.loanId);
         }
         // User is sending less than the total debt
         else {
             // User is sending less than the interest
-            if (amount <= interest) {
+            if (params.amount <= interest) {
                 IReserve(loanData.reserve).receiveUnderlying(
                     loanData.borrower,
                     0,
                     loanData.borrowRate,
-                    amount
+                    params.amount
                 );
 
                 // Calculate how much time the user has paid off with sent amount
                 loanCenter.updateLoanDebtTimestamp(
-                    loanId,
+                    params.loanId,
                     loanData.debtTimestamp +
                         ((365 days *
-                            amount *
+                            params.amount *
                             PercentageMath.PERCENTAGE_FACTOR) /
                             (loanData.amount * loanData.borrowRate))
                 );
@@ -172,14 +156,17 @@ library BorrowLogic {
             else {
                 IReserve(loanData.reserve).receiveUnderlying(
                     loanData.borrower,
-                    amount - interest,
+                    params.amount - interest,
                     loanData.borrowRate,
                     interest
                 );
-                loanCenter.updateLoanDebtTimestamp(loanId, block.timestamp);
+                loanCenter.updateLoanDebtTimestamp(
+                    params.loanId,
+                    block.timestamp
+                );
                 loanCenter.updateLoanAmount(
-                    loanId,
-                    loanData.amount - (amount - interest)
+                    params.loanId,
+                    loanData.amount - (params.amount - interest)
                 );
             }
         }
