@@ -40,6 +40,7 @@ contract GenesisNFT is
     address payable _devAddress;
     uint256 _ltvBoost;
     CountersUpgradeable.Counter private _tokenIdCounter;
+    address _mintDepositReserve;
 
     // NFT token id to bool that's true if NFT is being used to charge a loan
     mapping(uint256 => bool) private _active;
@@ -142,12 +143,29 @@ contract GenesisNFT is
                 _nativeTokenFactor) * 10**18;
     }
 
+    function getMintDepositReserve() external view returns (address) {
+        return _mintDepositReserve;
+    }
+
+    function segtMintDepositReserve(address mintDepositReserve)
+        external
+        onlyOwner
+    {
+        _mintDepositReserve = mintDepositReserve;
+    }
+
     function mint(uint256 locktime, string memory uri)
         external
         payable
         nonReentrant
         returns (uint256)
     {
+        // Make sure the genesis reserve is set
+        require(
+            _mintDepositReserve != address(0),
+            "Genesis mint deposit reserve is not set."
+        );
+
         // Make sure there's still enough tkens to mint
         uint256 tokenId = _tokenIdCounter.current();
         require(tokenId < getCap(), "All NFTs have been minted");
@@ -163,9 +181,8 @@ contract GenesisNFT is
         uint256 depositAmount = (2 * _price) / 3;
         address weth = _addressProvider.getWETH();
         address market = _addressProvider.getMarketAddress();
-        address wethReserve = IMarket(market).getReserve(address(this), weth);
-        IWETH(weth).approve(wethReserve, depositAmount);
-        IMarket(market).depositETH{value: depositAmount}(wethReserve);
+        IWETH(weth).approve(_mintDepositReserve, depositAmount);
+        IMarket(market).depositETH{value: depositAmount}(_mintDepositReserve);
 
         // Send the rest to the dev fund
         (bool sent, ) = _devAddress.call{value: _price - depositAmount}("");
@@ -237,14 +254,15 @@ contract GenesisNFT is
     }
 
     function _beforeTokenTransfer(
-        address,
-        address,
+        address from,
+        address to,
         uint256 tokenId
-    ) internal view override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
+    ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
         require(
             _active[tokenId] == false,
             "Cannot transfer token - currently locked in an active loan"
         );
+        super._beforeTokenTransfer(from, to, tokenId);
     }
 
     function supportsInterface(bytes4 interfaceId)
