@@ -147,7 +147,7 @@ contract GenesisNFT is
         return _mintDepositReserve;
     }
 
-    function segtMintDepositReserve(address mintDepositReserve)
+    function setMintDepositReserve(address mintDepositReserve)
         external
         onlyOwner
     {
