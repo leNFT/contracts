@@ -4,12 +4,14 @@ pragma solidity 0.8.17;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {INativeToken} from "../interfaces/INativeToken.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
 
 contract NativeToken is
     Initializable,
+    INativeToken,
     ERC20Upgradeable,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
@@ -25,8 +27,6 @@ contract NativeToken is
     uint256 internal _rewardsFactor;
     uint256 internal _rewardsPeriod;
     uint256 internal _maxPeriods;
-
-    event DistributeRewards(uint256 _amount);
 
     function initialize(
         IAddressesProvider addressProvider,

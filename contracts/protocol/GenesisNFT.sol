@@ -133,7 +133,7 @@ contract GenesisNFT is
         _nativeTokenFactor = newFactor;
     }
 
-    function getGenesisNativeTokens(uint256 locktime)
+    function getNativeTokensReward(uint256 locktime)
         public
         view
         returns (uint256)
@@ -175,7 +175,7 @@ contract GenesisNFT is
         require(locktime <= _maxLocktime, "Locktime is higher than limit");
 
         // Set a buying price
-        require(msg.value == _price, "Sent value is not equal to price");
+        require(msg.value == _price, "Tx value is not equal to price");
 
         //Wrap and Deposit 2/3 into the reserve
         uint256 depositAmount = (2 * _price) / 3;
@@ -191,7 +191,7 @@ contract GenesisNFT is
         // Send leNFT tokens to the caller
         INativeToken(_addressProvider.getNativeToken()).mintGenesisTokens(
             msg.sender,
-            getGenesisNativeTokens(locktime)
+            getNativeTokensReward(locktime)
         );
 
         //Increase supply
@@ -236,10 +236,6 @@ contract GenesisNFT is
             "Token is still locked"
         );
 
-        // Burn NFT token
-        _burn(tokenId);
-        emit Burn(tokenId);
-
         // Withdraw ETH deposited in the reserve
         uint256 withdrawAmount = (2 * _price) / 3;
         address weth = _addressProvider.getWETH();
@@ -251,6 +247,10 @@ contract GenesisNFT is
         );
         (bool sent, ) = msg.sender.call{value: withdrawAmount}("");
         require(sent, "Failed to send Ether");
+
+        // Burn NFT token
+        _burn(tokenId);
+        emit Burn(tokenId);
     }
 
     function _beforeTokenTransfer(
