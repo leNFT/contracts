@@ -140,6 +140,7 @@ contract NativeTokenVault is
             veTokenAmount = (amount * totalSupply()) / _getLockedBalance();
         }
 
+        //Assert 1e-18 division errors
         assert(veTokenAmount > 0);
 
         // Burn the veToken

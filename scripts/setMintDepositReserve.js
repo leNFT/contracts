@@ -6,17 +6,17 @@ async function main() {
   let contractAddresses = require("../../lenft-interface/contractAddresses.json");
   let chainID = hre.network.config.chainId;
   let addresses = contractAddresses[chainID.toString(16)];
-  let reserve = "";
+  let reserve = "0xA3e4910880cfCb8E1929b6B9a6B03DcE6312329a";
 
   // Add NFT to oracle
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
   const genesisNFT = GenesisNFT.attach(addresses.GenesisNFT);
 
   // Set trusted price source
-  const setGenesisMintReserveTx = await genesisNFT.setGenesisMintReserve(
+  const setMintDepositReserveTx = await genesisNFT.setMintDepositReserve(
     reserve
   );
-  await setGenesisMintReserveTx.wait();
+  await setMintDepositReserveTx.wait();
   console.log("Set " + reserve + " as genesis mint deposit reserve.");
 }
 
