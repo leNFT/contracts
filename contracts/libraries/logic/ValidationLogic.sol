@@ -12,7 +12,7 @@ import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
-import {WithdrawRequestLogic} from "./WithdrawRequestLogic.sol";
+import {WithdrawalRequestLogic} from "./WithdrawalRequestLogic.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {Trustus} from "../../protocol/Trustus.sol";
@@ -22,7 +22,7 @@ library ValidationLogic {
     uint256 internal constant ONE_DAY = 86400;
     uint256 internal constant ONE_WEEK = ONE_DAY * 7;
     uint256 internal constant UNVOTE_WINDOW = ONE_DAY * 2;
-    using WithdrawRequestLogic for DataTypes.WithdrawRequest;
+    using WithdrawalRequestLogic for DataTypes.WithdrawalRequest;
 
     function validateDeposit(DataTypes.DepositParams memory params)
         external
@@ -251,19 +251,19 @@ library ValidationLogic {
             addressesProvider.getNativeTokenVault()
         );
 
-        DataTypes.WithdrawRequest memory withdrawRequest = vault
-            .getWithdrawRequest(msg.sender);
+        DataTypes.WithdrawalRequest memory withdrawalRequest = vault
+            .getWithdrawalRequest(msg.sender);
 
         // Check if we are within the unlock request window and amount
         require(
-            block.timestamp > withdrawRequest.timestamp + ONE_WEEK &&
+            block.timestamp > withdrawalRequest.timestamp + ONE_WEEK &&
                 block.timestamp <
-                withdrawRequest.timestamp + ONE_WEEK + UNVOTE_WINDOW,
+                withdrawalRequest.timestamp + ONE_WEEK + UNVOTE_WINDOW,
             "Withdraw Request is not within valid timeframe"
         );
 
         require(
-            withdrawRequest.amount >= amount,
+            withdrawalRequest.amount >= amount,
             "Withdraw Request amount is smaller than requested amount"
         );
 
@@ -320,7 +320,7 @@ library ValidationLogic {
         );
     }
 
-    function validateCreateWithdrawRequest(
+    function validateCreateWithdrawalRequest(
         IAddressesProvider addressesProvider,
         uint256 amount
     ) external view {

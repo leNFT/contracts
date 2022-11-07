@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import {Trustus} from "../../protocol/Trustus.sol";
 
 library DataTypes {
-    struct WithdrawRequest {
+    struct WithdrawalRequest {
         bool created;
         uint256 amount;
         uint256 timestamp;
