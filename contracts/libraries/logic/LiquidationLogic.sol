@@ -15,7 +15,7 @@ import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import {Trustus} from "../../protocol/Trustus.sol";
+import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 import "hardhat/console.sol";
 
 library LiquidationLogic {

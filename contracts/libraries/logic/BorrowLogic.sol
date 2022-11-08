@@ -14,7 +14,7 @@ import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import {Trustus} from "../../protocol/Trustus.sol";
+import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 
 library BorrowLogic {
     function borrow(

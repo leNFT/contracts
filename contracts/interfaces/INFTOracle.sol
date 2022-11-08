@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {Trustus} from "../protocol/Trustus.sol";
+import {Trustus} from "../protocol/Trustus/Trustus.sol";
 
 interface INFTOracle {
     function getTokenETHPrice(

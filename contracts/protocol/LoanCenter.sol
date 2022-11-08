@@ -14,7 +14,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
-import {Trustus} from "../protocol/Trustus.sol";
+import {Trustus} from "../protocol/Trustus/Trustus.sol";
 import "hardhat/console.sol";
 
 contract LoanCenter is

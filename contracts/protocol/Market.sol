@@ -20,7 +20,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {Trustus} from "./Trustus.sol";
+import {Trustus} from "./Trustus/Trustus.sol";
 import "hardhat/console.sol";
 
 /// @title Market Contract

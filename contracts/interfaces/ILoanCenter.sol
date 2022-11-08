@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {DataTypes} from "../libraries/types/DataTypes.sol";
-import {Trustus} from "../protocol/Trustus.sol";
+import {Trustus} from "../protocol/Trustus/Trustus.sol";
 
 interface ILoanCenter {
     function createLoan(
