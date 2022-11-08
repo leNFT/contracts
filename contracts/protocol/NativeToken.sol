@@ -8,7 +8,7 @@ import {INativeToken} from "../interfaces/INativeToken.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
-import {Trustus} from "./Trustus.sol";
+import {TrustusUpgradable} from "./Trustus/TrustusUpgradable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 
 contract NativeToken is
@@ -17,7 +17,7 @@ contract NativeToken is
     ERC20Upgradeable,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable,
-    Trustus
+    TrustusUpgradable
 {
     IAddressesProvider private _addressProvider;
     address private _devAddress;
@@ -37,6 +37,7 @@ contract NativeToken is
         uint256 devVestingTime
     ) external initializer {
         __Ownable_init();
+        __Trustus_init();
         __ERC20_init(name, symbol);
         _addressProvider = addressProvider;
         _cap = cap;

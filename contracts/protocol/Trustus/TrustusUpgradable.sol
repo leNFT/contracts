@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.17;
 
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "hardhat/console.sol";
 
-/// @title Trustus
+/// @title TrustusUpgradable
 /// @author zefram.eth
 /// @notice Trust-minimized method for accessing offchain data onchain
-abstract contract Trustus {
+abstract contract TrustusUpgradable is Initializable {
     /// -----------------------------------------------------------------------
     /// Structs
     /// -----------------------------------------------------------------------
@@ -29,14 +30,14 @@ abstract contract Trustus {
     }
 
     /// -----------------------------------------------------------------------
-    /// Immutable parameters
+    /// Constant parameters
     /// -----------------------------------------------------------------------
 
     /// @notice The chain ID used by EIP-712
-    uint256 internal immutable INITIAL_CHAIN_ID;
+    uint256 internal INITIAL_CHAIN_ID;
 
     /// @notice The domain separator used by EIP-712
-    bytes32 internal immutable INITIAL_DOMAIN_SEPARATOR;
+    bytes32 internal INITIAL_DOMAIN_SEPARATOR;
 
     /// -----------------------------------------------------------------------
     /// Storage variables
@@ -61,10 +62,10 @@ abstract contract Trustus {
     }
 
     /// -----------------------------------------------------------------------
-    /// Constructor
+    /// Initializer
     /// -----------------------------------------------------------------------
 
-    constructor() {
+    function __Trustus_init() internal onlyInitializing {
         INITIAL_CHAIN_ID = block.chainid;
         INITIAL_DOMAIN_SEPARATOR = _computeDomainSeparator();
     }

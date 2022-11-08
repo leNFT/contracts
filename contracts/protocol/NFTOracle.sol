@@ -6,7 +6,7 @@ import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
-import {Trustus} from "./Trustus.sol";
+import {Trustus} from "./Trustus/Trustus.sol";
 import {INativeTokenVault} from "../interfaces/INativeTokenVault.sol";
 import "hardhat/console.sol";
 
