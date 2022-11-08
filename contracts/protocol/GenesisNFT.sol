@@ -129,10 +129,6 @@ contract GenesisNFT is
         _active[tokenId] = newState;
     }
 
-    function setNativeTokenFactor(uint256 newFactor) external onlyOwner {
-        _nativeTokenFactor = newFactor;
-    }
-
     function getNativeTokensReward(uint256 locktime)
         public
         view

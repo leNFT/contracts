@@ -16,6 +16,11 @@ library DataTypes {
         uint256 amount;
     }
 
+    struct AirdropTokens {
+        address user;
+        uint256 amount;
+    }
+
     /**
      * State change flow:
      * None -> Created -> Active -> Repaid -> Auction -> Defaulted
@@ -68,6 +73,24 @@ library DataTypes {
     struct MintDetails {
         uint256 timestamp;
         uint256 locktime;
+    }
+
+    struct BoostParams {
+        uint256 factor;
+        uint256 limit;
+    }
+
+    struct LiquidationRewardParams {
+        uint256 factor;
+        uint256 maxReward;
+        uint256 priceThreshold;
+        uint256 priceLimit;
+    }
+
+    struct StakingRewardParams {
+        uint256 factor;
+        uint256 period;
+        uint256 maxPeriods;
     }
 
     struct BorrowParams {

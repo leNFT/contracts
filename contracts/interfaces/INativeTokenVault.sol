@@ -9,6 +9,8 @@ interface INativeTokenVault {
 
     event Withdraw(address indexed user, uint256 amount);
 
+    event DistributeRewards(uint256 _amount);
+
     event Vote(
         address indexed user,
         address indexed collection,

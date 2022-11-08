@@ -128,9 +128,6 @@ async function main() {
     devAddress,
     "15000000000000000000000000", // 15M Dev Tokens
     "63113851", // 2-year dev vesting
-    "604800", // 7-day period between vault rewards
-    "312", // Limit number of periods
-    "283000000000000000000000", // Rewards Factor
   ]);
   console.log("Native Token Proxy Address:", nativeToken.address);
 
@@ -146,12 +143,21 @@ async function main() {
       addressesProvider.address,
       "veleNFT Token",
       "veLE",
-      "25000000000000000000000", // 25000 leNFT Reward Limit
-      "55000000000000000", // 0.055 Liquidation Reward Factor
-      9000, // Liquidation Reward Price Threshold (90%)
-      12000, // Liquidation Reward Price Limit (120%)
-      1500, //15% Boost Limit
-      "15000000000000000000", // 15 Boost Factor
+      {
+        factor: "55000000000000000", // 0.055 Liquidation Reward Factor
+        maxReward: "25000000000000000000000", // 25000 leNFT Reward Limit
+        priceThreshold: 9000, // Liquidation Reward Price Threshold (90%)
+        priceLimit: 12000, // Liquidation Reward Price Limit (120%)
+      },
+      {
+        factor: "15000000000000000000", // 15 Boost Factor
+        limit: 1500, //15% Boost Limit
+      },
+      {
+        factor: "100000000000000000000000", // Staking Rewards Factor
+        period: "604800", // 7-day period between vault staking rewards
+        maxPeriods: "416", // Limit number of staking periods
+      },
     ],
     { unsafeAllow: ["external-library-linking"], timeout: 0 }
   );
@@ -166,7 +172,7 @@ async function main() {
     "9999",
     "30000000000000000",
     "250",
-    3000000, // Native Token Mint Factor
+    50000000, // Native Token Mint Factor
     10368000, // Max locktime (120 days in s)
     1209600, // Min locktime (14 days in s)
     devAddress,

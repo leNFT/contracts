@@ -8,13 +8,16 @@ import {INativeToken} from "../interfaces/INativeToken.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
+import {Trustus} from "./Trustus.sol";
+import {DataTypes} from "../libraries/types/DataTypes.sol";
 
 contract NativeToken is
     Initializable,
     INativeToken,
     ERC20Upgradeable,
     OwnableUpgradeable,
-    ReentrancyGuardUpgradeable
+    ReentrancyGuardUpgradeable,
+    Trustus
 {
     IAddressesProvider private _addressProvider;
     address private _devAddress;
@@ -23,10 +26,6 @@ contract NativeToken is
     uint256 internal _devVestingTime;
     uint256 internal _devWithdrawn;
     uint256 internal _cap;
-    uint256 internal _lastRewardsTimestamp;
-    uint256 internal _rewardsFactor;
-    uint256 internal _rewardsPeriod;
-    uint256 internal _maxPeriods;
 
     function initialize(
         IAddressesProvider addressProvider,
@@ -35,10 +34,7 @@ contract NativeToken is
         uint256 cap,
         address devAddress,
         uint256 devReward,
-        uint256 devVestingTime,
-        uint256 rewardsPeriod,
-        uint256 maxPeriods,
-        uint256 rewardsFactor
+        uint256 devVestingTime
     ) external initializer {
         __Ownable_init();
         __ERC20_init(name, symbol);
@@ -48,9 +44,6 @@ contract NativeToken is
         _devAddress = devAddress;
         _devReward = devReward;
         _devVestingTime = devVestingTime;
-        _rewardsPeriod = rewardsPeriod;
-        _maxPeriods = maxPeriods;
-        _rewardsFactor = rewardsFactor;
     }
 
     function getCap() public view returns (uint256) {
@@ -69,74 +62,23 @@ contract NativeToken is
         _mint(account, amount);
     }
 
-    function getRewardsFactor() external view returns (uint256) {
-        return _rewardsFactor;
-    }
-
-    function setRewardsFactor(uint256 rewardsFactor) external onlyOwner {
-        _rewardsFactor = rewardsFactor;
-    }
-
-    function getMaxPeriods() external view returns (uint256) {
-        return _maxPeriods;
-    }
-
-    function setMaxPeriods(uint256 maxPeriods) external onlyOwner {
-        _maxPeriods = maxPeriods;
-    }
-
-    function getRewardsPeriod() external view returns (uint256) {
-        return _rewardsPeriod;
-    }
-
-    function setRewardsPeriod(uint256 rewardsPeriod) external onlyOwner {
-        _rewardsPeriod = rewardsPeriod;
-    }
-
     function mintGenesisTokens(address receiver, uint256 amount) external {
-        require(msg.sender == _addressProvider.getGenesisNFT());
+        require(
+            msg.sender == _addressProvider.getGenesisNFT(),
+            "Genesis tokens can only be minted by the Genesis NFT contract"
+        );
         _mintTokens(receiver, amount);
     }
 
-    function getRewards() public view returns (uint256) {
-        uint256 rewards = 0;
-
-        if (_maxPeriods * _rewardsPeriod > block.timestamp - _deployTimestamp) {
-            rewards =
-                (_rewardsFactor *
-                    (_maxPeriods *
-                        _rewardsPeriod +
-                        _deployTimestamp -
-                        block.timestamp)) /
-                (_maxPeriods * _rewardsPeriod);
-        }
-
-        return rewards;
-    }
-
-    function distributeRewards() external nonReentrant {
-        //The rewards can only be distributed if the rewards period has passed
+    function mintStakingRewardTokens(uint256 amount) external {
         require(
-            _lastRewardsTimestamp + _rewardsPeriod < block.timestamp,
-            "Not enough time since last rewards distribution."
+            msg.sender == _addressProvider.getNativeTokenVault(),
+            "Vault rewards can only be miinted by the vault contract"
         );
-
-        // Only give rewards until there are remaining periods
-        require(
-            _maxPeriods * _rewardsPeriod > block.timestamp - _deployTimestamp,
-            "Rewards period is over"
-        );
-
-        uint256 amount = getRewards();
         _mintTokens(_addressProvider.getNativeTokenVault(), amount);
-
-        // Update last rewards variable
-        _lastRewardsTimestamp = block.timestamp;
-
-        emit DistributeRewards(amount);
     }
 
-    function getDevRewards() public view returns (uint256) {
+    function getDevRewardTokens() public view returns (uint256) {
         uint256 unvestedTokens;
         if (block.timestamp - _deployTimestamp < _devVestingTime) {
             unvestedTokens = ((_devReward *
@@ -148,16 +90,33 @@ contract NativeToken is
         return unvestedTokens - _devWithdrawn;
     }
 
-    function mintDevRewards(uint256 amount) external {
+    function getDevRewardTokens(uint256 amount) external {
         // Require that the caller is the developer
         require(_msgSender() == _devAddress, "Caller must be dev");
 
         //Should only be able to withdrawn unvested tokens
         require(
-            getDevRewards() >= amount,
+            getDevRewardTokens() >= amount,
             "Amount bigger than allowed by vesting"
         );
         _mintTokens(_devAddress, amount);
         _devWithdrawn += amount;
+    }
+
+    function mintAirdropTokens(bytes32 request, TrustusPacket calldata packet)
+        external
+        verifyPacket(request, packet)
+    {
+        DataTypes.AirdropTokens memory airdropParams = abi.decode(
+            packet.payload,
+            (DataTypes.AirdropTokens)
+        );
+        // Make sure the request is for the right token
+        require(
+            msg.sender == airdropParams.user,
+            "Request user and caller don't coincide"
+        );
+
+        _mintTokens(airdropParams.user, airdropParams.amount);
     }
 }
