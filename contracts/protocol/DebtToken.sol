@@ -5,10 +5,12 @@ import {ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/t
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {IDebtToken} from "../interfaces/IDebtToken.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 
 contract DebtToken is
     Initializable,
+    ContextUpgradeable,
     ERC721Upgradeable,
     ERC721EnumerableUpgradeable,
     IDebtToken
@@ -27,7 +29,7 @@ contract DebtToken is
 
     modifier onlyMarket() {
         require(
-            msg.sender == address(_addressProvider.getMarketAddress()),
+            _msgSender() == address(_addressProvider.getMarketAddress()),
             "Caller must be Market contract"
         );
         _;

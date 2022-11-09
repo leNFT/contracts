@@ -6,11 +6,12 @@ import {SupplyLogic} from "../libraries/logic/SupplyLogic.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {IInterestRate} from "../interfaces/IInterestRate.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract Reserve is IReserve, ERC20, Ownable {
+contract Reserve is Context, IReserve, ERC20, Ownable {
     IAddressesProvider private _addressProvider;
     address internal _asset;
     uint256 internal _debt;
@@ -25,8 +26,8 @@ contract Reserve is IReserve, ERC20, Ownable {
 
     modifier onlyMarket() {
         require(
-            msg.sender == address(_addressProvider.getMarketAddress()),
-            "Caller must be Market contract"
+            _msgSender() == address(_addressProvider.getMarketAddress()),
+            "Callers must be Market contract"
         );
         _;
     }

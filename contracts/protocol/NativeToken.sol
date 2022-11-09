@@ -9,10 +9,12 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
 import {TrustusUpgradable} from "./Trustus/TrustusUpgradable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 
 contract NativeToken is
     Initializable,
+    ContextUpgradeable,
     INativeToken,
     ERC20Upgradeable,
     OwnableUpgradeable,
@@ -68,7 +70,7 @@ contract NativeToken is
 
     function mintGenesisTokens(address receiver, uint256 amount) external {
         require(
-            msg.sender == _addressProvider.getGenesisNFT(),
+            _msgSender() == _addressProvider.getGenesisNFT(),
             "Genesis tokens can only be minted by the Genesis NFT contract"
         );
         _mintTokens(receiver, amount);
@@ -76,7 +78,7 @@ contract NativeToken is
 
     function mintStakingRewardTokens(uint256 amount) external {
         require(
-            msg.sender == _addressProvider.getNativeTokenVault(),
+            _msgSender() == _addressProvider.getNativeTokenVault(),
             "Vault rewards can only be miinted by the vault contract"
         );
         _mintTokens(_addressProvider.getNativeTokenVault(), amount);
@@ -96,7 +98,7 @@ contract NativeToken is
 
     function mintDevRewardTokens(uint256 amount) external {
         // Require that the caller is the developer
-        require(msg.sender == _devAddress, "Caller must be dev");
+        require(_msgSender() == _devAddress, "Caller must be dev");
 
         //Should only be able to withdrawn unvested tokens
         require(
@@ -117,7 +119,7 @@ contract NativeToken is
         );
         // Make sure the request is for the right user
         require(
-            msg.sender == airdropParams.user,
+            _msgSender() == airdropParams.user,
             "Request user and caller don't coincide"
         );
 

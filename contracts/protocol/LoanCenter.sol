@@ -14,11 +14,13 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {Trustus} from "../protocol/Trustus/Trustus.sol";
 import "hardhat/console.sol";
 
 contract LoanCenter is
     Initializable,
+    ContextUpgradeable,
     ILoanCenter,
     IERC721ReceiverUpgradeable,
     OwnableUpgradeable
@@ -42,7 +44,7 @@ contract LoanCenter is
 
     modifier onlyMarket() {
         require(
-            msg.sender == address(_addressProvider.getMarketAddress()),
+            _msgSender() == address(_addressProvider.getMarketAddress()),
             "Caller must be Market contract"
         );
         _;

@@ -16,11 +16,13 @@ import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Cou
 import {ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
 
 contract GenesisNFT is
     Initializable,
+    ContextUpgradeable,
     ERC721Upgradeable,
     ERC721EnumerableUpgradeable,
     ERC721BurnableUpgradeable,
@@ -55,7 +57,7 @@ contract GenesisNFT is
 
     modifier onlyMarket() {
         require(
-            msg.sender == address(_addressProvider.getMarketAddress()),
+            _msgSender() == address(_addressProvider.getMarketAddress()),
             "Caller must be Market contract"
         );
         _;
@@ -186,7 +188,7 @@ contract GenesisNFT is
 
         // Send leNFT tokens to the caller
         INativeToken(_addressProvider.getNativeToken()).mintGenesisTokens(
-            msg.sender,
+            _msgSender(),
             getNativeTokensReward(locktime)
         );
 
@@ -194,7 +196,7 @@ contract GenesisNFT is
         _tokenIdCounter.increment();
 
         //Mint token
-        _safeMint(msg.sender, tokenId);
+        _safeMint(_msgSender(), tokenId);
 
         //Set URI
         _setTokenURI(tokenId, uri);
@@ -205,7 +207,7 @@ contract GenesisNFT is
             locktime
         );
 
-        emit Mint(msg.sender, tokenId);
+        emit Mint(_msgSender(), tokenId);
 
         return tokenId;
     }
@@ -241,7 +243,7 @@ contract GenesisNFT is
             address(this),
             withdrawAmount
         );
-        (bool sent, ) = msg.sender.call{value: withdrawAmount}("");
+        (bool sent, ) = _msgSender().call{value: withdrawAmount}("");
         require(sent, "Failed to send Ether");
 
         // Burn NFT token

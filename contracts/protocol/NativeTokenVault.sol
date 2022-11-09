@@ -13,6 +13,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {ValidationLogic} from "../libraries/logic/ValidationLogic.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {WithdrawalRequestLogic} from "../libraries/logic/WithdrawalRequestLogic.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
@@ -21,6 +22,7 @@ import "hardhat/console.sol";
 
 contract NativeTokenVault is
     Initializable,
+    ContextUpgradeable,
     ERC20Upgradeable,
     INativeTokenVault,
     OwnableUpgradeable,
@@ -49,7 +51,7 @@ contract NativeTokenVault is
 
     modifier onlyMarket() {
         require(
-            msg.sender == address(_addressProvider.getMarketAddress()),
+            _msgSender() == address(_addressProvider.getMarketAddress()),
             "Caller must be Market contract"
         );
         _;
@@ -88,18 +90,18 @@ contract NativeTokenVault is
 
         // Send native token from depositor to the vault
         IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransferFrom(
-            msg.sender,
+            _msgSender(),
             address(this),
             amount
         );
 
         //Mint veToken (locked) tokens
-        _mint(msg.sender, veTokenAmount);
+        _mint(_msgSender(), veTokenAmount);
 
         //Update the number of unused votes
-        _freeVotes[msg.sender] += veTokenAmount;
+        _freeVotes[_msgSender()] += veTokenAmount;
 
-        emit Deposit(msg.sender, amount);
+        emit Deposit(_msgSender(), amount);
     }
 
     function createWithdrawalRequest(uint256 amount)
@@ -112,7 +114,7 @@ contract NativeTokenVault is
             amount
         );
         //Create request and add it to the list
-        _withdrawalRequests[msg.sender].init(amount);
+        _withdrawalRequests[_msgSender()].init(amount);
     }
 
     function getWithdrawalRequest(address user)
@@ -143,21 +145,21 @@ contract NativeTokenVault is
         assert(veTokenAmount > 0);
 
         // Burn the veTokens
-        _burn(msg.sender, amount);
+        _burn(_msgSender(), amount);
 
         // Update the number of unused votes
-        _freeVotes[msg.sender] -= veTokenAmount;
+        _freeVotes[_msgSender()] -= veTokenAmount;
 
         // Delete withdrawal request
-        delete _withdrawalRequests[msg.sender];
+        delete _withdrawalRequests[_msgSender()];
 
         // Withdraw the native token from the vault
         IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransfer(
-            msg.sender,
+            _msgSender(),
             amount
         );
 
-        emit Withdraw(msg.sender, amount);
+        emit Withdraw(_msgSender(), amount);
     }
 
     function vote(uint256 amount, address collection)
@@ -168,12 +170,12 @@ contract NativeTokenVault is
         ValidationLogic.validateVote(_addressProvider, amount);
 
         // Vote for a collection with the tokens we just minted
-        _votes[msg.sender][collection] += amount;
+        _votes[_msgSender()][collection] += amount;
         _collectionVotes[collection] += amount;
 
-        _freeVotes[msg.sender] -= amount;
+        _freeVotes[_msgSender()] -= amount;
 
-        emit Vote(msg.sender, collection, amount);
+        emit Vote(_msgSender(), collection, amount);
     }
 
     function removeVote(uint256 amount, address collection)
@@ -188,12 +190,12 @@ contract NativeTokenVault is
         );
 
         // Vote for a collection with the tokens we just minted
-        _votes[msg.sender][collection] -= amount;
+        _votes[_msgSender()][collection] -= amount;
         _collectionVotes[collection] -= amount;
 
-        _freeVotes[msg.sender] += amount;
+        _freeVotes[_msgSender()] += amount;
 
-        emit RemoveVote(msg.sender, collection, amount);
+        emit RemoveVote(_msgSender(), collection, amount);
     }
 
     function getUserFreeVotes(address user)

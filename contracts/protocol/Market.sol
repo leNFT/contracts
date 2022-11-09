@@ -20,6 +20,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {Trustus} from "./Trustus/Trustus.sol";
 import "hardhat/console.sol";
 
@@ -29,6 +30,7 @@ import "hardhat/console.sol";
 /// @dev Call these contrcact functions to interact with the protocol
 contract Market is
     Initializable,
+    ContextUpgradeable,
     IMarket,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
@@ -76,7 +78,7 @@ contract Market is
             DataTypes.DepositParams({reserve: reserve, amount: amount})
         );
 
-        emit Deposit(msg.sender, reserve, amount);
+        emit Deposit(_msgSender(), reserve, amount);
     }
 
     /// @notice Deposit ETH in the wETH reserve
@@ -98,13 +100,13 @@ contract Market is
         // Deposit WETH into the callers account
         IWETH WETH = IWETH(wethAddress);
         WETH.deposit{value: msg.value}();
-        WETH.transfer(msg.sender, msg.value);
+        WETH.transfer(_msgSender(), msg.value);
 
         SupplyLogic.deposit(
             DataTypes.DepositParams({reserve: reserve, amount: msg.value})
         );
 
-        emit Deposit(msg.sender, reserve, msg.value);
+        emit Deposit(_msgSender(), reserve, msg.value);
     }
 
     /// @notice Withdraw an asset from the reserve
@@ -121,12 +123,12 @@ contract Market is
             _addressProvider,
             DataTypes.WithdrawalParams({
                 reserve: reserve,
-                depositor: msg.sender,
+                depositor: _msgSender(),
                 amount: amount
             })
         );
 
-        emit Withdraw(msg.sender, reserve, amount);
+        emit Withdraw(_msgSender(), reserve, amount);
     }
 
     /// @notice Withdraw an asset from the reserve
@@ -154,10 +156,10 @@ contract Market is
         );
         IWETH(wethAddress).withdraw(amount);
 
-        (bool sent, ) = msg.sender.call{value: amount}("");
+        (bool sent, ) = _msgSender().call{value: amount}("");
         require(sent, "Failed to send Ether");
 
-        emit Withdraw(msg.sender, reserve, amount);
+        emit Withdraw(_msgSender(), reserve, amount);
     }
 
     /// @notice Borrow an asset from the reserve while an NFT as collateral
@@ -195,10 +197,10 @@ contract Market is
 
         WETH.withdraw(amount);
 
-        (bool sent, ) = msg.sender.call{value: amount}("");
+        (bool sent, ) = _msgSender().call{value: amount}("");
         require(sent, "Failed to send Ether");
 
-        emit Borrow(msg.sender, wethAddress, nftAddress, nftTokenId, amount);
+        emit Borrow(_msgSender(), wethAddress, nftAddress, nftTokenId, amount);
     }
 
     /// @notice Borrow an asset from the reserve while an NFT as collateral
@@ -222,7 +224,7 @@ contract Market is
             _addressProvider,
             _reserves,
             DataTypes.BorrowParams({
-                depositor: msg.sender,
+                depositor: _msgSender(),
                 asset: asset,
                 amount: amount,
                 nftAddress: nftAddress,
@@ -233,7 +235,7 @@ contract Market is
             })
         );
 
-        emit Borrow(msg.sender, asset, nftAddress, nftTokenId, amount);
+        emit Borrow(_msgSender(), asset, nftAddress, nftTokenId, amount);
     }
 
     /// @notice Repay an an active loan
@@ -244,14 +246,14 @@ contract Market is
 
         // Deposit WETH into the callers account
         WETH.deposit{value: msg.value}();
-        WETH.transfer(msg.sender, msg.value);
+        WETH.transfer(_msgSender(), msg.value);
 
         BorrowLogic.repay(
             _addressProvider,
             DataTypes.RepayParams({loanId: loanId, amount: msg.value})
         );
 
-        emit Repay(msg.sender, loanId);
+        emit Repay(_msgSender(), loanId);
     }
 
     /// @notice Repay an an active loan
@@ -266,7 +268,7 @@ contract Market is
             DataTypes.RepayParams({loanId: loanId, amount: amount})
         );
 
-        emit Repay(msg.sender, loanId);
+        emit Repay(_msgSender(), loanId);
     }
 
     /// @notice Liquidate an active loan
@@ -288,7 +290,7 @@ contract Market is
             })
         );
 
-        emit Liquidate(msg.sender, loanId);
+        emit Liquidate(_msgSender(), loanId);
     }
 
     function _setReserve(
