@@ -25,7 +25,7 @@ library BorrowLogic {
         // Validate the movement
         ValidationLogic.validateBorrow(addressesProvider, reserves, params);
 
-        // Transfer the collateral
+        // Transfer the collateral to the loan center
         IERC721Upgradeable(params.nftAddress).safeTransferFrom(
             msg.sender,
             addressesProvider.getLoanCenter(),
@@ -75,7 +75,7 @@ library BorrowLogic {
         // Mint the token representing the debt
         IDebtToken(addressesProvider.getDebtToken()).mint(msg.sender, loanId);
 
-        //Activate Loan after the principal has been sent
+        //Activate Loan
         loanCenter.activateLoan(loanId);
 
         // Send the principal to the borrower

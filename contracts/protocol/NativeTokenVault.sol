@@ -49,7 +49,7 @@ contract NativeTokenVault is
 
     modifier onlyMarket() {
         require(
-            _msgSender() == address(_addressProvider.getMarketAddress()),
+            msg.sender == address(_addressProvider.getMarketAddress()),
             "Caller must be Market contract"
         );
         _;

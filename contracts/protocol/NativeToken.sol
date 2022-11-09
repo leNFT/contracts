@@ -91,9 +91,9 @@ contract NativeToken is
         return unvestedTokens - _devWithdrawn;
     }
 
-    function getDevRewardTokens(uint256 amount) external {
+    function mintDevRewardTokens(uint256 amount) external {
         // Require that the caller is the developer
-        require(_msgSender() == _devAddress, "Caller must be dev");
+        require(msg.sender == _devAddress, "Caller must be dev");
 
         //Should only be able to withdrawn unvested tokens
         require(
@@ -119,5 +119,16 @@ contract NativeToken is
         );
 
         _mintTokens(airdropParams.user, airdropParams.amount);
+    }
+
+    function setTrustedAirdropSigner(address signer, bool isTrusted)
+        external
+        onlyOwner
+    {
+        _setIsTrusted(signer, isTrusted);
+    }
+
+    function isTrustedSigner(address signer) external view returns (bool) {
+        return (_isTrusted(signer));
     }
 }

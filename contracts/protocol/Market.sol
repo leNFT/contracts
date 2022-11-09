@@ -364,7 +364,7 @@ contract Market is
         return _reserves[collection][asset];
     }
 
-    function setReserve(
+    function setCollectionReserve(
         address collection,
         address asset,
         address reserve

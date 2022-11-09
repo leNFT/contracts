@@ -7,17 +7,28 @@ async function main() {
   let chainID = hre.network.config.chainId;
   let addresses = contractAddresses[chainID.toString(16)];
 
-  // Add NFT to oracle
+  // Set trusted price signer
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
   const nftOracle = NFTOracle.attach(addresses.NFTOracle);
-
-  // Set trusted price source
-  const setTrustedPriceSourceTx = await nftOracle.addTrustedPriceSource(
-    process.env.SERVER_ADDRESS
+  const setTrustedPriceSourceTx = await nftOracle.setTrustedPriceSigner(
+    process.env.SERVER_ADDRESS,
+    true
   );
   await setTrustedPriceSourceTx.wait();
   console.log(
-    "Added " + process.env.SERVER_ADDRESS + " to trusted price sources."
+    "Added " + process.env.SERVER_ADDRESS + " to trusted price signers."
+  );
+
+  // Set trusted airdrop signer
+  const NativeToken = await ethers.getContractFactory("NativeToken");
+  const nativeToken = NativeToken.attach(addresses.NativeToken);
+  const setTrustedAirdropSignerTx = await nativeToken.setTrustedAirdropSigner(
+    process.env.SERVER_ADDRESS,
+    true
+  );
+  await setTrustedAirdropSignerTx.wait();
+  console.log(
+    "Added " + process.env.SERVER_ADDRESS + " to trusted airdrop signers."
   );
 }
 

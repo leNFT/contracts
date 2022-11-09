@@ -51,15 +51,14 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         return priceParams.amount;
     }
 
-    function addTrustedPriceSource(address signer) external onlyOwner {
-        _setIsTrusted(signer, true);
+    function setTrustedPriceSigner(address signer, bool isTrusted)
+        external
+        onlyOwner
+    {
+        _setIsTrusted(signer, isTrusted);
     }
 
-    function removeTrustedPriceSource(address signer) external onlyOwner {
-        _setIsTrusted(signer, false);
-    }
-
-    function isSourceTrusted(address signer) external view returns (bool) {
+    function isTrustedSigner(address signer) external view returns (bool) {
         return (_isTrusted(signer));
     }
 }

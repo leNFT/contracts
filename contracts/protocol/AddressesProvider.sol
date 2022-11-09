@@ -42,16 +42,16 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
         _nativeTokenVault = nativeTokenVault;
     }
 
-    function getNativeToken() external view override returns (address) {
-        return _nativeToken;
+    function getNativeTokenVault() external view override returns (address) {
+        return _nativeTokenVault;
     }
 
     function setNativeToken(address nativeToken) external override onlyOwner {
         _nativeToken = nativeToken;
     }
 
-    function getNativeTokenVault() external view override returns (address) {
-        return _nativeTokenVault;
+    function getNativeToken() external view override returns (address) {
+        return _nativeToken;
     }
 
     function setFeeTreasury(address feeTreasury) external override onlyOwner {
