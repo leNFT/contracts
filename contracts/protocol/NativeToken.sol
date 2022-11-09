@@ -27,6 +27,9 @@ contract NativeToken is
     uint256 internal _devWithdrawn;
     uint256 internal _cap;
 
+    // Mapping of airdroped users
+    mapping(address => bool) private mintedAirdrop;
+
     function initialize(
         IAddressesProvider addressProvider,
         string calldata name,
@@ -112,13 +115,27 @@ contract NativeToken is
             packet.payload,
             (DataTypes.AirdropTokens)
         );
-        // Make sure the request is for the right token
+        // Make sure the request is for the right user
         require(
             msg.sender == airdropParams.user,
             "Request user and caller don't coincide"
         );
 
+        // Check if user hasn't received the airdrop before
+        require(
+            mintedAirdrop[airdropParams.user] == false,
+            "User already minted airdrop"
+        );
+
+        //Mint airdrop tokens
         _mintTokens(airdropParams.user, airdropParams.amount);
+
+        // Mark address airdrop done
+        mintedAirdrop[airdropParams.user] = true;
+    }
+
+    function hasMintedAirdrop(address user) external view returns (bool) {
+        return mintedAirdrop[user];
     }
 
     function setTrustedAirdropSigner(address signer, bool isTrusted)
