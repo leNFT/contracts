@@ -27,11 +27,11 @@ library SupplyLogic {
                     IReserve(params.reserve).getDebt());
         }
 
-        console.log("msg.sender", msg.sender);
-        console.log("reserveTokenAmount", reserveTokenAmount);
-
-        IReserve(params.reserve).depositUnderlying(msg.sender, params.amount);
-        IReserve(params.reserve).mint(msg.sender, reserveTokenAmount);
+        IReserve(params.reserve).depositUnderlying(
+            params.initiator,
+            params.amount
+        );
+        IReserve(params.reserve).mint(params.initiator, reserveTokenAmount);
     }
 
     function withdraw(
@@ -54,7 +54,7 @@ library SupplyLogic {
 
         assert(reserveTokenAmount > 0);
 
-        IReserve(params.reserve).burn(msg.sender, reserveTokenAmount);
+        IReserve(params.reserve).burn(params.initiator, reserveTokenAmount);
         IReserve(params.reserve).withdrawUnderlying(
             params.depositor,
             params.amount

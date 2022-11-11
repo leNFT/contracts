@@ -92,10 +92,12 @@ async function main() {
     Market,
     [
       addressesProvider.address,
-      "1800", // defaultLiquidationPenalty
-      "200", // defaultProtocolLiquidationFee
-      "8500", // defaultMaximumUtilizationRate
-      "25000000000000000000", // defaultUnderlyingSafeguard
+      {
+        liquidationPenalty: "1800", // defaultLiquidationPenalty
+        protocolLiquidationFee: "200", // defaultProtocolLiquidationFee
+        maximumUtilizationRate: "8500", // defaultMaximumUtilizationRate
+        underlyingSafeguard: "25000000000000000000", // defaultUnderlyingSafeguard
+      },
     ],
     { unsafeAllow: ["external-library-linking"], timeout: 0 }
   );

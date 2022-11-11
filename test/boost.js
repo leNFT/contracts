@@ -100,10 +100,7 @@ describe("Boost", function () {
 
     //Find if the collection ltv boost has changed accordingly
     expect(
-      await nativeTokenVault.getVoteCollateralizationBoost(
-        owner.address,
-        testNFT.address
-      )
+      await nativeTokenVault.getLTVBoost(owner.address, testNFT.address)
     ).to.equal(3);
   });
 });

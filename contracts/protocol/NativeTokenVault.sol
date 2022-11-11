@@ -371,12 +371,11 @@ contract NativeTokenVault is
         );
     }
 
-    function getVoteCollateralizationBoost(address user, address collection)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function _calculateLTVBoost(
+        address user,
+        address collection,
+        uint256 votes
+    ) internal view returns (uint256) {
         uint256 boost = 0;
 
         uint256 userCollectionActiveLoansCount = ILoanCenter(
@@ -390,8 +389,14 @@ contract NativeTokenVault is
         uint256 pricePrecision = ITokenOracle(_addressProvider.getTokenOracle())
             .getPricePrecision();
 
-        uint256 votesValue = (_collectionVotes[collection] *
-            nativeTokenETHPrice) / pricePrecision;
+        if (totalSupply() == 0) {
+            return 0;
+        }
+
+        uint256 votesToUnderlying = (votes * _getLockedBalance()) /
+            totalSupply();
+        uint256 votesValue = (votesToUnderlying * nativeTokenETHPrice) /
+            pricePrecision;
 
         boost =
             (PercentageMath.PERCENTAGE_FACTOR * votesValue) /
@@ -403,6 +408,24 @@ contract NativeTokenVault is
         }
 
         return boost;
+    }
+
+    function calculateLTVBoost(
+        address user,
+        address collection,
+        uint256 votes
+    ) external view returns (uint256) {
+        return _calculateLTVBoost(user, collection, votes);
+    }
+
+    function getLTVBoost(address user, address collection)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return
+            _calculateLTVBoost(user, collection, _collectionVotes[collection]);
     }
 
     function getLockedBalance() external view override returns (uint256) {

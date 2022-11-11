@@ -46,7 +46,7 @@ library LiquidationLogic {
 
         // Get the payment from the liquidator
         IERC20Upgradeable(reserveAsset).safeTransferFrom(
-            msg.sender,
+            params.initiator,
             address(this),
             liquidationPrice
         );
@@ -110,7 +110,7 @@ library LiquidationLogic {
         // Send collateral to liquidator
         IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
             addressesProvider.getLoanCenter(),
-            msg.sender,
+            params.initiator,
             loanData.nftTokenId
         );
 
@@ -127,6 +127,6 @@ library LiquidationLogic {
 
         //Send the liquidation reward to the liquidator
         INativeTokenVault(addressesProvider.getNativeTokenVault())
-            .sendLiquidationReward(msg.sender, liquidationReward);
+            .sendLiquidationReward(params.initiator, liquidationReward);
     }
 }

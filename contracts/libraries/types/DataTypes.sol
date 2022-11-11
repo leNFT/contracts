@@ -93,7 +93,15 @@ library DataTypes {
         uint256 maxPeriods;
     }
 
+    struct ReserveParams {
+        uint256 liquidationPenalty;
+        uint256 protocolLiquidationFee;
+        uint256 maximumUtilizationRate;
+        uint256 underlyingSafeguard;
+    }
+
     struct BorrowParams {
+        address initiator;
         address depositor;
         address asset;
         uint256 amount;
@@ -105,22 +113,26 @@ library DataTypes {
     }
 
     struct RepayParams {
+        address initiator;
         uint256 loanId;
         uint256 amount;
     }
 
     struct DepositParams {
+        address initiator;
         address reserve;
         uint256 amount;
     }
 
     struct WithdrawalParams {
+        address initiator;
         address reserve;
         address depositor;
         uint256 amount;
     }
 
     struct LiquidationParams {
+        address initiator;
         uint256 loanId;
         bytes32 request;
         Trustus.TrustusPacket packet;

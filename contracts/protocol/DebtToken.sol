@@ -23,6 +23,7 @@ contract DebtToken is
         string memory name,
         string memory symbol
     ) external initializer {
+        __ERC721Enumerable_init();
         __ERC721_init(name, symbol);
         _addressProvider = addressesProvider;
     }
@@ -50,9 +51,10 @@ contract DebtToken is
     function _beforeTokenTransfer(
         address from,
         address to,
-        uint256 tokenId
+        uint256 tokenId,
+        uint256 batchSize
     ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
-        super._beforeTokenTransfer(from, to, tokenId);
+        super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
     function supportsInterface(bytes4 interfaceId)

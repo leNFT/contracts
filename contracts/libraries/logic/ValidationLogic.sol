@@ -32,7 +32,7 @@ library ValidationLogic {
         require(
             params.amount <=
                 IERC20Upgradeable(IReserve(params.reserve).getAsset())
-                    .balanceOf(msg.sender),
+                    .balanceOf(params.initiator),
             "Balance is lower than deposited amount"
         );
 
@@ -69,7 +69,9 @@ library ValidationLogic {
         // Check if the user has enough reserve balance for withdrawal
         require(
             params.amount <=
-                IReserve(params.reserve).getMaximumWithdrawalAmount(msg.sender),
+                IReserve(params.reserve).getMaximumWithdrawalAmount(
+                    params.initiator
+                ),
             "Amount too high"
         );
 
@@ -98,14 +100,14 @@ library ValidationLogic {
         // Get boost for this user and collection
         uint256 boost = INativeTokenVault(
             addressesProvider.getNativeTokenVault()
-        ).getVoteCollateralizationBoost(msg.sender, params.nftAddress);
+        ).getLTVBoost(params.initiator, params.nftAddress);
 
         // Get boost from genesis NFTs
         IGenesisNFT genesisNFT = IGenesisNFT(addressesProvider.getGenesisNFT());
         if (params.genesisNFTId != 0) {
             // Require owner is the borrower
             require(
-                genesisNFT.ownerOf(params.genesisNFTId) == msg.sender,
+                genesisNFT.ownerOf(params.genesisNFTId) == params.initiator,
                 "Caller is not owner of Genesis NFT"
             );
             //Require that the NFT is not being used
@@ -154,7 +156,7 @@ library ValidationLogic {
         // Check if the borrower owns the asset
         require(
             IERC721Upgradeable(params.nftAddress).ownerOf(params.nftTokenID) ==
-                msg.sender,
+                params.initiator,
             "Asset not owned by user"
         );
     }
@@ -172,12 +174,15 @@ library ValidationLogic {
         );
 
         // Check if caller trying to pay loan is borrower
-        require(msg.sender == loanData.borrower, "Caller is not loan borrower");
+        require(
+            params.initiator == loanData.borrower,
+            "Caller is not loan borrower"
+        );
 
         // Check the user has enough balance to repay
         require(
             IERC20Upgradeable(IReserve(loanData.reserve).getAsset()).balanceOf(
-                msg.sender
+                params.initiator
             ) >= params.amount,
             "Balance is lower than repay amount"
         );

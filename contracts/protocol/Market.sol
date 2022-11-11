@@ -22,6 +22,7 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {Trustus} from "./Trustus/Trustus.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
 
 /// @title Market Contract
@@ -41,27 +42,20 @@ contract Market is
     mapping(address => mapping(address => address)) private _reserves;
     // reserve = valid (bool)
     mapping(address => bool) private _validReserves;
+    // Number of reserves per asset
+    mapping(address => uint256) private _reservesCount;
 
     IAddressesProvider private _addressProvider;
-    uint256 private _defaultLiquidationPenalty;
-    uint256 private _defaultProtocolLiquidationFee;
-    uint256 private _defaultMaximumUtilizationRate;
-    uint256 private _defaultUnderlyingSafeguard;
+    DataTypes.ReserveParams private _defaultReserveParams;
 
     // Initialize the market
     function initialize(
         IAddressesProvider addressesProvider,
-        uint256 liquidationPenalty,
-        uint256 protocolLiquidationFee,
-        uint256 maximumUtilizationRate,
-        uint256 underlyingSafeguard
+        DataTypes.ReserveParams calldata defaultReserveParams
     ) external initializer {
         __Ownable_init();
         _addressProvider = addressesProvider;
-        _defaultLiquidationPenalty = liquidationPenalty;
-        _defaultProtocolLiquidationFee = protocolLiquidationFee;
-        _defaultMaximumUtilizationRate = maximumUtilizationRate;
-        _defaultUnderlyingSafeguard = underlyingSafeguard;
+        _defaultReserveParams = defaultReserveParams;
     }
 
     /// @notice Deposit any ERC-20 asset in the reserve
@@ -75,7 +69,11 @@ contract Market is
     {
         require(_validReserves[reserve] == true, "Invalid Reserve");
         SupplyLogic.deposit(
-            DataTypes.DepositParams({reserve: reserve, amount: amount})
+            DataTypes.DepositParams({
+                initiator: _msgSender(),
+                reserve: reserve,
+                amount: amount
+            })
         );
 
         emit Deposit(_msgSender(), reserve, amount);
@@ -103,7 +101,11 @@ contract Market is
         WETH.transfer(_msgSender(), msg.value);
 
         SupplyLogic.deposit(
-            DataTypes.DepositParams({reserve: reserve, amount: msg.value})
+            DataTypes.DepositParams({
+                initiator: _msgSender(),
+                reserve: reserve,
+                amount: msg.value
+            })
         );
 
         emit Deposit(_msgSender(), reserve, msg.value);
@@ -122,6 +124,7 @@ contract Market is
         SupplyLogic.withdraw(
             _addressProvider,
             DataTypes.WithdrawalParams({
+                initiator: _msgSender(),
                 reserve: reserve,
                 depositor: _msgSender(),
                 amount: amount
@@ -149,6 +152,7 @@ contract Market is
         SupplyLogic.withdraw(
             _addressProvider,
             DataTypes.WithdrawalParams({
+                initiator: _msgSender(),
                 reserve: reserve,
                 depositor: address(this),
                 amount: amount
@@ -184,6 +188,7 @@ contract Market is
             _addressProvider,
             _reserves,
             DataTypes.BorrowParams({
+                initiator: _msgSender(),
                 depositor: address(this),
                 asset: wethAddress,
                 amount: amount,
@@ -224,6 +229,7 @@ contract Market is
             _addressProvider,
             _reserves,
             DataTypes.BorrowParams({
+                initiator: _msgSender(),
                 depositor: _msgSender(),
                 asset: asset,
                 amount: amount,
@@ -250,7 +256,11 @@ contract Market is
 
         BorrowLogic.repay(
             _addressProvider,
-            DataTypes.RepayParams({loanId: loanId, amount: msg.value})
+            DataTypes.RepayParams({
+                initiator: _msgSender(),
+                loanId: loanId,
+                amount: msg.value
+            })
         );
 
         emit Repay(_msgSender(), loanId);
@@ -265,7 +275,11 @@ contract Market is
     {
         BorrowLogic.repay(
             _addressProvider,
-            DataTypes.RepayParams({loanId: loanId, amount: amount})
+            DataTypes.RepayParams({
+                initiator: _msgSender(),
+                loanId: loanId,
+                amount: amount
+            })
         );
 
         emit Repay(_msgSender(), loanId);
@@ -284,6 +298,7 @@ contract Market is
         LiquidationLogic.liquidate(
             _addressProvider,
             DataTypes.LiquidationParams({
+                initiator: _msgSender(),
                 loanId: loanId,
                 request: request,
                 packet: packet
@@ -324,13 +339,20 @@ contract Market is
         IReserve newReserve = new Reserve(
             _addressProvider,
             owner(),
-            asset,
-            string.concat(IERC20Metadata(asset).name(), " leNFT Reserve"),
-            string.concat("R", IERC20Metadata(asset).symbol()),
-            _defaultLiquidationPenalty,
-            _defaultProtocolLiquidationFee,
-            _defaultMaximumUtilizationRate,
-            _defaultUnderlyingSafeguard
+            IERC20(asset),
+            string.concat(
+                "leNFT ",
+                IERC20Metadata(asset).symbol(),
+                " Reserve #",
+                Strings.toString(_reservesCount[asset])
+            ),
+            string.concat(
+                "leR",
+                IERC20Metadata(asset).symbol(),
+                "-",
+                Strings.toString(_reservesCount[asset])
+            ),
+            _defaultReserveParams
         );
 
         // Approve reserve use of Market balance
@@ -350,6 +372,7 @@ contract Market is
 
         _validReserves[address(newReserve)] = true;
         _setReserve(collection, asset, address(newReserve));
+        _reservesCount[asset] += 1;
 
         emit CreateReserve(address(newReserve));
     }
@@ -378,32 +401,32 @@ contract Market is
         external
         onlyOwner
     {
-        _defaultLiquidationPenalty = liquidationPenalty;
+        _defaultReserveParams.liquidationPenalty = liquidationPenalty;
     }
 
     function setDefaultProtocolLiquidationFee(uint256 protocolLiquidationFee)
         external
         onlyOwner
     {
-        _defaultProtocolLiquidationFee = protocolLiquidationFee;
+        _defaultReserveParams.protocolLiquidationFee = protocolLiquidationFee;
     }
 
     function setDefaultMaximumUtilizationRate(uint256 maximumUtilizationRate)
         external
         onlyOwner
     {
-        _defaultMaximumUtilizationRate = maximumUtilizationRate;
+        _defaultReserveParams.maximumUtilizationRate = maximumUtilizationRate;
     }
 
     function setDefaultUnderlyingSafeguard(uint256 underlyingSafeguard)
         external
         onlyOwner
     {
-        _defaultUnderlyingSafeguard = underlyingSafeguard;
+        _defaultReserveParams.underlyingSafeguard = underlyingSafeguard;
     }
 
     function getDefaultLiquidationPenalty() external view returns (uint256) {
-        return _defaultLiquidationPenalty;
+        return _defaultReserveParams.liquidationPenalty;
     }
 
     function getDefaultProtocolLiquidationFee()
@@ -411,7 +434,7 @@ contract Market is
         view
         returns (uint256)
     {
-        return _defaultProtocolLiquidationFee;
+        return _defaultReserveParams.protocolLiquidationFee;
     }
 
     function getDefaultMaximumUtilizationRate()
@@ -419,11 +442,11 @@ contract Market is
         view
         returns (uint256)
     {
-        return _defaultMaximumUtilizationRate;
+        return _defaultReserveParams.maximumUtilizationRate;
     }
 
     function getDefaultUnderlyingSafeguard() external view returns (uint256) {
-        return _defaultUnderlyingSafeguard;
+        return _defaultReserveParams.underlyingSafeguard;
     }
 
     // Add receive ETH function
