@@ -40,6 +40,8 @@ interface IReserve is IERC20 {
 
     function getDebt() external view returns (uint256);
 
+    function getTVL() external view returns (uint256);
+
     function getMaximumWithdrawalAmount(address to)
         external
         view
@@ -55,5 +57,5 @@ interface IReserve is IERC20 {
 
     function getLiquidationFee() external view returns (uint256);
 
-    function getUnderlyingSafeguard() external view returns (uint256);
+    function getTVLSafeguard() external view returns (uint256);
 }

@@ -32,7 +32,7 @@ describe("Withdraw Native Token", function () {
       await nativeTokenVault.createWithdrawRequest(10);
     await createWithdrawRequestTx.wait();
 
-    const request = await nativeTokenVault.getWithdrawRequest(owner.address);
+    const request = await nativeTokenVault.getWithdrawalRequest(owner.address);
     expect(request.amount).to.equal(10);
   });
   it("Should be able to withdraw", async function () {

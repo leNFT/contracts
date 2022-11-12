@@ -97,7 +97,7 @@ library DataTypes {
         uint256 liquidationPenalty;
         uint256 protocolLiquidationFee;
         uint256 maximumUtilizationRate;
-        uint256 underlyingSafeguard;
+        uint256 tvlSafeguard;
     }
 
     struct BorrowParams {

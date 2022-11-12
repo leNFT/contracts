@@ -227,14 +227,11 @@ contract Reserve is Context, IReserve, ERC20, Ownable {
         _reserveParams.protocolLiquidationFee = protocolLiquidationFee;
     }
 
-    function getUnderlyingSafeguard() external view override returns (uint256) {
-        return _reserveParams.underlyingSafeguard;
+    function getTVLSafeguard() external view override returns (uint256) {
+        return _reserveParams.tvlSafeguard;
     }
 
-    function setUnderlyingSafeguard(uint256 underlyingSafeguard)
-        external
-        onlyOwner
-    {
-        _reserveParams.underlyingSafeguard = underlyingSafeguard;
+    function setTVLSafeguard(uint256 tvlSafeguard) external onlyOwner {
+        _reserveParams.tvlSafeguard = tvlSafeguard;
     }
 }

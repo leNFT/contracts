@@ -244,7 +244,7 @@ contract Market is
         emit Borrow(_msgSender(), asset, nftAddress, nftTokenId, amount);
     }
 
-    /// @notice Repay an an active loan
+    /// @notice Repay an an active loanreceive and
     /// @param loanId The ID of the loan to be paid
     function repayETH(uint256 loanId) external payable override nonReentrant {
         address wethAddress = _addressProvider.getWETH();
@@ -418,11 +418,8 @@ contract Market is
         _defaultReserveParams.maximumUtilizationRate = maximumUtilizationRate;
     }
 
-    function setDefaultUnderlyingSafeguard(uint256 underlyingSafeguard)
-        external
-        onlyOwner
-    {
-        _defaultReserveParams.underlyingSafeguard = underlyingSafeguard;
+    function setDefaultTVLSafeguard(uint256 tvlSafeguard) external onlyOwner {
+        _defaultReserveParams.tvlSafeguard = tvlSafeguard;
     }
 
     function getDefaultLiquidationPenalty() external view returns (uint256) {
@@ -445,10 +442,11 @@ contract Market is
         return _defaultReserveParams.maximumUtilizationRate;
     }
 
-    function getDefaultUnderlyingSafeguard() external view returns (uint256) {
-        return _defaultReserveParams.underlyingSafeguard;
+    function getDefaultTVLSafeguard() external view returns (uint256) {
+        return _defaultReserveParams.tvlSafeguard;
     }
 
     // Add receive ETH function
+    // Intended to receive ETH from WETH contract
     receive() external payable {}
 }

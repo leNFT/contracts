@@ -96,7 +96,7 @@ async function main() {
         liquidationPenalty: "1800", // defaultLiquidationPenalty
         protocolLiquidationFee: "200", // defaultProtocolLiquidationFee
         maximumUtilizationRate: "8500", // defaultMaximumUtilizationRate
-        underlyingSafeguard: "25000000000000000000", // defaultUnderlyingSafeguard
+        tvlSafeguard: "25000000000000000000", // defaultTVLSafeguard
       },
     ],
     { unsafeAllow: ["external-library-linking"], timeout: 0 }
