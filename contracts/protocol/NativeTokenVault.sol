@@ -60,11 +60,6 @@ contract NativeTokenVault is
         _;
     }
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     function initialize(
         IAddressesProvider addressProvider,
         string calldata name,
@@ -77,7 +72,7 @@ contract NativeTokenVault is
         __Ownable_init();
         __ERC20_init(name, symbol);
         __ERC4626_init(asset);
-        addressProvider = addressProvider;
+        _addressProvider = addressProvider;
         _liquidatonRewardsParams = liquidatonRewardsParams;
         _boostParams = boostParams;
         _stakingRewardsParams = stakingRewardsParams;
@@ -96,7 +91,7 @@ contract NativeTokenVault is
     function createWithdrawalRequest() external {
         ValidationLogic.validateCreateWithdrawalRequest(_addressProvider);
         // Create request and add it to the list
-        _withdrawalRequests[_msgSender()].init(maxRedeem(msg.sender));
+        _withdrawalRequests[_msgSender()].init(maxRedeem(_msgSender()));
     }
 
     function getWithdrawalRequest(address user)
@@ -123,40 +118,36 @@ contract NativeTokenVault is
         super._withdraw(caller, receiver, owner, assets, shares);
     }
 
-    function vote(uint256 shares, address collection)
+    function vote(uint256 votes, address collection)
         external
         override
         nonReentrant
     {
-        ValidationLogic.validateVote(_addressProvider, shares);
+        ValidationLogic.validateVote(_addressProvider, votes);
 
         // Vote for a collection with the tokens we just minted
-        _votes[_msgSender()][collection] += shares;
-        _collectionVotes[collection] += shares;
+        _votes[_msgSender()][collection] += votes;
+        _collectionVotes[collection] += votes;
 
-        _usedVotes[_msgSender()] += shares;
+        _usedVotes[_msgSender()] += votes;
 
-        emit Vote(_msgSender(), collection, shares);
+        emit Vote(_msgSender(), collection, votes);
     }
 
-    function removeVote(uint256 shares, address collection)
+    function removeVote(uint256 votes, address collection)
         external
         override
         nonReentrant
     {
-        ValidationLogic.validateRemoveVote(
-            _addressProvider,
-            shares,
-            collection
-        );
+        ValidationLogic.validateRemoveVote(_addressProvider, votes, collection);
 
         // Vote for a collection with the tokens we just minted
-        _votes[_msgSender()][collection] -= shares;
-        _collectionVotes[collection] -= shares;
+        _votes[_msgSender()][collection] -= votes;
+        _collectionVotes[collection] -= votes;
 
-        _usedVotes[_msgSender()] -= shares;
+        _usedVotes[_msgSender()] -= votes;
 
-        emit RemoveVote(_msgSender(), collection, shares);
+        emit RemoveVote(_msgSender(), collection, votes);
     }
 
     function getUserFreeVotes(address user)

@@ -63,13 +63,6 @@ let loadEnv = async function () {
   loanCenter = await LoanCenter.deploy();
   await loanCenter.deployed();
   console.log("Loan Center Address:", loanCenter.address);
-  const WETHReserve = await ethers.getContractFactory("Reserve", {
-    libraries: {
-      SupplyLogic: supplyLogicLib.address,
-    },
-  });
-  wethReserve = await WETHReserve.deploy();
-  await wethReserve.deployed();
   const InterestRate = await ethers.getContractFactory("InterestRate");
   interestRate = await InterestRate.deploy(8000, 1000, 2500, 10000);
   await interestRate.deployed();
@@ -159,27 +152,20 @@ let loadEnv = async function () {
   await setWETHTx.wait();
 
   // Initialize market
-  const initMarketTx = await market.initialize(addressesProvider.address);
+  const initMarketTx = await market.initialize(addressesProvider.address, {
+    liquidationPenalty: "1800", // defaultLiquidationPenalty
+    protocolLiquidationFee: "200", // defaultProtocolLiquidationFee
+    maximumUtilizationRate: "8500", // defaultMaximumUtilizationRate
+    tvlSafeguard: "25000000000000000000", // defaultTVLSafeguard
+  });
   await initMarketTx.wait();
 
   //Initialize LoanCenter
   const initLoanCenterTx = await loanCenter.initialize(
-    addressesProvider.address
+    addressesProvider.address,
+    "4000" // DefaultMaxCollaterization 40%
   );
   await initLoanCenterTx.wait();
-
-  // Initialize Reserve
-  const initReserveTx = await wethReserve.initialize(
-    addressesProvider.address,
-    weth.address,
-    "RESERVETOKEN",
-    "RTTOKEN",
-    9000, //max utilization rate (90%)
-    1200, // Liquidation penalty (12%)
-    200, // protocol liquidation fee (2%)
-    "1001000000000000000000" //Underlying safeguard (can deposit up to 1001 ETH)
-  );
-  await initReserveTx.wait();
 
   //Init debt token
   const initDebtTokenTx = await debtToken.initialize(
@@ -197,10 +183,7 @@ let loadEnv = async function () {
     "100000000000000000000000000", //100M Max Cap
     owner.address,
     "15000000000000000000000000", // 15M Dev Tokens
-    "63113851", // 2-year dev vesting
-    "604800", // 7-day period between vault rewards
-    "312", // Limit number of periods
-    "283000000000000000000000" // Rewards Factor
+    "63113851" // 2-year dev vesting
   );
   await initNativeTokenTx.wait();
 
@@ -209,12 +192,22 @@ let loadEnv = async function () {
     addressesProvider.address,
     "veleNFT Token",
     "veLE",
-    "25000000000000000000000", // 25000 leNFT Reward Limit
-    "10000000000000000", // 0.01 Liquidation Reward Factor
-    9000, // Liquidation Reward Price Threshold (90%)
-    12000, // Liquidation Reward Price Limit (120%)
-    1500, //15% Boost Limit
-    "15000000000000000000" // 15 Boost Factor
+    nativeToken.address,
+    {
+      factor: "55000000000000000", // 0.055 Liquidation Reward Factor
+      maxReward: "25000000000000000000000", // 25000 leNFT Reward Limit
+      priceThreshold: 9000, // Liquidation Reward Price Threshold (90%)
+      priceLimit: 12000, // Liquidation Reward Price Limit (120%)
+    },
+    {
+      factor: "15000000000000000000", // 15 Boost Factor
+      limit: 1500, //15% Boost Limit
+    },
+    {
+      factor: "100000000000000000000000", // Staking Rewards Factor
+      period: "604800", // 7-day period between vault staking rewards
+      maxPeriods: "416", // Limit number of staking periods
+    }
   );
   await initNativeTokenVaultTx.wait();
 
@@ -233,40 +226,12 @@ let loadEnv = async function () {
   );
   await initGenesisNFTTx.wait();
 
-  // Add reserve to market
-  const addReserveTx = await market.addReserve(
-    weth.address,
-    wethReserve.address
-  );
-  await addReserveTx.wait();
-
-  //Add test NFTs to oracle
-  const addNftToOracleTx = await nftOracle.addSupportedCollection(
-    testNFT.address,
-    2000 //max collaterization (20%)
-  );
-  await addNftToOracleTx.wait();
-  const addNft2ToOracleTx = await nftOracle.addSupportedCollection(
-    testNFT2.address,
-    4000 //max collaterization (40%)
-  );
-  await addNft2ToOracleTx.wait();
-
   // Set trusted price source
-  const setTrustedPriceSourceTx = await nftOracle.addTrustedPriceSource(
-    "0xfEa2AF8BB65c34ee64A005057b4C749310321Fa0"
+  const setTrustedPriceSourceTx = await nftOracle.setTrustedPriceSigner(
+    "0xfEa2AF8BB65c34ee64A005057b4C749310321Fa0",
+    true
   );
   await setTrustedPriceSourceTx.wait();
-
-  //Approve test nfts to be used by market
-  const approveNFTCollectionTx = await loanCenter.approveNFTCollection(
-    testNFT.address
-  );
-  await approveNFTCollectionTx.wait();
-  const approveNFT2CollectionTx = await loanCenter.approveNFTCollection(
-    testNFT2.address
-  );
-  await approveNFT2CollectionTx.wait();
 
   //Add a price to the native token using the token oracle
   const setNativeTokenPriceTx = await tokenOracle.setTokenETHPrice(
@@ -281,6 +246,8 @@ let loadEnv = async function () {
     "1000000000000000000" //1 testToken/ETH
   );
   await setTestTokenPriceTx.wait();
+
+  console.log("loaded");
 };
 
 function loadTest() {

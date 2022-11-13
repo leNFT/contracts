@@ -3,7 +3,6 @@ const { ethers } = require("hardhat");
 const load = require("../scripts/testDeploy/_loadTest.js");
 
 describe("Withdraw Native Token", function () {
-  this.timeout(10000);
   load.loadTest();
   it("Should deposit native tokens into the vault", async function () {
     // Mint 10 native tokens to the callers address
@@ -16,20 +15,20 @@ describe("Withdraw Native Token", function () {
       10
     );
     await approveTokenTx.wait();
-    const depositTx = await nativeTokenVault.deposit(10);
+    const depositTx = await nativeTokenVault.deposit(10, owner.address);
     await depositTx.wait();
 
     // Find if the reserve tokens were sent accordingly
-    expect(await nativeTokenVault.getLockedBalance()).to.equal(10);
+    expect(await nativeTokenVault.maxWithdraw(owner.address)).to.equal(10);
   });
   it("Should not be able to withdraw", async function () {
-    await expect(nativeTokenVault.withdraw(10)).to.be.revertedWith(
-      "Withdraw Request is not within valid timeframe"
-    );
+    await expect(
+      nativeTokenVault.withdraw(10, owner.address, owner.address)
+    ).to.be.revertedWith("No withdraw request created");
   });
   it("Should create an withdraw request", async function () {
     const createWithdrawRequestTx =
-      await nativeTokenVault.createWithdrawRequest(10);
+      await nativeTokenVault.createWithdrawalRequest();
     await createWithdrawRequestTx.wait();
 
     const request = await nativeTokenVault.getWithdrawalRequest(owner.address);
@@ -40,7 +39,11 @@ describe("Withdraw Native Token", function () {
     await ethers.provider.send("evm_increaseTime", [86400 * 8]);
     await ethers.provider.send("evm_mine");
 
-    const withdrawTx = await nativeTokenVault.withdraw(10);
+    const withdrawTx = await nativeTokenVault.withdraw(
+      10,
+      owner.address,
+      owner.address
+    );
     await withdrawTx.wait();
 
     // Find if the tokens were withdrawn

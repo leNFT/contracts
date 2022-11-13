@@ -50,11 +50,6 @@ contract GenesisNFT is
     // NFT token id to information about its mint
     mapping(uint256 => DataTypes.MintDetails) private _mintDetails;
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     modifier onlyMarket() {
         require(
             _msgSender() == address(_addressProvider.getMarketAddress()),

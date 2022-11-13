@@ -14,7 +14,6 @@ import {IReserve} from "../../interfaces/IReserve.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
 import {WithdrawalRequestLogic} from "./WithdrawalRequestLogic.sol";
 import {IERC4626Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4626Upgradeable.sol";
-
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
@@ -263,6 +262,12 @@ library ValidationLogic {
             memory withdrawalRequest = INativeTokenVault(
                 addressesProvider.getNativeTokenVault()
             ).getWithdrawalRequest(msg.sender);
+
+        // Check if the request was created
+        require(
+            withdrawalRequest.created == true,
+            "No withdraw request created"
+        );
 
         // Check if we are within the unlock request window and amount
         require(
