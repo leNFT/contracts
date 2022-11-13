@@ -245,7 +245,7 @@ library ValidationLogic {
                 addressesProvider.getNativeTokenVault()
             ).getWithdrawalRequest(msg.sender);
 
-        // Check if we are outside the request window
+        // Check if we are creating outside the request window
         if (withdrawalRequest.created == true) {
             require(
                 block.timestamp > withdrawalRequest.timestamp + ONE_WEEK,
