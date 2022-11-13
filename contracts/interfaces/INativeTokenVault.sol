@@ -19,8 +19,6 @@ interface INativeTokenVault {
         uint256 amount
     );
 
-    function createWithdrawalRequest() external;
-
     function getWithdrawalRequest(address user)
         external
         view

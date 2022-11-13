@@ -93,7 +93,7 @@ contract NativeTokenVault is
         return super.decimals();
     }
 
-    function createWithdrawalRequest() external override {
+    function createWithdrawalRequest() external {
         ValidationLogic.validateCreateWithdrawalRequest(_addressProvider);
         // Create request and add it to the list
         _withdrawalRequests[_msgSender()].init(maxRedeem(msg.sender));
