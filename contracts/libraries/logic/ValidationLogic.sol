@@ -13,6 +13,8 @@ import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
 import {WithdrawalRequestLogic} from "./WithdrawalRequestLogic.sol";
+import {IERC4626Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4626Upgradeable.sol";
+
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
@@ -236,28 +238,31 @@ library ValidationLogic {
         );
     }
 
-    function validateNativeTokenDeposit(address nativeAsset, uint256 amount)
-        external
-        view
-    {
-        // Get balance of the user trying the deposit
-        uint256 balance = IERC20Upgradeable(nativeAsset).balanceOf(msg.sender);
+    function validateCreateWithdrawalRequest(
+        IAddressesProvider addressesProvider
+    ) external view {
+        DataTypes.WithdrawalRequest
+            memory withdrawalRequest = INativeTokenVault(
+                addressesProvider.getNativeTokenVault()
+            ).getWithdrawalRequest(msg.sender);
 
-        require(amount <= balance, "Balance is lower than deposited amount");
-
-        require(amount > 0, "Deposit amount must be bigger than 0");
+        // Check if we are outside the request window
+        if (withdrawalRequest.created == true) {
+            require(
+                block.timestamp > withdrawalRequest.timestamp + ONE_WEEK,
+                "Withdraw request already created"
+            );
+        }
     }
 
     function validateNativeTokenWithdraw(
         IAddressesProvider addressesProvider,
-        uint256 amount
+        uint256 shares
     ) external view {
-        INativeTokenVault vault = INativeTokenVault(
-            addressesProvider.getNativeTokenVault()
-        );
-
-        DataTypes.WithdrawalRequest memory withdrawalRequest = vault
-            .getWithdrawalRequest(msg.sender);
+        DataTypes.WithdrawalRequest
+            memory withdrawalRequest = INativeTokenVault(
+                addressesProvider.getNativeTokenVault()
+            ).getWithdrawalRequest(msg.sender);
 
         // Check if we are within the unlock request window and amount
         require(
@@ -268,41 +273,35 @@ library ValidationLogic {
         );
 
         require(
-            withdrawalRequest.amount >= amount,
+            withdrawalRequest.amount >= shares,
             "Withdraw Request amount is smaller than requested amount"
         );
 
         require(
-            // Check if the user has enough reserve balance for withdrawal
-            amount <= vault.getMaximumWithdrawalAmount(msg.sender),
-            "Withdrawal amount higher than permitted."
+            INativeTokenVault(addressesProvider.getNativeTokenVault())
+                .getUserFreeVotes(msg.sender) >= shares,
+            "Not enough free votes"
         );
-
-        require(amount > 0, "Withdrawal amount must be bigger than 0");
     }
 
-    function validateVote(IAddressesProvider addressesProvider, uint256 amount)
+    function validateVote(IAddressesProvider addressesProvider, uint256 shares)
         external
         view
     {
-        INativeTokenVault vault = INativeTokenVault(
-            addressesProvider.getNativeTokenVault()
-        );
-        uint256 freeVotes = vault.getUserFreeVotes(msg.sender);
-
         //Check if the user has enough free votes
         require(
-            freeVotes >= amount,
+            INativeTokenVault(addressesProvider.getNativeTokenVault())
+                .getUserFreeVotes(msg.sender) >= shares,
             "Not enough voting power for requested amount"
         );
 
         // Check if the input amount is bigger than 0
-        require(amount > 0, "Vote amount must be bigger than 0");
+        require(shares > 0, "Vote amount must be bigger than 0");
     }
 
     function validateRemoveVote(
         IAddressesProvider addressesProvider,
-        uint256 amount,
+        uint256 shares,
         address collection
     ) external view {
         // Check if user has no active loans in voted collection
@@ -315,34 +314,13 @@ library ValidationLogic {
         );
 
         // Check if the input amount is bigger than 0
-        require(amount > 0, "Remove vote amount must be bigger than 0");
+        require(shares > 0, "Remove vote amount must be bigger than 0");
 
         //Check if the user has enough free votes
         require(
             INativeTokenVault(addressesProvider.getNativeTokenVault())
-                .getUserCollectionVotes(msg.sender, collection) >= amount,
+                .getUserCollectionVotes(msg.sender, collection) >= shares,
             "Not enough votes in selected collection"
-        );
-    }
-
-    function validateCreateWithdrawalRequest(
-        IAddressesProvider addressesProvider,
-        uint256 amount
-    ) external view {
-        INativeTokenVault vault = INativeTokenVault(
-            addressesProvider.getNativeTokenVault()
-        );
-
-        // Check if the input amount is bigger than 0
-        require(amount > 0, "Withdraw request amount must be bigger than 0");
-
-        uint256 maximumWithdrawalAmount = vault.getMaximumWithdrawalAmount(
-            msg.sender
-        );
-        // User needs to have less than or equal balance in the vault to withdraw
-        require(
-            amount <= maximumWithdrawalAmount,
-            "Requested amount is higher than vault balance"
         );
     }
 }

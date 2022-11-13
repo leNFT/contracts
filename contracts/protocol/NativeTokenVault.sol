@@ -3,6 +3,8 @@ pragma solidity 0.8.17;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {ERC4626Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol";
+import {MathUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {INativeTokenVault} from "../interfaces/INativeTokenVault.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";
@@ -24,6 +26,7 @@ contract NativeTokenVault is
     Initializable,
     ContextUpgradeable,
     ERC20Upgradeable,
+    ERC4626Upgradeable,
     INativeTokenVault,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
@@ -37,8 +40,8 @@ contract NativeTokenVault is
 
     // User + collection to votes
     mapping(address => mapping(address => uint256)) private _votes;
-    // User to votes
-    mapping(address => uint256) private _freeVotes;
+    // User to used votes
+    mapping(address => uint256) private _usedVotes;
     //Collections to votes
     mapping(address => uint256) private _collectionVotes;
     //User to withdraw requests
@@ -57,64 +60,43 @@ contract NativeTokenVault is
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(
         IAddressesProvider addressProvider,
         string calldata name,
         string calldata symbol,
+        IERC20Upgradeable asset,
         DataTypes.LiquidationRewardParams calldata liquidatonRewardsParams,
         DataTypes.BoostParams calldata boostParams,
         DataTypes.StakingRewardParams calldata stakingRewardsParams
     ) external initializer {
         __Ownable_init();
         __ERC20_init(name, symbol);
-        _addressProvider = addressProvider;
+        __ERC4626_init(asset);
+        addressProvider = addressProvider;
         _liquidatonRewardsParams = liquidatonRewardsParams;
         _boostParams = boostParams;
         _stakingRewardsParams = stakingRewardsParams;
         _deployTimestamp = block.timestamp;
     }
 
-    function deposit(uint256 amount) external override nonReentrant {
-        ValidationLogic.validateNativeTokenDeposit(
-            _addressProvider.getNativeToken(),
-            amount
-        );
-
-        // Find how many tokens the reserve should mint
-        uint256 veTokenAmount;
-        if (totalSupply() == 0) {
-            veTokenAmount = amount;
-        } else {
-            veTokenAmount = (amount * totalSupply()) / _getLockedBalance();
-        }
-
-        // Send native token from depositor to the vault
-        IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransferFrom(
-            _msgSender(),
-            address(this),
-            amount
-        );
-
-        //Mint veToken (locked) tokens
-        _mint(_msgSender(), veTokenAmount);
-
-        //Update the number of unused votes
-        _freeVotes[_msgSender()] += veTokenAmount;
-
-        emit Deposit(_msgSender(), amount);
+    function decimals()
+        public
+        view
+        override(ERC20Upgradeable, ERC4626Upgradeable)
+        returns (uint8)
+    {
+        return super.decimals();
     }
 
-    function createWithdrawalRequest(uint256 amount)
-        external
-        override
-        nonReentrant
-    {
-        ValidationLogic.validateCreateWithdrawalRequest(
-            _addressProvider,
-            amount
-        );
-        //Create request and add it to the list
-        _withdrawalRequests[_msgSender()].init(amount);
+    function createWithdrawalRequest() external override {
+        ValidationLogic.validateCreateWithdrawalRequest(_addressProvider);
+        // Create request and add it to the list
+        _withdrawalRequests[_msgSender()].init(maxRedeem(msg.sender));
     }
 
     function getWithdrawalRequest(address user)
@@ -123,79 +105,58 @@ contract NativeTokenVault is
         override
         returns (DataTypes.WithdrawalRequest memory)
     {
-        require(
-            _withdrawalRequests[user].created == true,
-            "User hasn't created any withdrawal requests"
-        );
         return _withdrawalRequests[user];
     }
 
-    function withdraw(uint256 amount) external override nonReentrant {
-        ValidationLogic.validateNativeTokenWithdraw(_addressProvider, amount);
-
-        // Find how many tokens the reserve should mint
-        uint256 veTokenAmount;
-        if (totalSupply() == 0) {
-            veTokenAmount = amount;
-        } else {
-            veTokenAmount = (amount * totalSupply()) / _getLockedBalance();
-        }
-
-        // Assert 1e-18 division errors
-        assert(veTokenAmount > 0);
-
-        // Burn the veTokens
-        _burn(_msgSender(), amount);
-
-        // Update the number of unused votes
-        _freeVotes[_msgSender()] -= veTokenAmount;
+    function _withdraw(
+        address caller,
+        address receiver,
+        address owner,
+        uint256 assets,
+        uint256 shares
+    ) internal override {
+        ValidationLogic.validateNativeTokenWithdraw(_addressProvider, shares);
 
         // Delete withdrawal request
-        delete _withdrawalRequests[_msgSender()];
+        delete _withdrawalRequests[caller];
 
-        // Withdraw the native token from the vault
-        IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransfer(
-            _msgSender(),
-            amount
-        );
-
-        emit Withdraw(_msgSender(), amount);
+        super._withdraw(caller, receiver, owner, assets, shares);
     }
 
-    function vote(uint256 amount, address collection)
+    function vote(uint256 shares, address collection)
         external
         override
         nonReentrant
     {
-        ValidationLogic.validateVote(_addressProvider, amount);
+        ValidationLogic.validateVote(_addressProvider, shares);
 
         // Vote for a collection with the tokens we just minted
-        _votes[_msgSender()][collection] += amount;
-        _collectionVotes[collection] += amount;
+        _votes[_msgSender()][collection] += shares;
+        _collectionVotes[collection] += shares;
 
-        _freeVotes[_msgSender()] -= amount;
+        _usedVotes[_msgSender()] += shares;
 
-        emit Vote(_msgSender(), collection, amount);
+        emit Vote(_msgSender(), collection, shares);
     }
 
-    function removeVote(uint256 amount, address collection)
+    function removeVote(uint256 shares, address collection)
         external
         override
         nonReentrant
     {
         ValidationLogic.validateRemoveVote(
             _addressProvider,
-            amount,
+            shares,
             collection
         );
 
         // Vote for a collection with the tokens we just minted
-        _votes[_msgSender()][collection] -= amount;
-        _collectionVotes[collection] -= amount;
+        _votes[_msgSender()][collection] -= shares;
+        _collectionVotes[collection] -= shares;
 
-        _freeVotes[_msgSender()] += amount;
+        _usedVotes[_msgSender()] -= shares;
 
-        emit RemoveVote(_msgSender(), collection, amount);
+        emit RemoveVote(_msgSender(), collection, shares);
     }
 
     function getUserFreeVotes(address user)
@@ -204,7 +165,7 @@ contract NativeTokenVault is
         override
         returns (uint256)
     {
-        return _freeVotes[user];
+        return maxRedeem(user) - _usedVotes[user];
     }
 
     function getUserCollectionVotes(address user, address collection)
@@ -389,14 +350,10 @@ contract NativeTokenVault is
         uint256 pricePrecision = ITokenOracle(_addressProvider.getTokenOracle())
             .getPricePrecision();
 
-        if (totalSupply() == 0) {
-            return 0;
-        }
-
-        uint256 votesToUnderlying = (votes * _getLockedBalance()) /
-            totalSupply();
-        uint256 votesValue = (votesToUnderlying * nativeTokenETHPrice) /
-            pricePrecision;
+        uint256 votesValue = (_convertToAssets(
+            votes,
+            MathUpgradeable.Rounding.Up
+        ) * nativeTokenETHPrice) / pricePrecision;
 
         boost =
             (PercentageMath.PERCENTAGE_FACTOR * votesValue) /
@@ -426,37 +383,6 @@ contract NativeTokenVault is
     {
         return
             _calculateLTVBoost(user, collection, _collectionVotes[collection]);
-    }
-
-    function getLockedBalance() external view override returns (uint256) {
-        return _getLockedBalance();
-    }
-
-    function _getLockedBalance() internal view returns (uint256) {
-        return
-            IERC20Upgradeable(_addressProvider.getNativeToken()).balanceOf(
-                address(this)
-            );
-    }
-
-    function getMaximumWithdrawalAmount(address user)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        uint256 veTokenFreeAmount = _freeVotes[user];
-        uint256 maximumAmount;
-
-        if (veTokenFreeAmount == 0) {
-            maximumAmount = 0;
-        } else {
-            maximumAmount =
-                (veTokenFreeAmount * _getLockedBalance()) /
-                totalSupply();
-        }
-
-        return maximumAmount;
     }
 
     function getStakingRewardsFactor() external view returns (uint256) {
@@ -530,7 +456,12 @@ contract NativeTokenVault is
     }
 
     // Override transfer functions so the token is not transferable
-    function transfer(address, uint256) public pure override returns (bool) {
+    function transfer(address, uint256)
+        public
+        pure
+        override(ERC20Upgradeable, IERC20Upgradeable)
+        returns (bool)
+    {
         revert("Transfer disabled");
     }
 
@@ -538,7 +469,7 @@ contract NativeTokenVault is
         address,
         address,
         uint256
-    ) public pure override returns (bool) {
+    ) public pure override(ERC20Upgradeable, IERC20Upgradeable) returns (bool) {
         revert("Transfer disabled");
     }
 }

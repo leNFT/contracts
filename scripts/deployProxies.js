@@ -145,6 +145,7 @@ async function main() {
       addressesProvider.address,
       "veleNFT Token",
       "veLE",
+      nativeToken.address,
       {
         factor: "55000000000000000", // 0.055 Liquidation Reward Factor
         maxReward: "25000000000000000000000", // 25000 leNFT Reward Limit

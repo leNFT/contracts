@@ -5,11 +5,7 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 
 interface INativeTokenVault {
-    event Deposit(address indexed user, uint256 amount);
-
-    event Withdraw(address indexed user, uint256 amount);
-
-    event DistributeRewards(uint256 _amount);
+    event DistributeRewards(uint256 amount);
 
     event Vote(
         address indexed user,
@@ -23,16 +19,7 @@ interface INativeTokenVault {
         uint256 amount
     );
 
-    function deposit(uint256 amount) external;
-
-    function withdraw(uint256 amount) external;
-
-    function getMaximumWithdrawalAmount(address user)
-        external
-        view
-        returns (uint256);
-
-    function createWithdrawalRequest(uint256 amount) external;
+    function createWithdrawalRequest() external;
 
     function getWithdrawalRequest(address user)
         external
@@ -58,8 +45,6 @@ interface INativeTokenVault {
     function sendLiquidationReward(address liquidator, uint256 amount) external;
 
     function getUserFreeVotes(address user) external view returns (uint256);
-
-    function getLockedBalance() external view returns (uint256);
 
     function getUserCollectionVotes(address user, address collection)
         external
