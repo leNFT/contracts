@@ -10,6 +10,7 @@ import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
+import {ConfigTypes} from "../libraries/types/ConfigTypes.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract Reserve is Context, IReserve, ERC20, Ownable {
@@ -18,7 +19,7 @@ contract Reserve is Context, IReserve, ERC20, Ownable {
     uint256 internal _debt;
     uint256 internal _borrowRate;
     uint256 internal _cumulativeDebtBorrowRate;
-    DataTypes.ReserveParams internal _reserveParams;
+    ConfigTypes.ReserveConfig internal _reserveConfig;
 
     using SafeERC20 for IERC20;
 
@@ -36,11 +37,11 @@ contract Reserve is Context, IReserve, ERC20, Ownable {
         IERC20 asset,
         string memory name,
         string memory symbol,
-        DataTypes.ReserveParams memory reserveParams
+        ConfigTypes.ReserveConfig memory reserveConfig
     ) ERC20(name, symbol) {
         _addressProvider = addressProvider;
         _asset = asset;
-        _reserveParams = reserveParams;
+        _reserveConfig = reserveConfig;
         _updateBorrowRate();
         _transferOwnership(owner);
     }
@@ -138,7 +139,7 @@ contract Reserve is Context, IReserve, ERC20, Ownable {
         override
         returns (uint256)
     {
-        return _reserveParams.maximumUtilizationRate;
+        return _reserveConfig.maximumUtilizationRate;
     }
 
     function _getUnderlyingBalance() internal view returns (uint256) {
@@ -206,32 +207,32 @@ contract Reserve is Context, IReserve, ERC20, Ownable {
     }
 
     function getLiquidationPenalty() external view override returns (uint256) {
-        return _reserveParams.liquidationPenalty;
+        return _reserveConfig.liquidationPenalty;
     }
 
     function setLiquidationPenalty(uint256 liquidationPenalty)
         external
         onlyOwner
     {
-        _reserveParams.liquidationPenalty = liquidationPenalty;
+        _reserveConfig.liquidationPenalty = liquidationPenalty;
     }
 
     function getLiquidationFee() external view override returns (uint256) {
-        return _reserveParams.protocolLiquidationFee;
+        return _reserveConfig.protocolLiquidationFee;
     }
 
     function setLiquidationFee(uint256 protocolLiquidationFee)
         external
         onlyOwner
     {
-        _reserveParams.protocolLiquidationFee = protocolLiquidationFee;
+        _reserveConfig.protocolLiquidationFee = protocolLiquidationFee;
     }
 
     function getTVLSafeguard() external view override returns (uint256) {
-        return _reserveParams.tvlSafeguard;
+        return _reserveConfig.tvlSafeguard;
     }
 
     function setTVLSafeguard(uint256 tvlSafeguard) external onlyOwner {
-        _reserveParams.tvlSafeguard = tvlSafeguard;
+        _reserveConfig.tvlSafeguard = tvlSafeguard;
     }
 }

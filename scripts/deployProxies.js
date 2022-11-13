@@ -16,6 +16,7 @@ async function main() {
   let contractAddresses = require("../../lenft-interface/contractAddresses.json");
   let chainID = hre.network.config.chainId;
   let addresses = contractAddresses[chainID.toString(16)];
+  const ONE_DAY = 86400;
 
   var feeTreasuryAddress;
   if (hre.network.config.chainId == 1) {
@@ -129,7 +130,7 @@ async function main() {
     "100000000000000000000000000", //100M Max Cap
     devAddress,
     "15000000000000000000000000", // 15M Dev Tokens
-    "63113851", // 2-year dev vesting
+    ONE_DAY * 365 * 2, // 2-year dev vesting
   ]);
   console.log("Native Token Proxy Address:", nativeToken.address);
 
@@ -158,8 +159,13 @@ async function main() {
       },
       {
         factor: "100000000000000000000000", // Staking Rewards Factor
-        period: "604800", // 7-day period between vault staking rewards
+        period: ONE_DAY * 7, // 7-day period between vault staking rewards
         maxPeriods: "416", // Limit number of staking periods
+      },
+
+      {
+        coolingPeriod: ONE_DAY * 7, // 7-day cooling period
+        activePeriod: ONE_DAY * 7, // 2-day active period
       },
     ],
     { unsafeAllow: ["external-library-linking"], timeout: 0 }
@@ -176,8 +182,8 @@ async function main() {
     "30000000000000000",
     "250",
     50000000, // Native Token Mint Factor
-    10368000, // Max locktime (120 days in s)
-    1209600, // Min locktime (14 days in s)
+    ONE_DAY * 120, // Max locktime (120 days in s)
+    ONE_DAY * 14, // Min locktime (14 days in s)
     devAddress,
   ]);
   console.log("Genesis NFT Proxy Address:", genesisNFT.address);

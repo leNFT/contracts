@@ -20,9 +20,6 @@ import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 import "hardhat/console.sol";
 
 library ValidationLogic {
-    uint256 internal constant ONE_DAY = 86400;
-    uint256 internal constant ONE_WEEK = ONE_DAY * 7;
-    uint256 internal constant UNVOTE_WINDOW = ONE_DAY * 2;
     using WithdrawalRequestLogic for DataTypes.WithdrawalRequest;
 
     function validateDeposit(DataTypes.DepositParams memory params)
@@ -240,15 +237,18 @@ library ValidationLogic {
     function validateCreateWithdrawalRequest(
         IAddressesProvider addressesProvider
     ) external view {
-        DataTypes.WithdrawalRequest
-            memory withdrawalRequest = INativeTokenVault(
-                addressesProvider.getNativeTokenVault()
-            ).getWithdrawalRequest(msg.sender);
+        INativeTokenVault vault = INativeTokenVault(
+            addressesProvider.getNativeTokenVault()
+        );
+        DataTypes.WithdrawalRequest memory withdrawalRequest = vault
+            .getWithdrawalRequest(msg.sender);
 
         // Check if we are creating outside the request window
         if (withdrawalRequest.created == true) {
             require(
-                block.timestamp > withdrawalRequest.timestamp + ONE_WEEK,
+                block.timestamp >
+                    withdrawalRequest.timestamp +
+                        vault.getWithdrawalCoolingPeriod(),
                 "Withdraw request already created"
             );
         }
@@ -258,10 +258,11 @@ library ValidationLogic {
         IAddressesProvider addressesProvider,
         uint256 shares
     ) external view {
-        DataTypes.WithdrawalRequest
-            memory withdrawalRequest = INativeTokenVault(
-                addressesProvider.getNativeTokenVault()
-            ).getWithdrawalRequest(msg.sender);
+        INativeTokenVault vault = INativeTokenVault(
+            addressesProvider.getNativeTokenVault()
+        );
+        DataTypes.WithdrawalRequest memory withdrawalRequest = vault
+            .getWithdrawalRequest(msg.sender);
 
         // Check if the request was created
         require(
@@ -271,9 +272,13 @@ library ValidationLogic {
 
         // Check if we are within the unlock request window and amount
         require(
-            block.timestamp > withdrawalRequest.timestamp + ONE_WEEK &&
+            block.timestamp >
+                withdrawalRequest.timestamp +
+                    vault.getWithdrawalCoolingPeriod() &&
                 block.timestamp <
-                withdrawalRequest.timestamp + ONE_WEEK + UNVOTE_WINDOW,
+                withdrawalRequest.timestamp +
+                    vault.getWithdrawalCoolingPeriod() +
+                    vault.getWithdrawalActivePeriod(),
             "Withdraw Request is not within valid timeframe"
         );
 

@@ -18,6 +18,7 @@ import {ValidationLogic} from "../libraries/logic/ValidationLogic.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {WithdrawalRequestLogic} from "../libraries/logic/WithdrawalRequestLogic.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
+import {ConfigTypes} from "../libraries/types/ConfigTypes.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
@@ -33,10 +34,12 @@ contract NativeTokenVault is
 {
     IAddressesProvider private _addressProvider;
     uint256 internal _deployTimestamp;
-    DataTypes.LiquidationRewardParams internal _liquidatonRewardsParams;
     uint256 internal _lastRewardsTimestamp;
-    DataTypes.BoostParams internal _boostParams;
-    DataTypes.StakingRewardParams internal _stakingRewardsParams;
+    ConfigTypes.LiquidationRewardConfig internal _liquidatonRewardsConfig;
+    ConfigTypes.BoostConfig internal _boostConfig;
+    ConfigTypes.StakingRewardConfig internal _stakingRewardsConfig;
+    ConfigTypes.NativeTokenWithdrawalConfig
+        internal _nativeTokenWithdrawalConfig;
 
     // User + collection to votes
     mapping(address => mapping(address => uint256)) private _votes;
@@ -65,17 +68,20 @@ contract NativeTokenVault is
         string calldata name,
         string calldata symbol,
         IERC20Upgradeable asset,
-        DataTypes.LiquidationRewardParams calldata liquidatonRewardsParams,
-        DataTypes.BoostParams calldata boostParams,
-        DataTypes.StakingRewardParams calldata stakingRewardsParams
+        ConfigTypes.LiquidationRewardConfig calldata liquidatonRewardsConfig,
+        ConfigTypes.BoostConfig calldata boostConfig,
+        ConfigTypes.StakingRewardConfig calldata stakingRewardsConfig,
+        ConfigTypes.NativeTokenWithdrawalConfig
+            calldata nativeTokenWithdrawalConfig
     ) external initializer {
         __Ownable_init();
         __ERC20_init(name, symbol);
         __ERC4626_init(asset);
         _addressProvider = addressProvider;
-        _liquidatonRewardsParams = liquidatonRewardsParams;
-        _boostParams = boostParams;
-        _stakingRewardsParams = stakingRewardsParams;
+        _liquidatonRewardsConfig = liquidatonRewardsConfig;
+        _boostConfig = boostConfig;
+        _stakingRewardsConfig = stakingRewardsConfig;
+        _nativeTokenWithdrawalConfig = nativeTokenWithdrawalConfig;
         _deployTimestamp = block.timestamp;
     }
 
@@ -116,6 +122,38 @@ contract NativeTokenVault is
         delete _withdrawalRequests[caller];
 
         super._withdraw(caller, receiver, owner, assets, shares);
+    }
+
+    function getWithdrawalCoolingPeriod()
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return _nativeTokenWithdrawalConfig.coolingPeriod;
+    }
+
+    function setWithdrawalCoolingPeriod(uint256 coolingPeriod)
+        external
+        onlyOwner
+    {
+        _nativeTokenWithdrawalConfig.coolingPeriod = coolingPeriod;
+    }
+
+    function getWithdrawalActivePeriod()
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return _nativeTokenWithdrawalConfig.activePeriod;
+    }
+
+    function setWithdrawalActivePeriod(uint256 activePeriod)
+        external
+        onlyOwner
+    {
+        _nativeTokenWithdrawalConfig.activePeriod = activePeriod;
     }
 
     function vote(uint256 votes, address collection)
@@ -169,25 +207,25 @@ contract NativeTokenVault is
     }
 
     function getLiquidationRewardFactor() external view returns (uint256) {
-        return _liquidatonRewardsParams.factor;
+        return _liquidatonRewardsConfig.factor;
     }
 
     function setLiquidationRewardFactor(uint256 liquidationRewardFactor)
         external
         onlyOwner
     {
-        _liquidatonRewardsParams.factor = liquidationRewardFactor;
+        _liquidatonRewardsConfig.factor = liquidationRewardFactor;
     }
 
     function getMaxLiquidationReward() external view returns (uint256) {
-        return _liquidatonRewardsParams.maxReward;
+        return _liquidatonRewardsConfig.maxReward;
     }
 
     function setMaxLiquidationReward(uint256 maxLiquidationReward)
         external
         onlyOwner
     {
-        _liquidatonRewardsParams.maxReward = maxLiquidationReward;
+        _liquidatonRewardsConfig.maxReward = maxLiquidationReward;
     }
 
     function getLiquidationRewardPriceThreshold()
@@ -195,41 +233,41 @@ contract NativeTokenVault is
         view
         returns (uint256)
     {
-        return _liquidatonRewardsParams.priceThreshold;
+        return _liquidatonRewardsConfig.priceThreshold;
     }
 
     function setLiquidationRewardPriceThreshold(
         uint256 liquidationRewardPriceThreshold
     ) external onlyOwner {
-        _liquidatonRewardsParams
+        _liquidatonRewardsConfig
             .priceThreshold = liquidationRewardPriceThreshold;
     }
 
     function getLiquidationRewardPriceLimit() external view returns (uint256) {
-        return _liquidatonRewardsParams.priceLimit;
+        return _liquidatonRewardsConfig.priceLimit;
     }
 
     function setLiquidationRewardPriceLimit(uint256 liquidationRewardPriceLimit)
         external
         onlyOwner
     {
-        _liquidatonRewardsParams.priceLimit = liquidationRewardPriceLimit;
+        _liquidatonRewardsConfig.priceLimit = liquidationRewardPriceLimit;
     }
 
     function getBoostFactor() external view returns (uint256) {
-        return _boostParams.factor;
+        return _boostConfig.factor;
     }
 
     function setBoostFactor(uint256 boostFactor) external onlyOwner {
-        _boostParams.factor = boostFactor;
+        _boostConfig.factor = boostFactor;
     }
 
     function getBoostLimit() external view returns (uint256) {
-        return _boostParams.limit;
+        return _boostConfig.limit;
     }
 
     function setBoostLimit(uint256 boostLimit) external onlyOwner {
-        _boostParams.limit = boostLimit;
+        _boostConfig.limit = boostLimit;
     }
 
     function isReserveIncentivized(address reserve)
@@ -267,13 +305,13 @@ contract NativeTokenVault is
         // Find the limit until which rewards are given
         uint256 rewardsPriceLimit = PercentageMath.percentMul(
             assetPrice,
-            _liquidatonRewardsParams.priceLimit
+            _liquidatonRewardsConfig.priceLimit
         );
 
         // Find the threshold from which rewards are given
         uint256 rewardsPriceThreshold = PercentageMath.percentMul(
             assetPrice,
-            _liquidatonRewardsParams.priceThreshold
+            _liquidatonRewardsConfig.priceThreshold
         );
         console.log("rewardsPriceLimit", rewardsPriceLimit);
         console.log("rewardsPriceThreshold", rewardsPriceThreshold);
@@ -293,11 +331,11 @@ contract NativeTokenVault is
                     tokenOracle.getTokenETHPrice(
                         _addressProvider.getNativeToken()
                     ) *
-                    _liquidatonRewardsParams.factor);
+                    _liquidatonRewardsConfig.factor);
 
             // Set the maximum amount for a liquidation reward
-            if (reward > _liquidatonRewardsParams.maxReward) {
-                reward = _liquidatonRewardsParams.maxReward;
+            if (reward > _liquidatonRewardsConfig.maxReward) {
+                reward = _liquidatonRewardsConfig.maxReward;
             }
 
             // If the vault has not enough balance to cover the reward
@@ -348,11 +386,11 @@ contract NativeTokenVault is
 
         boost =
             (PercentageMath.PERCENTAGE_FACTOR * votesValue) /
-            (userCollectionActiveLoansCount * _boostParams.factor);
+            (userCollectionActiveLoansCount * _boostConfig.factor);
 
         // Max Boost Cap
-        if (boost > _boostParams.limit) {
-            boost = _boostParams.limit;
+        if (boost > _boostConfig.limit) {
+            boost = _boostConfig.limit;
         }
 
         return boost;
@@ -377,44 +415,44 @@ contract NativeTokenVault is
     }
 
     function getStakingRewardsFactor() external view returns (uint256) {
-        return _stakingRewardsParams.factor;
+        return _stakingRewardsConfig.factor;
     }
 
     function setStakingRewardsFactor(uint256 rewardsFactor) external onlyOwner {
-        _stakingRewardsParams.factor = rewardsFactor;
+        _stakingRewardsConfig.factor = rewardsFactor;
     }
 
     function getStakingMaxPeriods() external view returns (uint256) {
-        return _stakingRewardsParams.maxPeriods;
+        return _stakingRewardsConfig.maxPeriods;
     }
 
     function setStakingMaxPeriods(uint256 maxPeriods) external onlyOwner {
-        _stakingRewardsParams.maxPeriods = maxPeriods;
+        _stakingRewardsConfig.maxPeriods = maxPeriods;
     }
 
     function getStakingRewardsPeriod() external view returns (uint256) {
-        return _stakingRewardsParams.period;
+        return _stakingRewardsConfig.period;
     }
 
     function setStakingRewardsPeriod(uint256 rewardsPeriod) external onlyOwner {
-        _stakingRewardsParams.period = rewardsPeriod;
+        _stakingRewardsConfig.period = rewardsPeriod;
     }
 
     function getStakingRewards() public view returns (uint256) {
         uint256 rewards = 0;
 
         if (
-            _stakingRewardsParams.maxPeriods * _stakingRewardsParams.period >
+            _stakingRewardsConfig.maxPeriods * _stakingRewardsConfig.period >
             block.timestamp - _deployTimestamp
         ) {
             rewards =
-                (_stakingRewardsParams.factor *
-                    (_stakingRewardsParams.maxPeriods *
-                        _stakingRewardsParams.period +
+                (_stakingRewardsConfig.factor *
+                    (_stakingRewardsConfig.maxPeriods *
+                        _stakingRewardsConfig.period +
                         _deployTimestamp -
                         block.timestamp)) /
-                (_stakingRewardsParams.maxPeriods *
-                    _stakingRewardsParams.period);
+                (_stakingRewardsConfig.maxPeriods *
+                    _stakingRewardsConfig.period);
         }
 
         return rewards;
@@ -423,14 +461,14 @@ contract NativeTokenVault is
     function distributeStakingRewards() external nonReentrant {
         //The rewards can only be distributed if the rewards period has passed
         require(
-            _lastRewardsTimestamp + _stakingRewardsParams.period <
+            _lastRewardsTimestamp + _stakingRewardsConfig.period <
                 block.timestamp,
             "Not enough time since last rewards distribution."
         );
 
         // Only give rewards until there are remaining periods
         require(
-            _stakingRewardsParams.maxPeriods * _stakingRewardsParams.period >
+            _stakingRewardsConfig.maxPeriods * _stakingRewardsConfig.period >
                 block.timestamp - _deployTimestamp,
             "Rewards period is over"
         );

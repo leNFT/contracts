@@ -75,31 +75,6 @@ library DataTypes {
         uint256 locktime;
     }
 
-    struct BoostParams {
-        uint256 factor;
-        uint256 limit;
-    }
-
-    struct LiquidationRewardParams {
-        uint256 factor;
-        uint256 maxReward;
-        uint256 priceThreshold;
-        uint256 priceLimit;
-    }
-
-    struct StakingRewardParams {
-        uint256 factor;
-        uint256 period;
-        uint256 maxPeriods;
-    }
-
-    struct ReserveParams {
-        uint256 liquidationPenalty;
-        uint256 protocolLiquidationFee;
-        uint256 maximumUtilizationRate;
-        uint256 tvlSafeguard;
-    }
-
     struct BorrowParams {
         address initiator;
         address depositor;

@@ -8,6 +8,7 @@ import {SupplyLogic} from "../libraries/logic/SupplyLogic.sol";
 import {LiquidationLogic} from "../libraries/logic/LiquidationLogic.sol";
 import {BorrowLogic} from "../libraries/logic/BorrowLogic.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
+import {ConfigTypes} from "../libraries/types/ConfigTypes.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
@@ -46,16 +47,16 @@ contract Market is
     mapping(address => uint256) private _reservesCount;
 
     IAddressesProvider private _addressProvider;
-    DataTypes.ReserveParams private _defaultReserveParams;
+    ConfigTypes.ReserveConfig private _defaultReserveConfig;
 
     // Initialize the market
     function initialize(
         IAddressesProvider addressesProvider,
-        DataTypes.ReserveParams calldata defaultReserveParams
+        ConfigTypes.ReserveConfig calldata defaultReserveConfig
     ) external initializer {
         __Ownable_init();
         _addressProvider = addressesProvider;
-        _defaultReserveParams = defaultReserveParams;
+        _defaultReserveConfig = defaultReserveConfig;
     }
 
     /// @notice Deposit any ERC-20 asset in the reserve
@@ -352,7 +353,7 @@ contract Market is
                 "-",
                 Strings.toString(_reservesCount[asset])
             ),
-            _defaultReserveParams
+            _defaultReserveConfig
         );
 
         // Approve reserve use of Market balance
@@ -401,29 +402,29 @@ contract Market is
         external
         onlyOwner
     {
-        _defaultReserveParams.liquidationPenalty = liquidationPenalty;
+        _defaultReserveConfig.liquidationPenalty = liquidationPenalty;
     }
 
     function setDefaultProtocolLiquidationFee(uint256 protocolLiquidationFee)
         external
         onlyOwner
     {
-        _defaultReserveParams.protocolLiquidationFee = protocolLiquidationFee;
+        _defaultReserveConfig.protocolLiquidationFee = protocolLiquidationFee;
     }
 
     function setDefaultMaximumUtilizationRate(uint256 maximumUtilizationRate)
         external
         onlyOwner
     {
-        _defaultReserveParams.maximumUtilizationRate = maximumUtilizationRate;
+        _defaultReserveConfig.maximumUtilizationRate = maximumUtilizationRate;
     }
 
     function setDefaultTVLSafeguard(uint256 tvlSafeguard) external onlyOwner {
-        _defaultReserveParams.tvlSafeguard = tvlSafeguard;
+        _defaultReserveConfig.tvlSafeguard = tvlSafeguard;
     }
 
     function getDefaultLiquidationPenalty() external view returns (uint256) {
-        return _defaultReserveParams.liquidationPenalty;
+        return _defaultReserveConfig.liquidationPenalty;
     }
 
     function getDefaultProtocolLiquidationFee()
@@ -431,7 +432,7 @@ contract Market is
         view
         returns (uint256)
     {
-        return _defaultReserveParams.protocolLiquidationFee;
+        return _defaultReserveConfig.protocolLiquidationFee;
     }
 
     function getDefaultMaximumUtilizationRate()
@@ -439,11 +440,11 @@ contract Market is
         view
         returns (uint256)
     {
-        return _defaultReserveParams.maximumUtilizationRate;
+        return _defaultReserveConfig.maximumUtilizationRate;
     }
 
     function getDefaultTVLSafeguard() external view returns (uint256) {
-        return _defaultReserveParams.tvlSafeguard;
+        return _defaultReserveConfig.tvlSafeguard;
     }
 
     // Add receive ETH function

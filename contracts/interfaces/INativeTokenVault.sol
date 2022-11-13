@@ -48,4 +48,8 @@ interface INativeTokenVault {
         external
         view
         returns (uint256);
+
+    function getWithdrawalCoolingPeriod() external view returns (uint256);
+
+    function getWithdrawalActivePeriod() external view returns (uint256);
 }
