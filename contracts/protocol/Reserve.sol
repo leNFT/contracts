@@ -2,7 +2,7 @@
 pragma solidity 0.8.17;
 
 import {IReserve} from "../interfaces/IReserve.sol";
-import {SupplyLogic} from "../libraries/logic/SupplyLogic.sol";
+import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {IInterestRate} from "../interfaces/IInterestRate.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -12,8 +12,9 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {ConfigTypes} from "../libraries/types/ConfigTypes.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ValidationLogic} from "../libraries/logic/ValidationLogic.sol";
 
-contract Reserve is Context, IReserve, ERC20, Ownable {
+contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
     IAddressesProvider private _addressProvider;
     IERC20 internal _asset;
     uint256 internal _debt;
@@ -38,7 +39,7 @@ contract Reserve is Context, IReserve, ERC20, Ownable {
         string memory name,
         string memory symbol,
         ConfigTypes.ReserveConfig memory reserveConfig
-    ) ERC20(name, symbol) {
+    ) ERC20(name, symbol) ERC4626(asset) onlyMarket {
         _addressProvider = addressProvider;
         _asset = asset;
         _reserveConfig = reserveConfig;
@@ -46,43 +47,38 @@ contract Reserve is Context, IReserve, ERC20, Ownable {
         _transferOwnership(owner);
     }
 
-    function getAsset() external view override returns (address) {
-        return address(_asset);
+    function decimals() public view override(ERC20, ERC4626) returns (uint8) {
+        return super.decimals();
     }
 
-    function mint(address user, uint256 amount) external override onlyMarket {
-        _mint(user, amount);
+    /** @dev See {IERC4626-totalAssets}. */
+    function totalAssets() public view override returns (uint256) {
+        return _debt + _asset.balanceOf(address(this));
     }
 
-    function burn(address user, uint256 amount) external override onlyMarket {
-        _burn(user, amount);
-    }
+    function _deposit(
+        address caller,
+        address receiver,
+        uint256 assets,
+        uint256 shares
+    ) internal override {
+        ValidationLogic.validateDeposit(address(this), assets);
 
-    function depositUnderlying(address depositor, uint256 amount)
-        external
-        override
-        onlyMarket
-    {
-        _asset.safeTransferFrom(depositor, address(this), amount);
+        super._deposit(caller, receiver, assets, shares);
 
         _updateBorrowRate();
     }
 
-    function getMaximumWithdrawalAmount(address to)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        return SupplyLogic.maximumWithdrawalAmount(address(this), to);
-    }
+    function _withdraw(
+        address caller,
+        address receiver,
+        address owner,
+        uint256 assets,
+        uint256 shares
+    ) internal override {
+        ValidationLogic.validateDeposit(address(this), assets);
 
-    function withdrawUnderlying(address to, uint256 amount)
-        external
-        override
-        onlyMarket
-    {
-        _asset.safeTransfer(to, amount);
+        super._withdraw(caller, receiver, owner, assets, shares);
 
         _updateBorrowRate();
     }
@@ -129,10 +125,6 @@ contract Reserve is Context, IReserve, ERC20, Ownable {
         _updateBorrowRate();
     }
 
-    function getUnderlyingBalance() external view override returns (uint256) {
-        return _getUnderlyingBalance();
-    }
-
     function getMaximumUtilizationRate()
         external
         view
@@ -142,10 +134,6 @@ contract Reserve is Context, IReserve, ERC20, Ownable {
         return _reserveConfig.maximumUtilizationRate;
     }
 
-    function _getUnderlyingBalance() internal view returns (uint256) {
-        return _asset.balanceOf(address(this));
-    }
-
     function getBorrowRate() external view override returns (uint256) {
         return _borrowRate;
     }
@@ -153,7 +141,7 @@ contract Reserve is Context, IReserve, ERC20, Ownable {
     function _updateBorrowRate() internal {
         _borrowRate = IInterestRate(
             IAddressesProvider(_addressProvider).getInterestRate()
-        ).calculateBorrowRate(_getUnderlyingBalance(), _debt);
+        ).calculateBorrowRate(_asset.balanceOf(address(this)), _debt);
     }
 
     // Updates the mean of the borrow rate in our debt
@@ -180,10 +168,10 @@ contract Reserve is Context, IReserve, ERC20, Ownable {
 
     function getSupplyRate() external view override returns (uint256) {
         uint256 supplyRate = 0;
-        if ((_debt + _getUnderlyingBalance()) > 0) {
+        if ((_debt + _asset.balanceOf(address(this))) > 0) {
             supplyRate =
                 (_cumulativeDebtBorrowRate * _debt) /
-                (_debt + _getUnderlyingBalance());
+                (_debt + _asset.balanceOf(address(this)));
         }
         return supplyRate;
     }
@@ -196,14 +184,13 @@ contract Reserve is Context, IReserve, ERC20, Ownable {
         return _debt;
     }
 
-    function getTVL() external view returns (uint256) {
-        return _getDebt() + _getUnderlyingBalance();
-    }
-
     function getUtilizationRate() external view override returns (uint256) {
         return
             IInterestRate(_addressProvider.getInterestRate())
-                .calculateUtilizationRate(_getUnderlyingBalance(), _getDebt());
+                .calculateUtilizationRate(
+                    _asset.balanceOf(address(this)),
+                    _getDebt()
+                );
     }
 
     function getLiquidationPenalty() external view override returns (uint256) {

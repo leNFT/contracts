@@ -13,7 +13,7 @@ import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {IReserve} from "../../interfaces/IReserve.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
 import {WithdrawalRequestLogic} from "./WithdrawalRequestLogic.sol";
-import {IERC4626Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4626Upgradeable.sol";
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
@@ -22,59 +22,39 @@ import "hardhat/console.sol";
 library ValidationLogic {
     using WithdrawalRequestLogic for DataTypes.WithdrawalRequest;
 
-    function validateDeposit(DataTypes.DepositParams memory params)
-        external
-        view
-    {
-        // Get balance of the user trying the deposit
-        require(
-            params.amount <=
-                IERC20Upgradeable(IReserve(params.reserve).getAsset())
-                    .balanceOf(params.initiator),
-            "Balance is lower than deposited amount"
-        );
-
+    function validateDeposit(address reserve, uint256 amount) external view {
         // Check if deposit amount is bigger than 0
-        require(params.amount > 0, "Deposit amount must be bigger than 0");
+        require(amount > 0, "Deposit amount must be bigger than 0");
 
         // Check if reserve will exceed maximum permitted amount
         require(
-            params.amount + IReserve(params.reserve).getTVL() <
-                IReserve(params.reserve).getTVLSafeguard(),
+            amount + IReserve(reserve).getTVL() <
+                IReserve(reserve).getTVLSafeguard(),
             "Reserve exceeds safeguarded limit"
         );
     }
 
     function validateWithdrawal(
         IAddressesProvider addressesProvider,
-        DataTypes.WithdrawalParams memory params
+        address reserve,
+        uint256 amount
     ) external view {
         // Check if the utilization rate doesn't go above maximum
-        uint256 maximumUtilizationRate = IReserve(params.reserve)
+        uint256 maximumUtilizationRate = IReserve(reserve)
             .getMaximumUtilizationRate();
-        uint256 debt = IReserve(params.reserve).getDebt();
-        uint256 underlyingBalance = IReserve(params.reserve)
-            .getUnderlyingBalance();
+        uint256 debt = IReserve(reserve).getDebt();
+        uint256 totalAssets = IERC4626(reserve).totalAssets();
         uint256 updatedUtilizationRate = IInterestRate(
             addressesProvider.getInterestRate()
-        ).calculateUtilizationRate(underlyingBalance - params.amount, debt);
+        ).calculateUtilizationRate(totalAssets - debt - amount, debt);
 
         require(
             updatedUtilizationRate <= maximumUtilizationRate,
             "Reserve utilization rate too high"
         );
 
-        // Check if the user has enough reserve balance for withdrawal
-        require(
-            params.amount <=
-                IReserve(params.reserve).getMaximumWithdrawalAmount(
-                    params.initiator
-                ),
-            "Amount too high"
-        );
-
         // Check if withdrawal amount is bigger than 0
-        require(params.amount > 0, "Withdrawal amount must be bigger than 0");
+        require(amount > 0, "Withdrawal amount must be bigger than 0");
     }
 
     // Check if borrowing conditions are valid

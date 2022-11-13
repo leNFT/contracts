@@ -4,18 +4,6 @@ pragma solidity ^0.8.0;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IReserve is IERC20 {
-    function getAsset() external view returns (address);
-
-    function getUnderlyingBalance() external view returns (uint256);
-
-    function mint(address user, uint256 amount) external;
-
-    function burn(address user, uint256 amount) external;
-
-    function depositUnderlying(address depositor, uint256 amount) external;
-
-    function withdrawUnderlying(address to, uint256 amount) external;
-
     function transferUnderlying(
         address to,
         uint256 amount,
@@ -39,13 +27,6 @@ interface IReserve is IERC20 {
     function getSupplyRate() external view returns (uint256);
 
     function getDebt() external view returns (uint256);
-
-    function getTVL() external view returns (uint256);
-
-    function getMaximumWithdrawalAmount(address to)
-        external
-        view
-        returns (uint256);
 
     function getBorrowRate() external view returns (uint256);
 

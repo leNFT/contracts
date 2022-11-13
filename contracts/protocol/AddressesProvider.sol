@@ -5,7 +5,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 
 contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
-    address private _marketAddress;
+    address private _market;
     address private _debtToken;
     address private _treasury;
     address private _feeTreasury;
@@ -22,16 +22,12 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
         __Ownable_init();
     }
 
-    function setMarketAddress(address marketAddress)
-        external
-        override
-        onlyOwner
-    {
-        _marketAddress = marketAddress;
+    function setMarket(address market) external override onlyOwner {
+        _market = market;
     }
 
-    function getMarketAddress() external view override returns (address) {
-        return _marketAddress;
+    function getMarket() external view override returns (address) {
+        return _market;
     }
 
     function setNativeTokenVault(address nativeTokenVault)

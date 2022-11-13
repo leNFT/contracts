@@ -93,19 +93,6 @@ library DataTypes {
         uint256 amount;
     }
 
-    struct DepositParams {
-        address initiator;
-        address reserve;
-        uint256 amount;
-    }
-
-    struct WithdrawalParams {
-        address initiator;
-        address reserve;
-        address depositor;
-        uint256 amount;
-    }
-
     struct LiquidationParams {
         address initiator;
         uint256 loanId;

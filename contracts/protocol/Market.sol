@@ -3,8 +3,6 @@ pragma solidity 0.8.17;
 
 import {IMarket} from "../interfaces/IMarket.sol";
 import {ITokenOracle} from "../interfaces/ITokenOracle.sol";
-import {IWETH} from "../interfaces/IWETH.sol";
-import {SupplyLogic} from "../libraries/logic/SupplyLogic.sol";
 import {LiquidationLogic} from "../libraries/logic/LiquidationLogic.sol";
 import {BorrowLogic} from "../libraries/logic/BorrowLogic.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
@@ -41,8 +39,7 @@ contract Market is
 
     // collection + asset = reserve
     mapping(address => mapping(address => address)) private _reserves;
-    // reserve = valid (bool)
-    mapping(address => bool) private _validReserves;
+
     // Number of reserves per asset
     mapping(address => uint256) private _reservesCount;
 
@@ -59,156 +56,6 @@ contract Market is
         _defaultReserveConfig = defaultReserveConfig;
     }
 
-    /// @notice Deposit any ERC-20 asset in the reserve
-    /// @dev Needs to give approval to the corresponding reserve
-    /// @param reserve The address of the reserve we are depositing into
-    /// @param amount Amount of the asset to be depositedreserve
-    function deposit(address reserve, uint256 amount)
-        external
-        override
-        nonReentrant
-    {
-        require(_validReserves[reserve] == true, "Invalid Reserve");
-        SupplyLogic.deposit(
-            DataTypes.DepositParams({
-                initiator: _msgSender(),
-                reserve: reserve,
-                amount: amount
-            })
-        );
-
-        emit Deposit(_msgSender(), reserve, amount);
-    }
-
-    /// @notice Deposit ETH in the wETH reserve
-    /// @dev Needs to give approval to the corresponding reserve
-    function depositETH(address reserve)
-        external
-        payable
-        override
-        nonReentrant
-    {
-        address wethAddress = _addressProvider.getWETH();
-
-        require(_validReserves[reserve] == true, "Invalid Reserve");
-        require(
-            IReserve(reserve).getAsset() == wethAddress,
-            "Reserve underlying is not WETH"
-        );
-
-        // Deposit WETH into the callers account
-        IWETH WETH = IWETH(wethAddress);
-        WETH.deposit{value: msg.value}();
-        WETH.transfer(_msgSender(), msg.value);
-
-        SupplyLogic.deposit(
-            DataTypes.DepositParams({
-                initiator: _msgSender(),
-                reserve: reserve,
-                amount: msg.value
-            })
-        );
-
-        emit Deposit(_msgSender(), reserve, msg.value);
-    }
-
-    /// @notice Withdraw an asset from the reserve
-    /// @param reserve The reserve to be withdrawn from
-    /// @param amount Amount of the asset to be withdrawn
-    function withdraw(address reserve, uint256 amount)
-        external
-        override
-        nonReentrant
-    {
-        require(_validReserves[reserve] == true, "Invalid Reserve");
-
-        SupplyLogic.withdraw(
-            _addressProvider,
-            DataTypes.WithdrawalParams({
-                initiator: _msgSender(),
-                reserve: reserve,
-                depositor: _msgSender(),
-                amount: amount
-            })
-        );
-
-        emit Withdraw(_msgSender(), reserve, amount);
-    }
-
-    /// @notice Withdraw an asset from the reserve
-    /// @param amount Amount of the asset to be withdrawn
-    function withdrawETH(address reserve, uint256 amount)
-        external
-        override
-        nonReentrant
-    {
-        address wethAddress = _addressProvider.getWETH();
-
-        require(_validReserves[reserve] == true, "Invalid Reserve");
-        require(
-            IReserve(reserve).getAsset() == wethAddress,
-            "Reserve underlying is not WETH"
-        );
-
-        SupplyLogic.withdraw(
-            _addressProvider,
-            DataTypes.WithdrawalParams({
-                initiator: _msgSender(),
-                reserve: reserve,
-                depositor: address(this),
-                amount: amount
-            })
-        );
-        IWETH(wethAddress).withdraw(amount);
-
-        (bool sent, ) = _msgSender().call{value: amount}("");
-        require(sent, "Failed to send Ether");
-
-        emit Withdraw(_msgSender(), reserve, amount);
-    }
-
-    /// @notice Borrow an asset from the reserve while an NFT as collateral
-    /// @dev NFT approval needs to be given to the LoanCenter contract
-    /// @param amount Amount of the asset to be borrowed
-    /// @param nftAddress Address of the NFT collateral
-    /// @param nftTokenId Token id of the NFT collateral
-    /// @param request ID of the collateral price request sent by the trusted server
-    /// @param packet Signed collateral price request sent by the trusted server
-    function borrowETH(
-        uint256 amount,
-        address nftAddress,
-        uint256 nftTokenId,
-        uint256 genesisNFTId,
-        bytes32 request,
-        Trustus.TrustusPacket calldata packet
-    ) external override nonReentrant {
-        address wethAddress = _addressProvider.getWETH();
-        IWETH WETH = IWETH(wethAddress);
-
-        BorrowLogic.borrow(
-            _addressProvider,
-            _reserves,
-            DataTypes.BorrowParams({
-                initiator: _msgSender(),
-                depositor: address(this),
-                asset: wethAddress,
-                amount: amount,
-                nftAddress: nftAddress,
-                nftTokenID: nftTokenId,
-                genesisNFTId: genesisNFTId,
-                request: request,
-                packet: packet
-            })
-        );
-
-        WETH.withdraw(amount);
-
-        (bool sent, ) = _msgSender().call{value: amount}("");
-        require(sent, "Failed to send Ether");
-
-        emit Borrow(_msgSender(), wethAddress, nftAddress, nftTokenId, amount);
-    }
-
     /// @notice Borrow an asset from the reserve while an NFT as collateral
     /// @dev NFT approval needs to be given to the LoanCenter contract
     /// @param asset The address of the asset the be borrowed
@@ -218,6 +65,8 @@ contract Market is
     /// @param request ID of the collateral price request sent by the trusted server
     /// @param packet Signed collateral price request sent by the trusted server
     function borrow(
+        address initiator,
+        address depositor,
         address asset,
         uint256 amount,
         address nftAddress,
@@ -230,8 +79,8 @@ contract Market is
             _addressProvider,
             _reserves,
             DataTypes.BorrowParams({
-                initiator: _msgSender(),
-                depositor: _msgSender(),
+                initiator: initiator,
+                depositor: depositor,
                 asset: asset,
                 amount: amount,
                 nftAddress: nftAddress,
@@ -245,39 +94,17 @@ contract Market is
         emit Borrow(_msgSender(), asset, nftAddress, nftTokenId, amount);
     }
 
-    /// @notice Repay an an active loanreceive and
-    /// @param loanId The ID of the loan to be paid
-    function repayETH(uint256 loanId) external payable override nonReentrant {
-        address wethAddress = _addressProvider.getWETH();
-        IWETH WETH = IWETH(wethAddress);
-
-        // Deposit WETH into the callers account
-        WETH.deposit{value: msg.value}();
-        WETH.transfer(_msgSender(), msg.value);
-
-        BorrowLogic.repay(
-            _addressProvider,
-            DataTypes.RepayParams({
-                initiator: _msgSender(),
-                loanId: loanId,
-                amount: msg.value
-            })
-        );
-
-        emit Repay(_msgSender(), loanId);
-    }
-
     /// @notice Repay an an active loan
     /// @param loanId The ID of the loan to be paid
-    function repay(uint256 loanId, uint256 amount)
-        external
-        override
-        nonReentrant
-    {
+    function repay(
+        address initiator,
+        uint256 loanId,
+        uint256 amount
+    ) external override nonReentrant {
         BorrowLogic.repay(
             _addressProvider,
             DataTypes.RepayParams({
-                initiator: _msgSender(),
+                initiator: initiator,
                 loanId: loanId,
                 amount: amount
             })
@@ -371,7 +198,6 @@ contract Market is
             );
         }
 
-        _validReserves[address(newReserve)] = true;
         _setReserve(collection, asset, address(newReserve));
         _reservesCount[asset] += 1;
 
@@ -446,8 +272,4 @@ contract Market is
     function getDefaultTVLSafeguard() external view returns (uint256) {
         return _defaultReserveConfig.tvlSafeguard;
     }
-
-    // Add receive ETH function
-    // Intended to receive ETH from WETH contract
-    receive() external payable {}
 }
