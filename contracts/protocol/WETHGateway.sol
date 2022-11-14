@@ -4,6 +4,7 @@ pragma solidity 0.8.17;
 import {IWETH} from "../interfaces/IWETH.sol";
 import {IMarket} from "../interfaces/IMarket.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Trustus} from "./Trustus/Trustus.sol";
@@ -27,8 +28,9 @@ contract WETHGateway is ReentrancyGuard, Context {
             "Reserve underlying is not WETH"
         );
 
-        // Deposit WETH into the callers account
+        // Deposit and approve WETH
         weth.deposit{value: msg.value}();
+        weth.approve(reserve, msg.value);
 
         IERC4626(reserve).deposit(msg.value, _msgSender());
     }
@@ -100,8 +102,11 @@ contract WETHGateway is ReentrancyGuard, Context {
         IMarket market = IMarket(_addressProvider.getMarket());
         IWETH weth = IWETH(_addressProvider.getWETH());
 
-        // Deposit WETH and repay loan
+        // Deposit and approve WETH
         weth.deposit{value: msg.value}();
+        weth.approve(address(market), msg.value);
+
+        // Repay loan
         market.repay(loanId, msg.value);
     }
 
