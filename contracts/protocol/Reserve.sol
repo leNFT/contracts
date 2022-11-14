@@ -55,9 +55,13 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
         return super.decimals();
     }
 
+    function getUnderlyingBalance() public view override returns (uint256) {
+        return _asset.balanceOf(address(this));
+    }
+
     /** @dev See {IERC4626-totalAssets}. */
     function totalAssets() public view override returns (uint256) {
-        return _debt + _asset.balanceOf(address(this));
+        return _debt + getUnderlyingBalance();
     }
 
     function _deposit(
@@ -145,7 +149,7 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
     function _updateBorrowRate() internal {
         _borrowRate = IInterestRate(
             IAddressesProvider(_addressProvider).getInterestRate()
-        ).calculateBorrowRate(_asset.balanceOf(address(this)), _debt);
+        ).calculateBorrowRate(getUnderlyingBalance(), _debt);
     }
 
     // Updates the mean of the borrow rate in our debt
@@ -172,29 +176,20 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
 
     function getSupplyRate() external view override returns (uint256) {
         uint256 supplyRate = 0;
-        if ((_debt + _asset.balanceOf(address(this))) > 0) {
-            supplyRate =
-                (_cumulativeDebtBorrowRate * _debt) /
-                (_debt + _asset.balanceOf(address(this)));
+        if (totalAssets() > 0) {
+            supplyRate = (_cumulativeDebtBorrowRate * _debt) / totalAssets();
         }
         return supplyRate;
     }
 
     function getDebt() external view override returns (uint256) {
-        return _getDebt();
-    }
-
-    function _getDebt() internal view returns (uint256) {
         return _debt;
     }
 
     function getUtilizationRate() external view override returns (uint256) {
         return
             IInterestRate(_addressProvider.getInterestRate())
-                .calculateUtilizationRate(
-                    _asset.balanceOf(address(this)),
-                    _getDebt()
-                );
+                .calculateUtilizationRate(getUnderlyingBalance(), _debt);
     }
 
     function getLiquidationPenalty() external view override returns (uint256) {

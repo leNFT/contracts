@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IReserve is IERC20 {
+    function getUnderlyingBalance() external view returns (uint256);
+
     function transferUnderlying(
         address to,
         uint256 amount,

@@ -43,10 +43,10 @@ library ValidationLogic {
         uint256 maximumUtilizationRate = IReserve(reserve)
             .getMaximumUtilizationRate();
         uint256 debt = IReserve(reserve).getDebt();
-        uint256 totalAssets = IERC4626(reserve).totalAssets();
+        uint256 underlyingBalance = IReserve(reserve).getUnderlyingBalance();
         uint256 updatedUtilizationRate = IInterestRate(
             addressesProvider.getInterestRate()
-        ).calculateUtilizationRate(totalAssets - debt - amount, debt);
+        ).calculateUtilizationRate(underlyingBalance - amount, debt);
 
         require(
             updatedUtilizationRate <= maximumUtilizationRate,
@@ -126,10 +126,8 @@ library ValidationLogic {
         // Check if the reserve has enough underlying to borrow
         require(
             params.amount <=
-                IERC4626(reserves[params.nftAddress][params.asset])
-                    .totalAssets() -
-                    IReserve(reserves[params.nftAddress][params.asset])
-                        .getDebt(),
+                IReserve(reserves[params.nftAddress][params.asset])
+                    .getUnderlyingBalance(),
             "Amount exceeds reserve balance"
         );
 
