@@ -24,13 +24,8 @@ interface IMarket {
         address indexed reserve
     );
 
-    function deposit(address reserve, uint256 amount) external;
-
-    function withdraw(address reserve, uint256 amount) external;
-
     function borrow(
-        address initiator,
-        address depositor,
+        address onBehalfOf,
         address asset,
         uint256 amount,
         address nftAddress,
@@ -40,11 +35,7 @@ interface IMarket {
         Trustus.TrustusPacket calldata packet
     ) external;
 
-    function repay(
-        address initiator,
-        uint256 loanId,
-        uint256 amount
-    ) external;
+    function repay(uint256 loanId, uint256 amount) external;
 
     function liquidate(
         uint256 loanId,

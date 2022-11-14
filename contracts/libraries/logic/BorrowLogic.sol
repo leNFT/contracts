@@ -27,7 +27,7 @@ library BorrowLogic {
 
         // Transfer the collateral to the loan center
         IERC721Upgradeable(params.nftAddress).safeTransferFrom(
-            params.initiator,
+            params.caller,
             addressesProvider.getLoanCenter(),
             params.nftTokenID
         );
@@ -45,7 +45,7 @@ library BorrowLogic {
         // Get boost for this user and collection
         uint256 boost = INativeTokenVault(
             addressesProvider.getNativeTokenVault()
-        ).getLTVBoost(params.initiator, params.nftAddress);
+        ).getLTVBoost(params.onBehalfOf, params.nftAddress);
 
         // If a genesis NFT was used with this loan
         if (params.genesisNFTId != 0) {
@@ -61,7 +61,7 @@ library BorrowLogic {
 
         // Create the loan
         uint256 loanId = loanCenter.createLoan(
-            params.initiator,
+            params.onBehalfOf,
             reserves[params.nftAddress][params.asset],
             params.amount,
             maxLTV,
@@ -74,7 +74,7 @@ library BorrowLogic {
 
         // Mint the token representing the debt
         IDebtToken(addressesProvider.getDebtToken()).mint(
-            params.initiator,
+            params.onBehalfOf,
             loanId
         );
 
@@ -83,7 +83,7 @@ library BorrowLogic {
 
         // Send the principal to the borrower
         IReserve(reserves[params.nftAddress][params.asset]).transferUnderlying(
-            params.depositor,
+            params.caller,
             params.amount,
             borrowRate
         );

@@ -42,15 +42,6 @@ async function main() {
   validationLogicLib = await ValidationLogicLib.deploy();
   console.log("Validation Logic Lib Address:", validationLogicLib.address);
 
-  // Deploy supply logic lib
-  SupplyLogicLib = await ethers.getContractFactory("SupplyLogic", {
-    libraries: {
-      ValidationLogic: validationLogicLib.address,
-    },
-  });
-  supplyLogicLib = await SupplyLogicLib.deploy();
-  console.log("Supply Logic Lib Address:", supplyLogicLib.address);
-
   // Deploy borrow logic lib
   BorrowLogicLib = await ethers.getContractFactory("BorrowLogic", {
     libraries: {
@@ -86,7 +77,7 @@ async function main() {
     libraries: {
       BorrowLogic: borrowLogicLib.address,
       LiquidationLogic: liquidationLogicLib.address,
-      SupplyLogic: supplyLogicLib.address,
+      ValidationLogic: validationLogicLib.address,
     },
   });
   const market = await upgrades.deployProxy(
@@ -162,7 +153,6 @@ async function main() {
         period: ONE_DAY * 7, // 7-day period between vault staking rewards
         maxPeriods: "416", // Limit number of staking periods
       },
-
       {
         coolingPeriod: ONE_DAY * 7, // 7-day cooling period
         activePeriod: ONE_DAY * 7, // 2-day active period
@@ -183,7 +173,7 @@ async function main() {
     "250",
     50000000, // Native Token Mint Factor
     ONE_DAY * 120, // Max locktime (120 days in s)
-    ONE_DAY * 14, // Min locktime (14 days in s)
+    ONE_DAY * 0, // Min locktime (14 days in s)
     devAddress,
   ]);
   console.log("Genesis NFT Proxy Address:", genesisNFT.address);
@@ -211,6 +201,12 @@ async function main() {
   await tokenOracle.deployed();
   console.log("Token Oracle Address:", tokenOracle.address);
 
+  // Deploy WETH Gateway contract
+  const WETHGateway = await ethers.getContractFactory("WETHGateway");
+  wethGateway = await WETHGateway.deploy(addressesProvider.address);
+  await wethGateway.deployed();
+  console.log("WETHGateway Address:", wethGateway.address);
+
   /****************************************************************
   SETUP TRANSACTIONS
   Broadcast transactions whose purpose is to setup the protocol for use
@@ -225,10 +221,8 @@ async function main() {
   console.log("Set Native Token / ETH to 0.0001");
 
   //Set every address in the address provider
-  const setMarketAddressTx = await addressesProvider.setMarketAddress(
-    market.address
-  );
-  await setMarketAddressTx.wait();
+  const setMarketTx = await addressesProvider.setMarket(market.address);
+  await setMarketTx.wait();
   const setDebtTokenTx = await addressesProvider.setDebtToken(
     debtToken.address
   );

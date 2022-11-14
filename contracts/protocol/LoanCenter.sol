@@ -8,6 +8,8 @@ import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {ITokenOracle} from "../interfaces/ITokenOracle.sol";
 import {IReserve} from "../interfaces/IReserve.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+
 import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
 import {INativeTokenVault} from "../interfaces/INativeTokenVault.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -44,7 +46,7 @@ contract LoanCenter is
 
     modifier onlyMarket() {
         require(
-            _msgSender() == address(_addressProvider.getMarketAddress()),
+            _msgSender() == _addressProvider.getMarket(),
             "Caller must be Market contract"
         );
         _;
@@ -184,7 +186,7 @@ contract LoanCenter is
         // Get the price of the collateral asset in the reserve asset. Ex: Punk #42 = 5 USDC
         uint256 reserveAssetETHPrice = ITokenOracle(
             _addressProvider.getTokenOracle()
-        ).getTokenETHPrice(IReserve(_loans[loanId].reserve).getAsset());
+        ).getTokenETHPrice(IERC4626(_loans[loanId].reserve).asset());
 
         uint256 collateralETHPrice = (
             (INFTOracle(_addressProvider.getNFTOracle()).getTokenETHPrice(
@@ -380,7 +382,7 @@ contract LoanCenter is
         onlyMarket
     {
         IERC721Upgradeable(collection).setApprovalForAll(
-            _addressProvider.getMarketAddress(),
+            _addressProvider.getMarket(),
             true
         );
     }

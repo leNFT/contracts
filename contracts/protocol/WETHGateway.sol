@@ -5,6 +5,7 @@ import {IWETH} from "../interfaces/IWETH.sol";
 import {IMarket} from "../interfaces/IMarket.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Trustus} from "./Trustus/Trustus.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
@@ -69,9 +70,15 @@ contract WETHGateway is ReentrancyGuard, Context {
         IMarket market = IMarket(_addressProvider.getMarket());
         IWETH weth = IWETH(_addressProvider.getWETH());
 
-        market.borrow(
+        // Transfer the collateral to the WETH Gateway
+        IERC721(nftAddress).safeTransferFrom(
             _msgSender(),
             address(this),
+            nftTokenId
+        );
+
+        market.borrow(
+            _msgSender(),
             address(weth),
             amount,
             nftAddress,
@@ -93,10 +100,9 @@ contract WETHGateway is ReentrancyGuard, Context {
         IMarket market = IMarket(_addressProvider.getMarket());
         IWETH weth = IWETH(_addressProvider.getWETH());
 
-        // Deposit WETH into the callers account
+        // Deposit WETH and repay loan
         weth.deposit{value: msg.value}();
-        weth.transfer(_msgSender(), msg.value);
-        market.repay(_msgSender(), loanId, msg.value);
+        market.repay(loanId, msg.value);
     }
 
     // Add receive ETH function

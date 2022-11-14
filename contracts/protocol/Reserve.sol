@@ -26,7 +26,7 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
 
     modifier onlyMarket() {
         require(
-            _msgSender() == address(_addressProvider.getMarketAddress()),
+            _msgSender() == _addressProvider.getMarket(),
             "Callers must be Market contract"
         );
         _;
@@ -39,7 +39,11 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
         string memory name,
         string memory symbol,
         ConfigTypes.ReserveConfig memory reserveConfig
-    ) ERC20(name, symbol) ERC4626(asset) onlyMarket {
+    ) ERC20(name, symbol) ERC4626(asset) {
+        require(
+            msg.sender == addressProvider.getMarket(),
+            "Reserve must be created through market"
+        );
         _addressProvider = addressProvider;
         _asset = asset;
         _reserveConfig = reserveConfig;

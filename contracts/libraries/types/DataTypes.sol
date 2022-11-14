@@ -76,8 +76,8 @@ library DataTypes {
     }
 
     struct BorrowParams {
-        address initiator;
-        address depositor;
+        address caller;
+        address onBehalfOf;
         address asset;
         uint256 amount;
         address nftAddress;
@@ -88,13 +88,13 @@ library DataTypes {
     }
 
     struct RepayParams {
-        address initiator;
+        address caller;
         uint256 loanId;
         uint256 amount;
     }
 
     struct LiquidationParams {
-        address initiator;
+        address caller;
         uint256 loanId;
         bytes32 request;
         Trustus.TrustusPacket packet;

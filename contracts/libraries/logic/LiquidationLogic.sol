@@ -13,6 +13,7 @@ import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
 import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
@@ -34,7 +35,7 @@ library LiquidationLogic {
         ).getLoan(params.loanId);
 
         // Get the address of this asset's reserve
-        address reserveAsset = IReserve(loanData.reserve).getAsset();
+        address reserveAsset = IERC4626(loanData.reserve).asset();
 
         // Find the liquidation price
         (uint256 liquidationPrice, uint256 liquidationReward) = ILoanCenter(
@@ -46,7 +47,7 @@ library LiquidationLogic {
 
         // Get the payment from the liquidator
         IERC20Upgradeable(reserveAsset).safeTransferFrom(
-            params.initiator,
+            params.caller,
             address(this),
             liquidationPrice
         );
@@ -110,7 +111,7 @@ library LiquidationLogic {
         // Send collateral to liquidator
         IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
             addressesProvider.getLoanCenter(),
-            params.initiator,
+            params.caller,
             loanData.nftTokenId
         );
 
@@ -127,6 +128,6 @@ library LiquidationLogic {
 
         //Send the liquidation reward to the liquidator
         INativeTokenVault(addressesProvider.getNativeTokenVault())
-            .sendLiquidationReward(params.initiator, liquidationReward);
+            .sendLiquidationReward(params.caller, liquidationReward);
     }
 }

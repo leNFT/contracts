@@ -9,6 +9,7 @@ import {INativeToken} from "../interfaces/INativeToken.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import {ERC721BurnableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
@@ -42,7 +43,7 @@ contract GenesisNFT is
     address payable _devAddress;
     uint256 _ltvBoost;
     CountersUpgradeable.Counter private _tokenIdCounter;
-    address _mintDepositReserve;
+    address _mintReserve;
 
     // NFT token id to bool that's true if NFT is being used to charge a loan
     mapping(uint256 => bool) private _active;
@@ -52,7 +53,7 @@ contract GenesisNFT is
 
     modifier onlyMarket() {
         require(
-            _msgSender() == address(_addressProvider.getMarketAddress()),
+            _msgSender() == _addressProvider.getMarket(),
             "Caller must be Market contract"
         );
         _;
@@ -136,15 +137,12 @@ contract GenesisNFT is
                 _nativeTokenFactor) * 10**18;
     }
 
-    function getMintDepositReserve() external view returns (address) {
-        return _mintDepositReserve;
+    function getMintReserve() external view returns (address) {
+        return _mintReserve;
     }
 
-    function setMintDepositReserve(address mintDepositReserve)
-        external
-        onlyOwner
-    {
-        _mintDepositReserve = mintDepositReserve;
+    function setMintReserve(address mintReserve) external onlyOwner {
+        _mintReserve = mintReserve;
     }
 
     function mint(uint256 locktime, string memory uri)
@@ -155,7 +153,7 @@ contract GenesisNFT is
     {
         // Make sure the genesis reserve is set
         require(
-            _mintDepositReserve != address(0),
+            _mintReserve != address(0),
             "Genesis mint deposit reserve is not set."
         );
 
@@ -173,11 +171,11 @@ contract GenesisNFT is
         //Wrap and Deposit 2/3 into the reserve
         uint256 depositAmount = (2 * _price) / 3;
         address weth = _addressProvider.getWETH();
-        address market = _addressProvider.getMarketAddress();
-        IWETH(weth).approve(_mintDepositReserve, depositAmount);
-        IMarket(market).depositETH{value: depositAmount}(_mintDepositReserve);
+        IWETH(weth).deposit{value: depositAmount}();
+        IWETH(weth).approve(_mintReserve, depositAmount);
+        IERC4626(_mintReserve).deposit(depositAmount, (address(this)));
 
-        // Send the rest to the dev fund
+        // Send the rest to the dev address
         (bool sent, ) = _devAddress.call{value: _price - depositAmount}("");
         require(sent, "Failed to send Ether to dev fund");
 
@@ -190,7 +188,7 @@ contract GenesisNFT is
         //Increase supply
         _tokenIdCounter.increment();
 
-        //Mint token
+        //Mint genesis NFT
         _safeMint(_msgSender(), tokenId);
 
         //Set URI
@@ -223,6 +221,11 @@ contract GenesisNFT is
     }
 
     function burn(uint256 tokenId) public override nonReentrant {
+        //Require the caller owns the token
+        require(
+            _msgSender() == ERC721Upgradeable.ownerOf(tokenId),
+            "Must own token"
+        );
         // Token can only be burned after locktime is over
         require(
             block.timestamp >= getUnlockTimestamp(tokenId),
@@ -232,16 +235,16 @@ contract GenesisNFT is
         // Withdraw ETH deposited in the reserve
         uint256 withdrawAmount = (2 * _price) / 3;
         address weth = _addressProvider.getWETH();
-        address market = _addressProvider.getMarketAddress();
-        IWETH(weth).approve(market, withdrawAmount);
-        IMarket(_addressProvider.getMarketAddress()).withdrawETH(
+        IERC4626(_mintReserve).withdraw(
+            withdrawAmount,
             address(this),
-            withdrawAmount
+            address(this)
         );
+        IWETH(weth).withdraw(withdrawAmount);
         (bool sent, ) = _msgSender().call{value: withdrawAmount}("");
         require(sent, "Failed to send Ether");
 
-        // Burn NFT token
+        // Burn genesis NFT
         _burn(tokenId);
         emit Burn(tokenId);
     }

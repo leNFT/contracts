@@ -65,8 +65,7 @@ contract Market is
     /// @param request ID of the collateral price request sent by the trusted server
     /// @param packet Signed collateral price request sent by the trusted server
     function borrow(
-        address initiator,
-        address depositor,
+        address onBehalfOf,
         address asset,
         uint256 amount,
         address nftAddress,
@@ -79,8 +78,8 @@ contract Market is
             _addressProvider,
             _reserves,
             DataTypes.BorrowParams({
-                initiator: initiator,
-                depositor: depositor,
+                caller: _msgSender(),
+                onBehalfOf: onBehalfOf,
                 asset: asset,
                 amount: amount,
                 nftAddress: nftAddress,
@@ -96,15 +95,15 @@ contract Market is
 
     /// @notice Repay an an active loan
     /// @param loanId The ID of the loan to be paid
-    function repay(
-        address initiator,
-        uint256 loanId,
-        uint256 amount
-    ) external override nonReentrant {
+    function repay(uint256 loanId, uint256 amount)
+        external
+        override
+        nonReentrant
+    {
         BorrowLogic.repay(
             _addressProvider,
             DataTypes.RepayParams({
-                initiator: initiator,
+                caller: _msgSender(),
                 loanId: loanId,
                 amount: amount
             })
@@ -126,7 +125,7 @@ contract Market is
         LiquidationLogic.liquidate(
             _addressProvider,
             DataTypes.LiquidationParams({
-                initiator: _msgSender(),
+                caller: _msgSender(),
                 loanId: loanId,
                 request: request,
                 packet: packet

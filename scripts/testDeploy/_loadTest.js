@@ -1,6 +1,7 @@
 const { ethers } = require("hardhat");
 
 let loadEnv = async function () {
+  const ONE_DAY = 86400;
   console.log("Setting up enviroment...");
 
   [owner, addr1, addr2] = await ethers.getSigners();
@@ -9,13 +10,6 @@ let loadEnv = async function () {
   ValidationLogicLib = await ethers.getContractFactory("ValidationLogic");
   validationLogicLib = await ValidationLogicLib.deploy();
   console.log("Validation Logic Lib Address:", validationLogicLib.address);
-  SupplyLogicLib = await ethers.getContractFactory("SupplyLogic", {
-    libraries: {
-      ValidationLogic: validationLogicLib.address,
-    },
-  });
-  supplyLogicLib = await SupplyLogicLib.deploy();
-  console.log("Supply Logic Lib Address:", supplyLogicLib.address);
   BorrowLogicLib = await ethers.getContractFactory("BorrowLogic", {
     libraries: {
       ValidationLogic: validationLogicLib.address,
@@ -53,7 +47,7 @@ let loadEnv = async function () {
     libraries: {
       BorrowLogic: borrowLogicLib.address,
       LiquidationLogic: liquidationLogicLib.address,
-      SupplyLogic: supplyLogicLib.address,
+      ValidationLogic: validationLogicLib.address,
     },
   });
   market = await Market.deploy();
@@ -107,10 +101,8 @@ let loadEnv = async function () {
   // Initialize address provider and add every contract address
   const initAddressesProviderTx = await addressesProvider.initialize();
   await initAddressesProviderTx.wait();
-  const setMarketAddressTx = await addressesProvider.setMarketAddress(
-    market.address
-  );
-  await setMarketAddressTx.wait();
+  const setMarketTx = await addressesProvider.setMarket(market.address);
+  await setMarketTx.wait();
   const setDebtTokenTx = await addressesProvider.setDebtToken(
     debtToken.address
   );
@@ -207,6 +199,10 @@ let loadEnv = async function () {
       factor: "100000000000000000000000", // Staking Rewards Factor
       period: "604800", // 7-day period between vault staking rewards
       maxPeriods: "416", // Limit number of staking periods
+    },
+    {
+      coolingPeriod: ONE_DAY * 7, // 7-day cooling period
+      activePeriod: ONE_DAY * 7, // 2-day active period
     }
   );
   await initNativeTokenVaultTx.wait();

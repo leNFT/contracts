@@ -13,11 +13,9 @@ async function main() {
   const genesisNFT = GenesisNFT.attach(addresses.GenesisNFT);
 
   // Set trusted price source
-  const setMintDepositReserveTx = await genesisNFT.setMintDepositReserve(
-    reserve
-  );
-  await setMintDepositReserveTx.wait();
-  console.log("Set " + reserve + " as genesis mint deposit reserve.");
+  const setMintReserveTx = await genesisNFT.setMintReserve(reserve);
+  await setMintReserveTx.wait();
+  console.log("Set " + reserve + " as genesis mint reserve.");
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -28,7 +28,7 @@ library ValidationLogic {
 
         // Check if reserve will exceed maximum permitted amount
         require(
-            amount + IReserve(reserve).getTVL() <
+            amount + IERC4626(reserve).totalAssets() <
                 IReserve(reserve).getTVLSafeguard(),
             "Reserve exceeds safeguarded limit"
         );
@@ -63,6 +63,9 @@ library ValidationLogic {
         mapping(address => mapping(address => address)) storage reserves,
         DataTypes.BorrowParams memory params
     ) external view {
+        // Check if borrow amount is bigger than 0
+        require(params.amount > 0, "Borrow amount must be bigger than 0");
+
         // Check if the asset is supported
         require(
             reserves[params.nftAddress][params.asset] != address(0),
@@ -78,15 +81,15 @@ library ValidationLogic {
         // Get boost for this user and collection
         uint256 boost = INativeTokenVault(
             addressesProvider.getNativeTokenVault()
-        ).getLTVBoost(params.initiator, params.nftAddress);
+        ).getLTVBoost(params.onBehalfOf, params.nftAddress);
 
         // Get boost from genesis NFTs
         IGenesisNFT genesisNFT = IGenesisNFT(addressesProvider.getGenesisNFT());
         if (params.genesisNFTId != 0) {
             // Require owner is the borrower
             require(
-                genesisNFT.ownerOf(params.genesisNFTId) == params.initiator,
-                "Caller is not owner of Genesis NFT"
+                genesisNFT.ownerOf(params.genesisNFTId) == params.onBehalfOf,
+                "onBehalfOf is not owner of Genesis NFT"
             );
             //Require that the NFT is not being used
             require(
@@ -123,20 +126,15 @@ library ValidationLogic {
         // Check if the reserve has enough underlying to borrow
         require(
             params.amount <=
-                IReserve(reserves[params.nftAddress][params.asset])
-                    .getUnderlyingBalance(),
+                IERC4626(reserves[params.nftAddress][params.asset])
+                    .totalAssets() -
+                    IReserve(reserves[params.nftAddress][params.asset])
+                        .getDebt(),
             "Amount exceeds reserve balance"
         );
 
         // Check if borrow amount is bigger than 0
         require(params.amount > 0, "Borrow amount must be bigger than 0");
-
-        // Check if the borrower owns the asset
-        require(
-            IERC721Upgradeable(params.nftAddress).ownerOf(params.nftTokenID) ==
-                params.initiator,
-            "Asset not owned by user"
-        );
     }
 
     function validateRepay(
@@ -146,27 +144,20 @@ library ValidationLogic {
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
         //Require that loan exists
         DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
+
+        // Check if borrow amount is bigger than 0
+        require(params.amount > 0, "Repay amount must be bigger than 0");
+
         require(
             loanData.state != DataTypes.LoanState.None,
             "Loan does not exist"
         );
 
-        // Check if caller trying to pay loan is borrower
-        require(
-            params.initiator == loanData.borrower,
-            "Caller is not loan borrower"
-        );
-
-        // Check the user has enough balance to repay
-        require(
-            IERC20Upgradeable(IReserve(loanData.reserve).getAsset()).balanceOf(
-                params.initiator
-            ) >= params.amount,
-            "Balance is lower than repay amount"
-        );
-
         // Check if user is over paying
-        require(params.amount <= loanCenter.getLoanDebt(params.loanId));
+        require(
+            params.amount <= loanCenter.getLoanDebt(params.loanId),
+            "Overpaying in repay. Amount is bigger than debt."
+        );
     }
 
     function validateLiquidation(
@@ -182,7 +173,7 @@ library ValidationLogic {
         );
 
         // Check if collateral / debt relation allows for liquidation
-        address reserveAsset = IReserve(loanData.reserve).getAsset();
+        address reserveAsset = IERC4626(loanData.reserve).asset();
         ITokenOracle tokenOracle = ITokenOracle(
             addressesProvider.getTokenOracle()
         );
@@ -198,19 +189,6 @@ library ValidationLogic {
                 baseTokenETHPrice <
                 loanCenter.getLoanDebt(params.loanId),
             "Collateral / Debt loan relation does not allow for liquidation."
-        );
-
-        (uint256 liquidationPrice, ) = loanCenter.getLoanLiquidationPrice(
-            params.loanId,
-            params.request,
-            params.packet
-        );
-
-        // Check if caller has enough balance
-        uint256 balance = IERC20Upgradeable(reserveAsset).balanceOf(msg.sender);
-        require(
-            balance >= liquidationPrice,
-            "Balance lower than liquidation price"
         );
     }
 
