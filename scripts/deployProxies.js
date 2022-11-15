@@ -168,12 +168,12 @@ async function main() {
     addressesProvider.address,
     "leNFT Genesis",
     "LGEN",
-    "10000",
+    "9999",
     "30000000000000000",
     "250",
     50000000, // Native Token Mint Factor
     ONE_DAY * 120, // Max locktime (120 days in s)
-    ONE_DAY * 0, // Min locktime (14 days in s)
+    ONE_DAY * 14, // Min locktime (14 days in s)
     devAddress,
   ]);
   console.log("Genesis NFT Proxy Address:", genesisNFT.address);

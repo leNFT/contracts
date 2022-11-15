@@ -84,7 +84,7 @@ contract GenesisNFT is
         _minLocktime = minLocktime;
         _devAddress = devAddress;
 
-        // Start from token_id 1 so to reserve 0
+        // Start from token_id 1 to reserve 0
         _tokenIdCounter.increment();
     }
 
@@ -162,7 +162,7 @@ contract GenesisNFT is
 
         // Make sure there's still enough tkens to mint
         uint256 tokenId = _tokenIdCounter.current();
-        require(tokenId < getCap(), "All NFTs have been minted");
+        require(tokenId <= getCap(), "All NFTs have been minted");
 
         // Make sure locktime is within limits
         require(locktime >= _minLocktime, "Locktime is lower than threshold");

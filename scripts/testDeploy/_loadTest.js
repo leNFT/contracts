@@ -216,7 +216,7 @@ let loadEnv = async function () {
     addressesProvider.address,
     "leNFT Genesis",
     "LGEN",
-    "10000",
+    "9999",
     "300000000000000000",
     "250",
     3000000, // Native Token Mint Factor
