@@ -83,6 +83,9 @@ contract GenesisNFT is
         _maxLocktime = maxLocktime;
         _minLocktime = minLocktime;
         _devAddress = devAddress;
+
+        // Start from token_id 1 so to reserve 0
+        _tokenIdCounter.increment();
     }
 
     function _baseURI() internal pure override returns (string memory) {
@@ -185,9 +188,6 @@ contract GenesisNFT is
             getNativeTokensReward(locktime)
         );
 
-        //Increase supply
-        _tokenIdCounter.increment();
-
         //Mint genesis NFT
         _safeMint(_msgSender(), tokenId);
 
@@ -199,6 +199,9 @@ contract GenesisNFT is
             block.timestamp,
             locktime
         );
+
+        //Increase supply
+        _tokenIdCounter.increment();
 
         emit Mint(_msgSender(), tokenId);
 

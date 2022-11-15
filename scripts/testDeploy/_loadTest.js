@@ -69,6 +69,10 @@ let loadEnv = async function () {
   tokenOracle = await TokenOracle.deploy();
   await tokenOracle.deployed();
   console.log("Token Oracle Address:", tokenOracle.address);
+  const WETHGateway = await ethers.getContractFactory("WETHGateway");
+  wethGateway = await WETHGateway.deploy(addressesProvider.address);
+  await wethGateway.deployed();
+  console.log("WETHGateway Address:", wethGateway.address);
 
   // Deploy Native Token Vault
   const NativeTokenVault = await ethers.getContractFactory("NativeTokenVault", {
@@ -212,7 +216,7 @@ let loadEnv = async function () {
     addressesProvider.address,
     "leNFT Genesis",
     "LGEN",
-    "9999",
+    "10000",
     "300000000000000000",
     "250",
     3000000, // Native Token Mint Factor

@@ -168,7 +168,7 @@ async function main() {
     addressesProvider.address,
     "leNFT Genesis",
     "LGEN",
-    "9999",
+    "10000",
     "30000000000000000",
     "250",
     50000000, // Native Token Mint Factor

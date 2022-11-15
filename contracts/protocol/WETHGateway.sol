@@ -4,6 +4,8 @@ pragma solidity 0.8.17;
 import {IWETH} from "../interfaces/IWETH.sol";
 import {IMarket} from "../interfaces/IMarket.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -11,7 +13,7 @@ import {Trustus} from "./Trustus/Trustus.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 
-contract WETHGateway is ReentrancyGuard, Context {
+contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     IAddressesProvider private _addressProvider;
 
     constructor(IAddressesProvider addressesProvider) {
@@ -79,6 +81,9 @@ contract WETHGateway is ReentrancyGuard, Context {
             nftTokenId
         );
 
+        // Approve the collateral to be moved by the market
+        IERC721(nftAddress).approve(address(market), nftTokenId);
+
         market.borrow(
             _msgSender(),
             address(weth),
@@ -108,6 +113,19 @@ contract WETHGateway is ReentrancyGuard, Context {
 
         // Repay loan
         market.repay(loanId, msg.value);
+    }
+
+    // So we can receive the collateral from the user when borrowing
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) public pure override returns (bytes4) {
+        return
+            bytes4(
+                keccak256("onERC721Received(address,address,uint256,bytes)")
+            );
     }
 
     // Add receive ETH function
