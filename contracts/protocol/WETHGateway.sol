@@ -5,7 +5,7 @@ import {IWETH} from "../interfaces/IWETH.sol";
 import {IMarket} from "../interfaces/IMarket.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-
+import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -104,12 +104,19 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     /// @notice Repay an an active loanreceive and
     /// @param loanId The ID of the loan to be paid
     function repayETH(uint256 loanId) external payable nonReentrant {
+        address reserve = ILoanCenter(_addressProvider.getLoanCenter())
+            .getLoanReserve(loanId);
         IMarket market = IMarket(_addressProvider.getMarket());
         IWETH weth = IWETH(_addressProvider.getWETH());
 
+        require(
+            IERC4626(reserve).asset() == address(weth),
+            "Loan reserve underlying is not WETH"
+        );
+
         // Deposit and approve WETH
         weth.deposit{value: msg.value}();
-        weth.approve(address(market), msg.value);
+        weth.approve(reserve, msg.value);
 
         // Repay loan
         market.repay(loanId, msg.value);

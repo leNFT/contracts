@@ -107,7 +107,7 @@ library BorrowLogic {
         if (params.amount == loanCenter.getLoanDebt(params.loanId)) {
             // Return the principal + interest
             IReserve(loanData.reserve).receiveUnderlying(
-                loanData.borrower,
+                params.caller,
                 loanData.amount,
                 loanData.borrowRate,
                 interest
@@ -139,7 +139,7 @@ library BorrowLogic {
             // User is sending less than the interest
             if (params.amount <= interest) {
                 IReserve(loanData.reserve).receiveUnderlying(
-                    loanData.borrower,
+                    params.caller,
                     0,
                     loanData.borrowRate,
                     params.amount
@@ -158,7 +158,7 @@ library BorrowLogic {
             // User is sending the full interest and closing part of the loan
             else {
                 IReserve(loanData.reserve).receiveUnderlying(
-                    loanData.borrower,
+                    params.caller,
                     params.amount - interest,
                     loanData.borrowRate,
                     interest

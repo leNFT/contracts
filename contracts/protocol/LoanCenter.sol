@@ -9,7 +9,6 @@ import {ITokenOracle} from "../interfaces/ITokenOracle.sol";
 import {IReserve} from "../interfaces/IReserve.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-
 import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
 import {INativeTokenVault} from "../interfaces/INativeTokenVault.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -301,6 +300,20 @@ contract LoanCenter is
         );
 
         return _loans[loanId].nftAsset;
+    }
+
+    function getLoanReserve(uint256 loanId)
+        external
+        view
+        override
+        returns (address)
+    {
+        require(
+            _loans[loanId].state != DataTypes.LoanState.None,
+            "Loan does not exist."
+        );
+
+        return _loans[loanId].reserve;
     }
 
     function updateLoanDebtTimestamp(uint256 loanId, uint256 newDebtTimestamp)

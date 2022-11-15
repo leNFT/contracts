@@ -40,6 +40,8 @@ interface ILoanCenter {
         view
         returns (uint256);
 
+    function getLoanReserve(uint256 loanId) external view returns (address);
+
     function getLoanMaxETHCollateral(
         uint256 loanId,
         bytes32 request,
