@@ -148,6 +148,10 @@ contract GenesisNFT is
         _mintReserve = mintReserve;
     }
 
+    function mintCount() external view returns (uint256) {
+        return _tokenIdCounter.current() - 1;
+    }
+
     function mint(uint256 locktime, string memory uri)
         external
         payable
