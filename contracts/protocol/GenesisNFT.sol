@@ -98,7 +98,7 @@ contract GenesisNFT is
         override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
         returns (string memory)
     {
-        return super.tokenURI(tokenId);
+        return ERC721URIStorageUpgradeable.tokenURI(tokenId);
     }
 
     function getCap() public view returns (uint256) {
@@ -224,7 +224,7 @@ contract GenesisNFT is
         internal
         override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
     {
-        super._burn(tokenId);
+        ERC721URIStorageUpgradeable._burn(tokenId);
     }
 
     function burn(uint256 tokenId) public override nonReentrant {
@@ -266,7 +266,12 @@ contract GenesisNFT is
             _active[tokenId] == false,
             "Cannot transfer token - currently locked in an active loan"
         );
-        super._beforeTokenTransfer(from, to, tokenId, batchSize);
+        ERC721EnumerableUpgradeable._beforeTokenTransfer(
+            from,
+            to,
+            tokenId,
+            batchSize
+        );
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -279,7 +284,7 @@ contract GenesisNFT is
         )
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        return ERC721EnumerableUpgradeable.supportsInterface(interfaceId);
     }
 
     // Function to receive Ether. msg.data must be empty

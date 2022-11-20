@@ -37,13 +37,13 @@ contract DebtToken is
     }
 
     function mint(address to, uint256 loanId) external override onlyMarket {
-        super._safeMint(to, loanId);
+        ERC721Upgradeable._safeMint(to, loanId);
 
         emit Mint(to, loanId);
     }
 
     function burn(uint256 loanId) external override onlyMarket {
-        super._burn(loanId);
+        ERC721Upgradeable._burn(loanId);
 
         emit Burn(loanId);
     }
@@ -54,7 +54,12 @@ contract DebtToken is
         uint256 tokenId,
         uint256 batchSize
     ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
-        super._beforeTokenTransfer(from, to, tokenId, batchSize);
+        ERC721EnumerableUpgradeable._beforeTokenTransfer(
+            from,
+            to,
+            tokenId,
+            batchSize
+        );
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -63,6 +68,6 @@ contract DebtToken is
         override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        return ERC721EnumerableUpgradeable.supportsInterface(interfaceId);
     }
 }

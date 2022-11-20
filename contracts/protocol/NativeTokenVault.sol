@@ -91,7 +91,7 @@ contract NativeTokenVault is
         override(ERC20Upgradeable, ERC4626Upgradeable)
         returns (uint8)
     {
-        return super.decimals();
+        return ERC4626Upgradeable.decimals();
     }
 
     function createWithdrawalRequest() external {
@@ -121,7 +121,7 @@ contract NativeTokenVault is
         // Delete withdrawal request
         delete _withdrawalRequests[caller];
 
-        super._withdraw(caller, receiver, owner, assets, shares);
+        ERC4626Upgradeable._withdraw(caller, receiver, owner, assets, shares);
     }
 
     function getWithdrawalCoolingPeriod()

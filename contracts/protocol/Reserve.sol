@@ -52,7 +52,7 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
     }
 
     function decimals() public view override(ERC20, ERC4626) returns (uint8) {
-        return super.decimals();
+        return ERC4626.decimals();
     }
 
     function getUnderlyingBalance() public view override returns (uint256) {
@@ -72,7 +72,7 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
     ) internal override {
         ValidationLogic.validateDeposit(address(this), assets);
 
-        super._deposit(caller, receiver, assets, shares);
+        ERC4626._deposit(caller, receiver, assets, shares);
 
         _updateBorrowRate();
     }
@@ -86,7 +86,7 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
     ) internal override {
         ValidationLogic.validateDeposit(address(this), assets);
 
-        super._withdraw(caller, receiver, owner, assets, shares);
+        ERC4626._withdraw(caller, receiver, owner, assets, shares);
 
         _updateBorrowRate();
     }
