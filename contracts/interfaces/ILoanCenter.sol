@@ -7,7 +7,7 @@ import {Trustus} from "../protocol/Trustus/Trustus.sol";
 interface ILoanCenter {
     function createLoan(
         address borrower,
-        address reserve,
+        address lendingPool,
         uint256 amount,
         uint256 maxLTV,
         uint256 boost,
@@ -17,10 +17,9 @@ interface ILoanCenter {
         uint256 borrowRate
     ) external returns (uint256);
 
-    function getLoan(uint256 loanId)
-        external
-        view
-        returns (DataTypes.LoanData memory);
+    function getLoan(
+        uint256 loanId
+    ) external view returns (DataTypes.LoanData memory);
 
     function repayLoan(uint256 loanId) external;
 
@@ -30,17 +29,17 @@ interface ILoanCenter {
 
     function getLoansCount() external view returns (uint256);
 
-    function getActiveLoansCount(address user, address collection)
-        external
-        view
-        returns (uint256);
+    function getActiveLoansCount(
+        address user,
+        address collection
+    ) external view returns (uint256);
 
-    function getNFTLoanId(address nftAddress, uint256 nftTokenID)
-        external
-        view
-        returns (uint256);
+    function getNFTLoanId(
+        address nftAddress,
+        uint256 nftTokenID
+    ) external view returns (uint256);
 
-    function getLoanReserve(uint256 loanId) external view returns (address);
+    function getLoanLendingPool(uint256 loanId) external view returns (address);
 
     function getLoanMaxETHCollateral(
         uint256 loanId,
@@ -60,22 +59,22 @@ interface ILoanCenter {
 
     function getLoanTokenId(uint256 loanId) external view returns (uint256);
 
-    function getLoanTokenAddress(uint256 loanId)
-        external
-        view
-        returns (address);
+    function getLoanTokenAddress(
+        uint256 loanId
+    ) external view returns (address);
 
     function getLoanBoost(uint256 loanId) external view returns (uint256);
 
-    function updateLoanDebtTimestamp(uint256 loanId, uint256 newDebtTimestamp)
-        external;
+    function updateLoanDebtTimestamp(
+        uint256 loanId,
+        uint256 newDebtTimestamp
+    ) external;
 
     function updateLoanAmount(uint256 loanId, uint256 newAmount) external;
 
-    function getCollectionMaxCollaterization(address collection)
-        external
-        view
-        returns (uint256);
+    function getCollectionMaxCollaterization(
+        address collection
+    ) external view returns (uint256);
 
     function changeCollectionMaxCollaterization(
         address collection,

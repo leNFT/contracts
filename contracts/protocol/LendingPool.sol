@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.17;
 
-import {IReserve} from "../interfaces/IReserve.sol";
+import {ILendingPool} from "../interfaces/ILendingPool.sol";
 import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {IInterestRate} from "../interfaces/IInterestRate.sol";
@@ -14,12 +14,13 @@ import {ConfigTypes} from "../libraries/types/ConfigTypes.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ValidationLogic} from "../libraries/logic/ValidationLogic.sol";
 
-contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
+contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     IAddressesProvider private _addressProvider;
     IERC20 internal _asset;
     uint256 internal _debt;
     uint256 internal _borrowRate;
     uint256 internal _cumulativeDebtBorrowRate;
+    bool internal _paused;
     ConfigTypes.ReserveConfig internal _reserveConfig;
 
     using SafeERC20 for IERC20;
@@ -70,6 +71,8 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
         uint256 assets,
         uint256 shares
     ) internal override {
+        require(!_paused, "Reserve is paused");
+
         ValidationLogic.validateDeposit(address(this), assets);
 
         ERC4626._deposit(caller, receiver, assets, shares);
@@ -84,6 +87,8 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
         uint256 assets,
         uint256 shares
     ) internal override {
+        require(!_paused, "Reserve is paused");
+
         ValidationLogic.validateDeposit(address(this), assets);
 
         ERC4626._withdraw(caller, receiver, owner, assets, shares);
@@ -96,6 +101,8 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
         uint256 amount,
         uint256 borrowRate
     ) external override onlyMarket {
+        require(!_paused, "Reserve is paused");
+
         // Send the underlying to user
         _asset.safeTransfer(to, amount);
 
@@ -115,6 +122,8 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
         uint256 borrowRate,
         uint256 interest
     ) external override onlyMarket {
+        require(!_paused, "Reserve is paused");
+
         _asset.safeTransferFrom(from, address(this), amount + interest);
         _updateCumulativeDebtBorrowRate(false, amount, borrowRate);
         _debt -= amount;
@@ -127,6 +136,8 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
         uint256 borrowRate,
         uint256 defaultedDebt
     ) external override onlyMarket {
+        require(!_paused, "Reserve is paused");
+
         _asset.safeTransferFrom(from, address(this), amount);
         _updateCumulativeDebtBorrowRate(false, defaultedDebt, borrowRate);
         _debt -= defaultedDebt;
@@ -196,10 +207,9 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
         return _reserveConfig.liquidationPenalty;
     }
 
-    function setLiquidationPenalty(uint256 liquidationPenalty)
-        external
-        onlyOwner
-    {
+    function setLiquidationPenalty(
+        uint256 liquidationPenalty
+    ) external onlyOwner {
         _reserveConfig.liquidationPenalty = liquidationPenalty;
     }
 
@@ -207,10 +217,9 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
         return _reserveConfig.protocolLiquidationFee;
     }
 
-    function setLiquidationFee(uint256 protocolLiquidationFee)
-        external
-        onlyOwner
-    {
+    function setLiquidationFee(
+        uint256 protocolLiquidationFee
+    ) external onlyOwner {
         _reserveConfig.protocolLiquidationFee = protocolLiquidationFee;
     }
 
@@ -220,5 +229,9 @@ contract Reserve is Context, IReserve, ERC20, ERC4626, Ownable {
 
     function setTVLSafeguard(uint256 tvlSafeguard) external onlyOwner {
         _reserveConfig.tvlSafeguard = tvlSafeguard;
+    }
+
+    function setPause(bool paused) external onlyOwner {
+        _paused = paused;
     }
 }

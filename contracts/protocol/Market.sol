@@ -11,7 +11,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
-import {IReserve} from "../interfaces/IReserve.sol";
+import {ILendingPool} from "../interfaces/ILendingPool.sol";
 import {Reserve} from "./Reserve.sol";
 import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -95,11 +95,10 @@ contract Market is
 
     /// @notice Repay an an active loan
     /// @param loanId The ID of the loan to be paid
-    function repay(uint256 loanId, uint256 amount)
-        external
-        override
-        nonReentrant
-    {
+    function repay(
+        uint256 loanId,
+        uint256 amount
+    ) external override nonReentrant {
         BorrowLogic.repay(
             _addressProvider,
             DataTypes.RepayParams({
@@ -163,7 +162,7 @@ contract Market is
             _reserves[collection][asset] == address(0),
             "Reserve already exists"
         );
-        IReserve newReserve = new Reserve(
+        ILendingPool newReserve = new Reserve(
             _addressProvider,
             owner(),
             IERC20(asset),
@@ -183,7 +182,7 @@ contract Market is
         );
 
         // Approve reserve use of Market balance
-        IERC20(asset).approve(address(newReserve), 2**256 - 1);
+        IERC20(asset).approve(address(newReserve), 2 ** 256 - 1);
 
         // Approve Market use of loan center NFT's (for returning the collateral)
         if (
@@ -206,12 +205,10 @@ contract Market is
     /// @notice Get the reserve address responsible to a certain asset
     /// @param asset The asset the reserve is responsible for
     /// @return The address of the reserve responsible for the asset
-    function getReserve(address collection, address asset)
-        external
-        view
-        override
-        returns (address)
-    {
+    function getReserve(
+        address collection,
+        address asset
+    ) external view override returns (address) {
         return _reserves[collection][asset];
     }
 
@@ -223,24 +220,21 @@ contract Market is
         _setReserve(collection, asset, reserve);
     }
 
-    function setDefaultLiquidationPenalty(uint256 liquidationPenalty)
-        external
-        onlyOwner
-    {
+    function setDefaultLiquidationPenalty(
+        uint256 liquidationPenalty
+    ) external onlyOwner {
         _defaultReserveConfig.liquidationPenalty = liquidationPenalty;
     }
 
-    function setDefaultProtocolLiquidationFee(uint256 protocolLiquidationFee)
-        external
-        onlyOwner
-    {
+    function setDefaultProtocolLiquidationFee(
+        uint256 protocolLiquidationFee
+    ) external onlyOwner {
         _defaultReserveConfig.protocolLiquidationFee = protocolLiquidationFee;
     }
 
-    function setDefaultMaximumUtilizationRate(uint256 maximumUtilizationRate)
-        external
-        onlyOwner
-    {
+    function setDefaultMaximumUtilizationRate(
+        uint256 maximumUtilizationRate
+    ) external onlyOwner {
         _defaultReserveConfig.maximumUtilizationRate = maximumUtilizationRate;
     }
 

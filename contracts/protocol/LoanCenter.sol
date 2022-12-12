@@ -6,7 +6,7 @@ import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
 import {INFTOracle} from "../interfaces/INFTOracle.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {ITokenOracle} from "../interfaces/ITokenOracle.sol";
-import {IReserve} from "../interfaces/IReserve.sol";
+import {ILendingPool} from "../interfaces/ILendingPool.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
@@ -124,21 +124,16 @@ contract LoanCenter is
         return _loansCount;
     }
 
-    function getActiveLoansCount(address user, address collection)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function getActiveLoansCount(
+        address user,
+        address collection
+    ) external view override returns (uint256) {
         return _activeLoansCount[user][collection];
     }
 
-    function getLoan(uint256 loanId)
-        external
-        view
-        override
-        returns (DataTypes.LoanData memory)
-    {
+    function getLoan(
+        uint256 loanId
+    ) external view override returns (DataTypes.LoanData memory) {
         require(
             _loans[loanId].state != DataTypes.LoanState.None,
             "Loan does not exist."
@@ -202,8 +197,8 @@ contract LoanCenter is
         uint256 liquidationThreshold = PercentageMath.percentMul(
             collateralETHPrice,
             PercentageMath.PERCENTAGE_FACTOR -
-                IReserve(_loans[loanId].reserve).getLiquidationPenalty() +
-                IReserve(_loans[loanId].reserve).getLiquidationFee()
+                ILendingPool(_loans[loanId].reserve).getLiquidationPenalty() +
+                ILendingPool(_loans[loanId].reserve).getLiquidationFee()
         );
         uint256 loanDebt = _getLoanDebt(loanId);
         console.log("liquidationThreshold", liquidationThreshold);
@@ -232,12 +227,10 @@ contract LoanCenter is
         return (liquidationPrice, liquidationReward);
     }
 
-    function getNFTLoanId(address nftAddress, uint256 nftTokenId)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function getNFTLoanId(
+        address nftAddress,
+        uint256 nftTokenId
+    ) external view override returns (uint256) {
         return _nftToLoanId[nftAddress][nftTokenId];
     }
 
@@ -246,12 +239,9 @@ contract LoanCenter is
             _loans[loanId].getInterest(block.timestamp) + _loans[loanId].amount;
     }
 
-    function getLoanDebt(uint256 loanId)
-        public
-        view
-        override
-        returns (uint256)
-    {
+    function getLoanDebt(
+        uint256 loanId
+    ) public view override returns (uint256) {
         require(
             _loans[loanId].state != DataTypes.LoanState.None,
             "Loan does not exist."
@@ -260,12 +250,9 @@ contract LoanCenter is
         return _getLoanDebt(loanId);
     }
 
-    function getLoanInterest(uint256 loanId)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function getLoanInterest(
+        uint256 loanId
+    ) external view override returns (uint256) {
         require(
             _loans[loanId].state != DataTypes.LoanState.None,
             "Loan does not exist."
@@ -274,12 +261,9 @@ contract LoanCenter is
         return _loans[loanId].getInterest(block.timestamp);
     }
 
-    function getLoanTokenId(uint256 loanId)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function getLoanTokenId(
+        uint256 loanId
+    ) external view override returns (uint256) {
         require(
             _loans[loanId].state != DataTypes.LoanState.None,
             "Loan does not exist."
@@ -288,12 +272,9 @@ contract LoanCenter is
         return _loans[loanId].nftTokenId;
     }
 
-    function getLoanTokenAddress(uint256 loanId)
-        external
-        view
-        override
-        returns (address)
-    {
+    function getLoanTokenAddress(
+        uint256 loanId
+    ) external view override returns (address) {
         require(
             _loans[loanId].state != DataTypes.LoanState.None,
             "Loan does not exist."
@@ -302,12 +283,9 @@ contract LoanCenter is
         return _loans[loanId].nftAsset;
     }
 
-    function getLoanReserve(uint256 loanId)
-        external
-        view
-        override
-        returns (address)
-    {
+    function getLoanReserve(
+        uint256 loanId
+    ) external view override returns (address) {
         require(
             _loans[loanId].state != DataTypes.LoanState.None,
             "Loan does not exist."
@@ -316,11 +294,10 @@ contract LoanCenter is
         return _loans[loanId].reserve;
     }
 
-    function updateLoanDebtTimestamp(uint256 loanId, uint256 newDebtTimestamp)
-        external
-        override
-        onlyMarket
-    {
+    function updateLoanDebtTimestamp(
+        uint256 loanId,
+        uint256 newDebtTimestamp
+    ) external override onlyMarket {
         require(
             _loans[loanId].state != DataTypes.LoanState.None,
             "Loan does not exist."
@@ -329,11 +306,10 @@ contract LoanCenter is
         _loans[loanId].debtTimestamp = newDebtTimestamp;
     }
 
-    function updateLoanAmount(uint256 loanId, uint256 newAmount)
-        external
-        override
-        onlyMarket
-    {
+    function updateLoanAmount(
+        uint256 loanId,
+        uint256 newAmount
+    ) external override onlyMarket {
         require(
             _loans[loanId].state != DataTypes.LoanState.None,
             "Loan does not exist."
@@ -342,12 +318,9 @@ contract LoanCenter is
         _loans[loanId].amount = newAmount;
     }
 
-    function getLoanBoost(uint256 loanId)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function getLoanBoost(
+        uint256 loanId
+    ) external view override returns (uint256) {
         require(
             _loans[loanId].state != DataTypes.LoanState.None,
             "Loan does not exist."
@@ -357,12 +330,9 @@ contract LoanCenter is
     }
 
     // Get the max collaterization price for a collection (10000 = 100%)
-    function getCollectionMaxCollaterization(address collection)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function getCollectionMaxCollaterization(
+        address collection
+    ) external view override returns (uint256) {
         if (_collectionsMaxCollaterization[collection] == 0) {
             return _defaultMaxCollaterization;
         }
@@ -389,11 +359,9 @@ contract LoanCenter is
             );
     }
 
-    function approveNFTCollection(address collection)
-        external
-        override
-        onlyMarket
-    {
+    function approveNFTCollection(
+        address collection
+    ) external override onlyMarket {
         IERC721Upgradeable(collection).setApprovalForAll(
             _addressProvider.getMarket(),
             true

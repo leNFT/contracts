@@ -4,12 +4,6 @@ pragma solidity 0.8.17;
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 
 library DataTypes {
-    struct WithdrawalRequest {
-        bool created;
-        uint256 amount;
-        uint256 timestamp;
-    }
-
     struct TokenPrice {
         address collection;
         uint256 tokenId;
@@ -19,6 +13,28 @@ library DataTypes {
     struct AirdropTokens {
         address user;
         uint256 amount;
+    }
+
+    struct WorkingBalance {
+        uint256 amount;
+        uint256 timestamp;
+    }
+
+    struct LockedBalance {
+        uint256 amount;
+        uint256 end;
+    }
+
+    struct VoteBalance {
+        uint256 weight;
+        uint256 slope;
+        uint256 end;
+    }
+
+    struct Point {
+        uint256 bias;
+        uint256 slope;
+        uint256 timestamp;
     }
 
     /**

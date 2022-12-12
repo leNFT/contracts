@@ -10,9 +10,9 @@ interface IAddressesProvider {
 
     function getLoanCenter() external view returns (address);
 
-    function setNativeTokenVault(address nativeTokenVault) external;
+    function setVotingEscrow(address nativeTokenVault) external;
 
-    function getNativeTokenVault() external view returns (address);
+    function getVotingEscrow() external view returns (address);
 
     function setNativeToken(address nativeToken) external;
 
@@ -30,9 +30,13 @@ interface IAddressesProvider {
 
     function getTokenOracle() external view returns (address);
 
-    function setFeeTreasury(address feeTreasury) external;
+    function setFeeDistributor(address feeDistributor) external;
 
-    function getFeeTreasury() external view returns (address);
+    function getFeeDistributor() external view returns (address);
+
+    function setLiquidationRewards(address liquidationRewards) external;
+
+    function getLiquidationRewards() external view returns (address);
 
     function setDebtToken(address debtToken) external;
 

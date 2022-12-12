@@ -8,7 +8,7 @@ import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
-import {IReserve} from "../../interfaces/IReserve.sol";
+import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
@@ -33,8 +33,9 @@ library BorrowLogic {
         );
 
         // Get the borrow rate index
-        uint256 borrowRate = IReserve(reserves[params.nftAddress][params.asset])
-            .getBorrowRate();
+        uint256 borrowRate = ILendingPool(
+            reserves[params.nftAddress][params.asset]
+        ).getBorrowRate();
 
         // Get max LTV for this collection
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
@@ -82,11 +83,8 @@ library BorrowLogic {
         loanCenter.activateLoan(loanId);
 
         // Send the principal to the borrower
-        IReserve(reserves[params.nftAddress][params.asset]).transferUnderlying(
-            params.caller,
-            params.amount,
-            borrowRate
-        );
+        ILendingPool(reserves[params.nftAddress][params.asset])
+            .transferUnderlying(params.caller, params.amount, borrowRate);
 
         return loanId;
     }
@@ -106,7 +104,7 @@ library BorrowLogic {
         // If we are paying the entire loan debt
         if (params.amount == loanCenter.getLoanDebt(params.loanId)) {
             // Return the principal + interest
-            IReserve(loanData.reserve).receiveUnderlying(
+            ILendingPool(loanData.reserve).receiveUnderlying(
                 params.caller,
                 loanData.amount,
                 loanData.borrowRate,
@@ -138,7 +136,7 @@ library BorrowLogic {
         else {
             // User is sending less than the interest
             if (params.amount <= interest) {
-                IReserve(loanData.reserve).receiveUnderlying(
+                ILendingPool(loanData.reserve).receiveUnderlying(
                     params.caller,
                     0,
                     loanData.borrowRate,
@@ -157,7 +155,7 @@ library BorrowLogic {
             }
             // User is sending the full interest and closing part of the loan
             else {
-                IReserve(loanData.reserve).receiveUnderlying(
+                ILendingPool(loanData.reserve).receiveUnderlying(
                     params.caller,
                     params.amount - interest,
                     loanData.borrowRate,

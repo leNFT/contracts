@@ -10,9 +10,7 @@ import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {IMarket} from "../../interfaces/IMarket.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
-import {IReserve} from "../../interfaces/IReserve.sol";
-import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
-import {WithdrawalRequestLogic} from "./WithdrawalRequestLogic.sol";
+import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -20,8 +18,6 @@ import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 import "hardhat/console.sol";
 
 library ValidationLogic {
-    using WithdrawalRequestLogic for DataTypes.WithdrawalRequest;
-
     function validateDeposit(address reserve, uint256 amount) external view {
         // Check if deposit amount is bigger than 0
         require(amount > 0, "Deposit amount must be bigger than 0");
@@ -29,7 +25,7 @@ library ValidationLogic {
         // Check if reserve will exceed maximum permitted amount
         require(
             amount + IERC4626(reserve).totalAssets() <
-                IReserve(reserve).getTVLSafeguard(),
+                ILendingPool(reserve).getTVLSafeguard(),
             "Reserve exceeds safeguarded limit"
         );
     }
@@ -40,10 +36,11 @@ library ValidationLogic {
         uint256 amount
     ) external view {
         // Check if the utilization rate doesn't go above maximum
-        uint256 maximumUtilizationRate = IReserve(reserve)
+        uint256 maximumUtilizationRate = ILendingPool(reserve)
             .getMaximumUtilizationRate();
-        uint256 debt = IReserve(reserve).getDebt();
-        uint256 underlyingBalance = IReserve(reserve).getUnderlyingBalance();
+        uint256 debt = ILendingPool(reserve).getDebt();
+        uint256 underlyingBalance = ILendingPool(reserve)
+            .getUnderlyingBalance();
         uint256 updatedUtilizationRate = IInterestRate(
             addressesProvider.getInterestRate()
         ).calculateUtilizationRate(underlyingBalance - amount, debt);
@@ -78,13 +75,9 @@ library ValidationLogic {
         uint256 assetETHPrice = tokenOracle.getTokenETHPrice(params.asset);
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
-        // Get boost for this user and collection
-        uint256 boost = INativeTokenVault(
-            addressesProvider.getNativeTokenVault()
-        ).getLTVBoost(params.onBehalfOf, params.nftAddress);
-
         // Get boost from genesis NFTs
         IGenesisNFT genesisNFT = IGenesisNFT(addressesProvider.getGenesisNFT());
+        uint256 boost;
         if (params.genesisNFTId != 0) {
             // Require owner is the borrower
             require(
@@ -97,7 +90,7 @@ library ValidationLogic {
                 "Genesis NFT currently being used by another loan"
             );
 
-            boost += genesisNFT.getLTVBoost();
+            boost = genesisNFT.getLTVBoost();
         }
 
         // Get asset ETH price
@@ -126,7 +119,7 @@ library ValidationLogic {
         // Check if the reserve has enough underlying to borrow
         require(
             params.amount <=
-                IReserve(reserves[params.nftAddress][params.asset])
+                ILendingPool(reserves[params.nftAddress][params.asset])
                     .getUnderlyingBalance(),
             "Amount exceeds reserve balance"
         );
@@ -187,106 +180,6 @@ library ValidationLogic {
                 baseTokenETHPrice <
                 loanCenter.getLoanDebt(params.loanId),
             "Collateral / Debt loan relation does not allow for liquidation."
-        );
-    }
-
-    function validateCreateWithdrawalRequest(
-        IAddressesProvider addressesProvider
-    ) external view {
-        INativeTokenVault vault = INativeTokenVault(
-            addressesProvider.getNativeTokenVault()
-        );
-        DataTypes.WithdrawalRequest memory withdrawalRequest = vault
-            .getWithdrawalRequest(msg.sender);
-
-        // Check if we are creating outside the request window
-        if (withdrawalRequest.created == true) {
-            require(
-                block.timestamp >
-                    withdrawalRequest.timestamp +
-                        vault.getWithdrawalCoolingPeriod(),
-                "Withdraw request already created"
-            );
-        }
-    }
-
-    function validateNativeTokenWithdraw(
-        IAddressesProvider addressesProvider,
-        uint256 shares
-    ) external view {
-        INativeTokenVault vault = INativeTokenVault(
-            addressesProvider.getNativeTokenVault()
-        );
-        DataTypes.WithdrawalRequest memory withdrawalRequest = vault
-            .getWithdrawalRequest(msg.sender);
-
-        // Check if the request was created
-        require(
-            withdrawalRequest.created == true,
-            "No withdraw request created"
-        );
-
-        // Check if we are within the unlock request window and amount
-        require(
-            block.timestamp >
-                withdrawalRequest.timestamp +
-                    vault.getWithdrawalCoolingPeriod() &&
-                block.timestamp <
-                withdrawalRequest.timestamp +
-                    vault.getWithdrawalCoolingPeriod() +
-                    vault.getWithdrawalActivePeriod(),
-            "Withdraw Request is not within valid timeframe"
-        );
-
-        require(
-            withdrawalRequest.amount >= shares,
-            "Withdraw Request amount is smaller than requested amount"
-        );
-
-        require(
-            INativeTokenVault(addressesProvider.getNativeTokenVault())
-                .getUserFreeVotes(msg.sender) >= shares,
-            "Not enough free votes"
-        );
-    }
-
-    function validateVote(IAddressesProvider addressesProvider, uint256 shares)
-        external
-        view
-    {
-        //Check if the user has enough free votes
-        require(
-            INativeTokenVault(addressesProvider.getNativeTokenVault())
-                .getUserFreeVotes(msg.sender) >= shares,
-            "Not enough voting power for requested amount"
-        );
-
-        // Check if the input amount is bigger than 0
-        require(shares > 0, "Vote amount must be bigger than 0");
-    }
-
-    function validateRemoveVote(
-        IAddressesProvider addressesProvider,
-        uint256 shares,
-        address collection
-    ) external view {
-        // Check if user has no active loans in voted collection
-        require(
-            ILoanCenter(addressesProvider.getLoanCenter()).getActiveLoansCount(
-                msg.sender,
-                collection
-            ) == 0,
-            "User has active loans in collection"
-        );
-
-        // Check if the input amount is bigger than 0
-        require(shares > 0, "Remove vote amount must be bigger than 0");
-
-        //Check if the user has enough free votes
-        require(
-            INativeTokenVault(addressesProvider.getNativeTokenVault())
-                .getUserCollectionVotes(msg.sender, collection) >= shares,
-            "Not enough votes in selected collection"
         );
     }
 }

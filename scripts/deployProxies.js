@@ -18,13 +18,6 @@ async function main() {
   let addresses = contractAddresses[chainID.toString(16)];
   const ONE_DAY = 86400;
 
-  var feeTreasuryAddress;
-  if (hre.network.config.chainId == 1) {
-    feeTreasuryAddress = process.env.MAINNET_FEE_TREASURY;
-  } else if (hre.network.config.chainId == 5) {
-    feeTreasuryAddress = process.env.GOERLI_FEE_TREASURY;
-  }
-
   var devAddress;
   if (hre.network.config.chainId == 1) {
     devAddress = process.env.MAINNET_DEV_ADDRESS;

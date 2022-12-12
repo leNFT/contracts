@@ -5,12 +5,13 @@ import {DataTypes} from "../types/DataTypes.sol";
 import {PercentageMath} from "../math/PercentageMath.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IFeeDistributor} from "../../interfaces/IFeeDistributor.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
-import {IReserve} from "../../interfaces/IReserve.sol";
+import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
-import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
+import {ILiquidationRewards} from "../../interfaces/ILiquidationRewards.sol";
 import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
@@ -59,7 +60,7 @@ library LiquidationLogic {
         uint256 loanDebt = loanData.amount + loanInterest;
         // If we only have funds to pay back part of the loan
         if (fundsLeft < loanDebt) {
-            IReserve(loanData.reserve).receiveUnderlyingDefaulted(
+            ILendingPool(loanData.reserve).receiveUnderlyingDefaulted(
                 address(this),
                 fundsLeft,
                 loanData.borrowRate,
@@ -69,7 +70,7 @@ library LiquidationLogic {
             fundsLeft = 0;
             // If we have funds to cover the whole debt associated with the loan
         } else {
-            IReserve(loanData.reserve).receiveUnderlying(
+            ILendingPool(loanData.reserve).receiveUnderlying(
                 address(this),
                 loanData.amount,
                 loanData.borrowRate,
@@ -83,15 +84,17 @@ library LiquidationLogic {
         if (fundsLeft > 0) {
             uint256 protocolFee = PercentageMath.percentMul(
                 liquidationPrice,
-                IReserve(loanData.reserve).getLiquidationFee()
+                ILendingPool(loanData.reserve).getLiquidationFee()
             );
             if (protocolFee > fundsLeft) {
                 protocolFee = fundsLeft;
             }
             IERC20Upgradeable(reserveAsset).safeTransfer(
-                addressesProvider.getFeeTreasury(),
+                addressesProvider.getFeeDistributor(),
                 protocolFee
             );
+            IFeeDistributor(addressesProvider.getFeeDistributor())
+                .feesCheckpoint(reserveAsset);
             fundsLeft -= protocolFee;
         }
 
@@ -127,7 +130,7 @@ library LiquidationLogic {
         IDebtToken(addressesProvider.getDebtToken()).burn(params.loanId);
 
         //Send the liquidation reward to the liquidator
-        INativeTokenVault(addressesProvider.getNativeTokenVault())
+        ILiquidationRewards(addressesProvider.getLiquidationRewards())
             .sendLiquidationReward(params.caller, liquidationReward);
     }
 }

@@ -7,16 +7,16 @@ import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _market;
     address private _debtToken;
-    address private _treasury;
-    address private _feeTreasury;
+    address private _feeDistributor;
     address private _loanCenter;
     address private _nftOracle;
     address private _tokenOracle;
     address private _interestRate;
-    address private _nativeTokenVault;
+    address private _votingEscrow;
     address private _nativeToken;
     address private _weth;
     address private _genesisNFT;
+    address private _liquidationRewards;
 
     function initialize() external initializer {
         __Ownable_init();
@@ -30,16 +30,12 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
         return _market;
     }
 
-    function setNativeTokenVault(address nativeTokenVault)
-        external
-        override
-        onlyOwner
-    {
-        _nativeTokenVault = nativeTokenVault;
+    function setVotingEscrow(address votingEscrow) external override onlyOwner {
+        _votingEscrow = votingEscrow;
     }
 
-    function getNativeTokenVault() external view override returns (address) {
-        return _nativeTokenVault;
+    function getVotingEscrow() external view override returns (address) {
+        return _votingEscrow;
     }
 
     function setNativeToken(address nativeToken) external override onlyOwner {
@@ -50,12 +46,14 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
         return _nativeToken;
     }
 
-    function setFeeTreasury(address feeTreasury) external override onlyOwner {
-        _feeTreasury = feeTreasury;
+    function setFeeDistributor(
+        address feeDistributor
+    ) external override onlyOwner {
+        _feeDistributor = feeDistributor;
     }
 
-    function getFeeTreasury() external view override returns (address) {
-        return _feeTreasury;
+    function getFeeDistributor() external view override returns (address) {
+        return _feeDistributor;
     }
 
     function setLoanCenter(address loanCenter) external override onlyOwner {
@@ -112,5 +110,13 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
 
     function getGenesisNFT() external view override returns (address) {
         return _genesisNFT;
+    }
+
+    function setLiquidationRewards(address liquidationRewards) external {
+        _liquidationRewards = liquidationRewards;
+    }
+
+    function getLiquidationRewards() external view returns (address) {
+        return _liquidationRewards;
     }
 }
