@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.17;
 
-import {IMarket} from "../../interfaces/IMarket.sol";
+import {ILendingMarket} from "../../interfaces/ILendingMarket.sol";
 import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {LiquidationLogic} from "../../libraries/logic/LiquidationLogic.sol";
 import {BorrowLogic} from "../../libraries/logic/BorrowLogic.sol";
@@ -31,7 +31,7 @@ import "hardhat/console.sol";
 contract LendingMarket is
     Initializable,
     ContextUpgradeable,
-    IMarket,
+    ILendingMarket,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
@@ -134,14 +134,14 @@ contract LendingMarket is
         emit Liquidate(_msgSender(), loanId);
     }
 
-    function _setReserve(
+    function _setLendingPool(
         address collection,
         address asset,
-        address reserve
+        address lendingPool
     ) internal {
-        _pools[collection][asset] = reserve;
+        _pools[collection][asset] = lendingPool;
 
-        emit SetReserve(collection, asset, reserve);
+        emit SetLendingPool(collection, asset, lendingPool);
     }
 
     /// @notice Create a new lending vault for a certain collection
@@ -196,28 +196,28 @@ contract LendingMarket is
             );
         }
 
-        _setReserve(collection, asset, address(newLendingPool));
+        _setLendingPool(collection, asset, address(newLendingPool));
         _poolsCount[asset] += 1;
 
-        emit CreateReserve(address(newLendingPool));
+        emit CreateLendingPool(address(newLendingPool));
     }
 
-    /// @notice Get the reserve address responsible to a certain asset
-    /// @param asset The asset the reserve is responsible for
-    /// @return The address of the reserve responsible for the asset
-    function getReserve(
+    /// @notice Get the Lending Pool address responsible to a certain asset
+    /// @param asset The asset the Lending Pool is responsible for
+    /// @return The address of the Lending Pool responsible for the asset
+    function getLendingPool(
         address collection,
         address asset
     ) external view override returns (address) {
         return _pools[collection][asset];
     }
 
-    function setCollectionReserve(
+    function setCollectionLendingPool(
         address collection,
         address asset,
         address reserve
     ) external onlyOwner {
-        _setReserve(collection, asset, reserve);
+        _setLendingPool(collection, asset, reserve);
     }
 
     function setDefaultLiquidationPenalty(

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {Trustus} from "../protocol/Trustus/Trustus.sol";
 
-interface IMarket {
+interface ILendingMarket {
     event Borrow(
         address indexed user,
         address indexed asset,
@@ -16,12 +16,12 @@ interface IMarket {
 
     event Liquidate(address indexed user, uint256 indexed loanId);
 
-    event CreateReserve(address indexed reserve);
+    event CreateLendingPool(address indexed lendingPool);
 
-    event SetReserve(
+    event SetLendingPool(
         address indexed collection,
         address indexed asset,
-        address indexed reserve
+        address indexed lendingPool
     );
 
     function borrow(
@@ -43,8 +43,8 @@ interface IMarket {
         Trustus.TrustusPacket calldata packet
     ) external;
 
-    function getReserve(address collection, address asset)
-        external
-        view
-        returns (address);
+    function getLendingPool(
+        address collection,
+        address asset
+    ) external view returns (address);
 }

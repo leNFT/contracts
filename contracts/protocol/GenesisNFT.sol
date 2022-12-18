@@ -2,7 +2,7 @@
 pragma solidity 0.8.17;
 
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
-import {IMarket} from "../interfaces/IMarket.sol";
+import {ILendingMarket} from "../interfaces/ILendingMarket.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
 import {IGenesisNFT} from "../interfaces/IGenesisNFT.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";

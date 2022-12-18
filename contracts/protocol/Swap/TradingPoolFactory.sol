@@ -53,6 +53,13 @@ contract TradingPoolFactory is
         return _defaultSwapFee;
     }
 
+    function getTradingPool(
+        address nft,
+        address token
+    ) external view returns (address) {
+        return _pools[nft][token];
+    }
+
     /// @notice Create a trading pool for a certain collection
     /// @param nft The nft collection
     /// @param token The token to trade against
@@ -87,6 +94,6 @@ contract TradingPoolFactory is
 
         _pools[nft][token] = address(newTradingPool);
 
-        emit CreateTradingPool(address(newTradingPool));
+        emit CreateTradingPool(address(newTradingPool), nft, token);
     }
 }

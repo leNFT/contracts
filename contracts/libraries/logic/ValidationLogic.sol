@@ -7,7 +7,7 @@ import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {IInterestRate} from "../../interfaces/IInterestRate.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
-import {IMarket} from "../../interfaces/IMarket.sol";
+import {ILendingMarket} from "../../interfaces/ILendingMarket.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";

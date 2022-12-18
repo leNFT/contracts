@@ -2,7 +2,7 @@
 pragma solidity 0.8.17;
 
 import {IWETH} from "../interfaces/IWETH.sol";
-import {IMarket} from "../interfaces/IMarket.sol";
+import {ILendingMarket} from "../interfaces/ILendingMarket.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
@@ -71,7 +71,9 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external nonReentrant {
-        IMarket market = IMarket(_addressProvider.getLendingMarket());
+        ILendingMarket market = ILendingMarket(
+            _addressProvider.getLendingMarket()
+        );
         IWETH weth = IWETH(_addressProvider.getWETH());
 
         // Transfer the collateral to the WETH Gateway
@@ -106,7 +108,9 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     function repayETH(uint256 loanId) external payable nonReentrant {
         address reserve = ILoanCenter(_addressProvider.getLoanCenter())
             .getLoanLendingPool(loanId);
-        IMarket market = IMarket(_addressProvider.getLendingMarket());
+        ILendingMarket market = ILendingMarket(
+            _addressProvider.getLendingMarket()
+        );
         IWETH weth = IWETH(_addressProvider.getWETH());
 
         require(
