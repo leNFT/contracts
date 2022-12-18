@@ -119,13 +119,16 @@ async function main() {
   console.log("Native Token Proxy Address:", nativeToken.address);
 
   // Deploy and initialize the native token vault
-  const NativeTokenVault = await ethers.getContractFactory("NativeTokenVault", {
-    libraries: {
-      ValidationLogic: validationLogicLib.address,
-    },
-  });
-  const nativeTokenVault = await upgrades.deployProxy(
-    NativeTokenVault,
+  const LiquidationsRewards = await ethers.getContractFactory(
+    "LiquidationsRewards",
+    {
+      libraries: {
+        ValidationLogic: validationLogicLib.address,
+      },
+    }
+  );
+  const liquidationsRewards = await upgrades.deployProxy(
+    LiquidationsRewards,
     [
       addressesProvider.address,
       "veleNFT Token",
@@ -153,7 +156,10 @@ async function main() {
     ],
     { unsafeAllow: ["external-library-linking"], timeout: 0 }
   );
-  console.log("Native Token Vault Proxy Address:", nativeTokenVault.address);
+  console.log(
+    "Liquidations Rewards Proxy Address:",
+    liquidationsRewards.address
+  );
 
   // Deploy and initialize Genesis NFT
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
@@ -170,6 +176,39 @@ async function main() {
     devAddress,
   ]);
   console.log("Genesis NFT Proxy Address:", genesisNFT.address);
+
+  // Deploy and initialize Voting Escrow contract
+  const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
+  const votingEscrow = await upgrades.deployProxy(VotingEscrow, [
+    addressesProvider.address,
+  ]);
+  console.log("Voting Escrow Proxy Address:", votingEscrow.address);
+
+  // Deploy and initialize Gauge Controller
+  const GaugeController = await ethers.getContractFactory("GaugeController");
+  const gaugeController = await upgrades.deployProxy(GaugeController, [
+    addressesProvider.address,
+  ]);
+  console.log("Gauge Controller Proxy Address:", gaugeController.address);
+
+  // Deploy and initialize Fee distributor
+  const FeeDistributor = await ethers.getContractFactory("FeeDistributor");
+  const feeDistributor = await upgrades.deployProxy(FeeDistributor, [
+    addressesProvider.address,
+  ]);
+  console.log("Fee Distributor Proxy Address:", feeDistributor.address);
+
+  // Deploy and initialize Trading Pool Factory
+  const TradingPoolFactory = await ethers.getContractFactory(
+    "TradingPoolFactory"
+  );
+  const tradingPoolFactory = await upgrades.deployProxy(TradingPoolFactory, [
+    addressesProvider.address,
+  ]);
+  console.log(
+    "Trading Pool Factory Proxy Address:",
+    tradingPoolFactory.address
+  );
 
   /****************************************************************
   DEPLOY NON-PROXY CONTRACTS

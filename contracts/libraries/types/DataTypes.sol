@@ -10,6 +10,19 @@ library DataTypes {
         uint256 amount;
     }
 
+    struct LiquidityPair {
+        uint256 tokenAmount;
+        uint256[] nftIds;
+        address curve;
+        uint256 delta;
+        uint256 price;
+    }
+
+    struct NftToLiquidityPair {
+        uint256 liquidityPair;
+        uint256 index;
+    }
+
     struct AirdropTokens {
         address user;
         uint256 amount;

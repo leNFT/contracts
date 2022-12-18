@@ -17,6 +17,7 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _weth;
     address private _genesisNFT;
     address private _liquidationRewards;
+    address private _gaugeController;
 
     function initialize() external initializer {
         __Ownable_init();
@@ -28,6 +29,16 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
 
     function getMarket() external view override returns (address) {
         return _market;
+    }
+
+    function setGaugeController(
+        address gaugeController
+    ) external override onlyOwner {
+        _gaugeController = gaugeController;
+    }
+
+    function getGaugeController() external view override returns (address) {
+        return _gaugeController;
     }
 
     function setVotingEscrow(address votingEscrow) external override onlyOwner {

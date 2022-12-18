@@ -6,6 +6,10 @@ interface IAddressesProvider {
 
     function getMarket() external view returns (address);
 
+    function setGaugeController(address gaugeController) external;
+
+    function getGaugeController() external view returns (address);
+
     function setLoanCenter(address loancenter) external;
 
     function getLoanCenter() external view returns (address);

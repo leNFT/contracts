@@ -11,7 +11,7 @@ library ConfigTypes {
         uint256 priceLimit;
     }
 
-    struct ReserveConfig {
+    struct LendingPoolConfig {
         uint256 liquidationPenalty;
         uint256 protocolLiquidationFee;
         uint256 maximumUtilizationRate;

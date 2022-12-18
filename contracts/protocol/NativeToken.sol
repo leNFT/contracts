@@ -8,9 +8,11 @@ import {INativeToken} from "../interfaces/INativeToken.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
+import {IGaugeController} from "../interfaces/IGaugeController.sol";
 import {TrustusUpgradable} from "./Trustus/TrustusUpgradable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
+import {Time} from "../libraries/Time.sol";
 
 contract NativeToken is
     Initializable,
@@ -23,11 +25,12 @@ contract NativeToken is
 {
     IAddressesProvider private _addressProvider;
     address private _devAddress;
-    uint256 internal _deployTimestamp;
-    uint256 internal _devReward;
-    uint256 internal _devVestingTime;
-    uint256 internal _devWithdrawn;
-    uint256 internal _cap;
+    uint256 private _deployTimestamp;
+    uint256 private _devReward;
+    uint256 private _devVestingTime;
+    uint256 private _devWithdrawn;
+    uint256 private _cap;
+    uint256 private _initialRewards;
 
     // Mapping of airdroped users
     mapping(address => bool) private mintedAirdrop;
@@ -39,7 +42,8 @@ contract NativeToken is
         uint256 cap,
         address devAddress,
         uint256 devReward,
-        uint256 devVestingTime
+        uint256 devVestingTime,
+        uint256 initialRewards
     ) external initializer {
         __Ownable_init();
         __Trustus_init();
@@ -50,6 +54,7 @@ contract NativeToken is
         _devAddress = devAddress;
         _devReward = devReward;
         _devVestingTime = devVestingTime;
+        _initialRewards = initialRewards;
     }
 
     function getCap() public view returns (uint256) {
@@ -76,12 +81,21 @@ contract NativeToken is
         _mintTokens(receiver, amount);
     }
 
-    function mintStakingRewardTokens(uint256 amount) external {
+    function getEpochGaugeRewards(
+        uint256 epoch
+    ) external view returns (uint256) {
+        uint256 inflationEpoch = epoch / Time.YEAR_IN_WEEKS;
+        return _initialRewards / (2 ** inflationEpoch);
+    }
+
+    function mintGaugeRewards(address receiver, uint256 amount) external {
         require(
-            _msgSender() == _addressProvider.getNativeTokenVault(),
-            "Vault rewards can only be miinted by the vault contract"
+            IGaugeController(_addressProvider.getGaugeController()).isGauge(
+                _msgSender()
+            ),
+            "Gauge rewards can only be minted by an approved gauge"
         );
-        _mintTokens(_addressProvider.getNativeTokenVault(), amount);
+        _mintTokens(receiver, amount);
     }
 
     function getDevRewardTokens() public view returns (uint256) {
@@ -109,10 +123,10 @@ contract NativeToken is
         _devWithdrawn += amount;
     }
 
-    function mintAirdropTokens(bytes32 request, TrustusPacket calldata packet)
-        external
-        verifyPacket(request, packet)
-    {
+    function mintAirdropTokens(
+        bytes32 request,
+        TrustusPacket calldata packet
+    ) external verifyPacket(request, packet) {
         DataTypes.AirdropTokens memory airdropParams = abi.decode(
             packet.payload,
             (DataTypes.AirdropTokens)
@@ -140,10 +154,10 @@ contract NativeToken is
         return mintedAirdrop[user];
     }
 
-    function setTrustedAirdropSigner(address signer, bool isTrusted)
-        external
-        onlyOwner
-    {
+    function setTrustedAirdropSigner(
+        address signer,
+        bool isTrusted
+    ) external onlyOwner {
         _setIsTrusted(signer, isTrusted);
     }
 

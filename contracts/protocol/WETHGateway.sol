@@ -20,29 +20,29 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         _addressProvider = addressesProvider;
     }
 
-    /// @notice Deposit ETH in the wETH reserve
-    /// @dev Needs to give approval to the corresponding reserve
-    function depositETH(address reserve) external payable nonReentrant {
+    /// @notice Deposit ETH in the wETH lending vault
+    /// @dev Needs to give approval to the corresponding vault
+    function depositETH(address lendingVault) external payable nonReentrant {
         IWETH weth = IWETH(_addressProvider.getWETH());
 
         require(
-            IERC4626(reserve).asset() == address(weth),
+            IERC4626(lendingVault).asset() == address(weth),
             "Reserve underlying is not WETH"
         );
 
         // Deposit and approve WETH
         weth.deposit{value: msg.value}();
-        weth.approve(reserve, msg.value);
+        weth.approve(lendingVault, msg.value);
 
-        IERC4626(reserve).deposit(msg.value, _msgSender());
+        IERC4626(lendingVault).deposit(msg.value, _msgSender());
     }
 
     /// @notice Withdraw an asset from the reserve
     /// @param amount Amount of the asset to be withdrawn
-    function withdrawETH(address reserve, uint256 amount)
-        external
-        nonReentrant
-    {
+    function withdrawETH(
+        address reserve,
+        uint256 amount
+    ) external nonReentrant {
         IWETH weth = IWETH(_addressProvider.getWETH());
         require(
             IERC4626(reserve).asset() == address(weth),
@@ -105,7 +105,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     /// @param loanId The ID of the loan to be paid
     function repayETH(uint256 loanId) external payable nonReentrant {
         address reserve = ILoanCenter(_addressProvider.getLoanCenter())
-            .getLoanReserve(loanId);
+            .getLoanLendingVault(loanId);
         IMarket market = IMarket(_addressProvider.getMarket());
         IWETH weth = IWETH(_addressProvider.getWETH());
 

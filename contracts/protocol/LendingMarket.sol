@@ -12,7 +12,6 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
 import {ILendingPool} from "../interfaces/ILendingPool.sol";
-import {Reserve} from "./Reserve.sol";
 import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -21,6 +20,7 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {Trustus} from "./Trustus/Trustus.sol";
+import {LendingPool} from "./LendingPool.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
 
@@ -37,23 +37,23 @@ contract Market is
 {
     using ERC165Checker for address;
 
-    // collection + asset = reserve
-    mapping(address => mapping(address => address)) private _reserves;
+    // collection + asset = pool
+    mapping(address => mapping(address => address)) private _pools;
 
     // Number of reserves per asset
-    mapping(address => uint256) private _reservesCount;
+    mapping(address => uint256) private _poolsCount;
 
     IAddressesProvider private _addressProvider;
-    ConfigTypes.ReserveConfig private _defaultReserveConfig;
+    ConfigTypes.LendingPoolConfig private _defaultLendingPoolConfig;
 
     // Initialize the market
     function initialize(
         IAddressesProvider addressesProvider,
-        ConfigTypes.ReserveConfig calldata defaultReserveConfig
+        ConfigTypes.LendingPoolConfig calldata defaultLendingPoolConfig
     ) external initializer {
         __Ownable_init();
         _addressProvider = addressesProvider;
-        _defaultReserveConfig = defaultReserveConfig;
+        _defaultLendingPoolConfig = defaultLendingPoolConfig;
     }
 
     /// @notice Borrow an asset from the reserve while an NFT as collateral
@@ -76,7 +76,7 @@ contract Market is
     ) external override nonReentrant {
         BorrowLogic.borrow(
             _addressProvider,
-            _reserves,
+            _pools,
             DataTypes.BorrowParams({
                 caller: _msgSender(),
                 onBehalfOf: onBehalfOf,
@@ -139,15 +139,15 @@ contract Market is
         address asset,
         address reserve
     ) internal {
-        _reserves[collection][asset] = reserve;
+        _pools[collection][asset] = reserve;
 
         emit SetReserve(collection, asset, reserve);
     }
 
-    /// @notice Create a new reserve for a certain collection
-    /// @param collection The collection using this reserve
-    /// @param asset The address of the asset the reserve controls
-    function createReserve(address collection, address asset) external {
+    /// @notice Create a new lending vault for a certain collection
+    /// @param collection The collection using this lending vault
+    /// @param asset The address of the asset the lending vault controls
+    function createLendingPool(address collection, address asset) external {
         require(
             collection.supportsInterface(type(IERC721).interfaceId),
             "Collection address is not ERC721 compliant."
@@ -157,28 +157,28 @@ contract Market is
                 asset
             ),
             "Underlying Asset is not supported"
-        );
+        )
         require(
-            _reserves[collection][asset] == address(0),
-            "Reserve already exists"
+            _pools[collection][asset] == address(0),
+            "Lending Pool already exists"
         );
-        ILendingPool newReserve = new Reserve(
+        ILendingPool newLendingPool = new LendingPool(
             _addressProvider,
             owner(),
             IERC20(asset),
             string.concat(
                 "leNFT ",
                 IERC20Metadata(asset).symbol(),
-                " Reserve #",
-                Strings.toString(_reservesCount[asset])
+                " Lending #",
+                Strings.toString(_poolsCount[asset])
             ),
             string.concat(
-                "leR",
+                "leL",
                 IERC20Metadata(asset).symbol(),
                 "-",
-                Strings.toString(_reservesCount[asset])
+                Strings.toString(_poolsCount[asset])
             ),
-            _defaultReserveConfig
+            _defaultLendingPoolConfig
         );
 
         // Approve reserve use of Market balance
@@ -197,7 +197,7 @@ contract Market is
         }
 
         _setReserve(collection, asset, address(newReserve));
-        _reservesCount[asset] += 1;
+        _poolsCount[asset] += 1;
 
         emit CreateReserve(address(newReserve));
     }
@@ -209,7 +209,7 @@ contract Market is
         address collection,
         address asset
     ) external view override returns (address) {
-        return _reserves[collection][asset];
+        return _pools[collection][asset];
     }
 
     function setCollectionReserve(
@@ -223,27 +223,27 @@ contract Market is
     function setDefaultLiquidationPenalty(
         uint256 liquidationPenalty
     ) external onlyOwner {
-        _defaultReserveConfig.liquidationPenalty = liquidationPenalty;
+        _defaultLendingPoolConfig.liquidationPenalty = liquidationPenalty;
     }
 
     function setDefaultProtocolLiquidationFee(
         uint256 protocolLiquidationFee
     ) external onlyOwner {
-        _defaultReserveConfig.protocolLiquidationFee = protocolLiquidationFee;
+        _defaultLendingPoolConfig.protocolLiquidationFee = protocolLiquidationFee;
     }
 
     function setDefaultMaximumUtilizationRate(
         uint256 maximumUtilizationRate
     ) external onlyOwner {
-        _defaultReserveConfig.maximumUtilizationRate = maximumUtilizationRate;
+        _defaultLendingPoolConfig.maximumUtilizationRate = maximumUtilizationRate;
     }
 
     function setDefaultTVLSafeguard(uint256 tvlSafeguard) external onlyOwner {
-        _defaultReserveConfig.tvlSafeguard = tvlSafeguard;
+        _defaultLendingPoolConfig.tvlSafeguard = tvlSafeguard;
     }
 
     function getDefaultLiquidationPenalty() external view returns (uint256) {
-        return _defaultReserveConfig.liquidationPenalty;
+        return _defaultLendingPoolConfig.liquidationPenalty;
     }
 
     function getDefaultProtocolLiquidationFee()
@@ -251,7 +251,7 @@ contract Market is
         view
         returns (uint256)
     {
-        return _defaultReserveConfig.protocolLiquidationFee;
+        return _defaultLendingPoolConfig.protocolLiquidationFee;
     }
 
     function getDefaultMaximumUtilizationRate()
@@ -259,10 +259,10 @@ contract Market is
         view
         returns (uint256)
     {
-        return _defaultReserveConfig.maximumUtilizationRate;
+        return _defaultLendingPoolConfig.maximumUtilizationRate;
     }
 
     function getDefaultTVLSafeguard() external view returns (uint256) {
-        return _defaultReserveConfig.tvlSafeguard;
+        return _defaultLendingPoolConfig.tvlSafeguard;
     }
 }

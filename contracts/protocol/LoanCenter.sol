@@ -6,11 +6,11 @@ import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
 import {INFTOracle} from "../interfaces/INFTOracle.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {ITokenOracle} from "../interfaces/ITokenOracle.sol";
-import {ILendingPool} from "../interfaces/ILendingPool.sol";
+import {ILendingVault} from "../interfaces/ILendingVault.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
-import {INativeTokenVault} from "../interfaces/INativeTokenVault.sol";
+import {ILiquidationRewards} from "../interfaces/ILiquidationRewards.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
@@ -197,8 +197,8 @@ contract LoanCenter is
         uint256 liquidationThreshold = PercentageMath.percentMul(
             collateralETHPrice,
             PercentageMath.PERCENTAGE_FACTOR -
-                ILendingPool(_loans[loanId].reserve).getLiquidationPenalty() +
-                ILendingPool(_loans[loanId].reserve).getLiquidationFee()
+                ILendingVault(_loans[loanId].reserve).getLiquidationPenalty() +
+                ILendingVault(_loans[loanId].reserve).getLiquidationFee()
         );
         uint256 loanDebt = _getLoanDebt(loanId);
         console.log("liquidationThreshold", liquidationThreshold);
@@ -215,8 +215,8 @@ contract LoanCenter is
         console.log("liquidationPrice", liquidationPrice);
 
         // Find the liquidation reward
-        uint256 liquidationReward = INativeTokenVault(
-            _addressProvider.getNativeTokenVault()
+        uint256 liquidationReward = ILiquidationRewards(
+            _addressProvider.getLiquidationRewards()
         ).getLiquidationReward(
                 _loans[loanId].reserve,
                 reserveAssetETHPrice,
@@ -283,7 +283,7 @@ contract LoanCenter is
         return _loans[loanId].nftAsset;
     }
 
-    function getLoanReserve(
+    function getLoanLendingVault(
         uint256 loanId
     ) external view override returns (address) {
         require(

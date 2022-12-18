@@ -5,10 +5,11 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
+import {IGaugeController} from "../interfaces/IGaugeController.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {Time} from "../libraries/Time.sol";
 
-contract GaugeController is OwnableUpgradeable {
+contract GaugeController is OwnableUpgradeable, IGaugeController {
     IAddressesProvider private _addressProvider;
 
     // Epoch history of gauge vote weight
@@ -30,6 +31,7 @@ contract GaugeController is OwnableUpgradeable {
     mapping(address => mapping(address => DataTypes.VoteBalance)) _userGaugeVoteBalance;
 
     mapping(address => address) _reserveToGauge;
+    mapping(address => bool) _isGauge;
 
     function initialize(
         IAddressesProvider addressProvider
@@ -41,6 +43,11 @@ contract GaugeController is OwnableUpgradeable {
     // Add a gauge (should be done by the admin)
     function addGauge(address reserve, address gauge) external {
         _reserveToGauge[reserve] = gauge;
+        _isGauge[gauge] = true;
+    }
+
+    function isGauge(address gauge) external view returns (bool) {
+        return _isGauge[gauge];
     }
 
     function getGauge(address reserve) external view returns (address) {
