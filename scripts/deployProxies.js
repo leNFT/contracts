@@ -257,6 +257,10 @@ async function main() {
     lendingMarket.address
   );
   await setLendingMarketTx.wait();
+  const setTradingPoolFactoryTx = await addressesProvider.setTradingPoolFactory(
+    tradingPoolFactory.address
+  );
+  await setTradingPoolFactoryTx.wait();
   const setDebtTokenTx = await addressesProvider.setDebtToken(
     debtToken.address
   );

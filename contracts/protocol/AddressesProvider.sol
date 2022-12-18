@@ -18,6 +18,7 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _genesisNFT;
     address private _liquidationRewards;
     address private _gaugeController;
+    address private _tradingPoolFactory;
 
     function initialize() external initializer {
         __Ownable_init();
@@ -31,6 +32,16 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
 
     function getLendingMarket() external view override returns (address) {
         return _lendingMarket;
+    }
+
+    function setTradingPoolFactory(
+        address tradingPoolFactory
+    ) external override onlyOwner {
+        _tradingPoolFactory = tradingPoolFactory;
+    }
+
+    function getTradingPoolFactory() external view override returns (address) {
+        return _tradingPoolFactory;
     }
 
     function setGaugeController(

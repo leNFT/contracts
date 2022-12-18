@@ -48,18 +48,18 @@ contract TradingPool is
         address owner,
         IERC20 token,
         address nft,
-        uint256 deafultSwapFee,
+        uint256 defaultSwapFee,
         string memory name,
         string memory symbol
     ) ERC721(name, symbol) {
         require(
-            msg.sender == addressProvider.getLendingMarket(),
+            msg.sender == addressProvider.getTradingPoolFactory(),
             "Trading Pool must be created through Factory"
         );
         _addressProvider = addressProvider;
         _token = token;
         _nft = nft;
-        _swapFee = deafultSwapFee;
+        _swapFee = defaultSwapFee;
         _transferOwnership(owner);
     }
 
@@ -223,6 +223,10 @@ contract TradingPool is
 
     function setSwapFee(uint256 newSwapFee) external onlyOwner {
         _swapFee = newSwapFee;
+    }
+
+    function getSwapFee() external view returns (uint256) {
+        return _swapFee;
     }
 
     function _beforeTokenTransfer(
