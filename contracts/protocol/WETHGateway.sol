@@ -71,7 +71,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external nonReentrant {
-        IMarket market = IMarket(_addressProvider.getMarket());
+        IMarket market = IMarket(_addressProvider.getLendingMarket());
         IWETH weth = IWETH(_addressProvider.getWETH());
 
         // Transfer the collateral to the WETH Gateway
@@ -106,7 +106,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     function repayETH(uint256 loanId) external payable nonReentrant {
         address reserve = ILoanCenter(_addressProvider.getLoanCenter())
             .getLoanLendingPool(loanId);
-        IMarket market = IMarket(_addressProvider.getMarket());
+        IMarket market = IMarket(_addressProvider.getLendingMarket());
         IWETH weth = IWETH(_addressProvider.getWETH());
 
         require(

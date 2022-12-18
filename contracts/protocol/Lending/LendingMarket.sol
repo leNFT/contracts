@@ -24,11 +24,11 @@ import {LendingPool} from "./LendingPool.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
 
-/// @title Market Contract
+/// @title LendingMarket Contract
 /// @author leNFT
-/// @notice This contract is the entrypoint for the leNFT protocol
+/// @notice This contract is the entrypoint for the leNFT lending protocol
 /// @dev Call these contrcact functions to interact with the protocol
-contract Market is
+contract LendingMarket is
     Initializable,
     ContextUpgradeable,
     IMarket,
@@ -226,11 +226,10 @@ contract Market is
         _defaultLendingPoolConfig.liquidationPenalty = liquidationPenalty;
     }
 
-    function setDefaultProtocolLiquidationFee(
-        uint256 protocolLiquidationFee
+    function setDefaultLiquidationFee(
+        uint256 liquidationFee
     ) external onlyOwner {
-        _defaultLendingPoolConfig
-            .protocolLiquidationFee = protocolLiquidationFee;
+        _defaultLendingPoolConfig.liquidationFee = liquidationFee;
     }
 
     function setDefaultMaximumUtilizationRate(
@@ -248,12 +247,8 @@ contract Market is
         return _defaultLendingPoolConfig.liquidationPenalty;
     }
 
-    function getDefaultProtocolLiquidationFee()
-        external
-        view
-        returns (uint256)
-    {
-        return _defaultLendingPoolConfig.protocolLiquidationFee;
+    function getDefaultLiquidationFee() external view returns (uint256) {
+        return _defaultLendingPoolConfig.liquidationFee;
     }
 
     function getDefaultMaximumUtilizationRate()

@@ -27,7 +27,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
 
     modifier onlyMarket() {
         require(
-            _msgSender() == _addressProvider.getMarket(),
+            _msgSender() == _addressProvider.getLendingMarket(),
             "Callers must be Market contract"
         );
         _;
@@ -42,7 +42,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         ConfigTypes.LendingPoolConfig memory LendingPoolConfig
     ) ERC20(name, symbol) ERC4626(asset) {
         require(
-            msg.sender == addressProvider.getMarket(),
+            msg.sender == addressProvider.getLendingMarket(),
             "Reserve must be created through market"
         );
         _addressProvider = addressProvider;
@@ -214,13 +214,11 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     }
 
     function getLiquidationFee() external view override returns (uint256) {
-        return _LendingPoolConfig.protocolLiquidationFee;
+        return _LendingPoolConfig.liquidationFee;
     }
 
-    function setLiquidationFee(
-        uint256 protocolLiquidationFee
-    ) external onlyOwner {
-        _LendingPoolConfig.protocolLiquidationFee = protocolLiquidationFee;
+    function setLiquidationFee(uint256 liquidationFee) external onlyOwner {
+        _LendingPoolConfig.liquidationFee = liquidationFee;
     }
 
     function getTVLSafeguard() external view override returns (uint256) {

@@ -2,9 +2,9 @@
 pragma solidity ^0.8.0;
 
 interface IAddressesProvider {
-    function setMarket(address market) external;
+    function setLendingMarket(address market) external;
 
-    function getMarket() external view returns (address);
+    function getLendingMarket() external view returns (address);
 
     function setGaugeController(address gaugeController) external;
 

@@ -30,7 +30,7 @@ contract DebtToken is
 
     modifier onlyMarket() {
         require(
-            _msgSender() == _addressProvider.getMarket(),
+            _msgSender() == _addressProvider.getLendingMarket(),
             "Caller must be Market contract"
         );
         _;

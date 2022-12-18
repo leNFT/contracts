@@ -13,7 +13,7 @@ library ConfigTypes {
 
     struct LendingPoolConfig {
         uint256 liquidationPenalty;
-        uint256 protocolLiquidationFee;
+        uint256 liquidationFee;
         uint256 maximumUtilizationRate;
         uint256 tvlSafeguard;
     }

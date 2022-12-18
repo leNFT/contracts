@@ -53,7 +53,7 @@ contract GenesisNFT is
 
     modifier onlyMarket() {
         require(
-            _msgSender() == _addressProvider.getMarket(),
+            _msgSender() == _addressProvider.getLendingMarket(),
             "Caller must be Market contract"
         );
         _;
@@ -92,7 +92,9 @@ contract GenesisNFT is
         return "ipfs://";
     }
 
-    function tokenURI(uint256 tokenId)
+    function tokenURI(
+        uint256 tokenId
+    )
         public
         view
         override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
@@ -113,31 +115,25 @@ contract GenesisNFT is
         _ltvBoost = newLTVBoost;
     }
 
-    function getActiveState(uint256 tokenId)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function getActiveState(
+        uint256 tokenId
+    ) external view override returns (bool) {
         return _active[tokenId];
     }
 
-    function setActiveState(uint256 tokenId, bool newState)
-        external
-        override
-        onlyMarket
-    {
+    function setActiveState(
+        uint256 tokenId,
+        bool newState
+    ) external override onlyMarket {
         _active[tokenId] = newState;
     }
 
-    function getNativeTokensReward(uint256 locktime)
-        public
-        view
-        returns (uint256)
-    {
+    function getNativeTokensReward(
+        uint256 locktime
+    ) public view returns (uint256) {
         return
             ((locktime * (_cap - _tokenIdCounter.current())) /
-                _nativeTokenFactor) * 10**18;
+                _nativeTokenFactor) * 10 ** 18;
     }
 
     function getMintReserve() external view returns (address) {
@@ -152,12 +148,10 @@ contract GenesisNFT is
         return _tokenIdCounter.current() - 1;
     }
 
-    function mint(uint256 locktime, string memory uri)
-        external
-        payable
-        nonReentrant
-        returns (uint256)
-    {
+    function mint(
+        uint256 locktime,
+        string memory uri
+    ) external payable nonReentrant returns (uint256) {
         // Make sure the genesis reserve is set
         require(
             _mintReserve != address(0),
@@ -220,10 +214,9 @@ contract GenesisNFT is
         return _mintDetails[tokenId].timestamp + _mintDetails[tokenId].locktime;
     }
 
-    function _burn(uint256 tokenId)
-        internal
-        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
-    {
+    function _burn(
+        uint256 tokenId
+    ) internal override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
         ERC721URIStorageUpgradeable._burn(tokenId);
     }
 
@@ -274,7 +267,9 @@ contract GenesisNFT is
         );
     }
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         override(

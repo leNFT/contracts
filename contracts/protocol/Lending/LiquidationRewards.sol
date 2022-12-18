@@ -27,7 +27,7 @@ contract LiquidationRewards is
 
     modifier onlyMarket() {
         require(
-            _msgSender() == _addressProvider.getMarket(),
+            _msgSender() == _addressProvider.getLendingMarket(),
             "Callers must be Market contract"
         );
         _;

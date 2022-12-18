@@ -37,7 +37,7 @@ contract TradingPool is
 
     modifier onlyMarket() {
         require(
-            _msgSender() == _addressProvider.getMarket(),
+            _msgSender() == _addressProvider.getLendingMarket(),
             "Callers must be Market contract"
         );
         _;
@@ -48,16 +48,18 @@ contract TradingPool is
         address owner,
         IERC20 token,
         address nft,
+        uint256 deafultSwapFee,
         string memory name,
         string memory symbol
     ) ERC721(name, symbol) {
         require(
-            msg.sender == addressProvider.getMarket(),
+            msg.sender == addressProvider.getLendingMarket(),
             "Trading Pool must be created through Factory"
         );
         _addressProvider = addressProvider;
         _token = token;
         _nft = nft;
+        _swapFee = deafultSwapFee;
         _transferOwnership(owner);
     }
 
@@ -217,6 +219,10 @@ contract TradingPool is
         IERC20(_token).safeTransfer(address(this), priceSum);
 
         return priceSum;
+    }
+
+    function setSwapFee(uint256 newSwapFee) external onlyOwner {
+        _swapFee = newSwapFee;
     }
 
     function _beforeTokenTransfer(

@@ -31,14 +31,26 @@ contract TradingPoolFactory is
     // collection + asset = pool
     mapping(address => mapping(address => address)) private _pools;
 
+    uint256 private _defaultSwapFee;
+
     using ERC165Checker for address;
 
     // Initialize the market
     function initialize(
-        IAddressesProvider addressesProvider
+        IAddressesProvider addressesProvider,
+        uint256 defaultSwapFee
     ) external initializer {
         __Ownable_init();
         _addressProvider = addressesProvider;
+        _defaultSwapFee = defaultSwapFee;
+    }
+
+    function setDefaultSwapFee(uint256 newSwapFee) external {
+        _defaultSwapFee = newSwapFee;
+    }
+
+    function getDefaultSwapFee() external view returns (uint256) {
+        return _defaultSwapFee;
     }
 
     /// @notice Create a trading pool for a certain collection
@@ -58,6 +70,7 @@ contract TradingPoolFactory is
             owner(),
             IERC20(token),
             nft,
+            _defaultSwapFee,
             string.concat(
                 "leNFT Trading Pool ",
                 IERC20Metadata(token).symbol(),

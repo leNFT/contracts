@@ -13,15 +13,16 @@ async function main() {
   // If this script is run directly using `node` you may want to call compile
   // manually to make sure everything is compiled
   // await hre.run('compile');
-  let contractAddresses = require("../../lenft-interface/contractAddresses.json");
+  var contractAddresses = require("../../lenft-interface/contractAddresses.json");
   let chainID = hre.network.config.chainId;
-  let addresses = contractAddresses[chainID.toString(16)];
+  console.log("chainID: ", chainID);
+  var addresses = contractAddresses[chainID.toString(16)];
   const ONE_DAY = 86400;
 
   var devAddress;
-  if (hre.network.config.chainId == 1) {
+  if (chainID == 1) {
     devAddress = process.env.MAINNET_DEV_ADDRESS;
-  } else if (hre.network.config.chainId == 5) {
+  } else if (chainID == 5) {
     devAddress = process.env.GOERLI_DEV_ADDRESS;
   }
 
@@ -33,7 +34,7 @@ async function main() {
   // Deploy validation logic lib
   ValidationLogicLib = await ethers.getContractFactory("ValidationLogic");
   validationLogicLib = await ValidationLogicLib.deploy();
-  console.log("Validation Logic Lib Address:", validationLogicLib.address);
+  addresses["ValidationLogicLib"] = validationLogicLib.address;
 
   // Deploy borrow logic lib
   BorrowLogicLib = await ethers.getContractFactory("BorrowLogic", {
@@ -42,7 +43,7 @@ async function main() {
     },
   });
   borrowLogicLib = await BorrowLogicLib.deploy();
-  console.log("Borrow Logic Lib Address:", borrowLogicLib.address);
+  addresses["BorrowLogicLib"] = borrowLogicLib.address;
 
   // Deploy liquidation logic lib
   LiquidationLogicLib = await ethers.getContractFactory("LiquidationLogic", {
@@ -51,7 +52,7 @@ async function main() {
     },
   });
   liquidationLogicLib = await LiquidationLogicLib.deploy();
-  console.log("Liquidation Logic Lib Address:", liquidationLogicLib.address);
+  addresses["LiquidationLogicLib"] = liquidationLogicLib.address;
 
   /****************************************************************
   DEPLOY PROXIES
@@ -63,30 +64,30 @@ async function main() {
     "AddressesProvider"
   );
   const addressesProvider = await upgrades.deployProxy(AddressesProvider);
-  console.log("Addresses Provider Proxy Address:", addressesProvider.address);
+  addresses["AddressesProvider"] = addressesProvider.address;
 
   // Deploy and initialize market proxy
-  const Market = await ethers.getContractFactory("Market", {
+  const LendingMarket = await ethers.getContractFactory("LendingMarket", {
     libraries: {
       BorrowLogic: borrowLogicLib.address,
       LiquidationLogic: liquidationLogicLib.address,
       ValidationLogic: validationLogicLib.address,
     },
   });
-  const market = await upgrades.deployProxy(
-    Market,
+  const lendingMarket = await upgrades.deployProxy(
+    LendingMarket,
     [
       addressesProvider.address,
       {
         liquidationPenalty: "1800", // defaultLiquidationPenalty
-        protocolLiquidationFee: "200", // defaultProtocolLiquidationFee
+        liquidationFee: "200", // defaultProtocolLiquidationFee
         maximumUtilizationRate: "8500", // defaultMaximumUtilizationRate
         tvlSafeguard: "25000000000000000000", // defaultTVLSafeguard
       },
     ],
     { unsafeAllow: ["external-library-linking"], timeout: 0 }
   );
-  console.log("Market Proxy Address:", market.address);
+  addresses["LendingMarket"] = lendingMarket.address;
 
   // Deploy and initialize loan center provider proxy
   const LoanCenter = await ethers.getContractFactory("LoanCenter");
@@ -94,7 +95,7 @@ async function main() {
     addressesProvider.address,
     "4000", // DefaultMaxCollaterization 40%
   ]);
-  console.log("Loan Center Proxy Address:", loanCenter.address);
+  addresses["LoanCenter"] = loanCenter.address;
 
   // Deploy and initialize the debt token
   const DebtToken = await ethers.getContractFactory("DebtToken");
@@ -103,7 +104,7 @@ async function main() {
     "LDEBT TOKEN",
     "LDEBT",
   ]);
-  console.log("Debt Token Proxy Address:", debtToken.address);
+  addresses["DebtToken"] = debtToken.address;
 
   // Deploy and initialize the native token
   const NativeToken = await ethers.getContractFactory("NativeToken");
@@ -117,7 +118,7 @@ async function main() {
     ONE_DAY * 365 * 2, // 2-year dev vesting
     "20000000000000000000",
   ]);
-  console.log("Native Token Proxy Address:", nativeToken.address);
+  addresses["NativeToken"] = nativeToken.address;
 
   // Deploy and initialize the native token vault
   const LiquidationsRewards = await ethers.getContractFactory(
@@ -136,10 +137,7 @@ async function main() {
     ],
     { unsafeAllow: ["external-library-linking"], timeout: 0 }
   );
-  console.log(
-    "Liquidations Rewards Proxy Address:",
-    liquidationsRewards.address
-  );
+  addresses["LiquidationsRewards"] = liquidationsRewards.address;
 
   // Deploy and initialize Genesis NFT
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
@@ -155,28 +153,28 @@ async function main() {
     ONE_DAY * 14, // Min locktime (14 days in s)
     devAddress,
   ]);
-  console.log("Genesis NFT Proxy Address:", genesisNFT.address);
+  addresses["GenesisNFT"] = genesisNFT.address;
 
   // Deploy and initialize Voting Escrow contract
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   const votingEscrow = await upgrades.deployProxy(VotingEscrow, [
     addressesProvider.address,
   ]);
-  console.log("Voting Escrow Proxy Address:", votingEscrow.address);
+  addresses["VotingEscrow"] = votingEscrow.address;
 
   // Deploy and initialize Gauge Controller
   const GaugeController = await ethers.getContractFactory("GaugeController");
   const gaugeController = await upgrades.deployProxy(GaugeController, [
     addressesProvider.address,
   ]);
-  console.log("Gauge Controller Proxy Address:", gaugeController.address);
+  addresses["GaugeController"] = gaugeController.address;
 
   // Deploy and initialize Fee distributor
   const FeeDistributor = await ethers.getContractFactory("FeeDistributor");
   const feeDistributor = await upgrades.deployProxy(FeeDistributor, [
     addressesProvider.address,
   ]);
-  console.log("Fee Distributor Proxy Address:", feeDistributor.address);
+  addresses["FeeDistributor"] = feeDistributor.address;
 
   // Deploy and initialize Trading Pool Factory
   const TradingPoolFactory = await ethers.getContractFactory(
@@ -184,11 +182,9 @@ async function main() {
   );
   const tradingPoolFactory = await upgrades.deployProxy(TradingPoolFactory, [
     addressesProvider.address,
+    "300", // Default swap fee (3%)
   ]);
-  console.log(
-    "Trading Pool Factory Proxy Address:",
-    tradingPoolFactory.address
-  );
+  addresses["TradingPoolFactory"] = tradingPoolFactory.address;
 
   /****************************************************************
   DEPLOY NON-PROXY CONTRACTS
@@ -199,25 +195,49 @@ async function main() {
   const InterestRate = await ethers.getContractFactory("InterestRate");
   interestRate = await InterestRate.deploy(7000, 500, 2000, 20000);
   await interestRate.deployed();
-  console.log("Interest Rate Address:", interestRate.address);
+  addresses["InterestRate"] = interestRate.address;
 
   // Deploy the NFT Oracle contract
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
   nftOracle = await NFTOracle.deploy(addressesProvider.address);
   await nftOracle.deployed();
-  console.log("NFT Oracle Address:", nftOracle.address);
+  addresses["NFTOracle"] = nftOracle.address;
 
   // Deploy TokenOracle contract
   const TokenOracle = await ethers.getContractFactory("TokenOracle");
   tokenOracle = await TokenOracle.deploy();
   await tokenOracle.deployed();
-  console.log("Token Oracle Address:", tokenOracle.address);
+  addresses["TokenOracle"] = tokenOracle.address;
 
   // Deploy WETH Gateway contract
   const WETHGateway = await ethers.getContractFactory("WETHGateway");
   wethGateway = await WETHGateway.deploy(addressesProvider.address);
   await wethGateway.deployed();
-  console.log("WETHGateway Address:", wethGateway.address);
+  addresses["WETHGateway"] = wethGateway.address;
+
+  /****************************************************************
+  SAVE TO DISK
+  Write contract addresses to file
+  ******************************************************************/
+
+  var fs = require("fs");
+  contractAddresses[chainID.toString(16)] = addresses;
+  fs.writeFileSync(
+    "../lenft-interface/contractAddresses.json",
+    JSON.stringify(contractAddresses),
+    function (err) {
+      if (err) throw err;
+      console.log("File written to interface folder");
+    }
+  );
+  fs.writeFileSync(
+    "../lenft-nft-api/contractAddresses.json",
+    JSON.stringify(contractAddresses),
+    function (err) {
+      if (err) throw err;
+      console.log("File written to API folder");
+    }
+  );
 
   /****************************************************************
   SETUP TRANSACTIONS
@@ -233,8 +253,10 @@ async function main() {
   console.log("Set Native Token / ETH to 0.0001");
 
   //Set every address in the address provider
-  const setMarketTx = await addressesProvider.setMarket(market.address);
-  await setMarketTx.wait();
+  const setLendingMarketTx = await addressesProvider.setLendingMarket(
+    lendingMarket.address
+  );
+  await setLendingMarketTx.wait();
   const setDebtTokenTx = await addressesProvider.setDebtToken(
     debtToken.address
   );
