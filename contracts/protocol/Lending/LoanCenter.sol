@@ -2,21 +2,21 @@
 pragma solidity 0.8.17;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
-import {INFTOracle} from "../interfaces/INFTOracle.sol";
-import {PercentageMath} from "../libraries/math/PercentageMath.sol";
-import {ITokenOracle} from "../interfaces/ITokenOracle.sol";
-import {ILendingVault} from "../interfaces/ILendingVault.sol";
-import {DataTypes} from "../libraries/types/DataTypes.sol";
+import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
+import {INFTOracle} from "../../interfaces/INFTOracle.sol";
+import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
+import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
+import {ILendingPool} from "../../interfaces/ILendingPool.sol";
+import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
-import {ILiquidationRewards} from "../interfaces/ILiquidationRewards.sol";
+import {LoanLogic} from "../../libraries/logic/LoanLogic.sol";
+import {ILiquidationRewards} from "../../interfaces/ILiquidationRewards.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import {Trustus} from "../protocol/Trustus/Trustus.sol";
+import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 import "hardhat/console.sol";
 
 contract LoanCenter is
@@ -178,9 +178,9 @@ contract LoanCenter is
         Trustus.TrustusPacket calldata packet
     ) external view override returns (uint256, uint256) {
         // Get the price of the collateral asset in the reserve asset. Ex: Punk #42 = 5 USDC
-        uint256 reserveAssetETHPrice = ITokenOracle(
+        uint256 poolAssetETHPrice = ITokenOracle(
             _addressProvider.getTokenOracle()
-        ).getTokenETHPrice(IERC4626(_loans[loanId].reserve).asset());
+        ).getTokenETHPrice(IERC4626(_loans[loanId].pool).asset());
 
         uint256 collateralETHPrice = (
             (INFTOracle(_addressProvider.getNFTOracle()).getTokenETHPrice(
@@ -191,14 +191,14 @@ contract LoanCenter is
             ) *
                 ITokenOracle(_addressProvider.getTokenOracle())
                     .getPricePrecision())
-        ) / reserveAssetETHPrice;
+        ) / poolAssetETHPrice;
 
         // Threshold in which the liquidation price starts being equal to debt
         uint256 liquidationThreshold = PercentageMath.percentMul(
             collateralETHPrice,
             PercentageMath.PERCENTAGE_FACTOR -
-                ILendingVault(_loans[loanId].reserve).getLiquidationPenalty() +
-                ILendingVault(_loans[loanId].reserve).getLiquidationFee()
+                ILendingPool(_loans[loanId].pool).getLiquidationPenalty() +
+                ILendingPool(_loans[loanId].pool).getLiquidationFee()
         );
         uint256 loanDebt = _getLoanDebt(loanId);
         console.log("liquidationThreshold", liquidationThreshold);
@@ -218,8 +218,8 @@ contract LoanCenter is
         uint256 liquidationReward = ILiquidationRewards(
             _addressProvider.getLiquidationRewards()
         ).getLiquidationReward(
-                _loans[loanId].reserve,
-                reserveAssetETHPrice,
+                _loans[loanId].pool,
+                poolAssetETHPrice,
                 collateralETHPrice,
                 liquidationPrice
             );
@@ -283,7 +283,7 @@ contract LoanCenter is
         return _loans[loanId].nftAsset;
     }
 
-    function getLoanLendingVault(
+    function getLoanLendingPool(
         uint256 loanId
     ) external view override returns (address) {
         require(
@@ -291,7 +291,7 @@ contract LoanCenter is
             "Loan does not exist."
         );
 
-        return _loans[loanId].reserve;
+        return _loans[loanId].pool;
     }
 
     function updateLoanDebtTimestamp(

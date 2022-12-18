@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.17;
 
-import {IInterestRate} from "../interfaces/IInterestRate.sol";
-import {PercentageMath} from "../libraries/math/PercentageMath.sol";
+import {IInterestRate} from "../../interfaces/IInterestRate.sol";
+import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 
 contract InterestRate is IInterestRate {
     uint256 internal _optimalUtilization;
@@ -23,12 +23,10 @@ contract InterestRate is IInterestRate {
         _highSlope = highSlope;
     }
 
-    function calculateBorrowRate(uint256 assets, uint256 debt)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function calculateBorrowRate(
+        uint256 assets,
+        uint256 debt
+    ) external view override returns (uint256) {
         uint256 utilizationRate = _calculateUtilizationRate(assets, debt);
 
         uint256 borrowRate;
@@ -63,20 +61,17 @@ contract InterestRate is IInterestRate {
         return _highSlope;
     }
 
-    function calculateUtilizationRate(uint256 assets, uint256 debt)
-        external
-        pure
-        override
-        returns (uint256)
-    {
+    function calculateUtilizationRate(
+        uint256 assets,
+        uint256 debt
+    ) external pure override returns (uint256) {
         return _calculateUtilizationRate(assets, debt);
     }
 
-    function _calculateUtilizationRate(uint256 assets, uint256 debt)
-        internal
-        pure
-        returns (uint256)
-    {
+    function _calculateUtilizationRate(
+        uint256 assets,
+        uint256 debt
+    ) internal pure returns (uint256) {
         uint256 utilizationRate;
 
         if ((assets + debt) == 0) {

@@ -115,43 +115,23 @@ async function main() {
     devAddress,
     "15000000000000000000000000", // 15M Dev Tokens
     ONE_DAY * 365 * 2, // 2-year dev vesting
+    "20000000000000000000",
   ]);
   console.log("Native Token Proxy Address:", nativeToken.address);
 
   // Deploy and initialize the native token vault
   const LiquidationsRewards = await ethers.getContractFactory(
-    "LiquidationsRewards",
-    {
-      libraries: {
-        ValidationLogic: validationLogicLib.address,
-      },
-    }
+    "LiquidationRewards"
   );
   const liquidationsRewards = await upgrades.deployProxy(
     LiquidationsRewards,
     [
       addressesProvider.address,
-      "veleNFT Token",
-      "veLE",
-      nativeToken.address,
       {
         factor: "55000000000000000", // 0.055 Liquidation Reward Factor
         maxReward: "25000000000000000000000", // 25000 leNFT Reward Limit
         priceThreshold: 9000, // Liquidation Reward Price Threshold (90%)
         priceLimit: 12000, // Liquidation Reward Price Limit (120%)
-      },
-      {
-        factor: "15000000000000000000", // 15 Boost Factor
-        limit: 1500, //15% Boost Limit
-      },
-      {
-        factor: "100000000000000000000000", // Staking Rewards Factor
-        period: ONE_DAY * 7, // 7-day period between vault staking rewards
-        maxPeriods: "416", // Limit number of staking periods
-      },
-      {
-        coolingPeriod: ONE_DAY * 7, // 7-day cooling period
-        activePeriod: ONE_DAY * 7, // 2-day active period
       },
     ],
     { unsafeAllow: ["external-library-linking"], timeout: 0 }
@@ -275,10 +255,10 @@ async function main() {
     loanCenter.address
   );
   await setLoanCenterTx.wait();
-  const setNativeTokenVaultTx = await addressesProvider.setNativeTokenVault(
-    nativeTokenVault.address
+  const setLiquidationRewardsTx = await addressesProvider.setLiquidationRewards(
+    liquidationsRewards.address
   );
-  await setNativeTokenVaultTx.wait();
+  await setLiquidationRewardsTx.wait();
   const setNativeTokenTx = await addressesProvider.setNativeToken(
     nativeToken.address
   );
@@ -287,10 +267,18 @@ async function main() {
     genesisNFT.address
   );
   await setGenesisNFT.wait();
-  const setFeeTreasuryTx = await addressesProvider.setFeeTreasury(
-    feeTreasuryAddress
+  const setFeeDistributorTx = await addressesProvider.setFeeDistributor(
+    feeDistributor.address
   );
-  await setFeeTreasuryTx.wait();
+  await setFeeDistributorTx.wait();
+  const setGaugeControllerTx = await addressesProvider.setGaugeController(
+    gaugeController.address
+  );
+  await setGaugeControllerTx.wait();
+  const setVotingEscrowTx = await addressesProvider.setVotingEscrow(
+    votingEscrow.address
+  );
+  await setVotingEscrowTx.wait();
   const setWETHTx = await addressesProvider.setWETH(addresses["ETH"].address);
   await setWETHTx.wait();
 }

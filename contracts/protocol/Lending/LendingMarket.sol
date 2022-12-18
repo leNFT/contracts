@@ -1,25 +1,25 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.17;
 
-import {IMarket} from "../interfaces/IMarket.sol";
-import {ITokenOracle} from "../interfaces/ITokenOracle.sol";
-import {LiquidationLogic} from "../libraries/logic/LiquidationLogic.sol";
-import {BorrowLogic} from "../libraries/logic/BorrowLogic.sol";
-import {DataTypes} from "../libraries/types/DataTypes.sol";
-import {ConfigTypes} from "../libraries/types/ConfigTypes.sol";
+import {IMarket} from "../../interfaces/IMarket.sol";
+import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
+import {LiquidationLogic} from "../../libraries/logic/LiquidationLogic.sol";
+import {BorrowLogic} from "../../libraries/logic/BorrowLogic.sol";
+import {DataTypes} from "../../libraries/types/DataTypes.sol";
+import {ConfigTypes} from "../../libraries/types/ConfigTypes.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
-import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
-import {ILendingPool} from "../interfaces/ILendingPool.sol";
-import {LoanLogic} from "../libraries/logic/LoanLogic.sol";
+import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
+import {ILendingPool} from "../../interfaces/ILendingPool.sol";
+import {LoanLogic} from "../../libraries/logic/LoanLogic.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import {Trustus} from "./Trustus/Trustus.sol";
+import {Trustus} from "../Trustus/Trustus.sol";
 import {LendingPool} from "./LendingPool.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
@@ -157,7 +157,7 @@ contract Market is
                 asset
             ),
             "Underlying Asset is not supported"
-        )
+        );
         require(
             _pools[collection][asset] == address(0),
             "Lending Pool already exists"
@@ -182,7 +182,7 @@ contract Market is
         );
 
         // Approve reserve use of Market balance
-        IERC20(asset).approve(address(newReserve), 2 ** 256 - 1);
+        IERC20(asset).approve(address(newLendingPool), 2 ** 256 - 1);
 
         // Approve Market use of loan center NFT's (for returning the collateral)
         if (
@@ -196,10 +196,10 @@ contract Market is
             );
         }
 
-        _setReserve(collection, asset, address(newReserve));
+        _setReserve(collection, asset, address(newLendingPool));
         _poolsCount[asset] += 1;
 
-        emit CreateReserve(address(newReserve));
+        emit CreateReserve(address(newLendingPool));
     }
 
     /// @notice Get the reserve address responsible to a certain asset
@@ -229,13 +229,15 @@ contract Market is
     function setDefaultProtocolLiquidationFee(
         uint256 protocolLiquidationFee
     ) external onlyOwner {
-        _defaultLendingPoolConfig.protocolLiquidationFee = protocolLiquidationFee;
+        _defaultLendingPoolConfig
+            .protocolLiquidationFee = protocolLiquidationFee;
     }
 
     function setDefaultMaximumUtilizationRate(
         uint256 maximumUtilizationRate
     ) external onlyOwner {
-        _defaultLendingPoolConfig.maximumUtilizationRate = maximumUtilizationRate;
+        _defaultLendingPoolConfig
+            .maximumUtilizationRate = maximumUtilizationRate;
     }
 
     function setDefaultTVLSafeguard(uint256 tvlSafeguard) external onlyOwner {

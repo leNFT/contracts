@@ -54,41 +54,38 @@ contract FeeDistributor is
             _addressProvider.getVotingEscrow()
         );
 
-        // Get maximum number of user epochs
-        uint256 currentEpoch = votingEscrow.epoch(block.timestamp);
-        uint256 userHistoryLength = votingEscrow.userHistoryLength(msg.sender);
-
         // Check if user has any user actions and therefore something to claim
-        if (userHistoryLength == 0) {
+        if (votingEscrow.userHistoryLength(msg.sender) == 0) {
             return 0;
         }
 
         // Iterate over a max of 50 weeks and/or user epochs
         uint256 amountToClaim;
+        DataTypes.Point memory userHistoryPoint;
+        uint256 nextClaimedEpoch;
+        uint256 nextClaimedEpochTimestamp;
+        uint256 nextPointEpoch;
         for (uint i = 0; i < 50; i++) {
-            if (_userClaimedEpoch[token][msg.sender] == currentEpoch - 1) {
+            if (
+                _userClaimedEpoch[token][msg.sender] ==
+                votingEscrow.epoch(block.timestamp) - 1
+            ) {
                 break;
             } else {
-                DataTypes.Point memory userHistoryPoint = votingEscrow
-                    .getUserHistoryPoint(
-                        msg.sender,
-                        _userHistoryPointer[token][msg.sender]
-                    );
-
-                uint256 pointEpoch = votingEscrow.epoch(
-                    userHistoryPoint.timestamp
+                userHistoryPoint = votingEscrow.getUserHistoryPoint(
+                    msg.sender,
+                    _userHistoryPointer[token][msg.sender]
                 );
-                uint256 nextClaimedEpoch = _userClaimedEpoch[token][
-                    msg.sender
-                ] + 1;
-                uint256 nextClaimedEpochTimestamp = votingEscrow.epochTimestamp(
+
+                nextClaimedEpoch = _userClaimedEpoch[token][msg.sender] + 1;
+                nextClaimedEpochTimestamp = votingEscrow.epochTimestamp(
                     _userClaimedEpoch[token][msg.sender] + 1
                 );
 
                 // Sum claimable amount if its the last activity in this epoch or the next activity is for a future epoch
                 if (
                     _userHistoryPointer[token][msg.sender] ==
-                    userHistoryLength - 1
+                    votingEscrow.userHistoryLength(msg.sender) - 1
                 ) {
                     amountToClaim +=
                         (_epochFees[token][nextClaimedEpoch] *
@@ -100,7 +97,7 @@ contract FeeDistributor is
 
                     _userClaimedEpoch[token][msg.sender] = nextClaimedEpoch;
                 } else {
-                    uint256 nextPointEpoch = votingEscrow.epoch(
+                    nextPointEpoch = votingEscrow.epoch(
                         votingEscrow
                             .getUserHistoryPoint(
                                 msg.sender,
@@ -109,7 +106,10 @@ contract FeeDistributor is
                             .timestamp
                     );
 
-                    if (nextPointEpoch == pointEpoch) {
+                    if (
+                        nextPointEpoch ==
+                        votingEscrow.epoch(userHistoryPoint.timestamp)
+                    ) {
                         _userHistoryPointer[token][msg.sender]++;
                     } else {
                         amountToClaim +=

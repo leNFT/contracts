@@ -36,7 +36,7 @@ library LiquidationLogic {
         ).getLoan(params.loanId);
 
         // Get the address of this asset's reserve
-        address reserveAsset = IERC4626(loanData.reserve).asset();
+        address poolAsset = IERC4626(loanData.pool).asset();
 
         // Find the liquidation price
         (uint256 liquidationPrice, uint256 liquidationReward) = ILoanCenter(
@@ -47,7 +47,7 @@ library LiquidationLogic {
         console.log("liquidationReward", liquidationReward);
 
         // Get the payment from the liquidator
-        IERC20Upgradeable(reserveAsset).safeTransferFrom(
+        IERC20Upgradeable(poolAsset).safeTransferFrom(
             params.caller,
             address(this),
             liquidationPrice
@@ -60,7 +60,7 @@ library LiquidationLogic {
         uint256 loanDebt = loanData.amount + loanInterest;
         // If we only have funds to pay back part of the loan
         if (fundsLeft < loanDebt) {
-            ILendingPool(loanData.reserve).receiveUnderlyingDefaulted(
+            ILendingPool(loanData.pool).receiveUnderlyingDefaulted(
                 address(this),
                 fundsLeft,
                 loanData.borrowRate,
@@ -70,7 +70,7 @@ library LiquidationLogic {
             fundsLeft = 0;
             // If we have funds to cover the whole debt associated with the loan
         } else {
-            ILendingPool(loanData.reserve).receiveUnderlying(
+            ILendingPool(loanData.pool).receiveUnderlying(
                 address(this),
                 loanData.amount,
                 loanData.borrowRate,
@@ -84,23 +84,23 @@ library LiquidationLogic {
         if (fundsLeft > 0) {
             uint256 protocolFee = PercentageMath.percentMul(
                 liquidationPrice,
-                ILendingPool(loanData.reserve).getLiquidationFee()
+                ILendingPool(loanData.pool).getLiquidationFee()
             );
             if (protocolFee > fundsLeft) {
                 protocolFee = fundsLeft;
             }
-            IERC20Upgradeable(reserveAsset).safeTransfer(
+            IERC20Upgradeable(poolAsset).safeTransfer(
                 addressesProvider.getFeeDistributor(),
                 protocolFee
             );
             IFeeDistributor(addressesProvider.getFeeDistributor())
-                .feesCheckpoint(reserveAsset);
+                .addFeesToEpoch(poolAsset, protocolFee);
             fundsLeft -= protocolFee;
         }
 
         // ... and the rest to the borrower.
         if (fundsLeft > 0) {
-            IERC20Upgradeable(reserveAsset).safeTransfer(
+            IERC20Upgradeable(poolAsset).safeTransfer(
                 loanData.borrower,
                 fundsLeft
             );

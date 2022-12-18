@@ -11,7 +11,7 @@ import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
-import {INativeTokenVault} from "../../interfaces/INativeTokenVault.sol";
+import {ILiquidationRewards} from "../../interfaces/ILiquidationRewards.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
@@ -44,9 +44,7 @@ library BorrowLogic {
         );
 
         // Get boost for this user and collection
-        uint256 boost = INativeTokenVault(
-            addressesProvider.getNativeTokenVault()
-        ).getLTVBoost(params.onBehalfOf, params.nftAddress);
+        uint256 boost = 0;
 
         // If a genesis NFT was used with this loan
         if (params.genesisNFTId != 0) {
@@ -104,7 +102,7 @@ library BorrowLogic {
         // If we are paying the entire loan debt
         if (params.amount == loanCenter.getLoanDebt(params.loanId)) {
             // Return the principal + interest
-            ILendingPool(loanData.reserve).receiveUnderlying(
+            ILendingPool(loanData.pool).receiveUnderlying(
                 params.caller,
                 loanData.amount,
                 loanData.borrowRate,
@@ -136,7 +134,7 @@ library BorrowLogic {
         else {
             // User is sending less than the interest
             if (params.amount <= interest) {
-                ILendingPool(loanData.reserve).receiveUnderlying(
+                ILendingPool(loanData.pool).receiveUnderlying(
                     params.caller,
                     0,
                     loanData.borrowRate,
@@ -155,7 +153,7 @@ library BorrowLogic {
             }
             // User is sending the full interest and closing part of the loan
             else {
-                ILendingPool(loanData.reserve).receiveUnderlying(
+                ILendingPool(loanData.pool).receiveUnderlying(
                     params.caller,
                     params.amount - interest,
                     loanData.borrowRate,

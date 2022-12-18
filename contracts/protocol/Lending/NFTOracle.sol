@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.17;
 
-import {INFTOracle} from "../interfaces/INFTOracle.sol";
-import {PercentageMath} from "../libraries/math/PercentageMath.sol";
-import {DataTypes} from "../libraries/types/DataTypes.sol";
+import {INFTOracle} from "../../interfaces/INFTOracle.sol";
+import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
+import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
-import {Trustus} from "./Trustus/Trustus.sol";
-import {INativeTokenVault} from "../interfaces/INativeTokenVault.sol";
+import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {Trustus} from "../Trustus/Trustus.sol";
+import {ILiquidationRewards} from "../../interfaces/ILiquidationRewards.sol";
 import "hardhat/console.sol";
 
 contract NFTOracle is INFTOracle, Ownable, Trustus {
@@ -51,10 +51,10 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         return priceParams.amount;
     }
 
-    function setTrustedPriceSigner(address signer, bool isTrusted)
-        external
-        onlyOwner
-    {
+    function setTrustedPriceSigner(
+        address signer,
+        bool isTrusted
+    ) external onlyOwner {
         _setIsTrusted(signer, isTrusted);
     }
 

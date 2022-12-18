@@ -39,9 +39,7 @@ interface ILoanCenter {
         uint256 nftTokenID
     ) external view returns (uint256);
 
-    function getLoanLendingVault(
-        uint256 loanId
-    ) external view returns (address);
+    function getLoanLendingPool(uint256 loanId) external view returns (address);
 
     function getLoanMaxETHCollateral(
         uint256 loanId,

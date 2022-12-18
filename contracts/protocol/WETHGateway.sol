@@ -105,7 +105,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     /// @param loanId The ID of the loan to be paid
     function repayETH(uint256 loanId) external payable nonReentrant {
         address reserve = ILoanCenter(_addressProvider.getLoanCenter())
-            .getLoanLendingVault(loanId);
+            .getLoanLendingPool(loanId);
         IMarket market = IMarket(_addressProvider.getMarket());
         IWETH weth = IWETH(_addressProvider.getWETH());
 

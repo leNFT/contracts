@@ -11,7 +11,7 @@ library LoanLogic {
         DataTypes.LoanData storage loandata,
         uint256 loanId,
         address borrower,
-        address reserve,
+        address pool,
         uint256 amount,
         uint256 maxLTV,
         uint256 boost,
@@ -30,16 +30,15 @@ library LoanLogic {
         loandata.nftAsset = nftAsset;
         loandata.nftTokenId = nftTokenId;
         loandata.borrowRate = borrowRate;
-        loandata.reserve = reserve;
+        loandata.pool = pool;
         loandata.initTimestamp = block.timestamp;
         loandata.debtTimestamp = block.timestamp;
     }
 
-    function getInterest(DataTypes.LoanData storage loandata, uint256 timestamp)
-        internal
-        view
-        returns (uint256)
-    {
+    function getInterest(
+        DataTypes.LoanData storage loandata,
+        uint256 timestamp
+    ) internal view returns (uint256) {
         //Interest increases every 10 minutes
         uint256 incrementalTimestamp = (timestamp / 600) * 601;
         return

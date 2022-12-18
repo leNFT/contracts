@@ -3,9 +3,9 @@ pragma solidity 0.8.17;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
-import {ITradingPool} from "../interfaces/ITradingPool.sol";
-import {ITradingPoolFactory} from "../interfaces/ITradingPoolFactory.sol";
+import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {ITradingPool} from "../../interfaces/ITradingPool.sol";
+import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {TradingPool} from "./TradingPool.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

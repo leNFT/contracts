@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.17;
 
-import {ILendingPool} from "../interfaces/ILendingPool.sol";
+import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
-import {IInterestRate} from "../interfaces/IInterestRate.sol";
+import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IInterestRate} from "../../interfaces/IInterestRate.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {DataTypes} from "../libraries/types/DataTypes.sol";
-import {ConfigTypes} from "../libraries/types/ConfigTypes.sol";
+import {DataTypes} from "../../libraries/types/DataTypes.sol";
+import {ConfigTypes} from "../../libraries/types/ConfigTypes.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ValidationLogic} from "../libraries/logic/ValidationLogic.sol";
+import {ValidationLogic} from "../../libraries/logic/ValidationLogic.sol";
 
 contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     IAddressesProvider private _addressProvider;

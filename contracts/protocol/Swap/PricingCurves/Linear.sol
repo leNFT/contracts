@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import {IPricingCurve} from "../../interfaces/IPricingCurve.sol";
-import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
+import {IPricingCurve} from "../../../interfaces/IPricingCurve.sol";
+import {PercentageMath} from "../../../libraries/math/PercentageMath.sol";
 
 contract LinearPriceCurve is IPricingCurve {
     function priceAfterBuy(

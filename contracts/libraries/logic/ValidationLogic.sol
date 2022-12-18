@@ -164,11 +164,11 @@ library ValidationLogic {
         );
 
         // Check if collateral / debt relation allows for liquidation
-        address reserveAsset = IERC4626(loanData.reserve).asset();
+        address poolAsset = IERC4626(loanData.pool).asset();
         ITokenOracle tokenOracle = ITokenOracle(
             addressesProvider.getTokenOracle()
         );
-        uint256 baseTokenETHPrice = tokenOracle.getTokenETHPrice(reserveAsset);
+        uint256 baseTokenETHPrice = tokenOracle.getTokenETHPrice(poolAsset);
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         require(

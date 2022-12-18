@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {PercentageMath} from "../libraries/math/PercentageMath.sol";
-import {DataTypes} from "../libraries/types/DataTypes.sol";
-import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
-import {IGaugeController} from "../interfaces/IGaugeController.sol";
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
-import {Time} from "../libraries/Time.sol";
+import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
+import {DataTypes} from "../../libraries/types/DataTypes.sol";
+import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
+import {IGaugeController} from "../../interfaces/IGaugeController.sol";
+import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {Time} from "../../libraries/Time.sol";
 
 contract GaugeController is OwnableUpgradeable, IGaugeController {
     IAddressesProvider private _addressProvider;

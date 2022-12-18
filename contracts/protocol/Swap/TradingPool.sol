@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.17;
 
-import {ITradingPool} from "../interfaces/ITradingPool.sol";
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
-import {IPricingCurve} from "../interfaces/IPricingCurve.sol";
+import {ITradingPool} from "../../interfaces/ITradingPool.sol";
+import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IPricingCurve} from "../../interfaces/IPricingCurve.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -13,9 +13,9 @@ import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {DataTypes} from "../libraries/types/DataTypes.sol";
-import {PercentageMath} from "../libraries/math/PercentageMath.sol";
-import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
+import {DataTypes} from "../../libraries/types/DataTypes.sol";
+import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
+import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
 
 contract TradingPool is
     Context,

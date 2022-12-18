@@ -2,11 +2,11 @@
 pragma solidity 0.8.17;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {ILiquidationRewards} from "../interfaces/ILiquidationRewards.sol";
-import {ITokenOracle} from "../interfaces/ITokenOracle.sol";
-import {PercentageMath} from "../libraries/math/PercentageMath.sol";
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
-import {ConfigTypes} from "../libraries/types/ConfigTypes.sol";
+import {ILiquidationRewards} from "../../interfaces/ILiquidationRewards.sol";
+import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
+import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
+import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {ConfigTypes} from "../../libraries/types/ConfigTypes.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -21,7 +21,7 @@ contract LiquidationRewards is
     ConfigTypes.LiquidationRewardConfig internal _liquidatonRewardsConfig;
 
     //Reserves that have their liquidations incentivized
-    mapping(address => bool) private _reserveIncentives;
+    mapping(address => bool) private _lendingPoolIncentives;
 
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -42,17 +42,17 @@ contract LiquidationRewards is
         _liquidatonRewardsConfig = liquidatonRewardsConfig;
     }
 
-    function isReserveLiquidationIncentivized(
-        address reserve
+    function isPoolLiquidationIncentivized(
+        address pool
     ) external view returns (bool) {
-        return _reserveIncentives[reserve];
+        return _lendingPoolIncentives[pool];
     }
 
-    function setReserveLiquidationIncentives(
-        address reserve,
+    function setPoolLiquidationIncentives(
+        address pool,
         bool isIncentivized
     ) external onlyOwner {
-        _reserveIncentives[reserve] = isIncentivized;
+        _lendingPoolIncentives[pool] = isIncentivized;
     }
 
     function getLiquidationReward(
@@ -64,7 +64,7 @@ contract LiquidationRewards is
         uint256 reward = 0;
 
         // If the reserve is not in the list of incentived reserves it gets no reward
-        if (_reserveIncentives[reserve] == false) {
+        if (_lendingPoolIncentives[reserve] == false) {
             return reward;
         }
 
