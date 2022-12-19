@@ -112,6 +112,8 @@ contract TradingPool is
         // Mint liquidity position NFT
         ERC721._safeMint(msg.sender, _lpCount);
         _lpCount++;
+
+        emit AddLiquidity(msg.sender, _lpCount, tokenAmount, nftIds);
     }
 
     function removeLiquidity(uint256 lpId) external {
@@ -135,6 +137,8 @@ contract TradingPool is
 
         // delete the user deposit info
         delete _liquidityPairs[lpId];
+
+        emit RemoveLiquidity(msg.sender, lpId);
     }
 
     function buy(uint256[] memory nftIds) external returns (uint256) {
