@@ -63,6 +63,14 @@ contract TradingPool is
         _transferOwnership(owner);
     }
 
+    function getNFT() external view returns (address) {
+        return _nft;
+    }
+
+    function getToken() external view returns (address) {
+        return address(_token);
+    }
+
     function getLP(
         uint256 lpId
     ) external view returns (DataTypes.LiquidityPair memory) {
