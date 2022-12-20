@@ -215,6 +215,18 @@ async function main() {
   await wethGateway.deployed();
   addresses["WETHGateway"] = wethGateway.address;
 
+  // Deploy price curves contracts
+  const ExponentialCurve = await ethers.getContractFactory(
+    "ExponentialPriceCurve"
+  );
+  exponentialCurve = await ExponentialCurve.deploy();
+  await exponentialCurve.deployed();
+  addresses["ExponentialCurve"] = exponentialCurve.address;
+  const LinearCurve = await ethers.getContractFactory("LinearPriceCurve");
+  linearCurve = await LinearCurve.deploy();
+  await linearCurve.deployed();
+  addresses["LinearCurve"] = linearCurve.address;
+
   /****************************************************************
   SAVE TO DISK
   Write contract addresses to file

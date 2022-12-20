@@ -188,6 +188,8 @@ contract TradingPool is
         // Get tokens from user
         IERC20(_token).safeTransferFrom(msg.sender, address(this), priceSum);
 
+        emit Buy(msg.sender, nftIds, priceSum);
+
         return priceSum;
     }
 
@@ -229,6 +231,8 @@ contract TradingPool is
         }
 
         IERC20(_token).safeTransfer(address(this), priceSum);
+
+        emit Sell(msg.sender, nftIds, priceSum);
 
         return priceSum;
     }

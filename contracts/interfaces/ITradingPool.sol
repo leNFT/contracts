@@ -7,11 +7,15 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 interface ITradingPool is IERC721 {
     event AddLiquidity(
         address indexed user,
-        address indexed id,
+        uint256 indexed id,
         uint256 tokenAmount,
         uint256[] nftIds
     );
-    event RemoveLiquidity(address indexed user, address indexed id);
+    event RemoveLiquidity(address indexed user, uint256 indexed id);
+
+    event Buy(address indexed user, uint256[] nftIds, uint256 price);
+
+    event Sell(address indexed user, uint256[] nftIds, uint256 price);
 
     function getLP(
         uint256 lpId
