@@ -11,14 +11,14 @@ library DataTypes {
     }
 
     struct LiquidityPair {
-        uint256 tokenAmount;
         uint256[] nftIds;
+        uint256 tokenAmount;
         address curve;
         uint256 delta;
         uint256 price;
     }
 
-    struct NftToLiquidityPair {
+    struct NftToLp {
         uint256 liquidityPair;
         uint256 index;
     }

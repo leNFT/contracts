@@ -250,6 +250,14 @@ async function main() {
       console.log("File written to API folder");
     }
   );
+  fs.writeFileSync(
+    "../swap-router/contractAddresses.json",
+    JSON.stringify(contractAddresses),
+    function (err) {
+      if (err) throw err;
+      console.log("File written to API folder");
+    }
+  );
 
   /****************************************************************
   SETUP TRANSACTIONS

@@ -30,7 +30,7 @@ contract TradingPool is
     address private _nft;
     uint256 private _swapFee;
     mapping(uint256 => DataTypes.LiquidityPair) _liquidityPairs;
-    mapping(uint256 => DataTypes.NftToLiquidityPair) _nftToLiquidityPair;
+    mapping(uint256 => DataTypes.NftToLp) _nftToLp;
     uint256 private _lpCount;
 
     using SafeERC20 for IERC20;
@@ -77,6 +77,10 @@ contract TradingPool is
         return _liquidityPairs[lpId];
     }
 
+    function nftToLp(uint256 nftId) external view returns (uint256) {
+        return _nftToLp[nftId].liquidityPair;
+    }
+
     function addLiquidity(
         uint256 tokenAmount,
         uint256[] memory nftIds,
@@ -91,7 +95,7 @@ contract TradingPool is
                 address(this),
                 nftIds[i]
             );
-            _nftToLiquidityPair[nftIds[i]] = DataTypes.NftToLiquidityPair({
+            _nftToLp[nftIds[i]] = DataTypes.NftToLp({
                 liquidityPair: _lpCount,
                 index: i
             });
@@ -102,8 +106,8 @@ contract TradingPool is
 
         // Save the user deposit info
         _liquidityPairs[_lpCount] = DataTypes.LiquidityPair({
-            tokenAmount: tokenAmount,
             nftIds: nftIds,
+            tokenAmount: tokenAmount,
             curve: curve,
             delta: delta,
             price: initialPrice
@@ -113,7 +117,15 @@ contract TradingPool is
         ERC721._safeMint(msg.sender, _lpCount);
         _lpCount++;
 
-        emit AddLiquidity(msg.sender, _lpCount, tokenAmount, nftIds);
+        emit AddLiquidity(
+            msg.sender,
+            _lpCount,
+            nftIds,
+            tokenAmount,
+            curve,
+            delta,
+            initialPrice
+        );
     }
 
     function removeLiquidity(uint256 lpId) external {
@@ -150,8 +162,8 @@ contract TradingPool is
         DataTypes.LiquidityPair memory lp;
 
         for (uint i = 0; i < nftIds.length; i++) {
-            lpIndex = _nftToLiquidityPair[nftIds[i]].liquidityPair;
-            nftIndex = _nftToLiquidityPair[nftIds[i]].index;
+            lpIndex = _nftToLp[nftIds[i]].liquidityPair;
+            nftIndex = _nftToLp[nftIds[i]].index;
             lp = _liquidityPairs[lpIndex];
             priceAfterBuy = IPricingCurve(lp.curve).priceAfterBuy(
                 lp.price,
@@ -175,7 +187,7 @@ contract TradingPool is
             priceSum += price;
 
             // Delete NFT from tracker
-            delete _nftToLiquidityPair[nftIds[i]];
+            delete _nftToLp[nftIds[i]];
 
             // Send NFT to user
             IERC721(_nft).safeTransferFrom(
@@ -215,8 +227,8 @@ contract TradingPool is
                 nftIds[i]
             );
 
-            lpIndex = _nftToLiquidityPair[nftIds[i]].liquidityPair;
-            nftIndex = _nftToLiquidityPair[nftIds[i]].index;
+            lpIndex = _nftToLp[nftIds[i]].liquidityPair;
+            nftIndex = _nftToLp[nftIds[i]].index;
             lp = _liquidityPairs[lpIndex];
 
             price =

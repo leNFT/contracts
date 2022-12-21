@@ -8,8 +8,11 @@ interface ITradingPool is IERC721 {
     event AddLiquidity(
         address indexed user,
         uint256 indexed id,
+        uint256[] nftIds,
         uint256 tokenAmount,
-        uint256[] nftIds
+        address curve,
+        uint256 delta,
+        uint256 initalPrice
     );
     event RemoveLiquidity(address indexed user, uint256 indexed id);
 
