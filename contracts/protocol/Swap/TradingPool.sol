@@ -217,7 +217,6 @@ contract TradingPool is
         uint256 priceSum;
         uint256 price;
         uint256 lpIndex;
-        uint256 nftIndex;
         DataTypes.LiquidityPair memory lp;
 
         // Transfer the NFTs to the pool
@@ -228,8 +227,7 @@ contract TradingPool is
                 nftIds[i]
             );
 
-            lpIndex = _nftToLp[nftIds[i]].liquidityPair;
-            nftIndex = _nftToLp[nftIds[i]].index;
+            lpIndex = liquidityPairs[i];
             lp = _liquidityPairs[lpIndex];
 
             price =
@@ -237,13 +235,13 @@ contract TradingPool is
                 PercentageMath.PERCENTAGE_FACTOR;
             priceSum += price;
 
-            _liquidityPairs[nftIds[i]].nftIds.push(nftIds[i]);
+            _liquidityPairs[lpIndex].nftIds.push(nftIds[i]);
             _liquidityPairs[lpIndex].tokenAmount -= price;
-            _liquidityPairs[nftIds[i]].price = IPricingCurve(lp.curve)
+            _liquidityPairs[lpIndex].price = IPricingCurve(lp.curve)
                 .priceAfterSell(lp.price, lp.delta);
         }
 
-        IERC20(_token).safeTransfer(address(this), priceSum);
+        IERC20(_token).safeTransfer(msg.sender, priceSum);
 
         emit Sell(msg.sender, nftIds, priceSum);
 
