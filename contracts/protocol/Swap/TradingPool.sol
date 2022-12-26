@@ -144,7 +144,7 @@ contract TradingPool is
 
         // Send user token to the pool
         IERC20(_token).safeTransfer(
-            address(this),
+            msg.sender,
             _liquidityPairs[lpId].tokenAmount
         );
 
