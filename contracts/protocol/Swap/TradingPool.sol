@@ -140,6 +140,7 @@ contract TradingPool is
                 msg.sender,
                 _liquidityPairs[lpId].nftIds[i]
             );
+            delete _nftToLp[_liquidityPairs[lpId].nftIds[i]];
         }
 
         // Send user token to the pool
@@ -161,6 +162,8 @@ contract TradingPool is
         uint256 lpIndex;
         uint256 nftIndex;
         DataTypes.LiquidityPair memory lp;
+
+        require(nftIds.length > 0, "Need to buy at least one NFT");
 
         for (uint i = 0; i < nftIds.length; i++) {
             lpIndex = _nftToLp[nftIds[i]].liquidityPair;
@@ -214,6 +217,7 @@ contract TradingPool is
             nftIds.length == liquidityPairs.length,
             "NFTs and Liquidity Pairs must have same length"
         );
+        require(nftIds.length > 0, "Need to sell at least one NFT");
         uint256 priceSum;
         uint256 price;
         uint256 lpIndex;
@@ -239,6 +243,11 @@ contract TradingPool is
             _liquidityPairs[lpIndex].tokenAmount -= price;
             _liquidityPairs[lpIndex].price = IPricingCurve(lp.curve)
                 .priceAfterSell(lp.price, lp.delta);
+
+            _nftToLp[nftIds[i]] = DataTypes.NftToLp({
+                liquidityPair: lpIndex,
+                index: _liquidityPairs[lpIndex].nftIds.length - 1
+            });
         }
 
         IERC20(_token).safeTransfer(msg.sender, priceSum);
