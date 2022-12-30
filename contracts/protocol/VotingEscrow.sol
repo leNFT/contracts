@@ -204,16 +204,16 @@ contract VotingEscrow is
     }
 
     // Locks LE tokens into the contract
-    function createLock(uint256 amount, uint256 unlocktime) external {
+    function createLock(uint256 amount, uint256 unlockTime) external {
         // Round the locktime to whole weeks
-        uint256 roundedUnlocktime = (unlocktime / Time.WEEK) * Time.WEEK;
+        uint256 roundedUnlockTime = (unlockTime / Time.WEEK) * Time.WEEK;
 
         require(
-            roundedUnlocktime >= MINLOCKTIME + block.timestamp,
+            roundedUnlockTime >= MINLOCKTIME + block.timestamp,
             "Locktime smaller than minimum locktime"
         );
         require(
-            roundedUnlocktime <= MAXLOCKTIME + block.timestamp,
+            roundedUnlockTime <= MAXLOCKTIME + block.timestamp,
             "Locktime higher than maximum locktime"
         );
         require(
@@ -225,7 +225,7 @@ contract VotingEscrow is
         DataTypes.LockedBalance memory oldLocked = _userLockedBalance[
             _msgSender()
         ];
-        _userLockedBalance[_msgSender()].init(amount, roundedUnlocktime);
+        _userLockedBalance[_msgSender()].init(amount, roundedUnlockTime);
 
         // Call a checkpoint and update global tracking vars
         _checkpoint(_msgSender(), oldLocked, _userLockedBalance[_msgSender()]);
@@ -259,9 +259,9 @@ contract VotingEscrow is
         );
     }
 
-    function increaseUnlocktime(uint256 newUnlocktime) external {
+    function increaseUnlockTime(uint256 newUnlockTime) external {
         // Round the locktime to whole weeks
-        uint256 roundedUnlocktime = (newUnlocktime / Time.WEEK) * Time.WEEK;
+        uint256 roundedUnlocktime = (newUnlockTime / Time.WEEK) * Time.WEEK;
         require(
             _userLockedBalance[_msgSender()].end < block.timestamp,
             "User has no active lock"
