@@ -41,9 +41,19 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     }
 
     // Add a gauge (should be done by the admin)
-    function addGauge(address reserve, address gauge) external {
+    function addGauge(address reserve, address gauge) external onlyOwner {
         _reserveToGauge[reserve] = gauge;
         _isGauge[gauge] = true;
+
+        emit AddGauge(reserve, gauge);
+    }
+
+    // Remove a gauge (should be done by the admin)
+    function removeGauge(address reserve, address gauge) external onlyOwner {
+        delete _reserveToGauge[reserve];
+        delete _isGauge[gauge];
+
+        emit RemoveGauge(reserve, gauge);
     }
 
     function isGauge(address gauge) external view returns (bool) {
@@ -226,5 +236,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             userLastPoint.slope,
             userLockedBalance.end
         );
+
+        emit Vote(msg.sender, gauge, weight);
     }
 }

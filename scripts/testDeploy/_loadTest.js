@@ -43,16 +43,16 @@ let loadEnv = async function () {
   testNFT2 = await TestNFT.deploy("TEST NFT2", "TNFT2");
   await testNFT2.deployed();
   console.log("Test NFT2 Address:", testNFT2.address);
-  const Market = await ethers.getContractFactory("Market", {
+  const LendingMarket = await ethers.getContractFactory("LendingMarket", {
     libraries: {
       BorrowLogic: borrowLogicLib.address,
       LiquidationLogic: liquidationLogicLib.address,
       ValidationLogic: validationLogicLib.address,
     },
   });
-  market = await Market.deploy();
-  await market.deployed();
-  console.log("Market Address:", market.address);
+  lendingMarket = await LendingMarket.deploy();
+  await lendingMarket.deployed();
+  console.log("Lending Market Address:", lendingMarket.address);
   const LoanCenter = await ethers.getContractFactory("LoanCenter");
   loanCenter = await LoanCenter.deploy();
   await loanCenter.deployed();
@@ -74,16 +74,6 @@ let loadEnv = async function () {
   await wethGateway.deployed();
   console.log("WETHGateway Address:", wethGateway.address);
 
-  // Deploy Native Token Vault
-  const NativeTokenVault = await ethers.getContractFactory("NativeTokenVault", {
-    libraries: {
-      ValidationLogic: validationLogicLib.address,
-    },
-  });
-  nativeTokenVault = await NativeTokenVault.deploy();
-  await nativeTokenVault.deployed();
-  console.log("Native Token Vault Address:", nativeTokenVault.address);
-
   // Deploy Native Token
   const NativeToken = await ethers.getContractFactory("NativeToken");
   nativeToken = await NativeToken.deploy();
@@ -102,11 +92,19 @@ let loadEnv = async function () {
   await genesisNFT.deployed();
   console.log("Genesis NFT Address:", genesisNFT.address);
 
+  // Deploy voting escrow
+  const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
+  votingEscrow = await VotingEscrow.deploy();
+  await votingEscrow.deployed();
+  console.log("Voting Escrow Address:", votingEscrow.address);
+
   // Initialize address provider and add every contract address
   const initAddressesProviderTx = await addressesProvider.initialize();
   await initAddressesProviderTx.wait();
-  const setMarketTx = await addressesProvider.setMarket(market.address);
-  await setMarketTx.wait();
+  const setLendingMarketTx = await addressesProvider.setLendingMarket(
+    lendingMarket.address
+  );
+  await setLendingMarketTx.wait();
   const setDebtTokenTx = await addressesProvider.setDebtToken(
     debtToken.address
   );
@@ -123,10 +121,7 @@ let loadEnv = async function () {
     tokenOracle.address
   );
   await setTokenOracleTx.wait();
-  const setNativeTokenVaultTx = await addressesProvider.setNativeTokenVault(
-    nativeTokenVault.address
-  );
-  await setNativeTokenVaultTx.wait();
+
   const setNativeTokenTx = await addressesProvider.setNativeToken(
     nativeToken.address
   );
@@ -139,22 +134,24 @@ let loadEnv = async function () {
     genesisNFT.address
   );
   await setGenesisNFT.wait();
-  feeTreasuryAddress = "0xa5C6eD5d801417c50f775099BA59C306d4034D4D";
-  const setFeeTreasuryTx = await addressesProvider.setFeeTreasury(
-    feeTreasuryAddress
+  const setVotingEscrowTx = await addressesProvider.setVotingEscrow(
+    votingEscrow.address
   );
-  await setFeeTreasuryTx.wait();
+  await setVotingEscrowTx.wait();
   const setWETHTx = await addressesProvider.setWETH(weth.address);
   await setWETHTx.wait();
 
-  // Initialize market
-  const initMarketTx = await market.initialize(addressesProvider.address, {
-    liquidationPenalty: "1800", // defaultLiquidationPenalty
-    protocolLiquidationFee: "200", // defaultProtocolLiquidationFee
-    maximumUtilizationRate: "8500", // defaultMaximumUtilizationRate
-    tvlSafeguard: "25000000000000000000", // defaultTVLSafeguard
-  });
-  await initMarketTx.wait();
+  // Initialize lending market
+  const initLendingMarketTx = await lendingMarket.initialize(
+    addressesProvider.address,
+    {
+      liquidationPenalty: "1800", // defaultLiquidationPenalty
+      liquidationFee: "200", // defaultProtocolLiquidationFee
+      maximumUtilizationRate: "8500", // defaultMaximumUtilizationRate
+      tvlSafeguard: "25000000000000000000", // defaultTVLSafeguard
+    }
+  );
+  await initLendingMarketTx.wait();
 
   //Initialize LoanCenter
   const initLoanCenterTx = await loanCenter.initialize(
@@ -179,37 +176,16 @@ let loadEnv = async function () {
     "100000000000000000000000000", //100M Max Cap
     owner.address,
     "15000000000000000000000000", // 15M Dev Tokens
-    "63113851" // 2-year dev vesting
+    ONE_DAY * 365 * 2, // 2-year dev vesting
+    "20000000000000000000"
   );
   await initNativeTokenTx.wait();
 
-  //Init native token vault
-  const initNativeTokenVaultTx = await nativeTokenVault.initialize(
-    addressesProvider.address,
-    "veleNFT Token",
-    "veLE",
-    nativeToken.address,
-    {
-      factor: "55000000000000000", // 0.055 Liquidation Reward Factor
-      maxReward: "25000000000000000000000", // 25000 leNFT Reward Limit
-      priceThreshold: 9000, // Liquidation Reward Price Threshold (90%)
-      priceLimit: 12000, // Liquidation Reward Price Limit (120%)
-    },
-    {
-      factor: "15000000000000000000", // 15 Boost Factor
-      limit: 1500, //15% Boost Limit
-    },
-    {
-      factor: "100000000000000000000000", // Staking Rewards Factor
-      period: "604800", // 7-day period between vault staking rewards
-      maxPeriods: "416", // Limit number of staking periods
-    },
-    {
-      coolingPeriod: ONE_DAY * 7, // 7-day cooling period
-      activePeriod: ONE_DAY * 7, // 2-day active period
-    }
+  // Init voting escrow
+  const initVotingEscrowTx = await votingEscrow.initialize(
+    addressesProvider.address
   );
-  await initNativeTokenVaultTx.wait();
+  await initVotingEscrowTx.wait();
 
   //Init Genesis NFT
   const initGenesisNFTTx = await genesisNFT.initialize(

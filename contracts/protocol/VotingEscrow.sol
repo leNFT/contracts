@@ -115,7 +115,7 @@ contract VotingEscrow is
         uint256 oldSlope;
         uint256 newSlope;
 
-        // Calculate slopes and weights
+        // Calculate slopes and bias
         if (oldBalance.end > block.timestamp && oldBalance.amount > 0) {
             oldPoint.slope = oldBalance.amount / MAXLOCKTIME;
             oldPoint.bias = oldPoint.slope * (oldBalance.end - block.timestamp);
@@ -123,7 +123,16 @@ contract VotingEscrow is
         if (newBalance.end > block.timestamp && newBalance.amount > 0) {
             newPoint.slope = newBalance.amount / MAXLOCKTIME;
             newPoint.bias = newPoint.slope * (newBalance.end - block.timestamp);
+            newPoint.timestamp = block.timestamp;
         }
+
+        console.log("oldPoint.slope", oldPoint.slope);
+        console.log("oldPoint.bias", oldPoint.bias);
+        console.log("newPoint.slope", newPoint.slope);
+        console.log("newPoint.bias", newPoint.bias);
+        console.log("newPoint.timestamp", newPoint.timestamp);
+        console.log("newBalance.end", newBalance.end);
+        console.log("newBalance.amount", newBalance.amount);
 
         // Bring epoch records into the present
         writeTotalWeightHistory();
@@ -197,6 +206,11 @@ contract VotingEscrow is
         DataTypes.Point memory lastUserPoint = _userHistory[user][
             _userHistory[user].length - 1
         ];
+
+        console.log("lastUserPoint.bias", lastUserPoint.bias);
+        console.log("lastUserPoint.slope", lastUserPoint.slope);
+        console.log("lastUserPoint.timestamp", lastUserPoint.timestamp);
+
         return
             lastUserPoint.bias -
             lastUserPoint.slope *
