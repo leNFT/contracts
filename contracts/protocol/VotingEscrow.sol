@@ -126,14 +126,6 @@ contract VotingEscrow is
             newPoint.timestamp = block.timestamp;
         }
 
-        console.log("oldPoint.slope", oldPoint.slope);
-        console.log("oldPoint.bias", oldPoint.bias);
-        console.log("newPoint.slope", newPoint.slope);
-        console.log("newPoint.bias", newPoint.bias);
-        console.log("newPoint.timestamp", newPoint.timestamp);
-        console.log("newBalance.end", newBalance.end);
-        console.log("newBalance.amount", newBalance.amount);
-
         // Bring epoch records into the present
         writeTotalWeightHistory();
 
@@ -266,7 +258,7 @@ contract VotingEscrow is
         // Call a checkpoint and update global tracking vars
         _checkpoint(_msgSender(), oldLocked, _userLockedBalance[_msgSender()]);
 
-        IERC20Upgradeable(_addressProvider.getNativeToken()).transferFrom(
+        IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransferFrom(
             _msgSender(),
             address(this),
             amount
@@ -314,6 +306,12 @@ contract VotingEscrow is
 
         // Call a checkpoint and update global tracking vars
         _checkpoint(_msgSender(), oldLocked, _userLockedBalance[_msgSender()]);
+
+        // Send locked amount back to user
+        IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransfer(
+            _msgSender(),
+            oldLocked.amount
+        );
     }
 
     function locked(
