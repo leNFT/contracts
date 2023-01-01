@@ -7,6 +7,8 @@ import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
 import {IGaugeController} from "../../interfaces/IGaugeController.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IGauge} from "../../interfaces/IGauge.sol";
+
 import {Time} from "../../libraries/Time.sol";
 
 contract GaugeController is OwnableUpgradeable, IGaugeController {
@@ -30,7 +32,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     // Weight vote power each user has in each gauge
     mapping(address => mapping(address => DataTypes.VoteBalance)) _userGaugeVoteBalance;
 
-    mapping(address => address) _reserveToGauge;
+    mapping(address => address) _liquidityPoolToGauge;
     mapping(address => bool) _isGauge;
 
     function initialize(
@@ -41,30 +43,36 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     }
 
     // Add a gauge (should be done by the admin)
-    function addGauge(address reserve, address gauge) external onlyOwner {
-        _reserveToGauge[reserve] = gauge;
+    function addGauge(address gauge) external onlyOwner {
+        address liquidityPool = IGauge(gauge).lpToken();
+        _liquidityPoolToGauge[liquidityPool] = gauge;
         _isGauge[gauge] = true;
 
-        emit AddGauge(reserve, gauge);
+        emit AddGauge(gauge, liquidityPool);
     }
 
     // Remove a gauge (should be done by the admin)
-    function removeGauge(address reserve, address gauge) external onlyOwner {
-        delete _reserveToGauge[reserve];
+    function removeGauge(address gauge) external onlyOwner {
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
+
+        address liquidityPool = IGauge(gauge).lpToken();
+        delete _liquidityPoolToGauge[liquidityPool];
         delete _isGauge[gauge];
 
-        emit RemoveGauge(reserve, gauge);
+        emit RemoveGauge(gauge, liquidityPool);
     }
 
     function isGauge(address gauge) external view returns (bool) {
         return _isGauge[gauge];
     }
 
-    function getGauge(address reserve) external view returns (address) {
-        return _reserveToGauge[reserve];
+    function getGauge(address liquidityPool) external view returns (address) {
+        return _liquidityPoolToGauge[liquidityPool];
     }
 
     function getGaugeWeight(address gauge) external view returns (uint256) {
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
+
         DataTypes.Point
             memory lastWeightCheckpoint = _lastGaugeWeigthCheckpoint[gauge];
         return
@@ -77,6 +85,8 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         address gauge,
         uint256 epoch
     ) external view returns (uint256) {
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
+
         return _gaugeWeightHistory[gauge][epoch];
     }
 
@@ -100,6 +110,8 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         address user,
         address gauge
     ) external view returns (uint256) {
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
+
         return _userGaugeVoteBalance[user][gauge].weight;
     }
 
@@ -130,6 +142,8 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     }
 
     function writeGaugeWeightHistory(address gauge) public {
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
+
         // Update last saved weight checkpoint and record weight for epochs
         // Will break if is not used for 128 weeks
         uint256 epochTimestampPointer = (_lastGaugeWeigthCheckpoint[gauge]
@@ -188,6 +202,8 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             userLockedBalance.amount > 0,
             "Must have locked balance bigger than 0 to vote"
         );
+
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
 
         // Write weight history to make sure its up to date until this epoch
         writeTotalWeightHistory();

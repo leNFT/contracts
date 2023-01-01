@@ -8,10 +8,12 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
+import {IGauge} from "../../interfaces/IGauge.sol";
+
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 
-contract LendingGauge {
+contract LendingGauge is IGauge {
     IAddressesProvider private _addressProvider;
     mapping(address => uint256) private _balanceOf;
     mapping(address => DataTypes.WorkingBalance[])
