@@ -294,6 +294,10 @@ contract VotingEscrow is
 
     function withdraw() external {
         require(
+            _userLockedBalance[_msgSender()].amount > 0,
+            "Nothing to withdraw"
+        );
+        require(
             block.timestamp > _userLockedBalance[_msgSender()].end,
             "Locktime is not over"
         );

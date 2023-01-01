@@ -96,6 +96,13 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         return _userVotePower[user];
     }
 
+    function userGaugeVoteWeight(
+        address user,
+        address gauge
+    ) external view returns (uint256) {
+        return _userGaugeVoteBalance[user][gauge].weight;
+    }
+
     function writeTotalWeightHistory() public {
         // Update last saved weight checkpoint and record weight for epochs
         // Will break if is not used for 128 weeks
