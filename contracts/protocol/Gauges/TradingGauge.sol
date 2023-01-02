@@ -18,6 +18,9 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 contract TradingGauge is IGauge {
     IAddressesProvider private _addressProvider;
     mapping(uint256 => address) private _ownerOf;
+    mapping(address => uint256) private _balanceOf;
+    mapping(address => mapping(uint256 => uint256)) private _ownedTokens;
+    mapping(uint256 => uint256) private _ownedTokensIndex;
     mapping(address => DataTypes.WorkingBalance[])
         private _workingBalanceHistory;
     mapping(address => uint256) private _workingBalancePointer;
@@ -30,6 +33,9 @@ contract TradingGauge is IGauge {
     uint256 private _totalLPValue;
 
     using SafeERC20 for IERC20;
+
+    event DepositLP(address user, uint256 lpId);
+    event WithdrawLP(address user, uint256 lpId);
 
     constructor(IAddressesProvider addressProvider, address lpToken_) {
         _addressProvider = addressProvider;
@@ -133,8 +139,6 @@ contract TradingGauge is IGauge {
     }
 
     function _checkpoint(address user) internal {
-        writeTotalWeightHistory();
-
         // Get user ve balance and total ve balance
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
@@ -157,6 +161,12 @@ contract TradingGauge is IGauge {
                 timestamp: block.timestamp
             });
 
+        _workingSupply +=
+            newWorkingBalance.amount -
+            _workingBalanceHistory[msg.sender][
+                _workingBalanceHistory[msg.sender].length - 1
+            ].amount;
+        writeTotalWeightHistory();
         _workingBalanceHistory[msg.sender].push(newWorkingBalance);
     }
 
@@ -184,6 +194,13 @@ contract TradingGauge is IGauge {
         _checkpoint(msg.sender);
 
         IERC721(_lpToken).safeTransferFrom(msg.sender, address(this), lpId);
+
+        uint256 lastTokenIndex = _balanceOf[msg.sender];
+        _ownedTokens[msg.sender][lastTokenIndex] = lpId;
+        _ownedTokensIndex[lpId] = lastTokenIndex;
+        _balanceOf[msg.sender] += 1;
+
+        emit DepositLP(msg.sender, lpId);
     }
 
     function withdraw(uint256 lpId) external {
@@ -203,6 +220,47 @@ contract TradingGauge is IGauge {
         _checkpoint(msg.sender);
 
         IERC721(_lpToken).safeTransferFrom(address(this), msg.sender, lpId);
+
+        uint256 lastTokenIndex = _balanceOf[msg.sender] - 1;
+        uint256 tokenIndex = _ownedTokensIndex[lpId];
+
+        // When the token to delete is the last token, the swap operation is unnecessary
+        if (tokenIndex != lastTokenIndex) {
+            uint256 lastTokenId = _ownedTokens[msg.sender][lastTokenIndex];
+
+            _ownedTokens[msg.sender][tokenIndex] = lastTokenId; // Move the last token to the slot of the to-delete token
+            _ownedTokensIndex[lastTokenId] = tokenIndex; // Update the moved token's index
+        }
+
+        // This also deletes the contents at the last position of the array
+        delete _ownedTokensIndex[lpId];
+        delete _ownedTokens[msg.sender][lastTokenIndex];
+
+        _balanceOf[msg.sender] -= 1;
+
+        emit WithdrawLP(msg.sender, lpId);
+    }
+
+    function userLPValue(address user) external view returns (uint256) {
+        return _userLPValue[user];
+    }
+
+    function userBoost(address user) external view returns (uint256) {
+        return
+            (_workingBalanceHistory[user][
+                _workingBalanceHistory[user].length - 1
+            ].amount * PercentageMath.PERCENTAGE_FACTOR) / _userLPValue[user];
+    }
+
+    function lpOfOwnerByIndex(
+        address user,
+        uint256 index
+    ) external view returns (uint256) {
+        return _ownedTokens[user][index];
+    }
+
+    function balanceOf(address user) external view returns (uint256) {
+        return _balanceOf[user];
     }
 
     function lpValue(uint256 lpId) public view returns (uint256) {
