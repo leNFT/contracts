@@ -246,6 +246,9 @@ contract TradingGauge is IGauge {
     }
 
     function userBoost(address user) external view returns (uint256) {
+        if (_userLPValue[user] == 0) {
+            return 0;
+        }
         return
             (_workingBalanceHistory[user][
                 _workingBalanceHistory[user].length - 1
