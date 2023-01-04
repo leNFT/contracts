@@ -146,21 +146,24 @@ contract TradingGauge is IGauge {
 
         uint256 userVotingBalance = votingEscrow.balanceOf(user);
         uint256 totalVotingSupply = votingEscrow.totalSupply();
+        uint256 newAmount;
+
+        if (totalVotingSupply == 0) {
+            newAmount = 0;
+        } else {
+            newAmount = Math.min(
+                _userLPValue[msg.sender],
+                (PercentageMath.HALF_PERCENTAGE_FACTOR *
+                    _userLPValue[msg.sender] +
+                    (PercentageMath.HALF_PERCENTAGE_FACTOR *
+                        userVotingBalance *
+                        _totalLPValue) /
+                    totalVotingSupply) / PercentageMath.PERCENTAGE_FACTOR
+            );
+        }
 
         DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
-            .WorkingBalance({
-                amount: Math.min(
-                    _userLPValue[msg.sender],
-                    (PercentageMath.HALF_PERCENTAGE_FACTOR *
-                        _userLPValue[msg.sender] +
-                        (PercentageMath.HALF_PERCENTAGE_FACTOR *
-                            userVotingBalance *
-                            _totalLPValue) /
-                        totalVotingSupply) / PercentageMath.PERCENTAGE_FACTOR
-                ),
-                timestamp: block.timestamp
-            });
-
+            .WorkingBalance({amount: newAmount, timestamp: block.timestamp});
         _workingSupply +=
             newWorkingBalance.amount -
             _workingBalanceHistory[msg.sender][
@@ -186,10 +189,10 @@ contract TradingGauge is IGauge {
         _ownerOf[lpId] = msg.sender;
 
         // Add token value
-        uint256 lpValue_ = lpValue(lpId);
-        _lpValue[lpId] = lpValue_;
-        _userLPValue[msg.sender] += lpValue_;
-        _totalLPValue += lpValue_;
+        uint256 depositLpValue = lpValue(lpId);
+        _lpValue[lpId] = depositLpValue;
+        _userLPValue[msg.sender] += depositLpValue;
+        _totalLPValue += depositLpValue;
 
         _checkpoint(msg.sender);
 
@@ -270,15 +273,15 @@ contract TradingGauge is IGauge {
         DataTypes.LiquidityPair memory lp = ITradingPool(_lpToken).getLP(lpId);
 
         uint256 nftsAppraisal = lp.nftIds.length * lp.price;
-        uint256 lpValue_ = 0;
+        uint256 returnValue = 0;
 
         // Value is higher if the lp is in equilibrium
         if (nftsAppraisal > lp.tokenAmount) {
-            lpValue_ = lp.tokenAmount;
+            returnValue = lp.tokenAmount;
         } else {
-            lpValue_ = nftsAppraisal;
+            returnValue = nftsAppraisal;
         }
 
-        return lpValue_;
+        return returnValue;
     }
 }
