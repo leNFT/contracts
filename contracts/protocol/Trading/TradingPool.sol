@@ -88,6 +88,9 @@ contract TradingPool is
         uint256 delta,
         uint256 initialPrice
     ) external {
+        // Require that the user is depositing something
+        require(tokenAmount > 0 || nftIds.length > 0, "Deposit can't be empty");
+
         // Send user nfts to the pool
         for (uint i = 0; i < nftIds.length; i++) {
             IERC721(_nft).safeTransferFrom(

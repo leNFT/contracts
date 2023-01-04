@@ -29,7 +29,7 @@ let loadEnv = async function () {
   const AddressesProvider = await ethers.getContractFactory(
     "AddressesProvider"
   );
-  const addressesProvider = await AddressesProvider.deploy();
+  addressesProvider = await AddressesProvider.deploy();
   await addressesProvider.deployed();
   console.log("Addresses Provider Address:", addressesProvider.address);
   const WETH = await ethers.getContractFactory("WETH");
@@ -98,6 +98,20 @@ let loadEnv = async function () {
   await votingEscrow.deployed();
   console.log("Voting Escrow Address:", votingEscrow.address);
 
+  // Deploy Gauge controller
+  const GaugeController = await ethers.getContractFactory("GaugeController");
+  gaugeController = await GaugeController.deploy();
+  await gaugeController.deployed();
+  console.log("Gauge Controller Address:", gaugeController.address);
+
+  // Deploy trading pool factory
+  const TradingPoolFactory = await ethers.getContractFactory(
+    "TradingPoolFactory"
+  );
+  tradingPoolFactory = await TradingPoolFactory.deploy();
+  await tradingPoolFactory.deployed();
+  console.log("Trading Pool Factory Address:", tradingPoolFactory.address);
+
   // Initialize address provider and add every contract address
   const initAddressesProviderTx = await addressesProvider.initialize();
   await initAddressesProviderTx.wait();
@@ -138,6 +152,10 @@ let loadEnv = async function () {
     votingEscrow.address
   );
   await setVotingEscrowTx.wait();
+  const setTradingPoolFactoryTx = await addressesProvider.setTradingPoolFactory(
+    tradingPoolFactory.address
+  );
+  await setTradingPoolFactoryTx.wait();
   const setWETHTx = await addressesProvider.setWETH(weth.address);
   await setWETHTx.wait();
 
@@ -186,6 +204,19 @@ let loadEnv = async function () {
     addressesProvider.address
   );
   await initVotingEscrowTx.wait();
+
+  // Init voting escrow
+  const initTradingPoolFactoryTx = await tradingPoolFactory.initialize(
+    addressesProvider.address,
+    "300"
+  );
+  await initTradingPoolFactoryTx.wait();
+
+  // Init gauge controller
+  const initGaugeControllerTx = await gaugeController.initialize(
+    addressesProvider.address
+  );
+  await initGaugeControllerTx.wait();
 
   //Init Genesis NFT
   const initGenesisNFTTx = await genesisNFT.initialize(

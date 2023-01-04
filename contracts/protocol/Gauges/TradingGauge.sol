@@ -14,8 +14,9 @@ import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IGauge} from "../../interfaces/IGauge.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-contract TradingGauge is IGauge {
+contract TradingGauge is IGauge, IERC721Receiver {
     IAddressesProvider private _addressProvider;
     mapping(uint256 => address) private _ownerOf;
     mapping(address => uint256) private _balanceOf;
@@ -149,7 +150,7 @@ contract TradingGauge is IGauge {
         uint256 newAmount;
 
         if (totalVotingSupply == 0) {
-            newAmount = 0;
+            newAmount = _userLPValue[msg.sender];
         } else {
             newAmount = Math.min(
                 _userLPValue[msg.sender],
@@ -161,14 +162,16 @@ contract TradingGauge is IGauge {
                     totalVotingSupply) / PercentageMath.PERCENTAGE_FACTOR
             );
         }
-
+        DataTypes.WorkingBalance memory oldWorkingBalance;
+        if (_workingBalanceHistory[msg.sender].length > 0) {
+            oldWorkingBalance = _workingBalanceHistory[msg.sender][
+                _workingBalanceHistory[msg.sender].length - 1
+            ];
+        }
         DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
             .WorkingBalance({amount: newAmount, timestamp: block.timestamp});
-        _workingSupply +=
-            newWorkingBalance.amount -
-            _workingBalanceHistory[msg.sender][
-                _workingBalanceHistory[msg.sender].length - 1
-            ].amount;
+
+        _workingSupply += newWorkingBalance.amount - oldWorkingBalance.amount;
         writeTotalWeightHistory();
         _workingBalanceHistory[msg.sender].push(newWorkingBalance);
     }
@@ -283,5 +286,17 @@ contract TradingGauge is IGauge {
         }
 
         return returnValue;
+    }
+
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) public pure override returns (bytes4) {
+        return
+            bytes4(
+                keccak256("onERC721Received(address,address,uint256,bytes)")
+            );
     }
 }
