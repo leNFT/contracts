@@ -187,11 +187,10 @@ contract TradingGauge is IGauge, IERC721Receiver {
 
     function kick(address user) external {
         // Get user locked balance end time
-        uint256 lockEnd = IVotingEscrow(_addressProvider.getVotingEscrow())
-            .locked(user)
-            .end;
-
-        if (lockEnd < block.timestamp) {
+        if (
+            IVotingEscrow(_addressProvider.getVotingEscrow()).locked(user).end <
+            block.timestamp
+        ) {
             _checkpoint(user);
         }
     }

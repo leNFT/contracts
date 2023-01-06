@@ -54,6 +54,8 @@ async function main() {
   liquidationLogicLib = await LiquidationLogicLib.deploy();
   addresses["LiquidationLogicLib"] = liquidationLogicLib.address;
 
+  console.log("Deployed Libraries");
+
   /****************************************************************
   DEPLOY PROXIES
   They will serve as an entry point for the upgraded contracts
@@ -186,6 +188,15 @@ async function main() {
   ]);
   addresses["TradingPoolFactory"] = tradingPoolFactory.address;
 
+  // Deploy and initialize Swap Router
+  const SwapRouter = await ethers.getContractFactory("SwapRouter");
+  const swapRouter = await upgrades.deployProxy(SwapRouter, [
+    addressesProvider.address,
+  ]);
+  addresses["SwapRouter"] = swapRouter.address;
+
+  console.log("Deployed Proxies");
+
   /****************************************************************
   DEPLOY NON-PROXY CONTRACTS
   Deploy contracts that are not updatable
@@ -193,25 +204,25 @@ async function main() {
 
   // Deploy the Interest Rate contract
   const InterestRate = await ethers.getContractFactory("InterestRate");
-  interestRate = await InterestRate.deploy(7000, 500, 2000, 20000);
+  const interestRate = await InterestRate.deploy(7000, 500, 2000, 20000);
   await interestRate.deployed();
   addresses["InterestRate"] = interestRate.address;
 
   // Deploy the NFT Oracle contract
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
-  nftOracle = await NFTOracle.deploy(addressesProvider.address);
+  const nftOracle = await NFTOracle.deploy(addressesProvider.address);
   await nftOracle.deployed();
   addresses["NFTOracle"] = nftOracle.address;
 
   // Deploy TokenOracle contract
   const TokenOracle = await ethers.getContractFactory("TokenOracle");
-  tokenOracle = await TokenOracle.deploy();
+  const tokenOracle = await TokenOracle.deploy();
   await tokenOracle.deployed();
   addresses["TokenOracle"] = tokenOracle.address;
 
   // Deploy WETH Gateway contract
   const WETHGateway = await ethers.getContractFactory("WETHGateway");
-  wethGateway = await WETHGateway.deploy(addressesProvider.address);
+  const wethGateway = await WETHGateway.deploy(addressesProvider.address);
   await wethGateway.deployed();
   addresses["WETHGateway"] = wethGateway.address;
 
@@ -219,13 +230,15 @@ async function main() {
   const ExponentialCurve = await ethers.getContractFactory(
     "ExponentialPriceCurve"
   );
-  exponentialCurve = await ExponentialCurve.deploy();
+  const exponentialCurve = await ExponentialCurve.deploy();
   await exponentialCurve.deployed();
   addresses["ExponentialCurve"] = exponentialCurve.address;
   const LinearCurve = await ethers.getContractFactory("LinearPriceCurve");
-  linearCurve = await LinearCurve.deploy();
+  const linearCurve = await LinearCurve.deploy();
   await linearCurve.deployed();
   addresses["LinearCurve"] = linearCurve.address;
+
+  console.log("Deployed Non-Proxies");
 
   /****************************************************************
   SAVE TO DISK

@@ -158,8 +158,12 @@ contract TradingPool is
         emit RemoveLiquidity(msg.sender, lpId);
     }
 
-    function buy(uint256[] memory nftIds) external returns (uint256) {
-        uint256 priceSum;
+    function buy(
+        address buyer,
+        uint256[] memory nftIds,
+        uint256 maximumPrice
+    ) external returns (uint256) {
+        uint256 priceQuote;
         uint256 priceAfterBuy;
         uint256 price;
         uint256 lpIndex;
@@ -191,48 +195,47 @@ contract TradingPool is
             _liquidityPairs[lpIndex].tokenAmount += price;
 
             // Increase total price sum
-            priceSum += price;
+            priceQuote += price;
 
             // Delete NFT from tracker
             delete _nftToLp[nftIds[i]];
 
             // Send NFT to user
-            IERC721(_nft).safeTransferFrom(
-                address(this),
-                msg.sender,
-                nftIds[i]
-            );
+            IERC721(_nft).safeTransferFrom(address(this), buyer, nftIds[i]);
         }
 
+        require(
+            priceQuote < maximumPrice,
+            "Price quote higher than maximum price"
+        );
+
         // Get tokens from user
-        IERC20(_token).safeTransferFrom(msg.sender, address(this), priceSum);
+        IERC20(_token).safeTransferFrom(buyer, address(this), priceQuote);
 
-        emit Buy(msg.sender, nftIds, priceSum);
+        emit Buy(buyer, nftIds, priceQuote);
 
-        return priceSum;
+        return priceQuote;
     }
 
     function sell(
+        address seller,
         uint256[] memory nftIds,
-        uint256[] memory liquidityPairs
+        uint256[] memory liquidityPairs,
+        uint256 minimumPrice
     ) external returns (uint256) {
         require(
             nftIds.length == liquidityPairs.length,
             "NFTs and Liquidity Pairs must have same length"
         );
         require(nftIds.length > 0, "Need to sell at least one NFT");
-        uint256 priceSum;
+        uint256 priceQuote;
         uint256 price;
         uint256 lpIndex;
         DataTypes.LiquidityPair memory lp;
 
         // Transfer the NFTs to the pool
         for (uint i = 0; i < nftIds.length; i++) {
-            IERC721(_nft).safeTransferFrom(
-                msg.sender,
-                address(this),
-                nftIds[i]
-            );
+            IERC721(_nft).safeTransferFrom(seller, address(this), nftIds[i]);
 
             lpIndex = liquidityPairs[i];
             lp = _liquidityPairs[lpIndex];
@@ -240,7 +243,7 @@ contract TradingPool is
             price =
                 ((PercentageMath.PERCENTAGE_FACTOR - _swapFee) * lp.price) /
                 PercentageMath.PERCENTAGE_FACTOR;
-            priceSum += price;
+            priceQuote += price;
 
             _liquidityPairs[lpIndex].nftIds.push(nftIds[i]);
             _liquidityPairs[lpIndex].tokenAmount -= price;
@@ -253,11 +256,16 @@ contract TradingPool is
             });
         }
 
-        IERC20(_token).safeTransfer(msg.sender, priceSum);
+        require(
+            priceQuote > minimumPrice,
+            "Price quote lower than minimum price"
+        );
 
-        emit Sell(msg.sender, nftIds, priceSum);
+        IERC20(_token).safeTransfer(seller, priceQuote);
 
-        return priceSum;
+        emit Sell(seller, nftIds, priceQuote);
+
+        return priceQuote;
     }
 
     function setSwapFee(uint256 newSwapFee) external onlyOwner {
