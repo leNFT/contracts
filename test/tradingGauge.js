@@ -5,6 +5,7 @@ describe("Trading Gauge", () => {
   load.loadTest();
   var poolAddress;
   var tradingPool;
+  var gauge;
   it("Should create a pool and deposit into it", async function () {
     // Create a pool
     const createPoolTx = await tradingPoolFactory.createTradingPool(
@@ -29,18 +30,24 @@ describe("Trading Gauge", () => {
     tradingPool = TradingPool.attach(poolAddress);
     const approveNFTTx = await testNFT.setApprovalForAll(poolAddress, true);
     await approveNFTTx.wait();
+    // Mint and approve test tokens to the callers address
+    const mintTestTokenTx = await weth.mint(owner.address, "100000000000000");
+    await mintTestTokenTx.wait();
+    // Deposit the tokens into the market
+    const approveTokenTx = await weth.approve(poolAddress, "100000000000000");
+    await approveTokenTx.wait();
     const depositTx = await tradingPool.addLiquidity(
-      0,
       [0],
+      "100000000000000",
       owner.address,
       "0",
-      "0"
+      "100000000000000"
     );
     await depositTx.wait();
   });
   it("Should create a gauge a stake into it", async function () {
     const Gauge = await ethers.getContractFactory("TradingGauge");
-    const gauge = await Gauge.deploy(addressesProvider.address, poolAddress);
+    gauge = await Gauge.deploy(addressesProvider.address, poolAddress);
     await gauge.deployed();
     console.log("Gauge address: ", gauge.address);
 
@@ -58,6 +65,16 @@ describe("Trading Gauge", () => {
     // Deposit into gauge
     const depositInGaugeTx = await gauge.deposit(0);
     await depositInGaugeTx.wait();
-    console.log("DEposited LP 0 in gauge");
+    console.log("Deposited LP 0 in gauge");
+  });
+
+  it("Should unstake from the gauge", async function () {
+    // withdraw from gauge
+    const withdrawFromGaugeTx = await gauge.withdraw(0);
+    await withdrawFromGaugeTx.wait();
+    console.log("Withdrew LP 0 from gauge");
+
+    // Find if the user received the asset
+    expect(await tradingPool.ownerOf(0)).to.equal(owner.address);
   });
 });

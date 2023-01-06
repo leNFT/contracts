@@ -15,6 +15,7 @@ import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IGauge} from "../../interfaces/IGauge.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "hardhat/console.sol";
 
 contract TradingGauge is IGauge, IERC721Receiver {
     IAddressesProvider private _addressProvider;
@@ -35,8 +36,8 @@ contract TradingGauge is IGauge, IERC721Receiver {
 
     using SafeERC20 for IERC20;
 
-    event DepositLP(address user, uint256 lpId);
-    event WithdrawLP(address user, uint256 lpId);
+    event DepositLP(address indexed user, uint256 lpId);
+    event WithdrawLP(address indexed user, uint256 lpId);
 
     constructor(IAddressesProvider addressProvider, address lpToken_) {
         _addressProvider = addressProvider;
@@ -162,6 +163,8 @@ contract TradingGauge is IGauge, IERC721Receiver {
                     totalVotingSupply) / PercentageMath.PERCENTAGE_FACTOR
             );
         }
+        console.log("_userLPValue[msg.sender]", _userLPValue[msg.sender]);
+        console.log("newAmount", newAmount);
         DataTypes.WorkingBalance memory oldWorkingBalance;
         if (_workingBalanceHistory[msg.sender].length > 0) {
             oldWorkingBalance = _workingBalanceHistory[msg.sender][
@@ -171,7 +174,13 @@ contract TradingGauge is IGauge, IERC721Receiver {
         DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
             .WorkingBalance({amount: newAmount, timestamp: block.timestamp});
 
-        _workingSupply += newWorkingBalance.amount - oldWorkingBalance.amount;
+        console.log("oldWorkingBalance", oldWorkingBalance.amount);
+        console.log("newWorkingBalance", newWorkingBalance.amount);
+
+        _workingSupply =
+            _workingSupply +
+            newWorkingBalance.amount -
+            oldWorkingBalance.amount;
         writeTotalWeightHistory();
         _workingBalanceHistory[msg.sender].push(newWorkingBalance);
     }
@@ -192,7 +201,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
         _ownerOf[lpId] = msg.sender;
 
         // Add token value
-        uint256 depositLpValue = lpValue(lpId);
+        uint256 depositLpValue = calculateLpValue(lpId);
         _lpValue[lpId] = depositLpValue;
         _userLPValue[msg.sender] += depositLpValue;
         _totalLPValue += depositLpValue;
@@ -272,11 +281,16 @@ contract TradingGauge is IGauge, IERC721Receiver {
         return _balanceOf[user];
     }
 
-    function lpValue(uint256 lpId) public view returns (uint256) {
+    function calculateLpValue(uint256 lpId) public view returns (uint256) {
         DataTypes.LiquidityPair memory lp = ITradingPool(_lpToken).getLP(lpId);
 
         uint256 nftsAppraisal = lp.nftIds.length * lp.price;
         uint256 returnValue = 0;
+
+        console.log("nftsAppraisal", nftsAppraisal);
+        console.log("lp.price", lp.price);
+        console.log("lp.tokenAmount", lp.tokenAmount);
+        console.log("lp.nftIds.length", lp.nftIds.length);
 
         // Value is higher if the lp is in equilibrium
         if (nftsAppraisal > lp.tokenAmount) {

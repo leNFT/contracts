@@ -82,8 +82,8 @@ contract TradingPool is
     }
 
     function addLiquidity(
-        uint256 tokenAmount,
         uint256[] memory nftIds,
+        uint256 tokenAmount,
         address curve,
         uint256 delta,
         uint256 initialPrice
