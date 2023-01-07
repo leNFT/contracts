@@ -160,6 +160,7 @@ contract TradingPool is
 
     function buy(
         address buyer,
+        address payer,
         uint256[] memory nftIds,
         uint256 maximumPrice
     ) external returns (uint256) {
@@ -201,7 +202,7 @@ contract TradingPool is
             delete _nftToLp[nftIds[i]];
 
             // Send NFT to user
-            IERC721(_nft).safeTransferFrom(address(this), buyer, nftIds[i]);
+            IERC721(_nft).safeTransferFrom(address(this), receiver, nftIds[i]);
         }
 
         require(
@@ -212,13 +213,14 @@ contract TradingPool is
         // Get tokens from user
         IERC20(_token).safeTransferFrom(buyer, address(this), priceQuote);
 
-        emit Buy(buyer, nftIds, priceQuote);
+        emit Buy(receiver, nftIds, priceQuote);
 
         return priceQuote;
     }
 
     function sell(
         address seller,
+        address receiver,
         uint256[] memory nftIds,
         uint256[] memory liquidityPairs,
         uint256 minimumPrice
@@ -261,7 +263,7 @@ contract TradingPool is
             "Price quote lower than minimum price"
         );
 
-        IERC20(_token).safeTransfer(seller, priceQuote);
+        IERC20(_token).safeTransfer(receiver, priceQuote);
 
         emit Sell(seller, nftIds, priceQuote);
 

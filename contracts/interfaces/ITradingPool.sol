@@ -20,7 +20,23 @@ interface ITradingPool is IERC721 {
 
     event Sell(address indexed user, uint256[] nftIds, uint256 price);
 
+    function buy(
+        address buyer,
+        uint256[] memory nftIds,
+        uint256 maximumPrice
+    ) external returns (uint256);
+
+    function sell(
+        address seller,
+        address receiver,
+        uint256[] memory nftIds,
+        uint256[] memory liquidityPairs,
+        uint256 minimumPrice
+    ) external returns (uint256);
+
     function getLP(
         uint256 lpId
     ) external view returns (DataTypes.LiquidityPair memory);
+
+    function getToken() external view returns (address);
 }
