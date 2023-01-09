@@ -264,7 +264,7 @@ async function main() {
     }
   );
   fs.writeFileSync(
-    "../swap-router/contractAddresses.json",
+    "../trade-router/contractAddresses.json",
     JSON.stringify(contractAddresses),
     function (err) {
       if (err) throw err;
