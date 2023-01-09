@@ -35,10 +35,10 @@ contract SwapRouter is Initializable, OwnableUpgradeable {
 
     function swap(
         ITradingPool buyPool,
-        ITradingPool sellPool,
         uint256[] memory buyNftIds,
         uint256 maximumBuyPrice,
         uint256 buyAmount,
+        ITradingPool sellPool,
         uint256[] memory sellNftIds,
         uint256[] memory liquidityPairs,
         uint256 minimumSellPrice
