@@ -159,8 +159,7 @@ contract TradingPool is
     }
 
     function buy(
-        address buyer,
-        address payer,
+        address onBehalfOf,
         uint256[] memory nftIds,
         uint256 maximumPrice
     ) external returns (uint256) {
@@ -202,7 +201,11 @@ contract TradingPool is
             delete _nftToLp[nftIds[i]];
 
             // Send NFT to user
-            IERC721(_nft).safeTransferFrom(address(this), receiver, nftIds[i]);
+            IERC721(_nft).safeTransferFrom(
+                address(this),
+                onBehalfOf,
+                nftIds[i]
+            );
         }
 
         require(
@@ -211,16 +214,15 @@ contract TradingPool is
         );
 
         // Get tokens from user
-        IERC20(_token).safeTransferFrom(buyer, address(this), priceQuote);
+        IERC20(_token).safeTransferFrom(msg.sender, address(this), priceQuote);
 
-        emit Buy(receiver, nftIds, priceQuote);
+        emit Buy(msg.sender, nftIds, priceQuote);
 
         return priceQuote;
     }
 
     function sell(
-        address seller,
-        address receiver,
+        address onBehalfOf,
         uint256[] memory nftIds,
         uint256[] memory liquidityPairs,
         uint256 minimumPrice
@@ -230,6 +232,12 @@ contract TradingPool is
             "NFTs and Liquidity Pairs must have same length"
         );
         require(nftIds.length > 0, "Need to sell at least one NFT");
+        if (onBehalfOf != msg.sender) {
+            require(
+                msg.sender == _addressProvider.getSwapRouter(),
+                "Only SwapRouter can sell on behalf of another address"
+            );
+        }
         uint256 priceQuote;
         uint256 price;
         uint256 lpIndex;
@@ -237,7 +245,11 @@ contract TradingPool is
 
         // Transfer the NFTs to the pool
         for (uint i = 0; i < nftIds.length; i++) {
-            IERC721(_nft).safeTransferFrom(seller, address(this), nftIds[i]);
+            IERC721(_nft).safeTransferFrom(
+                onBehalfOf,
+                address(this),
+                nftIds[i]
+            );
 
             lpIndex = liquidityPairs[i];
             lp = _liquidityPairs[lpIndex];
@@ -263,9 +275,9 @@ contract TradingPool is
             "Price quote lower than minimum price"
         );
 
-        IERC20(_token).safeTransfer(receiver, priceQuote);
+        IERC20(_token).safeTransfer(msg.sender, priceQuote);
 
-        emit Sell(seller, nftIds, priceQuote);
+        emit Sell(msg.sender, nftIds, priceQuote);
 
         return priceQuote;
     }

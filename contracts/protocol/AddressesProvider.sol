@@ -8,6 +8,7 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _lendingMarket;
     address private _debtToken;
     address private _feeDistributor;
+    address private _swapRouter;
     address private _loanCenter;
     address private _nftOracle;
     address private _tokenOracle;
@@ -42,6 +43,14 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
 
     function getTradingPoolFactory() external view override returns (address) {
         return _tradingPoolFactory;
+    }
+
+    function setSwapRouter(address swapRouter) external override onlyOwner {
+        _swapRouter = swapRouter;
+    }
+
+    function getSwapRouter() external view override returns (address) {
+        return _swapRouter;
     }
 
     function setGaugeController(

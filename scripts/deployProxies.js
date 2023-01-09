@@ -338,6 +338,10 @@ async function main() {
     votingEscrow.address
   );
   await setVotingEscrowTx.wait();
+  const setSwapRouterTx = await addressesProvider.setSwapRouter(
+    swapRouter.address
+  );
+  await setSwapRouterTx.wait();
   const setWETHTx = await addressesProvider.setWETH(addresses["ETH"].address);
   await setWETHTx.wait();
 }

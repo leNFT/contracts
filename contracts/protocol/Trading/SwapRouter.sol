@@ -38,11 +38,11 @@ contract SwapRouter is Initializable, OwnableUpgradeable {
         ITradingPool sellPool,
         uint256[] memory buyNftIds,
         uint256 maximumBuyPrice,
-        uint256 buyChange,
+        uint256 buyAmount,
         uint256[] memory sellNftIds,
         uint256[] memory liquidityPairs,
         uint256 minimumSellPrice
-    ) external returns (uint256) {
+    ) external {
         // Pools need to have the same underlying token
         require(
             buyPool.getToken() == sellPool.getToken(),
@@ -51,22 +51,27 @@ contract SwapRouter is Initializable, OwnableUpgradeable {
 
         uint256 sellPrice = sellPool.sell(
             msg.sender,
-            address(this),
             sellNftIds,
             liquidityPairs,
             minimumSellPrice
         );
 
-        if (buyChange > 0) {
-            IERC20(buyPool.getToken()).safeTransferFrom(
+        if (buyAmount > 0) {
+            IERC20(sellPool.getToken()).safeTransferFrom(
                 msg.sender,
                 address(this),
-                buyChange
+                buyAmount
             );
         }
 
-        uint256 buyPrice = sellPool.buy();
+        uint256 buyPrice = sellPool.buy(msg.sender, buyNftIds, maximumBuyPrice);
 
-        return 0;
+        //Send change back to user
+        if (buyPrice > sellPrice + buyAmount) {
+            IERC20(sellPool.getToken()).safeTransfer(
+                msg.sender,
+                sellPrice + buyAmount - buyPrice
+            );
+        }
     }
 }
