@@ -40,7 +40,11 @@ contract SwapRouter is
         uint256[] memory sellLps,
         uint256 minimumSellPrice
     ) external nonReentrant {
-        // Pools need to have the same underlying token
+        // Pools need to be different but have the same underlying token
+        require(
+            address(buyPool) != address(sellPool),
+            "Pools need to be different."
+        );
         require(
             buyPool.getToken() == sellPool.getToken(),
             "Underlying token mismatch."

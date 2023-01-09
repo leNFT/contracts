@@ -4434,6 +4434,66 @@
       "address": "0x98Ccc1873bF3e0812F0539243fcB9E7844d06208",
       "txHash": "0x353d2d293bc448544a1d7c484bc0f4942043a5797d36bf45222cfeef03f72e69",
       "kind": "transparent"
+    },
+    {
+      "address": "0x04cE6c65ce9770Cf5f89857687F21CA2cC6D3B63",
+      "txHash": "0xb5bd50c93af023b6bc8ac7a655d8cd3ce9d160c7ae08212a7f7daa8839f19e64",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x1d4429bA879f9F7E0aeD814CB0205e536d31C673",
+      "txHash": "0xafbb1b567152602d4ec82ced6f773643797fbf70f4e682f517a4cf061fcae87b",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xC7Ab76bF133B8Ca03cb22C0384E85262d6C9Db58",
+      "txHash": "0x8e5a3c755fb5277d24cfaf658eeb0443c206e4608d969026869c37f2319839d6",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x2c0e7BDc8598d64D666cF2d087ad12337084A578",
+      "txHash": "0xee06ca8e43752b4b5adf15a854510a031f817697b7d735c6f8fc47bf8ca322f8",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x3a2C0400802a37909f901daDA645e1bA724CAAbB",
+      "txHash": "0xbcc58f79e8c1cc09dfcc8f79c527693be46baa2ea40d2fa4c8deb790d39668e1",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x33015992b8F10Af81f4c535fd385f706019E30ed",
+      "txHash": "0x98b43b2a5def65f1347560fc5e9d428f1c6097170e19826c9983eb00e4407bf7",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x3a5c7DA8BD37A72f139F0bC3A3F545f75f5545A8",
+      "txHash": "0xc56647f761ec48ee49869fddcd07bda8a7e63df3fbe259e5cdd83ba77bb7f545",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x55A6f9Ee410B53CB34Ed4494E97c22059aa3690D",
+      "txHash": "0x6330e3b0c839b3dc7e859bc3c8938cf5683f7142a7d5ad18aa68cc3d7a5e398d",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x56C5433b03309de0CB29547Df4fEF23B0cFD6f98",
+      "txHash": "0x95d7c6f581c9b01046b5d59cf20866a27d12d2557a6a5f0e06c278dc954231c1",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x8961AAac62364835FB05469641db70bc49B1a952",
+      "txHash": "0x56d4f227ab672ad26ffa62f1e644b81b6f394bbde2209550ce3a373618d92534",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xde1C2403974800CD0af20b9C094b805E02BA9A35",
+      "txHash": "0xf075249fa6e467aca71d414764295094990c4c1d9ca72bca5168abc3f0486064",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x08b030C671aF7D0A0EFaA2F3566B357F59d164CF",
+      "txHash": "0x57d86e48d3fcf4cbe67fc5bc89f359b6e7b5f85871b8daa2fcdebb4ff714e47e",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -55220,6 +55280,176 @@
           "t_contract(IAddressesProvider)1375": {
             "label": "contract IAddressesProvider",
             "numberOfBytes": "20"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "1e3f194e001c4f5caf3314c906a5294ffc13b5825849669bc3c1c4f21568b3de": {
+      "address": "0x83EBb98a2d660a1c9d882FAF1b5F67bea761fd5f",
+      "txHash": "0xbe6f751d258e7530cff6d9749b01a506e60c1724fa7b7e0215732be86b181b5a",
+      "layout": {
+        "solcVersion": "0.8.17",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:80"
+          },
+          {
+            "label": "_pools",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_address))",
+            "contract": "LendingMarket",
+            "src": "contracts/protocol/Lending/LendingMarket.sol:41"
+          },
+          {
+            "label": "_poolsCount",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "LendingMarket",
+            "src": "contracts/protocol/Lending/LendingMarket.sol:44"
+          },
+          {
+            "label": "_addressProvider",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_contract(IAddressesProvider)9949",
+            "contract": "LendingMarket",
+            "src": "contracts/protocol/Lending/LendingMarket.sol:46"
+          },
+          {
+            "label": "_defaultLendingPoolConfig",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_struct(LendingPoolConfig)12203_storage",
+            "contract": "LendingMarket",
+            "src": "contracts/protocol/Lending/LendingMarket.sol:47"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IAddressesProvider)9949": {
+            "label": "contract IAddressesProvider",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_address))": {
+            "label": "mapping(address => mapping(address => address))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(LendingPoolConfig)12203_storage": {
+            "label": "struct ConfigTypes.LendingPoolConfig",
+            "members": [
+              {
+                "label": "liquidationPenalty",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "liquidationFee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "maximumUtilizationRate",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "tvlSafeguard",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
           },
           "t_uint256": {
             "label": "uint256",
