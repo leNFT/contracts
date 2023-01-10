@@ -43,7 +43,7 @@ contract GenesisNFT is
     address payable _devAddress;
     uint256 _ltvBoost;
     CountersUpgradeable.Counter private _tokenIdCounter;
-    address _mintReserve;
+    // address _mintReserve;
 
     // NFT token id to bool that's true if NFT is being used to charge a loan
     mapping(uint256 => bool) private _active;
@@ -136,13 +136,13 @@ contract GenesisNFT is
                 _nativeTokenFactor) * 10 ** 18;
     }
 
-    function getMintReserve() external view returns (address) {
-        return _mintReserve;
-    }
+    // function getMintReserve() external view returns (address) {
+    //     return _mintReserve;
+    // }
 
-    function setMintReserve(address mintReserve) external onlyOwner {
-        _mintReserve = mintReserve;
-    }
+    // function setMintReserve(address mintReserve) external onlyOwner {
+    //     _mintReserve = mintReserve;
+    // }
 
     function mintCount() external view returns (uint256) {
         return _tokenIdCounter.current() - 1;
@@ -153,10 +153,10 @@ contract GenesisNFT is
         string memory uri
     ) external payable nonReentrant returns (uint256) {
         // Make sure the genesis reserve is set
-        require(
-            _mintReserve != address(0),
-            "Genesis mint deposit reserve is not set."
-        );
+        // require(
+        //     _mintReserve != address(0),
+        //     "Genesis mint deposit reserve is not set."
+        // );
 
         // Make sure there's still enough tkens to mint
         uint256 tokenId = _tokenIdCounter.current();
@@ -169,15 +169,15 @@ contract GenesisNFT is
         // Set a buying price
         require(msg.value == _price, "Tx value is not equal to price");
 
-        //Wrap and Deposit 2/3 into the reserve
-        uint256 depositAmount = (2 * _price) / 3;
-        address weth = _addressProvider.getWETH();
-        IWETH(weth).deposit{value: depositAmount}();
-        IWETH(weth).approve(_mintReserve, depositAmount);
-        IERC4626(_mintReserve).deposit(depositAmount, (address(this)));
+        //Wrap and Deposit 2/3 into the curve pool
+        // uint256 depositAmount = (2 * _price) / 3;
+        // address weth = _addressProvider.getWETH();
+        // IWETH(weth).deposit{value: depositAmount}();
+        // IWETH(weth).approve(_mintReserve, depositAmount);
+        // IERC4626(_mintReserve).deposit(depositAmount, (address(this)));
 
         // Send the rest to the dev address
-        (bool sent, ) = _devAddress.call{value: _price - depositAmount}("");
+        (bool sent, ) = _devAddress.call{value: _price /*- depositAmount*/}("");
         require(sent, "Failed to send Ether to dev fund");
 
         // Send leNFT tokens to the caller
@@ -233,16 +233,16 @@ contract GenesisNFT is
         );
 
         // Withdraw ETH deposited in the reserve
-        uint256 withdrawAmount = (2 * _price) / 3;
-        address weth = _addressProvider.getWETH();
-        IERC4626(_mintReserve).withdraw(
-            withdrawAmount,
-            address(this),
-            address(this)
-        );
-        IWETH(weth).withdraw(withdrawAmount);
-        (bool sent, ) = _msgSender().call{value: withdrawAmount}("");
-        require(sent, "Failed to send Ether");
+        // uint256 withdrawAmount = (2 * _price) / 3;
+        // address weth = _addressProvider.getWETH();
+        // IERC4626(_mintReserve).withdraw(
+        //     withdrawAmount,
+        //     address(this),
+        //     address(this)
+        // );
+        // IWETH(weth).withdraw(withdrawAmount);
+        // (bool sent, ) = _msgSender().call{value: withdrawAmount}("");
+        // require(sent, "Failed to send Ether");
 
         // Burn genesis NFT
         _burn(tokenId);
