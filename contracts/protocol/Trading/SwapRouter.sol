@@ -35,7 +35,6 @@ contract SwapRouter is
         ITradingPool sellPool,
         uint256[] memory buyNftIds,
         uint256 maximumBuyPrice,
-        uint256 buyChange,
         uint256[] memory sellNftIds,
         uint256[] memory sellLps,
         uint256 minimumSellPrice
@@ -57,21 +56,23 @@ contract SwapRouter is
             minimumSellPrice
         );
 
-        if (buyChange > 0) {
+        uint256 change = 0;
+        if (maximumBuyPrice > minimumSellPrice) {
+            change = maximumBuyPrice - minimumSellPrice;
             IERC20Upgradeable(sellPool.getToken()).safeTransferFrom(
                 msg.sender,
                 address(this),
-                buyChange
+                change
             );
         }
 
         uint256 buyPrice = sellPool.buy(msg.sender, buyNftIds, maximumBuyPrice);
 
         //Send change back to user
-        if (buyPrice > sellPrice + buyChange) {
+        if (buyPrice > sellPrice + change) {
             IERC20Upgradeable(sellPool.getToken()).safeTransfer(
                 msg.sender,
-                sellPrice + buyChange - buyPrice
+                sellPrice + change - buyPrice
             );
         }
     }
