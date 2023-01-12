@@ -209,7 +209,7 @@ contract TradingPool is
         }
 
         require(
-            priceQuote < maximumPrice,
+            priceQuote <= maximumPrice,
             "Price quote higher than maximum price"
         );
 
@@ -271,7 +271,7 @@ contract TradingPool is
         }
 
         require(
-            priceQuote > minimumPrice,
+            priceQuote >= minimumPrice,
             "Price quote lower than minimum price"
         );
 

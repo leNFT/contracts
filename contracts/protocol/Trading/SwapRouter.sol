@@ -39,11 +39,12 @@ contract SwapRouter is
         uint256[] memory sellLps,
         uint256 minimumSellPrice
     ) external nonReentrant {
-        // Pools need to be different but have the same underlying token
+        // Pools need to be different
         require(
             address(buyPool) != address(sellPool),
             "Pools need to be different."
         );
+        // Pools need to have the same underlying token
         require(
             buyPool.getToken() == sellPool.getToken(),
             "Underlying token mismatch."
@@ -69,7 +70,7 @@ contract SwapRouter is
         uint256 buyPrice = sellPool.buy(msg.sender, buyNftIds, maximumBuyPrice);
 
         //Send change back to user
-        if (buyPrice > sellPrice + change) {
+        if (sellPrice + change > buyPrice) {
             IERC20Upgradeable(sellPool.getToken()).safeTransfer(
                 msg.sender,
                 sellPrice + change - buyPrice
