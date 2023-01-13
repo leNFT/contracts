@@ -5,6 +5,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
+import {ISwapRouter} from "../../interfaces/ISwapRouter.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -15,6 +16,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 /// @notice This contract is responsible for swapping between assets in different pools
 contract SwapRouter is
     Initializable,
+    ISwapRouter,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
@@ -57,24 +59,32 @@ contract SwapRouter is
             minimumSellPrice
         );
 
-        uint256 change = 0;
+        uint256 priceDiff = 0;
         if (maximumBuyPrice > minimumSellPrice) {
-            change = maximumBuyPrice - minimumSellPrice;
+            priceDiff = maximumBuyPrice - minimumSellPrice;
             IERC20Upgradeable(sellPool.getToken()).safeTransferFrom(
                 msg.sender,
                 address(this),
-                change
+                priceDiff
             );
         }
 
         uint256 buyPrice = sellPool.buy(msg.sender, buyNftIds, maximumBuyPrice);
 
-        //Send change back to user
-        if (sellPrice + change > buyPrice) {
+        // If the price difference + sell price is greater than the buy price, return the difference to the user
+        if (sellPrice + priceDiff > buyPrice) {
             IERC20Upgradeable(sellPool.getToken()).safeTransfer(
                 msg.sender,
-                sellPrice + change - buyPrice
+                sellPrice + priceDiff - buyPrice
             );
         }
+    }
+
+    function approveTradingPool(address token, address tradingPool) external {
+        require(
+            msg.sender == _addressProvider.getTradingPoolFactory(),
+            "Only trading pool factory can approve trading pool."
+        );
+        IERC20Upgradeable(token).safeApprove(tradingPool, type(uint256).max);
     }
 }

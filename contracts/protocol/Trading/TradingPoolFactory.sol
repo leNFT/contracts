@@ -8,6 +8,7 @@ import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {TradingPool} from "./TradingPool.sol";
+import {ISwapRouter} from "../../interfaces/ISwapRouter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
@@ -93,6 +94,12 @@ contract TradingPoolFactory is
         );
 
         _pools[nft][token] = address(newTradingPool);
+
+        // Approve trading pool in swap router
+        ISwapRouter(_addressProvider.getSwapRouter()).approveTradingPool(
+            token,
+            address(newTradingPool)
+        );
 
         emit CreateTradingPool(address(newTradingPool), nft, token);
     }
