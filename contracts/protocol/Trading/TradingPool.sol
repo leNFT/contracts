@@ -16,6 +16,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
+import "hardhat/console.sol";
 
 contract TradingPool is
     Context,
@@ -248,6 +249,7 @@ contract TradingPool is
 
         // Transfer the NFTs to the pool
         for (uint i = 0; i < nftIds.length; i++) {
+            console.log("Transfering NFT %s to pool", nftIds[i]);
             IERC721(_nft).safeTransferFrom(
                 onBehalfOf,
                 address(this),

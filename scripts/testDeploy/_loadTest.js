@@ -73,6 +73,11 @@ let loadEnv = async function () {
   wethGateway = await WETHGateway.deploy(addressesProvider.address);
   await wethGateway.deployed();
   console.log("WETHGateway Address:", wethGateway.address);
+  const ExponentialCurve = await ethers.getContractFactory(
+    "ExponentialPriceCurve"
+  );
+  exponentialCurve = await ExponentialCurve.deploy();
+  await exponentialCurve.deployed();
 
   // Deploy Native Token
   const NativeToken = await ethers.getContractFactory("NativeToken");
@@ -91,6 +96,12 @@ let loadEnv = async function () {
   genesisNFT = await GenesisNFT.deploy();
   await genesisNFT.deployed();
   console.log("Genesis NFT Address:", genesisNFT.address);
+
+  // Deploy Swap Router
+  const SwapRouter = await ethers.getContractFactory("SwapRouter");
+  swapRouter = await SwapRouter.deploy();
+  await swapRouter.deployed();
+  console.log("Swap Router Address:", swapRouter.address);
 
   // Deploy voting escrow
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
@@ -152,6 +163,10 @@ let loadEnv = async function () {
     votingEscrow.address
   );
   await setVotingEscrowTx.wait();
+  const setSwapRouterTx = await addressesProvider.setSwapRouter(
+    swapRouter.address
+  );
+  await setSwapRouterTx.wait();
   const setTradingPoolFactoryTx = await addressesProvider.setTradingPoolFactory(
     tradingPoolFactory.address
   );
@@ -177,6 +192,12 @@ let loadEnv = async function () {
     "4000" // DefaultMaxCollaterization 40%
   );
   await initLoanCenterTx.wait();
+
+  //Initialize swap router
+  const initSwapRouterTx = await swapRouter.initialize(
+    addressesProvider.address
+  );
+  await initSwapRouterTx.wait();
 
   //Init debt token
   const initDebtTokenTx = await debtToken.initialize(
