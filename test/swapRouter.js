@@ -63,9 +63,8 @@ describe("Swap Router", () => {
       (event) => event.event === "CreateTradingPool"
     );
     buyPoolAddress = event.args.pool;
-    buyPoolAddress;
 
-    console.log("Created new pool: ", sellPoolAddress);
+    console.log("Created new pool: ", buyPoolAddress);
 
     // Mint 50 test tokens to the callers address
     const mintTestNFTTx = await testNFT2.mint(owner.address);
@@ -120,5 +119,7 @@ describe("Swap Router", () => {
       "50000000000000"
     );
     await swapTx.wait();
+
+    expect(await testNFT2.ownerOf(0)).to.equal(owner.address);
   });
 });

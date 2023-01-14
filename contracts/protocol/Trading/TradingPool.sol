@@ -200,10 +200,14 @@ contract TradingPool is
             // Increase total fee sum
             totalFee += fee;
 
+            console.log("NFT To LP", _nftToLp[nftIds[i]].liquidityPair);
+
             // Delete NFT from tracker
             delete _nftToLp[nftIds[i]];
 
             // Send NFT to user
+            console.log("Sending NFT to user", onBehalfOf);
+            console.log("NFT ID", nftIds[i]);
             IERC721(_nft).safeTransferFrom(
                 address(this),
                 onBehalfOf,

@@ -10,6 +10,7 @@ import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Cont
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "hardhat/console.sol";
 
 /// @title SwapRouter Contract
 /// @author leNFT
@@ -59,6 +60,8 @@ contract SwapRouter is
             minimumSellPrice
         );
 
+        console.log("sellPrice", sellPrice);
+
         uint256 priceDiff = 0;
         if (maximumBuyPrice > minimumSellPrice) {
             priceDiff = maximumBuyPrice - minimumSellPrice;
@@ -69,7 +72,7 @@ contract SwapRouter is
             );
         }
 
-        uint256 buyPrice = sellPool.buy(msg.sender, buyNftIds, maximumBuyPrice);
+        uint256 buyPrice = buyPool.buy(msg.sender, buyNftIds, maximumBuyPrice);
 
         // If the price difference + sell price is greater than the buy price, return the difference to the user
         if (sellPrice + priceDiff > buyPrice) {
