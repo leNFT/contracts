@@ -21,7 +21,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     uint256 internal _borrowRate;
     uint256 internal _cumulativeDebtBorrowRate;
     bool internal _paused;
-    ConfigTypes.LendingPoolConfig internal _LendingPoolConfig;
+    ConfigTypes.LendingPoolConfig internal _lendingPoolConfig;
 
     using SafeERC20 for IERC20;
 
@@ -39,7 +39,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         IERC20 asset,
         string memory name,
         string memory symbol,
-        ConfigTypes.LendingPoolConfig memory LendingPoolConfig
+        ConfigTypes.LendingPoolConfig memory lendingPoolConfig
     ) ERC20(name, symbol) ERC4626(asset) {
         require(
             msg.sender == addressProvider.getLendingMarket(),
@@ -47,7 +47,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         );
         _addressProvider = addressProvider;
         _asset = asset;
-        _LendingPoolConfig = LendingPoolConfig;
+        _lendingPoolConfig = lendingPoolConfig;
         _updateBorrowRate();
         _transferOwnership(owner);
     }
@@ -150,7 +150,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         override
         returns (uint256)
     {
-        return _LendingPoolConfig.maximumUtilizationRate;
+        return _lendingPoolConfig.maximumUtilizationRate;
     }
 
     function getBorrowRate() external view override returns (uint256) {
@@ -204,29 +204,29 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     }
 
     function getLiquidationPenalty() external view override returns (uint256) {
-        return _LendingPoolConfig.liquidationPenalty;
+        return _lendingPoolConfig.liquidationPenalty;
     }
 
     function setLiquidationPenalty(
         uint256 liquidationPenalty
     ) external onlyOwner {
-        _LendingPoolConfig.liquidationPenalty = liquidationPenalty;
+        _lendingPoolConfig.liquidationPenalty = liquidationPenalty;
     }
 
     function getLiquidationFee() external view override returns (uint256) {
-        return _LendingPoolConfig.liquidationFee;
+        return _lendingPoolConfig.liquidationFee;
     }
 
     function setLiquidationFee(uint256 liquidationFee) external onlyOwner {
-        _LendingPoolConfig.liquidationFee = liquidationFee;
+        _lendingPoolConfig.liquidationFee = liquidationFee;
     }
 
     function getTVLSafeguard() external view override returns (uint256) {
-        return _LendingPoolConfig.tvlSafeguard;
+        return _lendingPoolConfig.tvlSafeguard;
     }
 
     function setTVLSafeguard(uint256 tvlSafeguard) external onlyOwner {
-        _LendingPoolConfig.tvlSafeguard = tvlSafeguard;
+        _lendingPoolConfig.tvlSafeguard = tvlSafeguard;
     }
 
     function setPause(bool paused) external onlyOwner {

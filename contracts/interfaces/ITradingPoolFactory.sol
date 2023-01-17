@@ -7,4 +7,6 @@ interface ITradingPoolFactory {
         address indexed nft,
         address indexed token
     );
+
+    function getProtocolFee() external view returns (uint256);
 }

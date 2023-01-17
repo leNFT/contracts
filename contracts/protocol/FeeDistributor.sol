@@ -11,6 +11,7 @@ import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ER
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {Time} from "../libraries/Time.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
+import "hardhat/console.sol";
 
 contract FeeDistributor is
     Initializable,
@@ -21,17 +22,11 @@ contract FeeDistributor is
     IAddressesProvider private _addressProvider;
     mapping(address => mapping(address => uint256)) private _userHistoryPointer;
     mapping(address => mapping(uint256 => uint256)) private _epochFees;
-    mapping(address => mapping(address => uint256)) private _userClaimedEpoch;
+    mapping(address => mapping(address => uint256))
+        private _userNextClaimedEpoch;
+    mapping(address => uint256) private _totalFees;
 
     using SafeERC20Upgradeable for IERC20Upgradeable;
-
-    modifier onlyMarket() {
-        require(
-            _msgSender() == _addressProvider.getLendingMarket(),
-            "Caller must be Market contract"
-        );
-        _;
-    }
 
     function initialize(
         IAddressesProvider addressProvider
@@ -40,13 +35,20 @@ contract FeeDistributor is
         _addressProvider = addressProvider;
     }
 
-    function addFeesToEpoch(address token, uint256 amount) external onlyMarket {
+    function checkpoint(address token) external {
+        console.log("Passed through checkpoint");
         // Find epoch we're in
         uint256 epoch = IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
             block.timestamp
         );
-        // Add fees to current epoch
-        _epochFees[token][epoch] += amount;
+        // Find the current balance if the token in question
+        uint256 balance = IERC20Upgradeable(token).balanceOf(address(this));
+
+        // Add unaccounted fees to current epoch
+        _epochFees[token][epoch] += balance - _totalFees[token];
+
+        // Update total fees accounted for
+        _totalFees[token] = balance;
     }
 
     function claim(address token) external override returns (uint256) {
@@ -59,6 +61,15 @@ contract FeeDistributor is
             return 0;
         }
 
+        // Set the next claimable epoch if it's the first time the user claims
+        if (_userNextClaimedEpoch[token][msg.sender] == 0) {
+            _userNextClaimedEpoch[token][msg.sender] =
+                votingEscrow.epoch(
+                    votingEscrow.getUserHistoryPoint(msg.sender, 0).timestamp
+                ) +
+                1;
+        }
+
         // Iterate over a max of 50 weeks and/or user epochs
         uint256 amountToClaim;
         DataTypes.Point memory userHistoryPoint;
@@ -66,27 +77,51 @@ contract FeeDistributor is
         uint256 nextClaimedEpochTimestamp;
         uint256 nextPointEpoch;
         for (uint i = 0; i < 50; i++) {
-            if (
-                _userClaimedEpoch[token][msg.sender] ==
-                votingEscrow.epoch(block.timestamp) - 1
-            ) {
+            console.log("i: ", i);
+            console.log("epoch: ", votingEscrow.epoch(block.timestamp));
+            nextClaimedEpoch = _userNextClaimedEpoch[token][msg.sender];
+            console.log("nextClaimedEpoch: ", nextClaimedEpoch);
+            // Break if the next claimable epoch is the one we are in
+            if (nextClaimedEpoch >= votingEscrow.epoch(block.timestamp)) {
                 break;
             } else {
+                // Get the current user history point
                 userHistoryPoint = votingEscrow.getUserHistoryPoint(
                     msg.sender,
                     _userHistoryPointer[token][msg.sender]
                 );
 
-                nextClaimedEpoch = _userClaimedEpoch[token][msg.sender] + 1;
+                // Get the user's next claimable epoch and its timestamp
                 nextClaimedEpochTimestamp = votingEscrow.epochTimestamp(
-                    _userClaimedEpoch[token][msg.sender] + 1
+                    nextClaimedEpoch
+                );
+                console.log(
+                    "nextClaimedEpochTimestamp: ",
+                    nextClaimedEpochTimestamp
                 );
 
-                // Sum claimable amount if its the last activity in this epoch or the next activity is for a future epoch
+                // Check if the user entire activity history has been iterated
                 if (
                     _userHistoryPointer[token][msg.sender] ==
                     votingEscrow.userHistoryLength(msg.sender) - 1
                 ) {
+                    console.log(
+                        "userHistoryPoint.timestamp",
+                        userHistoryPoint.timestamp
+                    );
+                    console.log(
+                        "votingEscrow.totalSupplyAt(nextClaimedEpoch)",
+                        votingEscrow.totalSupplyAt(nextClaimedEpoch)
+                    );
+                    console.log("userHistoryPoint.bias", userHistoryPoint.bias);
+                    console.log(
+                        "user vote power",
+                        userHistoryPoint.bias -
+                            userHistoryPoint.slope *
+                            (nextClaimedEpochTimestamp -
+                                userHistoryPoint.timestamp)
+                    );
+                    // Sum claimable amount if its the last activity
                     amountToClaim +=
                         (_epochFees[token][nextClaimedEpoch] *
                             (userHistoryPoint.bias -
@@ -95,23 +130,32 @@ contract FeeDistributor is
                                     userHistoryPoint.timestamp))) /
                         votingEscrow.totalSupplyAt(nextClaimedEpoch);
 
-                    _userClaimedEpoch[token][msg.sender] = nextClaimedEpoch;
+                    console.log(
+                        "_epochFees[token][nextClaimedEpoch]: ",
+                        _epochFees[token][nextClaimedEpoch]
+                    );
+                    console.log("amountToClaim: ", amountToClaim);
+
+                    // Increment next claimable epoch
+                    _userNextClaimedEpoch[token][msg.sender]++;
                 } else {
+                    // Find the epoch of the next user history point
                     nextPointEpoch = votingEscrow.epoch(
                         votingEscrow
                             .getUserHistoryPoint(
                                 msg.sender,
-                                _userHistoryPointer[token][msg.sender]
+                                _userHistoryPointer[token][msg.sender] + 1
                             )
                             .timestamp
                     );
-
                     if (
                         nextPointEpoch ==
                         votingEscrow.epoch(userHistoryPoint.timestamp)
                     ) {
+                        // If the next user activity is in the same epoch we increase the pointer
                         _userHistoryPointer[token][msg.sender]++;
                     } else {
+                        // If the next user activity is in a different epoch we sum the claimable amount for his epoch
                         amountToClaim +=
                             (_epochFees[token][nextClaimedEpoch] *
                                 (userHistoryPoint.bias -
@@ -120,8 +164,13 @@ contract FeeDistributor is
                                         userHistoryPoint.timestamp))) /
                             votingEscrow.totalSupplyAt(nextClaimedEpoch);
 
-                        _userClaimedEpoch[token][msg.sender] = nextClaimedEpoch;
-                        if (nextPointEpoch == nextClaimedEpoch) {
+                        // Increment next claimable epoch
+                        _userNextClaimedEpoch[token][msg.sender]++;
+                        // If the next user activity is in the next epoch to claim we increase the user history pointer
+                        if (
+                            nextPointEpoch ==
+                            _userNextClaimedEpoch[token][msg.sender]
+                        ) {
                             _userHistoryPointer[token][msg.sender]++;
                         }
                     }

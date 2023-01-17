@@ -185,6 +185,7 @@ async function main() {
   const tradingPoolFactory = await upgrades.deployProxy(TradingPoolFactory, [
     addressesProvider.address,
     "300", // Default swap fee (3%)
+    "1000", // Default protocol fee (10%)
   ]);
   addresses["TradingPoolFactory"] = tradingPoolFactory.address;
 

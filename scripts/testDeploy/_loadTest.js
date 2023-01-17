@@ -85,6 +85,12 @@ let loadEnv = async function () {
   await nativeToken.deployed();
   console.log("Native Token Address:", nativeToken.address);
 
+  // Deploy Fee Distributor
+  const FeeDistributor = await ethers.getContractFactory("FeeDistributor");
+  feeDistributor = await FeeDistributor.deploy();
+  await feeDistributor.deployed();
+  console.log("Fee Distributor Address:", feeDistributor.address);
+
   // Deploy Debt Token
   const DebtToken = await ethers.getContractFactory("DebtToken");
   debtToken = await DebtToken.deploy();
@@ -146,7 +152,10 @@ let loadEnv = async function () {
     tokenOracle.address
   );
   await setTokenOracleTx.wait();
-
+  const setFeeDistributorTx = await addressesProvider.setFeeDistributor(
+    feeDistributor.address
+  );
+  await setFeeDistributorTx.wait();
   const setNativeTokenTx = await addressesProvider.setNativeToken(
     nativeToken.address
   );
@@ -226,10 +235,17 @@ let loadEnv = async function () {
   );
   await initVotingEscrowTx.wait();
 
-  // Init voting escrow
+  // Init fee distributor
+  const initFeeDistributorTx = await feeDistributor.initialize(
+    addressesProvider.address
+  );
+  await initFeeDistributorTx.wait();
+
+  // Init trading pool factory
   const initTradingPoolFactoryTx = await tradingPoolFactory.initialize(
     addressesProvider.address,
-    "300"
+    "300", // 3% swap fee
+    "1000" // 10% protocol fee
   );
   await initTradingPoolFactoryTx.wait();
 

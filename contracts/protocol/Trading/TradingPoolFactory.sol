@@ -32,6 +32,7 @@ contract TradingPoolFactory is
     // collection + asset = pool
     mapping(address => mapping(address => address)) private _pools;
 
+    uint256 private _protocolFee;
     uint256 private _defaultSwapFee;
 
     using ERC165Checker for address;
@@ -39,11 +40,13 @@ contract TradingPoolFactory is
     // Initialize the market
     function initialize(
         IAddressesProvider addressesProvider,
-        uint256 defaultSwapFee
+        uint256 defaultSwapFee,
+        uint256 protocolFee
     ) external initializer {
         __Ownable_init();
         _addressProvider = addressesProvider;
         _defaultSwapFee = defaultSwapFee;
+        _protocolFee = protocolFee;
     }
 
     function setDefaultSwapFee(uint256 newSwapFee) external {
@@ -52,6 +55,14 @@ contract TradingPoolFactory is
 
     function getDefaultSwapFee() external view returns (uint256) {
         return _defaultSwapFee;
+    }
+
+    function setProtocolFee(uint256 newProtocolFee) external {
+        _protocolFee = newProtocolFee;
+    }
+
+    function getProtocolFee() external view returns (uint256) {
+        return _protocolFee;
     }
 
     function getTradingPool(

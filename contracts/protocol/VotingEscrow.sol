@@ -63,45 +63,46 @@ contract VotingEscrow is
         __Ownable_init();
         _addressProvider = addressProvider;
         _deployTimestamp = block.timestamp;
+        _lastWeightCheckpoint = DataTypes.Point(0, 0, epochTimestamp(0));
     }
 
-    function epoch(uint256 timestamp) external view returns (uint256) {
+    function epoch(uint256 timestamp) public view returns (uint256) {
         require(
             timestamp > _deployTimestamp,
             "Timestamp before contract deployment"
         );
-        return _epoch(timestamp);
-    }
-
-    function _epoch(uint256 timestamp) internal view returns (uint256) {
         return (timestamp / Time.WEEK - _deployTimestamp / Time.WEEK);
     }
 
-    function epochTimestamp(uint256 epoch_) external view returns (uint256) {
-        return epoch_ * Time.WEEK + (_deployTimestamp / Time.WEEK) * Time.WEEK;
+    function epochTimestamp(uint256 _epoch) public view returns (uint256) {
+        return (_deployTimestamp / Time.WEEK + _epoch) * Time.WEEK;
     }
 
     function writeTotalWeightHistory() public {
+        console.log("writeTotalWeightHistory");
         // Update last saved weight checkpoint and record weight for epochs
         // Will break if is not used for 128 weeks
-        uint256 epochTimestampPointer = (_lastWeightCheckpoint.timestamp /
-            Time.WEEK) * Time.WEEK;
+        uint256 epochTimestampPointer = epochTimestamp(
+            _totalWeigthHistory.length
+        );
         for (uint256 i = 0; i < 2 ** 7; i++) {
-            //Increase epoch timestamp
-            epochTimestampPointer += Time.WEEK;
             if (epochTimestampPointer > block.timestamp) {
                 break;
             }
 
             // Save epoch total weight
-            _totalWeigthHistory.push(
-                _lastWeightCheckpoint.bias -
-                    _lastWeightCheckpoint.slope *
-                    (block.timestamp - _lastWeightCheckpoint.timestamp)
-            );
+            uint256 currentTotalWeight = _lastWeightCheckpoint.bias -
+                _lastWeightCheckpoint.slope *
+                (epochTimestampPointer - _lastWeightCheckpoint.timestamp);
+            _totalWeigthHistory.push(currentTotalWeight);
 
-            // Update slope
+            // Update last weight checkpoint
+            _lastWeightCheckpoint.bias = currentTotalWeight;
+            _lastWeightCheckpoint.timestamp = epochTimestampPointer;
             _lastWeightCheckpoint.slope += _slopeChanges[epochTimestampPointer];
+
+            //Increase epoch timestamp
+            epochTimestampPointer += Time.WEEK;
         }
     }
 
@@ -125,7 +126,6 @@ contract VotingEscrow is
             newPoint.bias = newPoint.slope * (newBalance.end - block.timestamp);
             newPoint.timestamp = block.timestamp;
         }
-
         // Bring epoch records into the present
         writeTotalWeightHistory();
 
@@ -133,6 +133,12 @@ contract VotingEscrow is
         _lastWeightCheckpoint.bias += newPoint.bias - oldPoint.bias;
         _lastWeightCheckpoint.slope += newPoint.slope - oldPoint.slope;
         _lastWeightCheckpoint.timestamp = block.timestamp;
+        console.log(
+            "_lastWeightCheckpoint, BIAS: %s, SLOPE: %s, TIMESTAMP: %s",
+            _lastWeightCheckpoint.bias,
+            _lastWeightCheckpoint.slope,
+            _lastWeightCheckpoint.timestamp
+        );
 
         // Read and update slope changes in accordance
         oldSlope = _slopeChanges[oldBalance.end];
@@ -154,6 +160,12 @@ contract VotingEscrow is
         }
 
         // Update user history
+        console.log(
+            "newPOint, BIAS: %s, SLOPE: %s, TIMESTAMP: %s",
+            newPoint.bias,
+            newPoint.slope,
+            newPoint.timestamp
+        );
         _userHistory[user].push(newPoint);
     }
 
@@ -170,17 +182,18 @@ contract VotingEscrow is
         return _userHistory[user][index];
     }
 
-    function totalSupplyAt(uint256 epoch_) external returns (uint256) {
+    function totalSupplyAt(uint256 _epoch) external returns (uint256) {
         // Update total weight history
         writeTotalWeightHistory();
 
-        if (epoch_ >= _totalWeigthHistory.length) {
+        if (_epoch >= _totalWeigthHistory.length) {
+            console.log("epoch_ >= _totalWeigthHistory.length");
             return 0;
         }
-        return _totalWeigthHistory[epoch_];
+        return _totalWeigthHistory[_epoch];
     }
 
-    function totalSupply() external returns (uint256) {
+    function totalSupply() public returns (uint256) {
         // Update total weight history
         writeTotalWeightHistory();
 

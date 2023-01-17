@@ -93,8 +93,9 @@ library LiquidationLogic {
                 addressesProvider.getFeeDistributor(),
                 protocolFee
             );
-            IFeeDistributor(addressesProvider.getFeeDistributor())
-                .addFeesToEpoch(poolAsset, protocolFee);
+            IFeeDistributor(addressesProvider.getFeeDistributor()).checkpoint(
+                poolAsset
+            );
             fundsLeft -= protocolFee;
         }
 

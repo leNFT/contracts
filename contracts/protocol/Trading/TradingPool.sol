@@ -4,6 +4,8 @@ pragma solidity 0.8.17;
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {IPricingCurve} from "../../interfaces/IPricingCurve.sol";
+import {IFeeDistributor} from "../../interfaces/IFeeDistributor.sol";
+import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -168,37 +170,45 @@ contract TradingPool is
         uint256 priceAfterBuy;
         uint256 finalPrice;
         uint256 lpIndex;
-        uint256 nftIndex;
         uint256 fee;
         uint256 totalFee;
+        uint256 protocolFee;
         DataTypes.LiquidityPair memory lp;
 
         require(nftIds.length > 0, "Need to buy at least one NFT");
 
         for (uint i = 0; i < nftIds.length; i++) {
             lpIndex = _nftToLp[nftIds[i]].liquidityPair;
-            nftIndex = _nftToLp[nftIds[i]].index;
             lp = _liquidityPairs[lpIndex];
             priceAfterBuy = IPricingCurve(lp.curve).priceAfterBuy(
                 lp.price,
                 lp.delta
             );
             fee = (priceAfterBuy * _swapFee) / PercentageMath.PERCENTAGE_FACTOR;
+            protocolFee =
+                (fee *
+                    ITradingPoolFactory(
+                        _addressProvider.getTradingPoolFactory()
+                    ).getProtocolFee()) /
+                PercentageMath.PERCENTAGE_FACTOR;
 
             // Update liquidity pair price
             _liquidityPairs[lpIndex].price = priceAfterBuy;
 
             // Remove nft from liquidity pair and add token swap amount
-            _liquidityPairs[lpIndex].nftIds[nftIndex] = _liquidityPairs[lpIndex]
-                .nftIds[_liquidityPairs[lpIndex].nftIds.length - 1];
+            _liquidityPairs[lpIndex].nftIds[
+                _nftToLp[nftIds[i]].index
+            ] = _liquidityPairs[lpIndex].nftIds[
+                _liquidityPairs[lpIndex].nftIds.length - 1
+            ];
             _liquidityPairs[lpIndex].nftIds.pop();
-            _liquidityPairs[lpIndex].tokenAmount += priceAfterBuy + fee;
+            _liquidityPairs[lpIndex].tokenAmount +=
+                priceAfterBuy +
+                fee -
+                protocolFee;
 
             // Increase total price sum
             priceQuote += priceAfterBuy;
-
-            // Increase total fee sum
-            totalFee += fee;
 
             console.log("NFT To LP", _nftToLp[nftIds[i]].liquidityPair);
 
@@ -215,12 +225,24 @@ contract TradingPool is
             );
         }
 
+        totalFee = (priceQuote * _swapFee) / PercentageMath.PERCENTAGE_FACTOR;
         finalPrice = priceQuote + totalFee;
 
         require(finalPrice <= maximumPrice, "Price higher than maximum price");
 
         // Get tokens from user
         IERC20(_token).safeTransferFrom(msg.sender, address(this), finalPrice);
+
+        // Send protocol fee to protocol fee distributor
+        IERC20(_token).safeTransfer(
+            _addressProvider.getFeeDistributor(),
+            (totalFee *
+                ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
+                    .getProtocolFee()) / PercentageMath.PERCENTAGE_FACTOR
+        );
+        IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
+            address(_token)
+        );
 
         emit Buy(msg.sender, nftIds, finalPrice);
 
@@ -245,10 +267,10 @@ contract TradingPool is
             );
         }
         uint256 priceQuote;
-        uint256 lpIndex;
         uint256 fee;
         uint256 totalFee;
         uint256 finalPrice;
+        uint256 protocolFee;
         DataTypes.LiquidityPair memory lp;
 
         // Transfer the NFTs to the pool
@@ -260,15 +282,24 @@ contract TradingPool is
                 nftIds[i]
             );
 
-            lpIndex = liquidityPairs[i];
+            uint256 lpIndex = liquidityPairs[i];
             lp = _liquidityPairs[lpIndex];
             fee = (lp.price * _swapFee) / PercentageMath.PERCENTAGE_FACTOR;
+            protocolFee =
+                (fee *
+                    ITradingPoolFactory(
+                        _addressProvider.getTradingPoolFactory()
+                    ).getProtocolFee()) /
+                PercentageMath.PERCENTAGE_FACTOR;
 
+            // Update total price quote
             priceQuote += lp.price;
-            totalFee += fee;
 
             _liquidityPairs[lpIndex].nftIds.push(nftIds[i]);
-            _liquidityPairs[lpIndex].tokenAmount -= lp.price - fee;
+            _liquidityPairs[lpIndex].tokenAmount -=
+                lp.price -
+                fee +
+                protocolFee;
             _liquidityPairs[lpIndex].price = IPricingCurve(lp.curve)
                 .priceAfterSell(lp.price, lp.delta);
 
@@ -278,11 +309,23 @@ contract TradingPool is
             });
         }
 
+        totalFee = (priceQuote * _swapFee) / PercentageMath.PERCENTAGE_FACTOR;
         finalPrice = priceQuote - totalFee;
 
         require(finalPrice >= minimumPrice, "Price lower than minimum price");
 
         IERC20(_token).safeTransfer(msg.sender, finalPrice);
+
+        // Send protocol fee to protocol fee distributor
+        IERC20(_token).safeTransfer(
+            _addressProvider.getFeeDistributor(),
+            (totalFee *
+                ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
+                    .getProtocolFee()) / PercentageMath.PERCENTAGE_FACTOR
+        );
+        IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
+            address(_token)
+        );
 
         emit Sell(msg.sender, nftIds, finalPrice);
 
