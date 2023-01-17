@@ -11,7 +11,6 @@ import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
-import {ILiquidationRewards} from "../../interfaces/ILiquidationRewards.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";

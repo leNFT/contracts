@@ -17,7 +17,6 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _nativeToken;
     address private _weth;
     address private _genesisNFT;
-    address private _liquidationRewards;
     address private _gaugeController;
     address private _tradingPoolFactory;
 
@@ -143,13 +142,5 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
 
     function getGenesisNFT() external view override returns (address) {
         return _genesisNFT;
-    }
-
-    function setLiquidationRewards(address liquidationRewards) external {
-        _liquidationRewards = liquidationRewards;
-    }
-
-    function getLiquidationRewards() external view returns (address) {
-        return _liquidationRewards;
     }
 }

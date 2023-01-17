@@ -10,7 +10,6 @@ import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {LoanLogic} from "../../libraries/logic/LoanLogic.sol";
-import {ILiquidationRewards} from "../../interfaces/ILiquidationRewards.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
@@ -171,12 +170,11 @@ contract LoanCenter is
     /// @notice Get the price a liquidator would have to pay to liquidate a loan and the rewards associated
     /// @param loanId The ID of the loan to be liquidated
     /// @return price The price of the liquidation in borrowed asset token
-    /// @return reward The rewards given to the liquidator in leNFT tokens
     function getLoanLiquidationPrice(
         uint256 loanId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
-    ) external view override returns (uint256, uint256) {
+    ) external view override returns (uint256) {
         // Get the price of the collateral asset in the reserve asset. Ex: Punk #42 = 5 USDC
         uint256 poolAssetETHPrice = ITokenOracle(
             _addressProvider.getTokenOracle()
@@ -214,17 +212,7 @@ contract LoanCenter is
 
         console.log("liquidationPrice", liquidationPrice);
 
-        // Find the liquidation reward
-        uint256 liquidationReward = ILiquidationRewards(
-            _addressProvider.getLiquidationRewards()
-        ).getLiquidationReward(
-                _loans[loanId].pool,
-                poolAssetETHPrice,
-                collateralETHPrice,
-                liquidationPrice
-            );
-
-        return (liquidationPrice, liquidationReward);
+        return (liquidationPrice);
     }
 
     function getNFTLoanId(

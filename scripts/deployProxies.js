@@ -122,25 +122,6 @@ async function main() {
   ]);
   addresses["NativeToken"] = nativeToken.address;
 
-  // Deploy and initialize the native token vault
-  const LiquidationsRewards = await ethers.getContractFactory(
-    "LiquidationRewards"
-  );
-  const liquidationsRewards = await upgrades.deployProxy(
-    LiquidationsRewards,
-    [
-      addressesProvider.address,
-      {
-        factor: "55000000000000000", // 0.055 Liquidation Reward Factor
-        maxReward: "25000000000000000000000", // 25000 leNFT Reward Limit
-        priceThreshold: 9000, // Liquidation Reward Price Threshold (90%)
-        priceLimit: 12000, // Liquidation Reward Price Limit (120%)
-      },
-    ],
-    { unsafeAllow: ["external-library-linking"], timeout: 0 }
-  );
-  addresses["LiquidationsRewards"] = liquidationsRewards.address;
-
   // Deploy and initialize Genesis NFT
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
   const genesisNFT = await upgrades.deployProxy(GenesisNFT, [
@@ -315,10 +296,7 @@ async function main() {
     loanCenter.address
   );
   await setLoanCenterTx.wait();
-  const setLiquidationRewardsTx = await addressesProvider.setLiquidationRewards(
-    liquidationsRewards.address
-  );
-  await setLiquidationRewardsTx.wait();
+
   const setNativeTokenTx = await addressesProvider.setNativeToken(
     nativeToken.address
   );

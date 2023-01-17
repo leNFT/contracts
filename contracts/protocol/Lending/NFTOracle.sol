@@ -7,7 +7,6 @@ import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {Trustus} from "../Trustus/Trustus.sol";
-import {ILiquidationRewards} from "../../interfaces/ILiquidationRewards.sol";
 import "hardhat/console.sol";
 
 contract NFTOracle is INFTOracle, Ownable, Trustus {

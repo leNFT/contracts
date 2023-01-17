@@ -36,7 +36,6 @@ contract FeeDistributor is
     }
 
     function checkpoint(address token) external {
-        console.log("Passed through checkpoint");
         // Find epoch we're in
         uint256 epoch = IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
             block.timestamp
@@ -77,10 +76,7 @@ contract FeeDistributor is
         uint256 nextClaimedEpochTimestamp;
         uint256 nextPointEpoch;
         for (uint i = 0; i < 50; i++) {
-            console.log("i: ", i);
-            console.log("epoch: ", votingEscrow.epoch(block.timestamp));
             nextClaimedEpoch = _userNextClaimedEpoch[token][msg.sender];
-            console.log("nextClaimedEpoch: ", nextClaimedEpoch);
             // Break if the next claimable epoch is the one we are in
             if (nextClaimedEpoch >= votingEscrow.epoch(block.timestamp)) {
                 break;
@@ -95,32 +91,12 @@ contract FeeDistributor is
                 nextClaimedEpochTimestamp = votingEscrow.epochTimestamp(
                     nextClaimedEpoch
                 );
-                console.log(
-                    "nextClaimedEpochTimestamp: ",
-                    nextClaimedEpochTimestamp
-                );
 
                 // Check if the user entire activity history has been iterated
                 if (
                     _userHistoryPointer[token][msg.sender] ==
                     votingEscrow.userHistoryLength(msg.sender) - 1
                 ) {
-                    console.log(
-                        "userHistoryPoint.timestamp",
-                        userHistoryPoint.timestamp
-                    );
-                    console.log(
-                        "votingEscrow.totalSupplyAt(nextClaimedEpoch)",
-                        votingEscrow.totalSupplyAt(nextClaimedEpoch)
-                    );
-                    console.log("userHistoryPoint.bias", userHistoryPoint.bias);
-                    console.log(
-                        "user vote power",
-                        userHistoryPoint.bias -
-                            userHistoryPoint.slope *
-                            (nextClaimedEpochTimestamp -
-                                userHistoryPoint.timestamp)
-                    );
                     // Sum claimable amount if its the last activity
                     amountToClaim +=
                         (_epochFees[token][nextClaimedEpoch] *
@@ -129,12 +105,6 @@ contract FeeDistributor is
                                 (nextClaimedEpochTimestamp -
                                     userHistoryPoint.timestamp))) /
                         votingEscrow.totalSupplyAt(nextClaimedEpoch);
-
-                    console.log(
-                        "_epochFees[token][nextClaimedEpoch]: ",
-                        _epochFees[token][nextClaimedEpoch]
-                    );
-                    console.log("amountToClaim: ", amountToClaim);
 
                     // Increment next claimable epoch
                     _userNextClaimedEpoch[token][msg.sender]++;

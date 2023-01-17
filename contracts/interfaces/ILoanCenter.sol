@@ -51,7 +51,7 @@ interface ILoanCenter {
         uint256 loanId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
-    ) external view returns (uint256, uint256);
+    ) external view returns (uint256);
 
     function getLoanDebt(uint256 loanId) external view returns (uint256);
 

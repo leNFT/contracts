@@ -11,7 +11,6 @@ import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
-import {ILiquidationRewards} from "../../interfaces/ILiquidationRewards.sol";
 import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
@@ -39,12 +38,11 @@ library LiquidationLogic {
         address poolAsset = IERC4626(loanData.pool).asset();
 
         // Find the liquidation price
-        (uint256 liquidationPrice, uint256 liquidationReward) = ILoanCenter(
+        uint256 liquidationPrice = ILoanCenter(
             addressesProvider.getLoanCenter()
         ).getLoanLiquidationPrice(params.loanId, params.request, params.packet);
 
         console.log("liquidationPrice", liquidationPrice);
-        console.log("liquidationReward", liquidationReward);
 
         // Get the payment from the liquidator
         IERC20Upgradeable(poolAsset).safeTransferFrom(
@@ -129,9 +127,5 @@ library LiquidationLogic {
 
         // Burn the token representing the debt
         IDebtToken(addressesProvider.getDebtToken()).burn(params.loanId);
-
-        //Send the liquidation reward to the liquidator
-        ILiquidationRewards(addressesProvider.getLiquidationRewards())
-            .sendLiquidationReward(params.caller, liquidationReward);
     }
 }

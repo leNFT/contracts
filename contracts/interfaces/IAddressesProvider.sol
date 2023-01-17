@@ -46,10 +46,6 @@ interface IAddressesProvider {
 
     function getFeeDistributor() external view returns (address);
 
-    function setLiquidationRewards(address liquidationRewards) external;
-
-    function getLiquidationRewards() external view returns (address);
-
     function setDebtToken(address debtToken) external;
 
     function getDebtToken() external view returns (address);
