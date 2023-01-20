@@ -6,7 +6,5 @@ interface INativeToken {
 
     function mintGaugeRewards(address receiver, uint256 amount) external;
 
-    function getEpochGaugeRewards(
-        uint256 epoch
-    ) external view returns (uint256);
+    function getGaugeRewards(uint256 epoch) external view returns (uint256);
 }

@@ -98,13 +98,15 @@ contract FeeDistributor is
                     votingEscrow.userHistoryLength(msg.sender) - 1
                 ) {
                     // Sum claimable amount if its the last activity
-                    amountToClaim +=
-                        (_epochFees[token][nextClaimedEpoch] *
-                            (userHistoryPoint.bias -
-                                userHistoryPoint.slope *
-                                (nextClaimedEpochTimestamp -
-                                    userHistoryPoint.timestamp))) /
-                        votingEscrow.totalSupplyAt(nextClaimedEpoch);
+                    if (votingEscrow.totalSupplyAt(nextClaimedEpoch) != 0) {
+                        amountToClaim +=
+                            (_epochFees[token][nextClaimedEpoch] *
+                                (userHistoryPoint.bias -
+                                    userHistoryPoint.slope *
+                                    (nextClaimedEpochTimestamp -
+                                        userHistoryPoint.timestamp))) /
+                            votingEscrow.totalSupplyAt(nextClaimedEpoch);
+                    }
 
                     // Increment next claimable epoch
                     _userNextClaimedEpoch[token][msg.sender]++;
@@ -126,13 +128,15 @@ contract FeeDistributor is
                         _userHistoryPointer[token][msg.sender]++;
                     } else {
                         // If the next user activity is in a different epoch we sum the claimable amount for his epoch
-                        amountToClaim +=
-                            (_epochFees[token][nextClaimedEpoch] *
-                                (userHistoryPoint.bias -
-                                    userHistoryPoint.slope *
-                                    (nextClaimedEpochTimestamp -
-                                        userHistoryPoint.timestamp))) /
-                            votingEscrow.totalSupplyAt(nextClaimedEpoch);
+                        if (votingEscrow.totalSupplyAt(nextClaimedEpoch) != 0) {
+                            amountToClaim +=
+                                (_epochFees[token][nextClaimedEpoch] *
+                                    (userHistoryPoint.bias -
+                                        userHistoryPoint.slope *
+                                        (nextClaimedEpochTimestamp -
+                                            userHistoryPoint.timestamp))) /
+                                votingEscrow.totalSupplyAt(nextClaimedEpoch);
+                        }
 
                         // Increment next claimable epoch
                         _userNextClaimedEpoch[token][msg.sender]++;

@@ -81,14 +81,17 @@ contract NativeToken is
         _mintTokens(receiver, amount);
     }
 
-    function getEpochGaugeRewards(
+    function getGaugeRewards(
         uint256 epoch
-    ) external view returns (uint256) {
+    ) external view override returns (uint256) {
         uint256 inflationEpoch = epoch / Time.YEAR_IN_WEEKS;
         return _initialRewards / (2 ** inflationEpoch);
     }
 
-    function mintGaugeRewards(address receiver, uint256 amount) external {
+    function mintGaugeRewards(
+        address receiver,
+        uint256 amount
+    ) external override {
         require(
             IGaugeController(_addressProvider.getGaugeController()).isGauge(
                 _msgSender()

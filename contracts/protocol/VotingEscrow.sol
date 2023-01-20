@@ -63,6 +63,7 @@ contract VotingEscrow is
         __Ownable_init();
         _addressProvider = addressProvider;
         _deployTimestamp = block.timestamp;
+        _totalWeigthHistory.push(0);
         _lastWeightCheckpoint = DataTypes.Point(0, 0, epochTimestamp(0));
     }
 
@@ -79,7 +80,6 @@ contract VotingEscrow is
     }
 
     function writeTotalWeightHistory() public {
-        console.log("writeTotalWeightHistory");
         // Update last saved weight checkpoint and record weight for epochs
         // Will break if is not used for 128 weeks
         uint256 epochTimestampPointer = epochTimestamp(
@@ -211,10 +211,6 @@ contract VotingEscrow is
         DataTypes.Point memory lastUserPoint = _userHistory[user][
             _userHistory[user].length - 1
         ];
-
-        console.log("lastUserPoint.bias", lastUserPoint.bias);
-        console.log("lastUserPoint.slope", lastUserPoint.slope);
-        console.log("lastUserPoint.timestamp", lastUserPoint.timestamp);
 
         return
             lastUserPoint.bias -

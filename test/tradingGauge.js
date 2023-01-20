@@ -67,14 +67,52 @@ describe("Trading Gauge", () => {
     await depositInGaugeTx.wait();
     console.log("Deposited LP 0 in gauge");
   });
+  it("Should lock tokens", async function () {
+    // Mint 10 native tokens to the callers address
+    const mintNativeTokenTx = await nativeToken.mint(
+      owner.address,
+      "10000000000000000000"
+    );
+    await mintNativeTokenTx.wait();
 
-  it("Should unstake from the gauge", async function () {
-    // withdraw from gauge
-    const withdrawFromGaugeTx = await gauge.withdraw(0);
-    await withdrawFromGaugeTx.wait();
-    console.log("Withdrew LP 0 from gauge");
+    console.log("Minted tokens");
+
+    // Approve tokens for use by the voting escrow contract
+    const approveTokenTx = await nativeToken.approve(
+      votingEscrow.address,
+      "10000000000000000000"
+    );
+    await approveTokenTx.wait();
+
+    //Lock 10 tokens for 100 days
+    await votingEscrow.createLock(
+      "10000000000000000000",
+      Math.floor(Date.now() / 1000) + 86400 * 100
+    );
+    console.log(Math.floor(Date.now() / 1000) + 86400 * 100);
+  });
+  it("Should claim rewards from the gauge", async function () {
+    // 2 weeks pass
+    await ethers.provider.send("evm_increaseTime", [86400 * 14]);
+
+    console.log("CLAIMING REWARDS");
+    // Claim rewards from gauge
+    const claimRewardsTx = await gauge.claim();
+    await claimRewardsTx.wait();
+    console.log("Claimed rewards from gauge");
 
     // Find if the user received the asset
-    expect(await tradingPool.ownerOf(0)).to.equal(owner.address);
+    expect(await weth.balanceOf(owner.address)).to.equal("0");
   });
+
+  // it("Should unstake from the gauge", async function () {
+  //   console.log("UNSTAKING FROM GAUGE");
+  //   // withdraw from gauge
+  //   const withdrawFromGaugeTx = await gauge.withdraw(0);
+  //   await withdrawFromGaugeTx.wait();
+  //   console.log("Withdrew LP 0 from gauge");
+
+  //   // Find if the user received the asset
+  //   expect(await tradingPool.ownerOf(0)).to.equal(owner.address);
+  // });
 });

@@ -180,6 +180,10 @@ let loadEnv = async function () {
     tradingPoolFactory.address
   );
   await setTradingPoolFactoryTx.wait();
+  const setGaugeCotrollerTx = await addressesProvider.setGaugeController(
+    gaugeController.address
+  );
+  await setGaugeCotrollerTx.wait();
   const setWETHTx = await addressesProvider.setWETH(weth.address);
   await setWETHTx.wait();
 

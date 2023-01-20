@@ -62,7 +62,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         emit RemoveGauge(gauge, liquidityPool);
     }
 
-    function isGauge(address gauge) external view returns (bool) {
+    function isGauge(address gauge) external view override returns (bool) {
         return _isGauge[gauge];
     }
 

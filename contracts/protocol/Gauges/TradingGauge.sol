@@ -26,7 +26,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
     mapping(address => DataTypes.WorkingBalance[])
         private _workingBalanceHistory;
     mapping(address => uint256) private _workingBalancePointer;
-    mapping(address => uint256) private _userClaimedEpoch;
+    mapping(address => uint256) private _userNextClaimedEpoch;
     uint256 private _workingSupply;
     uint256[] private _workingSupplyHistory;
     address private _lpToken;
@@ -42,6 +42,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
     constructor(IAddressesProvider addressProvider, address lpToken_) {
         _addressProvider = addressProvider;
         _lpToken = lpToken_;
+        _workingSupplyHistory = [0];
     }
 
     function lpToken() external view returns (address) {
@@ -59,7 +60,6 @@ contract TradingGauge is IGauge, IERC721Receiver {
         );
 
         // Get maximum number of user epochs
-        uint256 currentEpoch = votingEscrow.epoch(block.timestamp);
         uint256 workingBalanceHistoryLength = _workingBalanceHistory[msg.sender]
             .length;
         // Check if user has any user actions and therefore something to claim
@@ -67,52 +67,83 @@ contract TradingGauge is IGauge, IERC721Receiver {
             return 0;
         }
 
+        // Set the next claimable epoch if it's the first time the user claims
+        if (_userNextClaimedEpoch[msg.sender] == 0) {
+            _userNextClaimedEpoch[msg.sender] =
+                votingEscrow.epoch(
+                    _workingBalanceHistory[msg.sender][0].timestamp
+                ) +
+                1;
+        }
+
         // Iterate over a max of 50 weeks and/or user epochs
         uint256 amountToClaim;
+        uint256 nextClaimedEpoch;
         for (uint256 i = 0; i < 50; i++) {
-            if (_userClaimedEpoch[msg.sender] == currentEpoch - 1) {
+            nextClaimedEpoch = _userNextClaimedEpoch[msg.sender];
+            console.log(
+                "i = %s, nextClaimedEpoch = %s , votingEscrow.epoch(block.timestamp) = %s",
+                i,
+                nextClaimedEpoch,
+                votingEscrow.epoch(block.timestamp)
+            );
+            // Break if the next claimable epoch is the one we are in
+            if (nextClaimedEpoch >= votingEscrow.epoch(block.timestamp)) {
                 break;
             } else {
+                // Get the current user working Balance and its epoch
                 DataTypes.WorkingBalance
                     memory workingBalance = _workingBalanceHistory[msg.sender][
                         _workingBalancePointer[msg.sender]
                     ];
-                uint256 workingBalanceEpoch = votingEscrow.epoch(
-                    workingBalance.timestamp
-                );
 
+                // Check if the user entire balance history has been iterated
                 if (
                     _workingBalancePointer[msg.sender] ==
                     workingBalanceHistoryLength - 1
                 ) {
+                    console.log(
+                        "Claiming last working balance",
+                        _workingBalancePointer[msg.sender]
+                    );
                     amountToClaim +=
-                        (nativeToken.getEpochGaugeRewards(workingBalanceEpoch) *
+                        (nativeToken.getGaugeRewards(nextClaimedEpoch) *
                             workingBalance.amount) /
-                        _workingSupplyHistory[workingBalanceEpoch];
+                        _workingSupplyHistory[nextClaimedEpoch];
 
-                    _userClaimedEpoch[msg.sender]++;
+                    _userNextClaimedEpoch[msg.sender]++;
                 } else {
                     DataTypes.WorkingBalance
                         memory nextWorkingBalance = _workingBalanceHistory[
                             msg.sender
                         ][_workingBalancePointer[msg.sender] + 1];
-                    uint256 nextWorkingBalanceEpoch = votingEscrow.epoch(
-                        nextWorkingBalance.timestamp
-                    );
 
-                    if (nextWorkingBalanceEpoch == workingBalanceEpoch) {
+                    if (
+                        votingEscrow.epoch(nextWorkingBalance.timestamp) ==
+                        votingEscrow.epoch(workingBalance.timestamp)
+                    ) {
                         _workingBalancePointer[msg.sender]++;
+                        console.log(
+                            "Incremented working balance pointer",
+                            _workingBalancePointer[msg.sender]
+                        );
                     } else {
-                        amountToClaim +=
-                            (nativeToken.getEpochGaugeRewards(
-                                nextWorkingBalanceEpoch
-                            ) * workingBalance.amount) /
-                            _workingSupplyHistory[workingBalanceEpoch];
-
-                        _userClaimedEpoch[msg.sender] = nextWorkingBalanceEpoch;
+                        console.log(
+                            "Claiming working balance %s with %s tokens out of %s",
+                            nativeToken.getGaugeRewards(nextClaimedEpoch),
+                            workingBalance.amount,
+                            _workingSupplyHistory[nextClaimedEpoch]
+                        );
+                        if (_workingSupplyHistory[nextClaimedEpoch] != 0) {
+                            amountToClaim +=
+                                (nativeToken.getGaugeRewards(nextClaimedEpoch) *
+                                    workingBalance.amount) /
+                                _workingSupplyHistory[nextClaimedEpoch];
+                        }
+                        _userNextClaimedEpoch[msg.sender]++;
                         if (
-                            nextWorkingBalanceEpoch ==
-                            _userClaimedEpoch[msg.sender] + 1
+                            votingEscrow.epoch(nextWorkingBalance.timestamp) ==
+                            _userNextClaimedEpoch[msg.sender]
                         ) {
                             _workingBalancePointer[msg.sender]++;
                         }
@@ -120,6 +151,12 @@ contract TradingGauge is IGauge, IERC721Receiver {
                 }
             }
         }
+
+        console.log("amountToClaim", amountToClaim);
+        INativeToken(_addressProvider.getNativeToken()).mintGaugeRewards(
+            msg.sender,
+            amountToClaim
+        );
 
         return amountToClaim;
     }
@@ -131,7 +168,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
             .epoch(block.timestamp);
         for (uint256 i = 0; i < 2 ** 7; i++) {
             //Increase epoch
-            if (currentEpoch > _workingSupplyHistory.length) {
+            if (_workingSupplyHistory.length >= currentEpoch) {
                 break;
             }
 
@@ -163,8 +200,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
                     totalVotingSupply) / PercentageMath.PERCENTAGE_FACTOR
             );
         }
-        console.log("_userLPValue[msg.sender]", _userLPValue[msg.sender]);
-        console.log("newAmount", newAmount);
+
         DataTypes.WorkingBalance memory oldWorkingBalance;
         if (_workingBalanceHistory[msg.sender].length > 0) {
             oldWorkingBalance = _workingBalanceHistory[msg.sender][
@@ -174,14 +210,12 @@ contract TradingGauge is IGauge, IERC721Receiver {
         DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
             .WorkingBalance({amount: newAmount, timestamp: block.timestamp});
 
-        console.log("oldWorkingBalance", oldWorkingBalance.amount);
-        console.log("newWorkingBalance", newWorkingBalance.amount);
-
         _workingSupply =
             _workingSupply +
             newWorkingBalance.amount -
             oldWorkingBalance.amount;
         writeTotalWeightHistory();
+
         _workingBalanceHistory[msg.sender].push(newWorkingBalance);
     }
 
@@ -286,17 +320,14 @@ contract TradingGauge is IGauge, IERC721Receiver {
         uint256 nftsAppraisal = lp.nftIds.length * lp.price;
         uint256 returnValue = 0;
 
-        console.log("nftsAppraisal", nftsAppraisal);
-        console.log("lp.price", lp.price);
-        console.log("lp.tokenAmount", lp.tokenAmount);
-        console.log("lp.nftIds.length", lp.nftIds.length);
-
         // Value is higher if the lp is in equilibrium
         if (nftsAppraisal > lp.tokenAmount) {
             returnValue = lp.tokenAmount;
         } else {
             returnValue = nftsAppraisal;
         }
+
+        console.log("LP VALUE", returnValue);
 
         return returnValue;
     }
