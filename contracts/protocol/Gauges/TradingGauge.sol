@@ -188,12 +188,12 @@ contract TradingGauge is IGauge, IERC721Receiver {
         uint256 newAmount;
 
         if (totalVotingSupply == 0) {
-            newAmount = _userLPValue[msg.sender];
+            newAmount = _userLPValue[user];
         } else {
             newAmount = Math.min(
-                _userLPValue[msg.sender],
+                _userLPValue[user],
                 (PercentageMath.HALF_PERCENTAGE_FACTOR *
-                    _userLPValue[msg.sender] +
+                    _userLPValue[user] +
                     (PercentageMath.HALF_PERCENTAGE_FACTOR *
                         userVotingBalance *
                         _totalLPValue) /
@@ -202,9 +202,9 @@ contract TradingGauge is IGauge, IERC721Receiver {
         }
 
         DataTypes.WorkingBalance memory oldWorkingBalance;
-        if (_workingBalanceHistory[msg.sender].length > 0) {
-            oldWorkingBalance = _workingBalanceHistory[msg.sender][
-                _workingBalanceHistory[msg.sender].length - 1
+        if (_workingBalanceHistory[user].length > 0) {
+            oldWorkingBalance = _workingBalanceHistory[user][
+                _workingBalanceHistory[user].length - 1
             ];
         }
         DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
@@ -216,7 +216,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
             oldWorkingBalance.amount;
         writeTotalWeightHistory();
 
-        _workingBalanceHistory[msg.sender].push(newWorkingBalance);
+        _workingBalanceHistory[user].push(newWorkingBalance);
     }
 
     function kick(address user) external {

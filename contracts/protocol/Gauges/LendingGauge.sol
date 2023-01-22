@@ -43,17 +43,17 @@ contract LendingGauge is IGauge {
         return _workingSupply;
     }
 
-    function balanceOf() external view returns (uint256) {
-        return _balanceOf[msg.sender];
+    function balanceOf(address user) external view returns (uint256) {
+        return _balanceOf[user];
     }
 
-    function workingBalanceOf() external view returns (uint256) {
-        if (_workingBalanceHistory[msg.sender].length == 0) {
+    function workingBalanceOf(address user) external view returns (uint256) {
+        if (_workingBalanceHistory[user].length == 0) {
             return 0;
         }
         return
-            _workingBalanceHistory[msg.sender][
-                _workingBalanceHistory[msg.sender].length - 1
+            _workingBalanceHistory[user][
+                _workingBalanceHistory[user].length - 1
             ].amount;
     }
 
@@ -186,8 +186,6 @@ contract LendingGauge is IGauge {
     }
 
     function _checkpoint(address user) internal {
-        writeTotalWeightHistory();
-
         // Get user ve balance and total ve balance
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
@@ -195,22 +193,38 @@ contract LendingGauge is IGauge {
 
         uint256 userVotingBalance = votingEscrow.balanceOf(user);
         uint256 totalVotingSupply = votingEscrow.totalSupply();
+        uint256 newAmount;
 
-        DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
-            .WorkingBalance({
-                amount: Math.min(
-                    _balanceOf[msg.sender],
+        if (totalVotingSupply == 0) {
+            newAmount = _balanceOf[user];
+        } else {
+            newAmount = Math.min(
+                _balanceOf[user],
+                (PercentageMath.HALF_PERCENTAGE_FACTOR *
+                    _balanceOf[user] +
                     (PercentageMath.HALF_PERCENTAGE_FACTOR *
-                        _balanceOf[msg.sender] +
-                        (PercentageMath.HALF_PERCENTAGE_FACTOR *
-                            userVotingBalance *
-                            totalSupply()) /
-                        totalVotingSupply) / PercentageMath.PERCENTAGE_FACTOR
-                ),
-                timestamp: block.timestamp
-            });
+                        userVotingBalance *
+                        totalSupply()) /
+                    totalVotingSupply) / PercentageMath.PERCENTAGE_FACTOR
+            );
+        }
 
-        _workingBalanceHistory[msg.sender].push(newWorkingBalance);
+        DataTypes.WorkingBalance memory oldWorkingBalance;
+        if (_workingBalanceHistory[user].length > 0) {
+            oldWorkingBalance = _workingBalanceHistory[user][
+                _workingBalanceHistory[user].length - 1
+            ];
+        }
+        DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
+            .WorkingBalance({amount: newAmount, timestamp: block.timestamp});
+
+        _workingSupply =
+            _workingSupply +
+            newWorkingBalance.amount -
+            oldWorkingBalance.amount;
+        writeTotalWeightHistory();
+
+        _workingBalanceHistory[user].push(newWorkingBalance);
     }
 
     function userBoost(address user) external view returns (uint256) {
