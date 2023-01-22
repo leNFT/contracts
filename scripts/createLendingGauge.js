@@ -17,7 +17,7 @@ async function main() {
   let chainID = hre.network.config.chainId;
   console.log("chainID: ", chainID);
   var addresses = contractAddresses[chainID.toString(16)];
-  const lendingPool = "";
+  const lendingPool = "0x488A436E1156407DF03DB8F3cEe6Ab2DE506A704";
 
   // Deploy gauge
   const Gauge = await ethers.getContractFactory("LendingGauge");
@@ -33,3 +33,12 @@ async function main() {
   await setAddGaugeTx.wait();
   console.log("Added Gauge to Gauge Controller.");
 }
+
+// We recommend this pattern to be able to use async/await everywhere
+// and properly handle errors.
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

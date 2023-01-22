@@ -102,17 +102,19 @@ describe("Trading Gauge", () => {
     console.log("Claimed rewards from gauge");
 
     // Find if the user received the asset
-    expect(await weth.balanceOf(owner.address)).to.equal("0");
+    expect(await nativeToken.balanceOf(owner.address)).to.equal(
+      "20000000000000000000"
+    );
   });
 
-  // it("Should unstake from the gauge", async function () {
-  //   console.log("UNSTAKING FROM GAUGE");
-  //   // withdraw from gauge
-  //   const withdrawFromGaugeTx = await gauge.withdraw(0);
-  //   await withdrawFromGaugeTx.wait();
-  //   console.log("Withdrew LP 0 from gauge");
+  it("Should unstake from the gauge", async function () {
+    console.log("UNSTAKING FROM GAUGE");
+    // withdraw from gauge
+    const withdrawFromGaugeTx = await gauge.withdraw(0);
+    await withdrawFromGaugeTx.wait();
+    console.log("Withdrew LP 0 from gauge");
 
-  //   // Find if the user received the asset
-  //   expect(await tradingPool.ownerOf(0)).to.equal(owner.address);
-  // });
+    // Find if the user received the asset
+    expect(await tradingPool.ownerOf(0)).to.equal(owner.address);
+  });
 });
