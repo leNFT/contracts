@@ -213,6 +213,16 @@ contract LendingGauge is IGauge {
         _workingBalanceHistory[msg.sender].push(newWorkingBalance);
     }
 
+    function userBoost(address user) external view returns (uint256) {
+        if (_balanceOf[user] == 0) {
+            return 0;
+        }
+        return
+            (_workingBalanceHistory[user][
+                _workingBalanceHistory[user].length - 1
+            ].amount * PercentageMath.PERCENTAGE_FACTOR) / _balanceOf[user];
+    }
+
     function kick(address user) external {
         // Get user locked balance end time
         uint256 lockEnd = IVotingEscrow(_addressProvider.getVotingEscrow())
