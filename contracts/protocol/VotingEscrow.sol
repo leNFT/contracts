@@ -186,10 +186,6 @@ contract VotingEscrow is
         // Update total weight history
         writeTotalWeightHistory();
 
-        if (_epoch >= _totalWeigthHistory.length) {
-            console.log("epoch_ >= _totalWeigthHistory.length");
-            return 0;
-        }
         return _totalWeigthHistory[_epoch];
     }
 

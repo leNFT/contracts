@@ -33,37 +33,40 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     mapping(address => mapping(address => DataTypes.VoteBalance)) _userGaugeVoteBalance;
 
     mapping(address => address) _liquidityPoolToGauge;
-    mapping(address => bool) _isGauge;
 
     function initialize(
         IAddressesProvider addressProvider
     ) external initializer {
         __Ownable_init();
         _addressProvider = addressProvider;
+        _totalWeigthHistory.push(0);
+        _lastWeightCheckpoint = DataTypes.Point(
+            0,
+            0,
+            IVotingEscrow(_addressProvider.getVotingEscrow()).epochTimestamp(0)
+        );
     }
 
     // Add a gauge (should be done by the admin)
     function addGauge(address gauge) external onlyOwner {
         address liquidityPool = IGauge(gauge).lpToken();
         _liquidityPoolToGauge[liquidityPool] = gauge;
-        _isGauge[gauge] = true;
 
         emit AddGauge(gauge, liquidityPool);
     }
 
     // Remove a gauge (should be done by the admin)
     function removeGauge(address gauge) external onlyOwner {
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(isGauge(gauge), "Gauge is not on the gauge list");
 
         address liquidityPool = IGauge(gauge).lpToken();
         delete _liquidityPoolToGauge[liquidityPool];
-        delete _isGauge[gauge];
 
         emit RemoveGauge(gauge, liquidityPool);
     }
 
-    function isGauge(address gauge) external view override returns (bool) {
-        return _isGauge[gauge];
+    function isGauge(address gauge) public view override returns (bool) {
+        return _liquidityPoolToGauge[gauge] != address(0);
     }
 
     function getGauge(address liquidityPool) external view returns (address) {
@@ -71,7 +74,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     }
 
     function getGaugeWeight(address gauge) external view returns (uint256) {
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(isGauge(gauge), "Gauge is not on the gauge list");
 
         DataTypes.Point
             memory lastWeightCheckpoint = _lastGaugeWeigthCheckpoint[gauge];
@@ -84,8 +87,10 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function getGaugeWeightAt(
         address gauge,
         uint256 epoch
-    ) external view returns (uint256) {
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+    ) external returns (uint256) {
+        require(isGauge(gauge), "Gauge is not on the gauge list");
+        // Update gauge weight history
+        writeGaugeWeightHistory(gauge);
 
         return _gaugeWeightHistory[gauge][epoch];
     }
@@ -97,7 +102,10 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             (block.timestamp - _lastWeightCheckpoint.timestamp);
     }
 
-    function getTotalWeightAt(uint256 epoch) external view returns (uint256) {
+    function getTotalWeightAt(uint256 epoch) external returns (uint256) {
+        // Update total weight history
+        writeTotalWeightHistory();
+
         return _totalWeigthHistory[epoch];
     }
 
@@ -106,11 +114,11 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         return _userVotePower[user];
     }
 
-    function userGaugeVoteWeight(
+    function userVoteWeightForGauge(
         address user,
         address gauge
     ) external view returns (uint256) {
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(isGauge(gauge), "Gauge is not on the gauge list");
 
         return _userGaugeVoteBalance[user][gauge].weight;
     }
@@ -118,55 +126,73 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function writeTotalWeightHistory() public {
         // Update last saved weight checkpoint and record weight for epochs
         // Will break if is not used for 128 weeks
-        uint256 epochTimestampPointer = (_lastWeightCheckpoint.timestamp /
-            Time.WEEK) * Time.WEEK;
+        uint256 epochTimestampPointer = IVotingEscrow(
+            _addressProvider.getVotingEscrow()
+        ).epochTimestamp(_totalWeigthHistory.length);
         for (uint256 i = 0; i < 2 ** 7; i++) {
-            //Increase epoch timestamp
-            epochTimestampPointer += Time.WEEK;
             if (epochTimestampPointer > block.timestamp) {
                 break;
             }
 
             // Save epoch total weight
-            _totalWeigthHistory.push(
-                _lastWeightCheckpoint.bias -
-                    _lastWeightCheckpoint.slope *
-                    (block.timestamp - _lastWeightCheckpoint.timestamp)
-            );
+            uint256 currentTotalWeight = _lastWeightCheckpoint.bias -
+                _lastWeightCheckpoint.slope *
+                (epochTimestampPointer - _lastWeightCheckpoint.timestamp);
+            _totalWeigthHistory.push(currentTotalWeight);
 
-            // Update slope
+            // Update last weight checkpoint
+            _lastWeightCheckpoint.bias = currentTotalWeight;
+            _lastWeightCheckpoint.timestamp = epochTimestampPointer;
             _lastWeightCheckpoint.slope += _totalWeightSlopeChanges[
                 epochTimestampPointer
             ];
         }
+
+        //Increase epoch timestamp
+        epochTimestampPointer += Time.WEEK;
     }
 
     function writeGaugeWeightHistory(address gauge) public {
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(isGauge(gauge), "Gauge is not on the gauge list");
+
+        // If the gauge weights are empty set the weight for the first epoch
+        if (_gaugeWeightHistory[gauge].length == 0) {
+            _gaugeWeightHistory[gauge].push(0);
+            _lastGaugeWeigthCheckpoint[gauge] = DataTypes.Point(
+                0,
+                0,
+                IVotingEscrow(_addressProvider.getVotingEscrow())
+                    .epochTimestamp(0)
+            );
+        }
 
         // Update last saved weight checkpoint and record weight for epochs
         // Will break if is not used for 128 weeks
-        uint256 epochTimestampPointer = (_lastGaugeWeigthCheckpoint[gauge]
-            .timestamp / Time.WEEK) * Time.WEEK;
+        uint256 epochTimestampPointer = IVotingEscrow(
+            _addressProvider.getVotingEscrow()
+        ).epochTimestamp(_lastGaugeWeigthCheckpoint[gauge].timestamp);
         for (uint256 i = 0; i < 2 ** 7; i++) {
             //Increase epoch timestamp
-            epochTimestampPointer += Time.WEEK;
             if (epochTimestampPointer > block.timestamp) {
                 break;
             }
 
             // Save epoch total weight
-            _gaugeWeightHistory[gauge].push(
-                _lastGaugeWeigthCheckpoint[gauge].bias -
-                    _lastWeightCheckpoint.slope *
-                    (block.timestamp -
-                        _lastGaugeWeigthCheckpoint[gauge].timestamp)
-            );
+            uint256 currentGaugeWeight = _lastGaugeWeigthCheckpoint[gauge]
+                .bias -
+                _lastWeightCheckpoint.slope *
+                (epochTimestampPointer -
+                    _lastGaugeWeigthCheckpoint[gauge].timestamp);
+            _gaugeWeightHistory[gauge].push(currentGaugeWeight);
 
-            // Update slope
+            // Update last weight checkpoint
+            _lastGaugeWeigthCheckpoint[gauge].bias = currentGaugeWeight;
+            _lastGaugeWeigthCheckpoint[gauge].timestamp = epochTimestampPointer;
             _lastGaugeWeigthCheckpoint[gauge].slope += _gaugeWeightSlopeChanges[
                 gauge
             ][epochTimestampPointer];
+
+            epochTimestampPointer += Time.WEEK;
         }
     }
 
@@ -203,7 +229,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             "Must have locked balance bigger than 0 to vote"
         );
 
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(isGauge(gauge), "Gauge is not on the gauge list");
 
         // Write weight history to make sure its up to date until this epoch
         writeTotalWeightHistory();

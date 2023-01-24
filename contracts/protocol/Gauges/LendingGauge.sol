@@ -29,6 +29,7 @@ contract LendingGauge is IGauge {
     constructor(IAddressesProvider addressProvider, address lpToken_) {
         _addressProvider = addressProvider;
         _lpToken = lpToken_;
+        _workingSupplyHistory = [0];
     }
 
     function lpToken() external view returns (address) {

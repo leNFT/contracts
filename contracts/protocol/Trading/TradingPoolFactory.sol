@@ -49,7 +49,7 @@ contract TradingPoolFactory is
         _protocolFee = protocolFee;
     }
 
-    function setDefaultSwapFee(uint256 newSwapFee) external {
+    function setDefaultSwapFee(uint256 newSwapFee) external onlyOwner {
         _defaultSwapFee = newSwapFee;
     }
 
@@ -57,7 +57,7 @@ contract TradingPoolFactory is
         return _defaultSwapFee;
     }
 
-    function setProtocolFee(uint256 newProtocolFee) external {
+    function setProtocolFee(uint256 newProtocolFee) external onlyOwner {
         _protocolFee = newProtocolFee;
     }
 
