@@ -64,7 +64,7 @@ contract VotingEscrow is
         _addressProvider = addressProvider;
         _deployTimestamp = block.timestamp;
         _totalWeigthHistory.push(0);
-        _lastWeightCheckpoint = DataTypes.Point(0, 0, epochTimestamp(0));
+        _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);
     }
 
     function epoch(uint256 timestamp) public view returns (uint256) {

@@ -31,7 +31,6 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     mapping(address => uint256) _userVotePower;
     // Weight vote power each user has in each gauge
     mapping(address => mapping(address => DataTypes.VoteBalance)) _userGaugeVoteBalance;
-
     mapping(address => address) _liquidityPoolToGauge;
 
     function initialize(
@@ -40,11 +39,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         __Ownable_init();
         _addressProvider = addressProvider;
         _totalWeigthHistory.push(0);
-        _lastWeightCheckpoint = DataTypes.Point(
-            0,
-            0,
-            IVotingEscrow(_addressProvider.getVotingEscrow()).epochTimestamp(0)
-        );
+        _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);
     }
 
     // Add a gauge (should be done by the admin)

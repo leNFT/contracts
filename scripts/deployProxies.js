@@ -99,6 +99,8 @@ async function main() {
   ]);
   addresses["LoanCenter"] = loanCenter.address;
 
+  console.log("Deployed LoanCenter");
+
   // Deploy and initialize the debt token
   const DebtToken = await ethers.getContractFactory("DebtToken");
   const debtToken = await upgrades.deployProxy(DebtToken, [
@@ -107,6 +109,8 @@ async function main() {
     "LDEBT",
   ]);
   addresses["DebtToken"] = debtToken.address;
+
+  console.log("Deployed DebtToken");
 
   // Deploy and initialize the native token
   const NativeToken = await ethers.getContractFactory("NativeToken");
@@ -121,6 +125,8 @@ async function main() {
     "20000000000000000000",
   ]);
   addresses["NativeToken"] = nativeToken.address;
+
+  console.log("Deployed NativeToken");
 
   // Deploy and initialize Genesis NFT
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
@@ -138,12 +144,16 @@ async function main() {
   ]);
   addresses["GenesisNFT"] = genesisNFT.address;
 
+  console.log("Deployed GenesisNFT");
+
   // Deploy and initialize Voting Escrow contract
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   const votingEscrow = await upgrades.deployProxy(VotingEscrow, [
     addressesProvider.address,
   ]);
   addresses["VotingEscrow"] = votingEscrow.address;
+
+  console.log("Deployed VotingEscrow");
 
   // Deploy and initialize Gauge Controller
   const GaugeController = await ethers.getContractFactory("GaugeController");
@@ -152,12 +162,16 @@ async function main() {
   ]);
   addresses["GaugeController"] = gaugeController.address;
 
+  console.log("Deployed GaugeController");
+
   // Deploy and initialize Fee distributor
   const FeeDistributor = await ethers.getContractFactory("FeeDistributor");
   const feeDistributor = await upgrades.deployProxy(FeeDistributor, [
     addressesProvider.address,
   ]);
   addresses["FeeDistributor"] = feeDistributor.address;
+
+  console.log("Deployed FeeDistributor");
 
   // Deploy and initialize Trading Pool Factory
   const TradingPoolFactory = await ethers.getContractFactory(
@@ -170,6 +184,8 @@ async function main() {
   ]);
   addresses["TradingPoolFactory"] = tradingPoolFactory.address;
 
+  console.log("Deployed TradingPoolFactory");
+
   // Deploy and initialize Swap Router
   const SwapRouter = await ethers.getContractFactory("SwapRouter");
   const swapRouter = await upgrades.deployProxy(SwapRouter, [
@@ -177,7 +193,9 @@ async function main() {
   ]);
   addresses["SwapRouter"] = swapRouter.address;
 
-  console.log("Deployed Proxies");
+  console.log("Deployed SwapRouter");
+
+  console.log("Deployed All Proxies");
 
   /****************************************************************
   DEPLOY NON-PROXY CONTRACTS
