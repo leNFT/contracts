@@ -31,6 +31,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     mapping(address => uint256) _userVotePower;
     // Weight vote power each user has in each gauge
     mapping(address => mapping(address => DataTypes.VoteBalance)) _userGaugeVoteBalance;
+    mapping(address => bool) _isGauge;
     mapping(address => address) _liquidityPoolToGauge;
 
     function initialize(
@@ -46,22 +47,24 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function addGauge(address gauge) external onlyOwner {
         address liquidityPool = IGauge(gauge).lpToken();
         _liquidityPoolToGauge[liquidityPool] = gauge;
+        _isGauge[gauge] = true;
 
         emit AddGauge(gauge, liquidityPool);
     }
 
     // Remove a gauge (should be done by the admin)
     function removeGauge(address gauge) external onlyOwner {
-        require(isGauge(gauge), "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
 
         address liquidityPool = IGauge(gauge).lpToken();
         delete _liquidityPoolToGauge[liquidityPool];
+        delete _isGauge[gauge];
 
         emit RemoveGauge(gauge, liquidityPool);
     }
 
-    function isGauge(address gauge) public view override returns (bool) {
-        return _liquidityPoolToGauge[gauge] != address(0);
+    function isGauge(address gauge) external view override returns (bool) {
+        return _isGauge[gauge];
     }
 
     function getGauge(address liquidityPool) external view returns (address) {
@@ -69,7 +72,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     }
 
     function getGaugeWeight(address gauge) external view returns (uint256) {
-        require(isGauge(gauge), "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
 
         DataTypes.Point
             memory lastWeightCheckpoint = _lastGaugeWeigthCheckpoint[gauge];
@@ -83,7 +86,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         address gauge,
         uint256 epoch
     ) external returns (uint256) {
-        require(isGauge(gauge), "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
         // Update gauge weight history
         writeGaugeWeightHistory(gauge);
 
@@ -113,7 +116,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         address user,
         address gauge
     ) external view returns (uint256) {
-        require(isGauge(gauge), "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
 
         return _userGaugeVoteBalance[user][gauge].weight;
     }
@@ -148,7 +151,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     }
 
     function writeGaugeWeightHistory(address gauge) public {
-        require(isGauge(gauge), "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
 
         // If the gauge weights are empty set the weight for the first epoch
         if (_gaugeWeightHistory[gauge].length == 0) {
@@ -224,7 +227,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             "Must have locked balance bigger than 0 to vote"
         );
 
-        require(isGauge(gauge), "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
 
         // Write weight history to make sure its up to date until this epoch
         writeTotalWeightHistory();

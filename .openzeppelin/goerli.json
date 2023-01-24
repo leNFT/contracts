@@ -5989,6 +5989,11 @@
       "address": "0xa0b1c2A4aD54f5Fa3eF5CB8D4Eda00f5F0D6E926",
       "txHash": "0x2636a2e1f8e26a8557ca612ceacfbb91e102573161c4082d9d09ede88486d4a5",
       "kind": "transparent"
+    },
+    {
+      "address": "0xd0DeFeCF5D36bc0cbf32899Bf0B683d6b85a54b8",
+      "txHash": "0x8b000ace6b0faf29ed7ada2fc9304f95cf49c3c8b5ca7145cfd9b0548f29d6aa",
+      "kind": "transparent"
     }
   ],
   "impls": {
