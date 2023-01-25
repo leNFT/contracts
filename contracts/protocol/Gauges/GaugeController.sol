@@ -133,13 +133,13 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             }
 
             // Save epoch total weight
-            uint256 currentTotalWeight = _lastWeightCheckpoint.bias -
+            uint256 epochTotalWeight = _lastWeightCheckpoint.bias -
                 _lastWeightCheckpoint.slope *
                 (epochTimestampPointer - _lastWeightCheckpoint.timestamp);
-            _totalWeigthHistory.push(currentTotalWeight);
+            _totalWeigthHistory.push(epochTotalWeight);
 
             // Update last weight checkpoint
-            _lastWeightCheckpoint.bias = currentTotalWeight;
+            _lastWeightCheckpoint.bias = epochTotalWeight;
             _lastWeightCheckpoint.timestamp = epochTimestampPointer;
             _lastWeightCheckpoint.slope += _totalWeightSlopeChanges[
                 epochTimestampPointer
@@ -168,7 +168,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         // Will break if is not used for 128 weeks
         uint256 epochTimestampPointer = IVotingEscrow(
             _addressProvider.getVotingEscrow()
-        ).epochTimestamp(_lastGaugeWeigthCheckpoint[gauge].timestamp);
+        ).epochTimestamp(_gaugeWeightHistory[gauge].length);
         for (uint256 i = 0; i < 2 ** 7; i++) {
             //Increase epoch timestamp
             if (epochTimestampPointer > block.timestamp) {
@@ -176,15 +176,14 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             }
 
             // Save epoch total weight
-            uint256 currentGaugeWeight = _lastGaugeWeigthCheckpoint[gauge]
-                .bias -
+            uint256 epochGaugeWeight = _lastGaugeWeigthCheckpoint[gauge].bias -
                 _lastWeightCheckpoint.slope *
                 (epochTimestampPointer -
                     _lastGaugeWeigthCheckpoint[gauge].timestamp);
-            _gaugeWeightHistory[gauge].push(currentGaugeWeight);
+            _gaugeWeightHistory[gauge].push(epochGaugeWeight);
 
             // Update last weight checkpoint
-            _lastGaugeWeigthCheckpoint[gauge].bias = currentGaugeWeight;
+            _lastGaugeWeigthCheckpoint[gauge].bias = epochGaugeWeight;
             _lastGaugeWeigthCheckpoint[gauge].timestamp = epochTimestampPointer;
             _lastGaugeWeigthCheckpoint[gauge].slope += _gaugeWeightSlopeChanges[
                 gauge

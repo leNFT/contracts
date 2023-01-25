@@ -91,13 +91,13 @@ contract VotingEscrow is
             }
 
             // Save epoch total weight
-            uint256 currentTotalWeight = _lastWeightCheckpoint.bias -
+            uint256 epochTotalWeight = _lastWeightCheckpoint.bias -
                 _lastWeightCheckpoint.slope *
                 (epochTimestampPointer - _lastWeightCheckpoint.timestamp);
-            _totalWeigthHistory.push(currentTotalWeight);
+            _totalWeigthHistory.push(epochTotalWeight);
 
             // Update last weight checkpoint
-            _lastWeightCheckpoint.bias = currentTotalWeight;
+            _lastWeightCheckpoint.bias = epochTotalWeight;
             _lastWeightCheckpoint.timestamp = epochTimestampPointer;
             _lastWeightCheckpoint.slope += _slopeChanges[epochTimestampPointer];
 
