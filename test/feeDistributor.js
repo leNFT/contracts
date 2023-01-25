@@ -33,6 +33,8 @@ describe("Fee Distributor ", () => {
   it("Should deposit into the fee distributor contract", async function () {
     // Add 1 weeks to the time
     await ethers.provider.send("evm_increaseTime", [86400 * 7]);
+    // Mine a new block
+    await ethers.provider.send("evm_mine", []);
 
     // Mint weth tokens to the fee distributor contract
     const mintTestTokenTx = await weth.mint(
@@ -48,6 +50,8 @@ describe("Fee Distributor ", () => {
   it("Should be able to claim the tokens after the epoch is over", async function () {
     // Add 2 weeks to the time
     await ethers.provider.send("evm_increaseTime", [86400 * 7]);
+    // Mine a new block
+    await ethers.provider.send("evm_mine", []);
 
     // Claim fees
     const claimFeesTx = await feeDistributor.claim(weth.address);

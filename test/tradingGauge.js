@@ -94,6 +94,8 @@ describe("Trading Gauge", () => {
   it("Should claim rewards from the gauge", async function () {
     // 2 weeks pass
     await ethers.provider.send("evm_increaseTime", [86400 * 14]);
+    // Mine a new block
+    await ethers.provider.send("evm_mine", []);
 
     console.log("CLAIMING REWARDS");
     // Claim rewards from gauge

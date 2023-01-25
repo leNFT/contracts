@@ -38,12 +38,6 @@ library DataTypes {
         uint256 end;
     }
 
-    struct VoteBalance {
-        uint256 weight;
-        uint256 slope;
-        uint256 end;
-    }
-
     struct Point {
         uint256 bias;
         uint256 slope;
