@@ -8,6 +8,7 @@ import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
 import {IGaugeController} from "../../interfaces/IGaugeController.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {IGauge} from "../../interfaces/IGauge.sol";
+import {INativeToken} from "../../interfaces/INativeToken.sol";
 import "hardhat/console.sol";
 import {Time} from "../../libraries/Time.sol";
 
@@ -98,7 +99,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function getGaugeWeightAt(
         address gauge,
         uint256 epoch
-    ) external returns (uint256) {
+    ) public returns (uint256) {
         require(_isGauge[gauge], "Gauge is not on the gauge list");
         // Update gauge weight history
         writeGaugeWeightHistory(gauge);
@@ -121,7 +122,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             (block.timestamp - _lastWeightCheckpoint.timestamp);
     }
 
-    function getTotalWeightAt(uint256 epoch) external returns (uint256) {
+    function getTotalWeightAt(uint256 epoch) public returns (uint256) {
         // Update total weight history
         writeTotalWeightHistory();
 
@@ -147,6 +148,15 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         address gauge
     ) external view returns (uint256) {
         require(_isGauge[gauge], "Gauge is not on the gauge list");
+
+        if (
+            _userGaugeVoteWeight[user][gauge].slope *
+                (block.timestamp -
+                    _userGaugeVoteWeight[user][gauge].timestamp) >
+            _userGaugeVoteWeight[user][gauge].bias
+        ) {
+            return 0;
+        }
 
         return
             _userGaugeVoteWeight[user][gauge].bias -
@@ -248,8 +258,8 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         );
 
         require(
-            userLockedBalance.end > block.timestamp,
-            "Must have an active vote in order to vote"
+            userLockedBalance.end > block.timestamp || ratio == 0,
+            "Must have an active lock in order to vote"
         );
 
         require(
@@ -310,12 +320,11 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
 
         // Update user vote info
         _userVoteRatio[msg.sender] =
+            ratio +
             _userVoteRatio[msg.sender] -
-            _userGaugeVoteRatio[msg.sender][gauge] +
-            ratio;
+            _userGaugeVoteRatio[msg.sender][gauge];
         _userGaugeVoteRatio[msg.sender][gauge] = ratio;
 
-        // If there's a valid lock
         _userGaugeVoteWeight[msg.sender][gauge] = DataTypes.Point(
             voteWeight,
             voteSlope,
@@ -323,5 +332,30 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         );
 
         emit Vote(msg.sender, gauge, ratio);
+    }
+
+    function getGaugeRewards(
+        address gauge,
+        uint256 epoch
+    ) external returns (uint256 rewards) {
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
+
+        console.log(
+            "getEpochRewards",
+            INativeToken(_addressProvider.getNativeToken()).getEpochRewards(
+                epoch
+            )
+        );
+
+        console.log("getTotalWeightAt", getTotalWeightAt(epoch));
+
+        if (getTotalWeightAt(epoch) == 0) {
+            return 0;
+        }
+
+        return
+            (INativeToken(_addressProvider.getNativeToken()).getEpochRewards(
+                epoch
+            ) * getGaugeWeightAt(gauge, epoch)) / getTotalWeightAt(epoch);
     }
 }

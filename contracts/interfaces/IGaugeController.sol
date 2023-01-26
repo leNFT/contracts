@@ -10,12 +10,10 @@ interface IGaugeController {
 
     function isGauge(address gauge) external view returns (bool);
 
-    function getGaugeWeightAt(
+    function userVoteRatio(address user) external view returns (uint256);
+
+    function getGaugeRewards(
         address gauge,
         uint256 epoch
-    ) external returns (uint256);
-
-    function getTotalWeightAt(uint256 epoch) external returns (uint256);
-
-    function userVoteRatio(address user) external view returns (uint256);
+    ) external returns (uint256 rewards);
 }

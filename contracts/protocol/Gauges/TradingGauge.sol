@@ -3,6 +3,7 @@ pragma solidity 0.8.17;
 
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {INativeToken} from "../../interfaces/INativeToken.sol";
+import {IGaugeController} from "../../interfaces/IGaugeController.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -55,8 +56,8 @@ contract TradingGauge is IGauge, IERC721Receiver {
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         );
-        INativeToken nativeToken = INativeToken(
-            _addressProvider.getNativeToken()
+        IGaugeController gaugeController = IGaugeController(
+            _addressProvider.getGaugeController()
         );
 
         // Get maximum number of user epochs
@@ -107,8 +108,10 @@ contract TradingGauge is IGauge, IERC721Receiver {
                         _workingBalancePointer[msg.sender]
                     );
                     amountToClaim +=
-                        (nativeToken.getGaugeRewards(nextClaimedEpoch) *
-                            workingBalance.amount) /
+                        (gaugeController.getGaugeRewards(
+                            address(this),
+                            nextClaimedEpoch
+                        ) * workingBalance.amount) /
                         _workingSupplyHistory[nextClaimedEpoch];
 
                     _userNextClaimedEpoch[msg.sender]++;
@@ -130,14 +133,19 @@ contract TradingGauge is IGauge, IERC721Receiver {
                     } else {
                         console.log(
                             "Claiming working balance %s with %s tokens out of %s",
-                            nativeToken.getGaugeRewards(nextClaimedEpoch),
+                            gaugeController.getGaugeRewards(
+                                address(this),
+                                nextClaimedEpoch
+                            ),
                             workingBalance.amount,
                             _workingSupplyHistory[nextClaimedEpoch]
                         );
                         if (_workingSupplyHistory[nextClaimedEpoch] != 0) {
                             amountToClaim +=
-                                (nativeToken.getGaugeRewards(nextClaimedEpoch) *
-                                    workingBalance.amount) /
+                                (gaugeController.getGaugeRewards(
+                                    address(this),
+                                    nextClaimedEpoch
+                                ) * workingBalance.amount) /
                                 _workingSupplyHistory[nextClaimedEpoch];
                         }
                         _userNextClaimedEpoch[msg.sender]++;

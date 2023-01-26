@@ -81,7 +81,7 @@ contract NativeToken is
         _mintTokens(receiver, amount);
     }
 
-    function getGaugeRewards(
+    function getEpochRewards(
         uint256 epoch
     ) external view override returns (uint256) {
         uint256 inflationEpoch = epoch / Time.YEAR_IN_WEEKS;

@@ -79,13 +79,13 @@ describe("Trading Gauge", () => {
     );
     console.log(
       "userVoteWeight: ",
-      await gaugeController.userVoteWeight(owner.address)
+      await gaugeController.userVoteRatio(owner.address)
     );
 
     expect(
       await gaugeController.userVoteWeightForGauge(owner.address, gauge.address)
     ).to.not.equal("0");
-    expect(await gaugeController.userVoteWeight(owner.address)).to.not.equal(
+    expect(await gaugeController.userVoteRatio(owner.address)).to.not.equal(
       "0"
     );
   });
