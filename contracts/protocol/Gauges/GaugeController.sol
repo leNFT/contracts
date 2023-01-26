@@ -27,8 +27,10 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     DataTypes.Point _lastWeightCheckpoint;
     // Slope changes for total weight
     mapping(uint256 => uint256) private _totalWeightSlopeChanges;
-    // Weight vote power used by each user (%), smallest tick is 0.01%
-    mapping(address => DataTypes.Point) _userVoteWeight;
+    // Uset vote ratio used by each user (%), smallest tick is 0.01%
+    mapping(address => uint256) _userVoteRatio;
+    // User vote ratio used by each user at each gauge (%), smallest tick is 0.01%
+    mapping(address => mapping(address => uint256)) _userGaugeVoteRatio;
     // Weight vote power each user has in each gauge
     mapping(address => mapping(address => DataTypes.Point)) _userGaugeVoteWeight;
     mapping(address => bool) _isGauge;
@@ -127,36 +129,24 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     }
 
     // Get current used vote power for user
-    function userVoteWeight(address user) public view returns (uint256) {
-        if (
-            block.timestamp >
-            IVotingEscrow(_addressProvider.getVotingEscrow())
-                .locked(msg.sender)
-                .end
-        ) {
-            return 0;
-        }
+    function userVoteRatio(address user) external view returns (uint256) {
+        return _userVoteRatio[user];
+    }
 
-        return
-            _userVoteWeight[user].bias -
-            _userVoteWeight[user].slope *
-            (block.timestamp - _userVoteWeight[user].timestamp);
+    function userVoteRatioForGauge(
+        address user,
+        address gauge
+    ) external view returns (uint256) {
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
+
+        return _userGaugeVoteRatio[user][gauge];
     }
 
     function userVoteWeightForGauge(
         address user,
         address gauge
-    ) public view returns (uint256) {
+    ) external view returns (uint256) {
         require(_isGauge[gauge], "Gauge is not on the gauge list");
-
-        if (
-            block.timestamp >
-            IVotingEscrow(_addressProvider.getVotingEscrow())
-                .locked(msg.sender)
-                .end
-        ) {
-            return 0;
-        }
 
         return
             _userGaugeVoteWeight[user][gauge].bias -
@@ -184,7 +174,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             // Update last weight checkpoint
             _lastWeightCheckpoint.bias = epochTotalWeight;
             _lastWeightCheckpoint.timestamp = epochTimestampPointer;
-            _lastWeightCheckpoint.slope += _totalWeightSlopeChanges[
+            _lastWeightCheckpoint.slope -= _totalWeightSlopeChanges[
                 epochTimestampPointer
             ];
         }
@@ -228,7 +218,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             // Update last weight checkpoint
             _lastGaugeWeigthCheckpoint[gauge].bias = epochGaugeWeight;
             _lastGaugeWeigthCheckpoint[gauge].timestamp = epochTimestampPointer;
-            _lastGaugeWeigthCheckpoint[gauge].slope += _gaugeWeightSlopeChanges[
+            _lastGaugeWeigthCheckpoint[gauge].slope -= _gaugeWeightSlopeChanges[
                 gauge
             ][epochTimestampPointer];
 
@@ -236,7 +226,8 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         }
     }
 
-    function vote(address gauge, uint256 weight) external {
+    // Vote for a gauge, ratio is % of user ve weighted balance
+    function vote(address gauge, uint256 ratio) external {
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         );
@@ -246,12 +237,14 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             msg.sender
         );
 
-        require(weight > 0, "Vote weight must be higher than 0");
+        require(ratio > 0, "Vote ratio must be higher than 0");
 
         require(
-            weight + userVoteWeight(msg.sender) <=
-                votingEscrow.balanceOf(msg.sender),
-            "Total vote weight must be smaller than locked weight"
+            ratio +
+                _userVoteRatio[msg.sender] -
+                _userGaugeVoteRatio[msg.sender][gauge] <=
+                PercentageMath.PERCENTAGE_FACTOR, // 100%
+            "Total vote ratio must be smaller than 100%"
         );
 
         require(
@@ -275,10 +268,15 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             msg.sender,
             votingEscrow.userHistoryLength(msg.sender) - 1
         );
+        DataTypes.Point memory oldGaugeVoteWeight;
+        uint256 voteWeight = (userLastPoint.bias * ratio) /
+            PercentageMath.PERCENTAGE_FACTOR;
+        uint256 voteSlope = (userLastPoint.slope * ratio) /
+            PercentageMath.PERCENTAGE_FACTOR;
 
-        // If we alredy have votes in this gauge update old slopes
+        // If we alredy have valid votes in this gauge
         if (
-            userVoteWeightForGauge(msg.sender, gauge) != 0 &&
+            _userGaugeVoteRatio[msg.sender][gauge] != 0 &&
             block.timestamp < userLockedBalance.end
         ) {
             _gaugeWeightSlopeChanges[gauge][
@@ -288,36 +286,42 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             _totalWeightSlopeChanges[
                 userLockedBalance.end
             ] -= _userGaugeVoteWeight[msg.sender][gauge].slope;
+
+            oldGaugeVoteWeight = _userGaugeVoteWeight[msg.sender][gauge];
         }
 
         // Add new slope updates
-        _gaugeWeightSlopeChanges[gauge][userLockedBalance.end] += userLastPoint
-            .slope;
-        _totalWeightSlopeChanges[userLockedBalance.end] += userLastPoint.slope;
+        _gaugeWeightSlopeChanges[gauge][userLockedBalance.end] += voteSlope;
+        _totalWeightSlopeChanges[userLockedBalance.end] += voteSlope;
 
         // Update checkpoints
         _lastGaugeWeigthCheckpoint[gauge].bias +=
-            weight -
-            _userGaugeVoteWeight[msg.sender][gauge].bias;
+            voteWeight -
+            oldGaugeVoteWeight.bias;
         _lastGaugeWeigthCheckpoint[gauge].slope +=
             userLastPoint.slope -
-            _userGaugeVoteWeight[msg.sender][gauge].slope;
+            oldGaugeVoteWeight.slope;
         _lastGaugeWeigthCheckpoint[gauge].timestamp = block.timestamp;
-        _lastWeightCheckpoint.bias =
-            weight -
-            _userGaugeVoteWeight[msg.sender][gauge].bias;
+        _lastWeightCheckpoint.bias = voteWeight - oldGaugeVoteWeight.bias;
         _lastWeightCheckpoint.slope +=
             userLastPoint.slope -
-            _userGaugeVoteWeight[msg.sender][gauge].slope;
+            oldGaugeVoteWeight.slope;
         _lastWeightCheckpoint.timestamp = block.timestamp;
 
-        // Update user gauge vote info
+        // Update user vote info
+        _userVoteRatio[msg.sender] =
+            _userVoteRatio[msg.sender] -
+            _userGaugeVoteRatio[msg.sender][gauge] +
+            ratio;
+        _userGaugeVoteRatio[msg.sender][gauge] = ratio;
+
+        // If there's a valid lock
         _userGaugeVoteWeight[msg.sender][gauge] = DataTypes.Point(
-            weight,
-            userLastPoint.slope,
+            voteWeight,
+            voteSlope,
             userLastPoint.timestamp
         );
 
-        emit Vote(msg.sender, gauge, weight);
+        emit Vote(msg.sender, gauge, ratio);
     }
 }

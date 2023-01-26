@@ -5,6 +5,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {MathUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
+import {IGaugeController} from "../interfaces/IGaugeController.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";
 import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
 import {INFTOracle} from "../interfaces/INFTOracle.sol";
@@ -99,7 +100,7 @@ contract VotingEscrow is
             // Update last weight checkpoint
             _lastWeightCheckpoint.bias = epochTotalWeight;
             _lastWeightCheckpoint.timestamp = epochTimestampPointer;
-            _lastWeightCheckpoint.slope += _slopeChanges[epochTimestampPointer];
+            _lastWeightCheckpoint.slope -= _slopeChanges[epochTimestampPointer];
 
             //Increase epoch timestamp
             epochTimestampPointer += Time.WEEK;
@@ -305,6 +306,13 @@ contract VotingEscrow is
         require(
             block.timestamp > _userLockedBalance[_msgSender()].end,
             "Locktime is not over"
+        );
+
+        // Make sure the user has no active votes
+        require(
+            IGaugeController(_addressProvider.getGaugeController())
+                .userVoteRatio(_msgSender()) == 0,
+            "User has active  gauge votes"
         );
 
         // Save oldLocked and update the locked balance

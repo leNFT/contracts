@@ -58,10 +58,7 @@ describe("Trading Gauge", () => {
   it("Should vote for the created gauge", async function () {
     console.log("VOTING");
     // Use 50% of the locked tokens to vote for the gauge
-    const voteTx = await gaugeController.vote(
-      gauge.address,
-      "100000000000000000"
-    );
+    const voteTx = await gaugeController.vote(gauge.address, "5000");
     await voteTx.wait();
     console.log("Voted for gauge");
 
@@ -76,5 +73,20 @@ describe("Trading Gauge", () => {
       await gaugeController.getGaugeWeight(gauge.address)
     );
     console.log("Total weight: ", await gaugeController.getTotalWeight());
+    console.log(
+      "userVoteWeightForGauge",
+      await gaugeController.userVoteWeightForGauge(owner.address, gauge.address)
+    );
+    console.log(
+      "userVoteWeight: ",
+      await gaugeController.userVoteWeight(owner.address)
+    );
+
+    expect(
+      await gaugeController.userVoteWeightForGauge(owner.address, gauge.address)
+    ).to.not.equal("0");
+    expect(await gaugeController.userVoteWeight(owner.address)).to.not.equal(
+      "0"
+    );
   });
 });

@@ -9,4 +9,13 @@ interface IGaugeController {
     event RemoveGauge(address indexed gauge, address indexed liquidityPool);
 
     function isGauge(address gauge) external view returns (bool);
+
+    function getGaugeWeightAt(
+        address gauge,
+        uint256 epoch
+    ) external returns (uint256);
+
+    function getTotalWeightAt(uint256 epoch) external returns (uint256);
+
+    function userVoteRatio(address user) external view returns (uint256);
 }
