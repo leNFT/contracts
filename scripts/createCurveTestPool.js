@@ -3,6 +3,9 @@
 //
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
+
+const { ethers } = require("hardhat");
+
 // const hre = require("hardhat");
 require("dotenv").config();
 
@@ -17,21 +20,30 @@ async function main() {
   let chainID = hre.network.config.chainId;
   console.log("chainID: ", chainID);
   var addresses = contractAddresses[chainID.toString(16)];
-  const tradingPool = "0x51fB4d287243d08C935A01C63CEFBA76f5094E7b";
 
   // Deploy gauge
-  const Gauge = await ethers.getContractFactory("TradingGauge");
-  const gauge = await Gauge.deploy(addresses.AddressesProvider, tradingPool);
-  await gauge.deployed();
-  console.log("Gauge address: ", gauge.address);
+  const Pool = await ethers.getContractFactory("CurvePool");
+  const pool = await Pool.deploy();
+  await pool.deployed();
+  console.log("Pool address: ", pool.address);
 
-  // Add gauge to gauge controller
-  const GaugeController = await ethers.getContractFactory("GaugeController");
-  const gaugeController = GaugeController.attach(addresses.GaugeController);
+  // Init pool
+  const initPoolTx = await pool.initialize(
+    "leNFT",
+    "LE",
+    [
+      "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", // Burn address
+      addresses.NativeToken,
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero,
+    ],
+    [18, 18, 0, 0],
+    10000,
+    300
+  );
+  await initPoolTx.wait();
 
-  const setAddGaugeTx = await gaugeController.addGauge(gauge.address);
-  await setAddGaugeTx.wait();
-  console.log("Added Gauge to Gauge Controller.");
+  console.log("Initialized pool");
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -5,9 +5,12 @@ import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {ILendingMarket} from "../interfaces/ILendingMarket.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
 import {IGenesisNFT} from "../interfaces/IGenesisNFT.sol";
+import {ICurvePool} from "../interfaces/ICurvePool.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -33,6 +36,7 @@ contract GenesisNFT is
     ReentrancyGuardUpgradeable
 {
     using CountersUpgradeable for CountersUpgradeable.Counter;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     IAddressesProvider private _addressProvider;
     uint256 _cap;
@@ -40,6 +44,7 @@ contract GenesisNFT is
     uint256 _maxLocktime;
     uint256 _minLocktime;
     uint256 _nativeTokenFactor;
+    address _tradingPool;
     address payable _devAddress;
     uint256 _ltvBoost;
     CountersUpgradeable.Counter private _tokenIdCounter;
@@ -136,13 +141,9 @@ contract GenesisNFT is
                 _nativeTokenFactor) * 10 ** 18;
     }
 
-    // function getMintReserve() external view returns (address) {
-    //     return _mintReserve;
-    // }
-
-    // function setMintReserve(address mintReserve) external onlyOwner {
-    //     _mintReserve = mintReserve;
-    // }
+    function setTradingPool(address pool) external onlyOwner {
+        _tradingPool = pool;
+    }
 
     function mintCount() external view returns (uint256) {
         return _tokenIdCounter.current() - 1;
@@ -152,11 +153,8 @@ contract GenesisNFT is
         uint256 locktime,
         string memory uri
     ) external payable nonReentrant returns (uint256) {
-        // Make sure the genesis reserve is set
-        // require(
-        //     _mintReserve != address(0),
-        //     "Genesis mint deposit reserve is not set."
-        // );
+        // Make sure the genesis incentived pool is set
+        require(_tradingPool != address(0), "Incentivized pool is not set.");
 
         // Make sure there's still enough tkens to mint
         uint256 tokenId = _tokenIdCounter.current();
@@ -169,19 +167,41 @@ contract GenesisNFT is
         // Set a buying price
         require(msg.value == _price, "Tx value is not equal to price");
 
-        //Wrap and Deposit 2/3 into the curve pool
-        // uint256 depositAmount = (2 * _price) / 3;
-        // address weth = _addressProvider.getWETH();
-        // IWETH(weth).deposit{value: depositAmount}();
-        // IWETH(weth).approve(_mintReserve, depositAmount);
-        // IERC4626(_mintReserve).deposit(depositAmount, (address(this)));
+        // Get the amount of ETH to deposit to the pool
+        uint256 ethAmount = (2 * _price) / 3;
 
-        // Send the rest to the dev address
-        (bool sent, ) = _devAddress.call{value: _price /*- depositAmount*/}("");
+        // Get the amount of LE tokens to pair with the ETH
+        uint256[2] memory balances = ICurvePool(_tradingPool).get_balances();
+        uint256 leAmount;
+
+        if (balances[0] == 0) {
+            leAmount = ethAmount * 15000;
+        } else {
+            leAmount = (ethAmount * balances[1]) / balances[0];
+        }
+
+        // Mint LE tokens
+        INativeToken(_addressProvider.getNativeToken()).mintGenesisTokens(
+            leAmount + getNativeTokensReward(locktime)
+        );
+
+        // Approve the pool to spend LE tokens
+        IERC20Upgradeable(_addressProvider.getNativeToken()).approve(
+            _tradingPool,
+            leAmount
+        );
+
+        // Deposit tokens to the pool and the LP amount
+        uint256 lpAmount = ICurvePool(_tradingPool).add_liquidity{
+            value: ethAmount
+        }([ethAmount, leAmount], 0);
+
+        // Send the rest of the ETH to the dev address
+        (bool sent, ) = _devAddress.call{value: _price - ethAmount}("");
         require(sent, "Failed to send Ether to dev fund");
 
-        // Send leNFT tokens to the caller
-        INativeToken(_addressProvider.getNativeToken()).mintGenesisTokens(
+        // Send the extra leNFT tokens to the caller
+        IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransfer(
             _msgSender(),
             getNativeTokensReward(locktime)
         );
@@ -195,7 +215,8 @@ contract GenesisNFT is
         // Add mint details
         _mintDetails[tokenId] = DataTypes.MintDetails(
             block.timestamp,
-            locktime
+            locktime,
+            lpAmount
         );
 
         //Increase supply
@@ -206,7 +227,7 @@ contract GenesisNFT is
         return tokenId;
     }
 
-    function getETHPrice() external view returns (uint256) {
+    function getPrice() external view returns (uint256) {
         return _price;
     }
 
@@ -232,17 +253,12 @@ contract GenesisNFT is
             "Token is still locked"
         );
 
-        // Withdraw ETH deposited in the reserve
-        // uint256 withdrawAmount = (2 * _price) / 3;
-        // address weth = _addressProvider.getWETH();
-        // IERC4626(_mintReserve).withdraw(
-        //     withdrawAmount,
-        //     address(this),
-        //     address(this)
-        // );
-        // IWETH(weth).withdraw(withdrawAmount);
-        // (bool sent, ) = _msgSender().call{value: withdrawAmount}("");
-        // require(sent, "Failed to send Ether");
+        // Withdraw LP tokens from the pool
+        ICurvePool(_tradingPool).remove_liquidity(
+            _mintDetails[tokenId].lpAmount,
+            [uint256(0), uint256(0)],
+            _msgSender()
+        );
 
         // Burn genesis NFT
         _burn(tokenId);

@@ -96,6 +96,7 @@ library DataTypes {
     struct MintDetails {
         uint256 timestamp;
         uint256 locktime;
+        uint256 lpAmount;
     }
 
     struct BorrowParams {

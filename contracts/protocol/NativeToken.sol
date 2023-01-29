@@ -73,12 +73,12 @@ contract NativeToken is
         _mint(account, amount);
     }
 
-    function mintGenesisTokens(address receiver, uint256 amount) external {
+    function mintGenesisTokens(uint256 amount) external {
         require(
             _msgSender() == _addressProvider.getGenesisNFT(),
             "Genesis tokens can only be minted by the Genesis NFT contract"
         );
-        _mintTokens(receiver, amount);
+        _mintTokens(_addressProvider.getGenesisNFT(), amount);
     }
 
     function getEpochRewards(

@@ -6,16 +6,16 @@ async function main() {
   let contractAddresses = require("../../lenft-interface/contractAddresses.json");
   let chainID = hre.network.config.chainId;
   let addresses = contractAddresses[chainID.toString(16)];
-  let reserve = "0xA24174A4895119fB37E4bf61D16FAee4d1355BAF";
+  let pool = "0xA24174A4895119fB37E4bf61D16FAee4d1355BAF";
 
   // Add NFT to oracle
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
   const genesisNFT = GenesisNFT.attach(addresses.GenesisNFT);
 
   // Set trusted price source
-  const setMintReserveTx = await genesisNFT.setMintReserve(reserve);
-  await setMintReserveTx.wait();
-  console.log("Set " + reserve + " as genesis mint reserve.");
+  const setIncentivizedPoolTx = await genesisNFT.setTradingPool(pool);
+  await setIncentivizedPoolTx.wait();
+  console.log("Set " + pool + " as genesis incentivized pool.");
 }
 
 // We recommend this pattern to be able to use async/await everywhere
