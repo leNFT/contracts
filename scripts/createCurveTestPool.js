@@ -37,7 +37,7 @@ async function main() {
       ethers.constants.AddressZero,
       ethers.constants.AddressZero,
     ],
-    [18, 18, 0, 0],
+    [ethers.utils.parseUnits("1", 18), ethers.utils.parseUnits("1", 18), 0, 0],
     10000,
     300
   );

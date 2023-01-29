@@ -133,7 +133,7 @@ contract GenesisNFT is
         _active[tokenId] = newState;
     }
 
-    function getNativeTokensReward(
+    function getNativeTokenReward(
         uint256 locktime
     ) public view returns (uint256) {
         return
@@ -172,39 +172,33 @@ contract GenesisNFT is
 
         // Get the amount of LE tokens to pair with the ETH
         uint256[2] memory balances = ICurvePool(_tradingPool).get_balances();
-        uint256 leAmount;
+        uint256 tokenAmount;
 
         if (balances[0] == 0) {
-            leAmount = ethAmount * 15000;
+            tokenAmount = ethAmount * 15000;
         } else {
-            leAmount = (ethAmount * balances[1]) / balances[0];
+            tokenAmount = (ethAmount * balances[1]) / balances[0];
         }
 
         // Mint LE tokens
         INativeToken(_addressProvider.getNativeToken()).mintGenesisTokens(
-            leAmount + getNativeTokensReward(locktime)
+            tokenAmount
         );
 
         // Approve the pool to spend LE tokens
         IERC20Upgradeable(_addressProvider.getNativeToken()).approve(
             _tradingPool,
-            leAmount
+            tokenAmount
         );
 
         // Deposit tokens to the pool and the LP amount
         uint256 lpAmount = ICurvePool(_tradingPool).add_liquidity{
             value: ethAmount
-        }([ethAmount, leAmount], 0);
+        }([ethAmount, tokenAmount], 0);
 
         // Send the rest of the ETH to the dev address
         (bool sent, ) = _devAddress.call{value: _price - ethAmount}("");
         require(sent, "Failed to send Ether to dev fund");
-
-        // Send the extra leNFT tokens to the caller
-        IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransfer(
-            _msgSender(),
-            getNativeTokensReward(locktime)
-        );
 
         //Mint genesis NFT
         _safeMint(_msgSender(), tokenId);
@@ -258,6 +252,15 @@ contract GenesisNFT is
             _mintDetails[tokenId].lpAmount,
             [uint256(0), uint256(0)],
             _msgSender()
+        );
+
+        // Mint and send the extra leNFT tokens to the caller
+        INativeToken(_addressProvider.getNativeToken()).mintGenesisTokens(
+            getNativeTokenReward(_mintDetails[tokenId].locktime)
+        );
+        IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransfer(
+            _msgSender(),
+            getNativeTokenReward(_mintDetails[tokenId].locktime)
         );
 
         // Burn genesis NFT
