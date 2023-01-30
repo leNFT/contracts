@@ -30,16 +30,19 @@ contract NativeToken is
     uint256 private _devVestingTime;
     uint256 private _devWithdrawn;
     uint256 private _cap;
+    uint256 private _airdropCap;
     uint256 private _initialRewards;
 
-    // Mapping of airdroped users
+    // Mapping of airdroped users and total airdroped amount
     mapping(address => bool) private mintedAirdrop;
+    uint256 private _airdropped;
 
     function initialize(
         IAddressesProvider addressProvider,
         string calldata name,
         string calldata symbol,
         uint256 cap,
+        uint256 airdropCap,
         address devAddress,
         uint256 devReward,
         uint256 devVestingTime,
@@ -50,6 +53,7 @@ contract NativeToken is
         __ERC20_init(name, symbol);
         _addressProvider = addressProvider;
         _cap = cap;
+        _airdropCap = airdropCap;
         _deployTimestamp = block.timestamp;
         _devAddress = devAddress;
         _devReward = devReward;
@@ -140,6 +144,12 @@ contract NativeToken is
             "Request user and caller don't coincide"
         );
 
+        // Check if airdrop cap hasn't been reached
+        require(
+            _airdropped + airdropParams.amount <= _airdropCap,
+            "Airdrop cap reached"
+        );
+
         // Check if user hasn't received the airdrop before
         require(
             mintedAirdrop[airdropParams.user] == false,
@@ -151,6 +161,9 @@ contract NativeToken is
 
         // Mark address airdrop done
         mintedAirdrop[airdropParams.user] = true;
+
+        // Increase airdropped amount
+        _airdropped += airdropParams.amount;
     }
 
     function hasMintedAirdrop(address user) external view returns (bool) {

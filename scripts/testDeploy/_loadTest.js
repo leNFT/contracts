@@ -248,7 +248,7 @@ let loadEnv = async function () {
   // Init trading pool factory
   const initTradingPoolFactoryTx = await tradingPoolFactory.initialize(
     addressesProvider.address,
-    "300", // 3% swap fee
+    "30", // 0.3% swap fee
     "1000" // 10% protocol fee
   );
   await initTradingPoolFactoryTx.wait();

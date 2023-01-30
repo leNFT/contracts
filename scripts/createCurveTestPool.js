@@ -21,7 +21,6 @@ async function main() {
   console.log("chainID: ", chainID);
   var addresses = contractAddresses[chainID.toString(16)];
 
-  // Deploy gauge
   const Pool = await ethers.getContractFactory("CurvePool");
   const pool = await Pool.deploy();
   await pool.deployed();
