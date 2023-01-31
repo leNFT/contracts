@@ -3,8 +3,9 @@ pragma solidity ^0.8.0;
 
 import {IPricingCurve} from "../../../interfaces/IPricingCurve.sol";
 import {PercentageMath} from "../../../libraries/math/PercentageMath.sol";
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-contract LinearPriceCurve is IPricingCurve {
+contract LinearPriceCurve is IPricingCurve, ERC165 {
     function priceAfterBuy(
         uint256 price,
         uint256 delta
@@ -17,5 +18,13 @@ contract LinearPriceCurve is IPricingCurve {
         uint256 delta
     ) external pure override returns (uint256) {
         return price - delta;
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override returns (bool) {
+        return
+            interfaceId == type(IPricingCurve).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 }

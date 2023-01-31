@@ -94,6 +94,15 @@ contract TradingPool is
         // Require that the user is depositing something
         require(tokenAmount > 0 || nftIds.length > 0, "Deposit can't be empty");
 
+        // Require that the inital price is greater than 0
+        require(initialPrice > 0, "Initial price must be greater than 0");
+
+        // require that the curve is a valid curve
+        require(
+            IERC165(curve).supportsInterface(type(IPricingCurve).interfaceId),
+            "Curve must be a valid curve contract"
+        );
+
         // Send user nfts to the pool
         for (uint i = 0; i < nftIds.length; i++) {
             IERC721(_nft).safeTransferFrom(
