@@ -35,7 +35,7 @@ contract FeeDistributor is
         _addressProvider = addressProvider;
     }
 
-    function checkpoint(address token) external {
+    function checkpoint(address token) external override {
         // Find epoch we're in
         uint256 epoch = IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
             block.timestamp
@@ -55,7 +55,7 @@ contract FeeDistributor is
             _addressProvider.getVotingEscrow()
         );
 
-        // Check if user has any user actions and therefore something to claim
+        // Check if user has any user actions and therefore possibly something to claim
         if (votingEscrow.userHistoryLength(msg.sender) == 0) {
             return 0;
         }

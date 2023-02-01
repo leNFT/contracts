@@ -114,8 +114,9 @@ contract VotingEscrow is
     ) internal {
         DataTypes.Point memory oldPoint;
         DataTypes.Point memory newPoint;
-        uint256 oldSlope;
-        uint256 newSlope;
+
+        // Bring epoch records into the present
+        writeTotalWeightHistory();
 
         // Calculate slopes and bias
         if (oldBalance.end > block.timestamp && oldBalance.amount > 0) {
@@ -127,11 +128,14 @@ contract VotingEscrow is
             newPoint.bias = newPoint.slope * (newBalance.end - block.timestamp);
             newPoint.timestamp = block.timestamp;
         }
-        // Bring epoch records into the present
-        writeTotalWeightHistory();
 
         // Update last saved total weight
-        _lastWeightCheckpoint.bias += newPoint.bias - oldPoint.bias;
+        _lastWeightCheckpoint.bias =
+            _lastWeightCheckpoint.bias -
+            _lastWeightCheckpoint.slope *
+            (block.timestamp - _lastWeightCheckpoint.timestamp) +
+            newPoint.bias -
+            oldPoint.bias;
         _lastWeightCheckpoint.slope += newPoint.slope - oldPoint.slope;
         _lastWeightCheckpoint.timestamp = block.timestamp;
         console.log(
@@ -142,22 +146,13 @@ contract VotingEscrow is
         );
 
         // Read and update slope changes in accordance
-        oldSlope = _slopeChanges[oldBalance.end];
-        if (newBalance.amount != 0) {
-            if (newBalance.end == oldBalance.end) {
-                newSlope = oldSlope;
-            } else {
-                newSlope = _slopeChanges[newBalance.end];
-            }
-        }
-
         if (oldBalance.end > block.timestamp) {
-            // Cancel old slope
-            _slopeChanges[oldBalance.end] -= oldSlope;
+            // Cancel old slope change
+            _slopeChanges[oldBalance.end] -= oldPoint.slope;
         }
 
         if (newBalance.end > block.timestamp) {
-            _slopeChanges[newBalance.end] += newSlope;
+            _slopeChanges[newBalance.end] += newPoint.slope;
         }
 
         // Update user history
@@ -230,7 +225,7 @@ contract VotingEscrow is
         );
         require(
             _userLockedBalance[_msgSender()].amount == 0,
-            "User has lock with non-zero amount"
+            "User has lock with non-zero balance"
         );
 
         // Save oldLocked and update the locked balance

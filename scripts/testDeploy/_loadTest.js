@@ -226,6 +226,7 @@ let loadEnv = async function () {
     "leNFT Token",
     "LE",
     "100000000000000000000000000", //100M Max Cap
+    "250000000000000000000000", //0.25M Max Airdrop Cap
     owner.address,
     "15000000000000000000000000", // 15M Dev Tokens
     ONE_DAY * 365 * 2, // 2-year dev vesting
