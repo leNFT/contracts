@@ -48,7 +48,6 @@ contract GenesisNFT is
     address payable _devAddress;
     uint256 _ltvBoost;
     CountersUpgradeable.Counter private _tokenIdCounter;
-    // address _mintReserve;
 
     // NFT token id to bool that's true if NFT is being used to charge a loan
     mapping(uint256 => bool) private _active;
@@ -228,6 +227,10 @@ contract GenesisNFT is
 
     function getUnlockTimestamp(uint256 tokenId) public view returns (uint256) {
         return _mintDetails[tokenId].timestamp + _mintDetails[tokenId].locktime;
+    }
+
+    function mintedRewards(uint256 tokenId) external view returns (bool) {
+        return _mintDetails[tokenId].mintedRewards;
     }
 
     function _burn(
