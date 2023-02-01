@@ -210,7 +210,8 @@ contract GenesisNFT is
         _mintDetails[tokenId] = DataTypes.MintDetails(
             block.timestamp,
             locktime,
-            lpAmount
+            lpAmount,
+            false
         );
 
         //Increase supply
@@ -235,6 +236,33 @@ contract GenesisNFT is
         ERC721URIStorageUpgradeable._burn(tokenId);
     }
 
+    function mintRewards(uint256 tokenId) external {
+        //Require the caller owns the token
+        require(
+            _msgSender() == ERC721Upgradeable.ownerOf(tokenId),
+            "Must own token"
+        );
+        // Mint can only be happen after locktime is over
+        require(
+            block.timestamp >= getUnlockTimestamp(tokenId),
+            "Tokens are still locked"
+        );
+        _mintRewards(_msgSender(), tokenId);
+    }
+
+    function _mintRewards(address receiver, uint256 tokenId) internal {
+        require(!_mintDetails[tokenId].mintedRewards, "Rewards already minted");
+        // Mint and send the extra leNFT tokens to the caller
+        INativeToken(_addressProvider.getNativeToken()).mintGenesisTokens(
+            getNativeTokenReward(_mintDetails[tokenId].locktime)
+        );
+        IERC20Upgradeable(_addressProvider.getNativeToken()).transfer(
+            receiver,
+            getNativeTokenReward(_mintDetails[tokenId].locktime)
+        );
+        _mintDetails[tokenId].mintedRewards = true;
+    }
+
     function burn(uint256 tokenId) public override nonReentrant {
         //Require the caller owns the token
         require(
@@ -254,14 +282,10 @@ contract GenesisNFT is
             _msgSender()
         );
 
-        // Mint and send the extra leNFT tokens to the caller
-        INativeToken(_addressProvider.getNativeToken()).mintGenesisTokens(
-            getNativeTokenReward(_mintDetails[tokenId].locktime)
-        );
-        IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransfer(
-            _msgSender(),
-            getNativeTokenReward(_mintDetails[tokenId].locktime)
-        );
+        // Mint and send the extra leNFT tokens to the caller if he hasnt done it yet
+        if (!_mintDetails[tokenId].mintedRewards) {
+            _mintRewards(_msgSender(), tokenId);
+        }
 
         // Burn genesis NFT
         _burn(tokenId);

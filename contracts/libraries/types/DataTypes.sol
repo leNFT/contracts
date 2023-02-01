@@ -97,6 +97,7 @@ library DataTypes {
         uint256 timestamp;
         uint256 locktime;
         uint256 lpAmount;
+        bool mintedRewards;
     }
 
     struct BorrowParams {
