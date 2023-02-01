@@ -17,6 +17,9 @@ contract LinearPriceCurve is IPricingCurve, ERC165 {
         uint256 price,
         uint256 delta
     ) external pure override returns (uint256) {
+        if (delta > price) {
+            return 0;
+        }
         return price - delta;
     }
 
