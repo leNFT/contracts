@@ -16,20 +16,20 @@ describe("Borrow", function () {
     // Find if the NFT was minted accordingly
     expect(await testNFT.ownerOf(tokenID)).to.equal(owner.address);
   });
-  it("Deposit underlying to the reserve", async function () {
-    const createReserveTx = await market.createReserve(
+  it("Deposit underlying to the lending pool", async function () {
+    const createLendingPoolTx = await lendingMarket.createLendingPool(
       testNFT.address,
       weth.address
     );
-    await createReserveTx.wait();
+    await createLendingPoolTx.wait();
     const depositETHTx = await wethGateway.depositETH(
-      await market.getReserve(testNFT.address, weth.address),
+      await lendingMarket.getLendingPool(testNFT.address, weth.address),
       { value: 200 }
     );
     await depositETHTx.wait();
   });
   it("Borrow using NFT asset as collateral", async function () {
-    // Approve asset to be used by the market
+    // Approve asset to be used by the lending market
     const approveNftTx = await testNFT.approve(wethGateway.address, tokenID);
     await approveNftTx.wait();
 

@@ -20,36 +20,36 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         _addressProvider = addressesProvider;
     }
 
-    /// @notice Deposit ETH in the wETH lending vault
+    /// @notice Deposit ETH in a wETH lending pool
     /// @dev Needs to give approval to the corresponding vault
-    function depositETH(address lendingVault) external payable nonReentrant {
+    function depositETH(address lendingPool) external payable nonReentrant {
         IWETH weth = IWETH(_addressProvider.getWETH());
 
         require(
-            IERC4626(lendingVault).asset() == address(weth),
+            IERC4626(lendingPool).asset() == address(weth),
             "Reserve underlying is not WETH"
         );
 
         // Deposit and approve WETH
         weth.deposit{value: msg.value}();
-        weth.approve(lendingVault, msg.value);
+        weth.approve(lendingPool, msg.value);
 
-        IERC4626(lendingVault).deposit(msg.value, _msgSender());
+        IERC4626(lendingPool).deposit(msg.value, _msgSender());
     }
 
-    /// @notice Withdraw an asset from the reserve
+    /// @notice Withdraw an asset from a lending pool
     /// @param amount Amount of the asset to be withdrawn
     function withdrawETH(
-        address reserve,
+        address lendingPool,
         uint256 amount
     ) external nonReentrant {
         IWETH weth = IWETH(_addressProvider.getWETH());
         require(
-            IERC4626(reserve).asset() == address(weth),
+            IERC4626(lendingPool).asset() == address(weth),
             "Reserve underlying is not WETH"
         );
 
-        IERC4626(reserve).withdraw(amount, address(this), _msgSender());
+        IERC4626(lendingPool).withdraw(amount, address(this), _msgSender());
         weth.withdraw(amount);
 
         (bool sent, ) = _msgSender().call{value: amount}("");

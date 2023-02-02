@@ -55,7 +55,7 @@ describe("GenesisNFT", function () {
 
     // Find if the NFT was minted
     expect(balanceAfter.sub(balanceBefore).toString()).to.equal(
-      "199816343232266496"
+      "199798575613703807"
     );
   });
 });

@@ -40,7 +40,7 @@ contract LendingMarket is
     // collection + asset = pool
     mapping(address => mapping(address => address)) private _pools;
 
-    // Number of reserves per asset
+    // Number of pools per asset
     mapping(address => uint256) private _poolsCount;
 
     IAddressesProvider private _addressProvider;

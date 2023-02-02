@@ -18,11 +18,11 @@ import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 library BorrowLogic {
     function borrow(
         IAddressesProvider addressesProvider,
-        mapping(address => mapping(address => address)) storage reserves,
+        mapping(address => mapping(address => address)) storage pools,
         DataTypes.BorrowParams memory params
     ) external returns (uint256) {
         // Validate the movement
-        ValidationLogic.validateBorrow(addressesProvider, reserves, params);
+        ValidationLogic.validateBorrow(addressesProvider, pools, params);
 
         // Transfer the collateral to the loan center
         IERC721Upgradeable(params.nftAddress).safeTransferFrom(
@@ -33,7 +33,7 @@ library BorrowLogic {
 
         // Get the borrow rate index
         uint256 borrowRate = ILendingPool(
-            reserves[params.nftAddress][params.asset]
+            pools[params.nftAddress][params.asset]
         ).getBorrowRate();
 
         // Get max LTV for this collection
@@ -47,8 +47,7 @@ library BorrowLogic {
 
         // If a genesis NFT was used with this loan
         if (params.genesisNFTId != 0) {
-            boost += IGenesisNFT(addressesProvider.getGenesisNFT())
-                .getLTVBoost();
+            boost = IGenesisNFT(addressesProvider.getGenesisNFT()).getLTVBoost();
 
             // Lock genesis NFT to this loan
             IGenesisNFT(addressesProvider.getGenesisNFT()).setActiveState(
@@ -60,7 +59,7 @@ library BorrowLogic {
         // Create the loan
         uint256 loanId = loanCenter.createLoan(
             params.onBehalfOf,
-            reserves[params.nftAddress][params.asset],
+            pools[params.nftAddress][params.asset],
             params.amount,
             maxLTV,
             boost,
@@ -80,8 +79,11 @@ library BorrowLogic {
         loanCenter.activateLoan(loanId);
 
         // Send the principal to the borrower
-        ILendingPool(reserves[params.nftAddress][params.asset])
-            .transferUnderlying(params.caller, params.amount, borrowRate);
+        ILendingPool(pools[params.nftAddress][params.asset]).transferUnderlying(
+                params.caller,
+                params.amount,
+                borrowRate
+            );
 
         return loanId;
     }

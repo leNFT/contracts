@@ -16,23 +16,23 @@ describe("Repay", function () {
     // Find if the NFT was minted accordingly
     expect(await testNFT.ownerOf(tokenID)).to.equal(owner.address);
   });
-  it("Deposit underlying to the reserve", async function () {
+  it("Deposit underlying to the lending pool", async function () {
     // Mint 100 test tokens to the callers address
     const mintTestTokenTx = await weth.mint(owner.address, 100);
     await mintTestTokenTx.wait();
 
-    // Deposit the tokens into the market
+    // Deposit the tokens into the lending Market
     const approveTokenTx = await weth.approve(wethReserve.address, 100);
     await approveTokenTx.wait();
-    const depositTx = await market.deposit(weth.address, 100);
+    const depositTx = await lendingMarket.deposit(weth.address, 100);
     await depositTx.wait();
 
-    // Find if the reserve tokens were sent accordingly
+    // Find if the lending pool tokens were sent accordingly
     expect(await wethReserve.balanceOf(owner.address)).to.equal(100);
   });
   it("Borrow using NFT asset as collateral", async function () {
-    // Approve asset to be used by the market
-    const approveNftTx = await testNFT.approve(market.address, tokenID);
+    // Approve asset to be used by the lending Market
+    const approveNftTx = await testNFT.approve(lendingMarket.address, tokenID);
     await approveNftTx.wait();
 
     const priceSig = getPriceSig(
@@ -43,8 +43,8 @@ describe("Repay", function () {
       nftOracle.address
     );
 
-    // Ask the market to borrow underlying using the collateral
-    const borrowTx = await market.borrow(
+    // Ask the lendingMarket to borrow underlying using the collateral
+    const borrowTx = await lendingMarket.borrow(
       weth.address,
       50,
       testNFT.address,
@@ -64,8 +64,8 @@ describe("Repay", function () {
   it("Repay loan", async function () {
     const approveTokenTx = await weth.approve(wethReserve.address, 50);
     await approveTokenTx.wait();
-    // Ask the market to repay underlying
-    const repayTx = await market.repay(0, 50);
+    // Ask the lendingMarket to repay underlying
+    const repayTx = await lendingMarket.repay(0, 50);
     await repayTx.wait();
 
     // Find if the protocol received the funds
