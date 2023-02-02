@@ -57,7 +57,7 @@ library ValidationLogic {
     // Check if borrowing conditions are valid
     function validateBorrow(
         IAddressesProvider addressesProvider,
-        mapping(address => mapping(address => address)) storage reserves,
+        mapping(address => mapping(address => address)) storage lendingPools,
         DataTypes.BorrowParams memory params
     ) external view {
         // Check if borrow amount is bigger than 0
@@ -65,7 +65,7 @@ library ValidationLogic {
 
         // Check if the asset is supported
         require(
-            reserves[params.nftAddress][params.asset] != address(0),
+            lendingPools[params.nftAddress][params.asset] != address(0),
             "No reserve for asset and collection"
         );
 
@@ -119,7 +119,7 @@ library ValidationLogic {
         // Check if the reserve has enough underlying to borrow
         require(
             params.amount <=
-                ILendingPool(reserves[params.nftAddress][params.asset])
+                ILendingPool(lendingPools[params.nftAddress][params.asset])
                     .getUnderlyingBalance(),
             "Amount exceeds reserve balance"
         );

@@ -6,7 +6,7 @@ async function main() {
   let contractAddresses = require("../../lenft-interface/contractAddresses.json");
   let chainID = hre.network.config.chainId;
   let addresses = contractAddresses[chainID.toString(16)];
-  let pool = "0xc5a6E3EE69B0B368aD88c2c5552DA3Ea91f7C2d9";
+  let pool = "0xbBAbFd1261aF13057ea59e246101026E26e1ecAe";
 
   // Add NFT to oracle
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");

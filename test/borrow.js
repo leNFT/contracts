@@ -24,7 +24,7 @@ describe("Borrow", function () {
     await createLendingPoolTx.wait();
     const depositETHTx = await wethGateway.depositETH(
       await lendingMarket.getLendingPool(testNFT.address, weth.address),
-      { value: 200 }
+      { value: "1000000000000000000" }
     );
     await depositETHTx.wait();
   });
@@ -36,14 +36,14 @@ describe("Borrow", function () {
     const priceSig = getPriceSig(
       testNFT.address,
       0,
-      "500000000000000000000", //Price is 500 Tokens
+      "8000000000000000", //Price of 0.008 ETH
       "1694784579",
       nftOracle.address
     );
 
     // Ask the market to borrow underlying using the collateral
     const borrowTx = await wethGateway.borrowETH(
-      50,
+      "100000000000000",
       testNFT.address,
       tokenID,
       0,

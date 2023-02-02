@@ -274,6 +274,14 @@ async function main() {
       console.log("File written to API folder");
     }
   );
+  fs.writeFileSync(
+    "../lenft/contractAddresses.json",
+    JSON.stringify(contractAddresses),
+    function (err) {
+      if (err) throw err;
+      console.log("File written to API folder");
+    }
+  );
 
   /****************************************************************
   SETUP TRANSACTIONS
@@ -344,6 +352,7 @@ async function main() {
   await setSwapRouterTx.wait();
   const setWETHTx = await addressesProvider.setWETH(addresses["ETH"].address);
   await setWETHTx.wait();
+  console.log("Set WETH @ " + addresses["ETH"].address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
