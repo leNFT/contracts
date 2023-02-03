@@ -12,6 +12,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Trustus} from "./Trustus/Trustus.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import "hardhat/console.sol";
 
 contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     IAddressesProvider private _addressProvider;
@@ -97,9 +98,12 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
             packet
         );
 
-        weth.withdraw(amount);
+        require(
+            weth.balanceOf(address(this)) == amount,
+            "Not enough WETH received."
+        );
 
-        require(false, "Ready to withdraw");
+        weth.withdraw(amount);
 
         (bool sent, ) = _msgSender().call{value: amount}("");
         require(sent, "Failed to send Ether");
