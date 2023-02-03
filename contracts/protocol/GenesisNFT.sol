@@ -63,6 +63,11 @@ contract GenesisNFT is
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(
         IAddressesProvider addressProvider,
         string calldata name,

@@ -50,6 +50,11 @@ contract LoanCenter is
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // Initialize the loancenter
     function initialize(
         IAddressesProvider addressesProvider,

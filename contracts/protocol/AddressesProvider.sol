@@ -20,6 +20,11 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _gaugeController;
     address private _tradingPoolFactory;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize() external initializer {
         __Ownable_init();
     }

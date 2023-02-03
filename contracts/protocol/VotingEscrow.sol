@@ -58,6 +58,11 @@ contract VotingEscrow is
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(
         IAddressesProvider addressProvider
     ) external initializer {

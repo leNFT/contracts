@@ -37,6 +37,11 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     mapping(address => bool) _isGauge;
     mapping(address => address) _liquidityPoolToGauge;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(
         IAddressesProvider addressProvider
     ) external initializer {

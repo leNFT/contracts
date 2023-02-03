@@ -28,6 +28,11 @@ contract FeeDistributor is
 
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(
         IAddressesProvider addressProvider
     ) external initializer {

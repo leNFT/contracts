@@ -37,6 +37,11 @@ contract TradingPoolFactory is
 
     using ERC165Checker for address;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // Initialize the market
     function initialize(
         IAddressesProvider addressesProvider,

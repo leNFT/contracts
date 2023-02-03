@@ -46,6 +46,11 @@ contract LendingMarket is
     IAddressesProvider private _addressProvider;
     ConfigTypes.LendingPoolConfig private _defaultLendingPoolConfig;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // Initialize the market
     function initialize(
         IAddressesProvider addressesProvider,

@@ -37,6 +37,11 @@ contract NativeToken is
     mapping(address => bool) private mintedAirdrop;
     uint256 private _airdropped;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(
         IAddressesProvider addressProvider,
         string calldata name,

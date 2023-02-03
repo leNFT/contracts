@@ -25,6 +25,11 @@ contract SwapRouter is
 
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // Initialize the market
     function initialize(
         IAddressesProvider addressesProvider

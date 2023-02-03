@@ -17,6 +17,11 @@ contract DebtToken is
 {
     IAddressesProvider private _addressProvider;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // Initialize the market
     function initialize(
         IAddressesProvider addressesProvider,
