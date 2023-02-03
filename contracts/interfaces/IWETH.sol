@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+pragma solidity 0.8.17;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-interface IWETH is IERC20 {
+interface IWETH {
     function deposit() external payable;
 
     function withdraw(uint) external;
+
+    function approve(address guy, uint wad) external returns (bool);
 }

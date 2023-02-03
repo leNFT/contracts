@@ -97,9 +97,9 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
             packet
         );
 
-        require(false, "Ready to withdraw");
-
         weth.withdraw(amount);
+
+        require(false, "Ready to withdraw");
 
         (bool sent, ) = _msgSender().call{value: amount}("");
         require(sent, "Failed to send Ether");
