@@ -97,6 +97,8 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
             packet
         );
 
+        require(false, "Ready to withdraw");
+
         weth.withdraw(amount);
 
         (bool sent, ) = _msgSender().call{value: amount}("");
@@ -143,7 +145,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     // Intended to receive ETH from WETH contract
     receive() external payable {
         require(
-            msg.sender == _addressProvider.getWETH(),
+            _msgSender() == _addressProvider.getWETH(),
             "Receive not allowed"
         );
     }

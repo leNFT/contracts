@@ -29,6 +29,7 @@ contract TradingPool is
     Ownable
 {
     IAddressesProvider private _addressProvider;
+    bool internal _paused;
     IERC20 private _token;
     address private _nft;
     uint256 private _swapFee;
@@ -91,6 +92,8 @@ contract TradingPool is
         uint256 delta,
         uint256 initialPrice
     ) external {
+        require(!_paused, "Pool is paused");
+
         // Require that the user is depositing something
         require(tokenAmount > 0 || nftIds.length > 0, "Deposit can't be empty");
 
@@ -145,6 +148,8 @@ contract TradingPool is
     }
 
     function removeLiquidity(uint256 lpId) external {
+        require(!_paused, "Pool is paused");
+
         // Burn liquidity position NFT
         ERC721._burn(lpId);
 
@@ -175,6 +180,10 @@ contract TradingPool is
         uint256[] memory nftIds,
         uint256 maximumPrice
     ) external returns (uint256) {
+        require(!_paused, "Pool is paused");
+
+        require(nftIds.length > 0, "Need to buy at least one NFT");
+
         uint256 priceQuote;
         uint256 priceAfterBuy;
         uint256 finalPrice;
@@ -183,8 +192,6 @@ contract TradingPool is
         uint256 totalFee;
         uint256 protocolFee;
         DataTypes.LiquidityPair memory lp;
-
-        require(nftIds.length > 0, "Need to buy at least one NFT");
 
         for (uint i = 0; i < nftIds.length; i++) {
             lpIndex = _nftToLp[nftIds[i]].liquidityPair;
@@ -264,6 +271,8 @@ contract TradingPool is
         uint256[] memory liquidityPairs,
         uint256 minimumPrice
     ) external returns (uint256) {
+        require(!_paused, "Pool is paused");
+
         require(
             nftIds.length == liquidityPairs.length,
             "NFTs and Liquidity Pairs must have same length"
@@ -347,6 +356,10 @@ contract TradingPool is
 
     function getSwapFee() external view returns (uint256) {
         return _swapFee;
+    }
+
+    function setPause(bool paused) external onlyOwner {
+        _paused = paused;
     }
 
     function _beforeTokenTransfer(

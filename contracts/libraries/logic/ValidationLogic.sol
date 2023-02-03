@@ -76,9 +76,12 @@ library ValidationLogic {
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         // Get boost from genesis NFTs
-        IGenesisNFT genesisNFT = IGenesisNFT(addressesProvider.getGenesisNFT());
         uint256 boost;
         if (params.genesisNFTId != 0) {
+            IGenesisNFT genesisNFT = IGenesisNFT(
+                addressesProvider.getGenesisNFT()
+            );
+
             // Require owner is the borrower
             require(
                 genesisNFT.ownerOf(params.genesisNFTId) == params.onBehalfOf,

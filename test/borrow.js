@@ -36,21 +36,33 @@ describe("Borrow", function () {
     const priceSig = getPriceSig(
       testNFT.address,
       0,
-      "8000000000000000", //Price of 0.008 ETH
+      "8000000000000000", //Price of 0.8 ETH
       "1694784579",
       nftOracle.address
     );
 
     // Ask the market to borrow underlying using the collateral
+    const balanceBeforeBorrow = await owner.getBalance();
+    console.log("Balance before borrow: ", balanceBeforeBorrow.toString());
     const borrowTx = await wethGateway.borrowETH(
-      "100000000000000",
+      "1000000000000000",
       testNFT.address,
       tokenID,
       0,
       priceSig.request,
       priceSig
     );
-    await borrowTx.wait();
+    const receipt = await borrowTx.wait();
+    const balanceAfterBorrow = await owner.getBalance();
+
+    const effGasPrice = receipt.effectiveGasPrice;
+    const txGasUsed = receipt.gasUsed;
+    const gasUsedETH = effGasPrice * txGasUsed;
+
+    // Find if the user received the borrowed amountS
+    expect(
+      balanceAfterBorrow.sub(balanceBeforeBorrow).add(gasUsedETH)
+    ).to.be.eq("1000000000000000");
 
     // Find if the protocol received the asset
     expect(await testNFT.ownerOf(tokenID)).to.equal(loanCenter.address);

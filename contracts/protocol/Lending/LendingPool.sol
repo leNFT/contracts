@@ -71,7 +71,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         uint256 assets,
         uint256 shares
     ) internal override {
-        require(!_paused, "Reserve is paused");
+        require(!_paused, "Pool is paused");
 
         ValidationLogic.validateDeposit(address(this), assets);
 
@@ -87,7 +87,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         uint256 assets,
         uint256 shares
     ) internal override {
-        require(!_paused, "Reserve is paused");
+        require(!_paused, "Pool is paused");
 
         ValidationLogic.validateDeposit(address(this), assets);
 
@@ -101,7 +101,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         uint256 amount,
         uint256 borrowRate
     ) external override onlyMarket {
-        require(!_paused, "Reserve is paused");
+        require(!_paused, "Pool is paused");
 
         // Send the underlying to user
         _asset.safeTransfer(to, amount);
@@ -122,7 +122,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         uint256 borrowRate,
         uint256 interest
     ) external override onlyMarket {
-        require(!_paused, "Reserve is paused");
+        require(!_paused, "Pool is paused");
 
         _asset.safeTransferFrom(from, address(this), amount + interest);
         _updateCumulativeDebtBorrowRate(false, amount, borrowRate);
@@ -136,7 +136,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         uint256 borrowRate,
         uint256 defaultedDebt
     ) external override onlyMarket {
-        require(!_paused, "Reserve is paused");
+        require(!_paused, "Pool is paused");
 
         _asset.safeTransferFrom(from, address(this), amount);
         _updateCumulativeDebtBorrowRate(false, defaultedDebt, borrowRate);

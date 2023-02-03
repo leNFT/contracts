@@ -147,7 +147,10 @@ contract LendingMarket is
     /// @notice Create a new lending vault for a certain collection
     /// @param collection The collection using this lending vault
     /// @param asset The address of the asset the lending vault controls
-    function createLendingPool(address collection, address asset) external {
+    function createLendingPool(
+        address collection,
+        address asset
+    ) external returns (address) {
         require(
             collection.supportsInterface(type(IERC721).interfaceId),
             "Collection address is not ERC721 compliant."
@@ -181,7 +184,7 @@ contract LendingMarket is
             _defaultLendingPoolConfig
         );
 
-        // Approve reserve use of Market balance
+        // Approve lending pool use of market balance
         IERC20(asset).approve(address(newLendingPool), 2 ** 256 - 1);
 
         // Approve Market use of loan center NFT's (for returning the collateral)
@@ -200,6 +203,8 @@ contract LendingMarket is
         _poolsCount[asset] += 1;
 
         emit CreateLendingPool(address(newLendingPool));
+
+        return address(newLendingPool);
     }
 
     /// @notice Get the Lending Pool address responsible to a certain asset
