@@ -150,8 +150,8 @@ contract TradingPool is
     function removeLiquidity(uint256 lpId) external {
         require(!_paused, "Pool is paused");
 
-        // Burn liquidity position NFT
-        ERC721._burn(lpId);
+        //Require the caller owns LP
+        require(_msgSender() == ERC721.ownerOf(lpId), "Must own LP position");
 
         // Send pool nfts to the user
         for (uint i = 0; i < _liquidityPairs[lpId].nftIds.length; i++) {
@@ -171,6 +171,9 @@ contract TradingPool is
 
         // delete the user deposit info
         delete _liquidityPairs[lpId];
+
+        // Burn liquidity position NFT
+        ERC721._burn(lpId);
 
         emit RemoveLiquidity(msg.sender, lpId);
     }
