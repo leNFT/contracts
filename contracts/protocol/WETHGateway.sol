@@ -151,7 +151,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
             "Pool underlying is not WETH"
         );
 
-        // Transfer the NFTs to the WETH Gateway
+        // Transfer the NFTs to the WETH Gateway and approve them for use
         for (uint i = 0; i < nftIds.length; i++) {
             IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
                 _msgSender(),
@@ -159,6 +159,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
                 nftIds[i]
             );
         }
+        IERC721(ITradingPool(pool).getNFT()).setApprovalForAll(pool, true);
 
         // Deposit and approve WETH
         weth.deposit{value: msg.value}();
@@ -261,7 +262,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
             "Pool underlying is not WETH"
         );
 
-        // Send NFTs to this contract
+        // Send NFTs to this contract and approve them for pool use
         for (uint i = 0; i < nftIds.length; i++) {
             IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
                 _msgSender(),
@@ -269,6 +270,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
                 nftIds[i]
             );
         }
+        IERC721(ITradingPool(pool).getNFT()).setApprovalForAll(pool, true);
 
         // Sell NFTs
         uint256 finalPrice = ITradingPool(pool).sell(
@@ -305,7 +307,15 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
             "Sell pool underlying is not WETH"
         );
 
-        // Send NFTs to this contract
+        // Make sure the msg.value covers the swap
+        if (maximumBuyPrice > minimumSellPrice) {
+            require(
+                msg.value == maximumBuyPrice - minimumSellPrice,
+                "Not enough ETH sent to cover swap change"
+            );
+        }
+
+        // Send NFTs to this contract and approve them for pool use
         for (uint i = 0; i < sellNftIds.length; i++) {
             IERC721(sellPool.getNFT()).safeTransferFrom(
                 _msgSender(),
@@ -313,6 +323,11 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
                 sellNftIds[i]
             );
         }
+        IERC721(sellPool.getNFT()).setApprovalForAll(address(sellPool), true);
+
+        // Deposit and approve WETH
+        weth.deposit{value: msg.value}();
+        weth.approve(address(buyPool), msg.value);
 
         // Swap
         uint256 returnedAmount = ISwapRouter(_addressProvider.getSwapRouter())
