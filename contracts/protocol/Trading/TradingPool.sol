@@ -85,6 +85,23 @@ contract TradingPool is
         return _nftToLp[nftId].liquidityPair;
     }
 
+    function setLpPrice(uint256 lpId, uint256 price) external {
+        _liquidityPairs[lpId].price = price;
+
+        emit SetLpPrice(msg.sender, lpId, price);
+    }
+
+    function setLpPricingCurve(
+        uint256 lpId,
+        address curve,
+        uint256 delta
+    ) external {
+        _liquidityPairs[lpId].curve = curve;
+        _liquidityPairs[lpId].delta = delta;
+
+        emit SetLpPricingCurve(msg.sender, lpId, curve, delta);
+    }
+
     function addLiquidity(
         address receiver,
         uint256[] memory nftIds,

@@ -14,11 +14,20 @@ interface ITradingPool is IERC721 {
         uint256 delta,
         uint256 initalPrice
     );
-    event RemoveLiquidity(address indexed user, uint256 indexed id);
+    event RemoveLiquidity(address indexed user, uint256 indexed lpId);
 
     event Buy(address indexed user, uint256[] nftIds, uint256 price);
 
     event Sell(address indexed user, uint256[] nftIds, uint256 price);
+
+    event SetLpPrice(address indexed user, uint256 indexed lpId, uint256 price);
+
+    event SetLpPricingCurve(
+        address indexed user,
+        uint256 indexed lpId,
+        address curve,
+        uint256 delta
+    );
 
     function addLiquidity(
         address receiver,
