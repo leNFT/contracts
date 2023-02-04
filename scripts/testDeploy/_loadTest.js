@@ -140,7 +140,6 @@ let loadEnv = async function () {
   );
   tradingPoolFactory = await upgrades.deployProxy(TradingPoolFactory, [
     addressesProvider.address,
-    "30", // Default swap fee (0.3%)
     "1000", // Default protocol fee (10%)
   ]);
 

@@ -32,7 +32,6 @@ contract TradingPool is
     bool internal _paused;
     IERC20 private _token;
     address private _nft;
-    uint256 private _swapFee;
     mapping(uint256 => DataTypes.LiquidityPair) _liquidityPairs;
     mapping(uint256 => DataTypes.NftToLp) _nftToLp;
     uint256 private _lpCount;
@@ -52,7 +51,6 @@ contract TradingPool is
         address owner,
         IERC20 token,
         address nft,
-        uint256 defaultSwapFee,
         string memory name,
         string memory symbol
     ) ERC721(name, symbol) {
@@ -63,7 +61,6 @@ contract TradingPool is
         _addressProvider = addressProvider;
         _token = token;
         _nft = nft;
-        _swapFee = defaultSwapFee;
         _transferOwnership(owner);
     }
 
@@ -85,7 +82,19 @@ contract TradingPool is
         return _nftToLp[nftId].liquidityPair;
     }
 
+    function setLpFee(uint256 lpId, uint256 fee) external {
+        //Require the caller owns LP
+        require(_msgSender() == ERC721.ownerOf(lpId), "Must own LP position");
+
+        _liquidityPairs[lpId].fee = fee;
+
+        emit SetLpFee(msg.sender, lpId, fee);
+    }
+
     function setLpPrice(uint256 lpId, uint256 price) external {
+        //Require the caller owns LP
+        require(_msgSender() == ERC721.ownerOf(lpId), "Must own LP position");
+
         _liquidityPairs[lpId].price = price;
 
         emit SetLpPrice(msg.sender, lpId, price);
@@ -96,6 +105,9 @@ contract TradingPool is
         address curve,
         uint256 delta
     ) external {
+        //Require the caller owns LP
+        require(_msgSender() == ERC721.ownerOf(lpId), "Must own LP position");
+
         _liquidityPairs[lpId].curve = curve;
         _liquidityPairs[lpId].delta = delta;
 
@@ -106,9 +118,10 @@ contract TradingPool is
         address receiver,
         uint256[] memory nftIds,
         uint256 tokenAmount,
+        uint256 initialPrice,
         address curve,
         uint256 delta,
-        uint256 initialPrice
+        uint256 fee
     ) external {
         require(!_paused, "Pool is paused");
 
@@ -148,9 +161,10 @@ contract TradingPool is
         _liquidityPairs[_lpCount] = DataTypes.LiquidityPair({
             nftIds: nftIds,
             tokenAmount: tokenAmount,
+            price: initialPrice,
             curve: curve,
             delta: delta,
-            price: initialPrice
+            fee: fee
         });
 
         // Mint liquidity position NFT
@@ -161,15 +175,16 @@ contract TradingPool is
             _lpCount,
             nftIds,
             tokenAmount,
+            initialPrice,
             curve,
             delta,
-            initialPrice
+            fee
         );
 
         _lpCount++;
     }
 
-    function removeLiquidity(uint256 lpId) external {
+    function removeLiquidity(uint256 lpId) public {
         require(!_paused, "Pool is paused");
 
         //Require the caller owns LP
@@ -200,6 +215,14 @@ contract TradingPool is
         emit RemoveLiquidity(_msgSender(), lpId);
     }
 
+    function removeLiquidityBatch(uint256[] memory lpIds) external {
+        require(!_paused, "Pool is paused");
+
+        for (uint i = 0; i < lpIds.length; i++) {
+            removeLiquidity(lpIds[i]);
+        }
+    }
+
     function buy(
         address onBehalfOf,
         uint256[] memory nftIds,
@@ -225,7 +248,7 @@ contract TradingPool is
                 lp.price,
                 lp.delta
             );
-            fee = (priceAfterBuy * _swapFee) / PercentageMath.PERCENTAGE_FACTOR;
+            fee = (priceAfterBuy * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
             protocolFee =
                 (fee *
                     ITradingPoolFactory(
@@ -248,8 +271,9 @@ contract TradingPool is
                 fee -
                 protocolFee;
 
-            // Increase total price sum
+            // Increase total price and fee sum
             priceQuote += priceAfterBuy;
+            totalFee += fee;
 
             console.log("NFT To LP", _nftToLp[nftIds[i]].liquidityPair);
 
@@ -266,7 +290,6 @@ contract TradingPool is
             );
         }
 
-        totalFee = (priceQuote * _swapFee) / PercentageMath.PERCENTAGE_FACTOR;
         finalPrice = priceQuote + totalFee;
 
         require(finalPrice <= maximumPrice, "Price higher than maximum price");
@@ -331,7 +354,7 @@ contract TradingPool is
 
             uint256 lpIndex = liquidityPairs[i];
             lp = _liquidityPairs[lpIndex];
-            fee = (lp.price * _swapFee) / PercentageMath.PERCENTAGE_FACTOR;
+            fee = (lp.price * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
             protocolFee =
                 (fee *
                     ITradingPoolFactory(
@@ -339,8 +362,9 @@ contract TradingPool is
                     ).getProtocolFee()) /
                 PercentageMath.PERCENTAGE_FACTOR;
 
-            // Update total price quote
+            // Update total price quote and fee sum
             priceQuote += lp.price;
+            totalFee += fee;
 
             _liquidityPairs[lpIndex].nftIds.push(nftIds[i]);
             _liquidityPairs[lpIndex].tokenAmount -=
@@ -356,7 +380,6 @@ contract TradingPool is
             });
         }
 
-        totalFee = (priceQuote * _swapFee) / PercentageMath.PERCENTAGE_FACTOR;
         finalPrice = priceQuote - totalFee;
 
         require(finalPrice >= minimumPrice, "Price lower than minimum price");
@@ -377,14 +400,6 @@ contract TradingPool is
         emit Sell(_msgSender(), nftIds, finalPrice);
 
         return finalPrice;
-    }
-
-    function setSwapFee(uint256 newSwapFee) external onlyOwner {
-        _swapFee = newSwapFee;
-    }
-
-    function getSwapFee() external view returns (uint256) {
-        return _swapFee;
     }
 
     function setPause(bool paused) external onlyOwner {

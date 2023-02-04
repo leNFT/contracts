@@ -259,7 +259,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
         emit DepositLP(msg.sender, lpId);
     }
 
-    function withdraw(uint256 lpId) external {
+    function withdraw(uint256 lpId) public {
         require(
             _ownerOf[lpId] == msg.sender,
             "Not the owner of liquidity position"
@@ -295,6 +295,12 @@ contract TradingGauge is IGauge, IERC721Receiver {
         _balanceOf[msg.sender] -= 1;
 
         emit WithdrawLP(msg.sender, lpId);
+    }
+
+    function withdrawBatch(uint256[] memory lpIds) external {
+        for (uint256 i = 0; i < lpIds.length; i++) {
+            withdraw(lpIds[i]);
+        }
     }
 
     function userLPValue(address user) external view returns (uint256) {

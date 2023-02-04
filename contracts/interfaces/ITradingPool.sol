@@ -10,9 +10,10 @@ interface ITradingPool is IERC721 {
         uint256 indexed id,
         uint256[] nftIds,
         uint256 tokenAmount,
+        uint256 initalPrice,
         address curve,
         uint256 delta,
-        uint256 initalPrice
+        uint256 fee
     );
     event RemoveLiquidity(address indexed user, uint256 indexed lpId);
 
@@ -29,16 +30,21 @@ interface ITradingPool is IERC721 {
         uint256 delta
     );
 
+    event SetLpFee(address indexed user, uint256 indexed lpId, uint256 fee);
+
     function addLiquidity(
         address receiver,
         uint256[] memory nftIds,
         uint256 tokenAmount,
+        uint256 initialPrice,
         address curve,
         uint256 delta,
-        uint256 initialPrice
+        uint256 fee
     ) external;
 
     function removeLiquidity(uint256 lpId) external;
+
+    function removeLiquidityBatch(uint256[] memory lpIds) external;
 
     function buy(
         address onBehalfOf,

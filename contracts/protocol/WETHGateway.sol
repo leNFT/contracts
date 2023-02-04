@@ -140,9 +140,10 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     function depositTradingPool(
         address pool,
         uint256[] memory nftIds,
+        uint256 initialPrice,
         address curve,
         uint256 delta,
-        uint256 initialPrice
+        uint256 fee
     ) external payable nonReentrant {
         IWETH weth = IWETH(_addressProvider.getWETH());
 
@@ -168,10 +169,11 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         ITradingPool(pool).addLiquidity(
             msg.sender,
             nftIds,
+            initialPrice,
             msg.value,
             curve,
             delta,
-            initialPrice
+            fee
         );
     }
 
@@ -208,6 +210,60 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         weth.withdraw(lp.tokenAmount);
 
         (bool sent, ) = _msgSender().call{value: lp.tokenAmount}("");
+        require(sent, "Failed to send Ether");
+    }
+
+    function withdrawBatchTradingPool(
+        address pool,
+        uint256[] memory lpIds
+    ) external nonReentrant {
+        IWETH weth = IWETH(_addressProvider.getWETH());
+        uint256 totalAmount = 0;
+        uint256[][] memory nftIds = new uint256[][](lpIds.length);
+
+        require(
+            ITradingPool(pool).getToken() == address(weth),
+            "Pool underlying is not WETH"
+        );
+
+        // Send LP NFTs to this contract
+        for (uint i = 0; i < lpIds.length; i++) {
+            IERC721(pool).safeTransferFrom(
+                _msgSender(),
+                address(this),
+                lpIds[i]
+            );
+
+            // Get LP info so we can send the correct amounts back
+            DataTypes.LiquidityPair memory lp = ITradingPool(pool).getLP(
+                lpIds[i]
+            );
+
+            // Add up the total amount of ETH to withdraw
+            totalAmount += lp.tokenAmount;
+
+            // Add up the total amount of NFTs to withdraw
+            nftIds[i] = lp.nftIds;
+        }
+
+        // Remove liquidity in batch
+        ITradingPool(pool).removeLiquidityBatch(lpIds);
+
+        // Send NFTs back to the user
+        for (uint a = 0; a < nftIds.length; a++) {
+            for (uint b = 0; b < nftIds[a].length; b++) {
+                IERC721(pool).safeTransferFrom(
+                    address(this),
+                    _msgSender(),
+                    nftIds[a][b]
+                );
+            }
+        }
+
+        // Send ETH back to the user
+        weth.withdraw(totalAmount);
+
+        (bool sent, ) = _msgSender().call{value: totalAmount}("");
         require(sent, "Failed to send Ether");
     }
 

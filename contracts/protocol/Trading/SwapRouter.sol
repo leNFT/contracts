@@ -52,8 +52,6 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
             minimumSellPrice
         );
 
-        console.log("sellPrice", sellPrice);
-
         uint256 priceDiff = 0;
         if (maximumBuyPrice > minimumSellPrice) {
             priceDiff = maximumBuyPrice - minimumSellPrice;
@@ -65,9 +63,6 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
         }
 
         uint256 buyPrice = buyPool.buy(msg.sender, buyNftIds, maximumBuyPrice);
-        console.log("buyPrice", buyPrice);
-        console.log("sellPrice", sellPrice);
-        console.log("priceDiff", priceDiff);
 
         // If the price difference + sell price is greater than the buy price, return the difference to the user
         uint256 returnedAmount = 0;
