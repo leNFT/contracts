@@ -55,6 +55,29 @@ contract FeeDistributor is
         _totalFees[token] = balance;
     }
 
+    // If there are any funds stuck in the contract that can't be claimed by users
+    // Hopefully this will never be used
+    function salvageRewards(address token, uint256 epoch) external {
+        IVotingEscrow votingEscrow = IVotingEscrow(
+            _addressProvider.getVotingEscrow()
+        );
+        // Funds not claimable by users are epoch in which there was no locked supply
+        require(
+            votingEscrow.totalSupplyAt(epoch) == 0,
+            "Funds are claimable by users"
+        );
+        // THere needs to be funds to salvage
+        require(_epochFees[token][epoch] > 0, "No funds left to salvage");
+
+        // Tranfer rewards to current epoch
+        _epochFees[token][epoch] += _epochFees[token][
+            votingEscrow.epoch(block.timestamp)
+        ];
+
+        // Reset epoch fees so they can't be salvaged again
+        _epochFees[token][epoch] = 0;
+    }
+
     function claim(address token) external override returns (uint256) {
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
