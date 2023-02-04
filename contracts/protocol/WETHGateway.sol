@@ -9,9 +9,7 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
 import {ISwapRouter} from "../interfaces/ISwapRouter.sol";
-
 import {ITradingPool} from "../interfaces/ITradingPool.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Trustus} from "./Trustus/Trustus.sol";
@@ -224,6 +222,11 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
             "Pool underlying is not WETH"
         );
 
+        require(
+            msg.value == maximumPrice,
+            "Sent value is not equal to maximum price"
+        );
+
         // Deposit and approve WETH
         weth.deposit{value: msg.value}();
         weth.approve(pool, msg.value);
@@ -261,8 +264,8 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         // Send NFTs to this contract
         for (uint i = 0; i < nftIds.length; i++) {
             IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
-                address(this),
                 _msgSender(),
+                address(this),
                 nftIds[i]
             );
         }
@@ -305,8 +308,8 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         // Send NFTs to this contract
         for (uint i = 0; i < sellNftIds.length; i++) {
             IERC721(sellPool.getNFT()).safeTransferFrom(
-                address(this),
                 _msgSender(),
+                address(this),
                 sellNftIds[i]
             );
         }
