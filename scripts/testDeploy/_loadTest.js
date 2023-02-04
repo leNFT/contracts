@@ -25,24 +25,18 @@ let loadEnv = async function () {
   liquidationLogicLib = await LiquidationLogicLib.deploy();
   console.log("Liquidation Logic Lib Address:", liquidationLogicLib.address);
 
-  // Deploy every needed contract
+  /****************************************************************
+  DEPLOY PROXIES
+  They will serve as an entry point for the upgraded contracts
+  ******************************************************************/
+
+  // Deploy and initialize addresses provider proxy
   const AddressesProvider = await ethers.getContractFactory(
     "AddressesProvider"
   );
-  addressesProvider = await AddressesProvider.deploy();
-  await addressesProvider.deployed();
-  console.log("Addresses Provider Address:", addressesProvider.address);
-  const WETH = await ethers.getContractFactory("WETH");
-  weth = await WETH.deploy();
-  await weth.deployed();
-  console.log("WETH Address:", weth.address);
-  const TestNFT = await ethers.getContractFactory("TestNFT");
-  testNFT = await TestNFT.deploy("TEST NFT", "TNFT");
-  await testNFT.deployed();
-  console.log("Test NFT Address:", testNFT.address);
-  testNFT2 = await TestNFT.deploy("TEST NFT2", "TNFT2");
-  await testNFT2.deployed();
-  console.log("Test NFT2 Address:", testNFT2.address);
+  const addressesProvider = await upgrades.deployProxy(AddressesProvider);
+
+  // Deploy and initialize market proxy
   const LendingMarket = await ethers.getContractFactory("LendingMarket", {
     libraries: {
       BorrowLogic: borrowLogicLib.address,
@@ -50,88 +44,167 @@ let loadEnv = async function () {
       ValidationLogic: validationLogicLib.address,
     },
   });
-  lendingMarket = await LendingMarket.deploy();
-  await lendingMarket.deployed();
-  console.log("Lending Market Address:", lendingMarket.address);
+  const lendingMarket = await upgrades.deployProxy(
+    LendingMarket,
+    [
+      addressesProvider.address,
+      {
+        liquidationPenalty: "1800", // defaultLiquidationPenalty
+        liquidationFee: "200", // defaultProtocolLiquidationFee
+        maximumUtilizationRate: "8500", // defaultMaximumUtilizationRate
+        tvlSafeguard: "25000000000000000000", // defaultTVLSafeguard
+      },
+    ],
+    { unsafeAllow: ["external-library-linking"], timeout: 0 }
+  );
+
+  // Deploy and initialize loan center provider proxy
   const LoanCenter = await ethers.getContractFactory("LoanCenter");
-  loanCenter = await LoanCenter.deploy();
-  await loanCenter.deployed();
-  console.log("Loan Center Address:", loanCenter.address);
+  const loanCenter = await upgrades.deployProxy(LoanCenter, [
+    addressesProvider.address,
+    "4000", // DefaultMaxCollaterization 40%
+  ]);
+
+  console.log("Deployed LoanCenter");
+
+  // Deploy and initialize the debt token
+  const DebtToken = await ethers.getContractFactory("DebtToken");
+  const debtToken = await upgrades.deployProxy(DebtToken, [
+    addressesProvider.address,
+    "LDEBT TOKEN",
+    "LDEBT",
+  ]);
+
+  console.log("Deployed DebtToken");
+
+  // Deploy and initialize the native token
+  const NativeToken = await ethers.getContractFactory("NativeToken");
+  const nativeToken = await upgrades.deployProxy(NativeToken, [
+    addressesProvider.address,
+    "leNFT Token",
+    "LE",
+    "100000000000000000000000000", //100M Max Cap
+    "250000000000000000000000", //0.25M Max Airdrop Cap
+    "0x91A7cEeAf399e9f933FF13F9575A2B74ac9c3EA7", // Dev Address
+    "15000000000000000000000000", // 15M Dev Tokens
+    ONE_DAY * 365 * 2, // 2-year dev vesting
+    "20000000000000000000",
+  ]);
+
+  console.log("Deployed NativeToken");
+
+  // Deploy and initialize Genesis NFT
+  const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
+  const genesisNFT = await upgrades.deployProxy(GenesisNFT, [
+    addressesProvider.address,
+    "leNFT Genesis",
+    "LGEN",
+    "9999",
+    "30000000000000000",
+    "250",
+    50000000, // Native Token Mint Factor
+    ONE_DAY * 120, // Max locktime (120 days in s)
+    ONE_DAY * 14, // Min locktime (14 days in s)
+    "0x91A7cEeAf399e9f933FF13F9575A2B74ac9c3EA7",
+  ]);
+
+  console.log("Deployed GenesisNFT");
+
+  // Deploy and initialize Voting Escrow contract
+  const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
+  const votingEscrow = await upgrades.deployProxy(VotingEscrow, [
+    addressesProvider.address,
+  ]);
+
+  console.log("Deployed VotingEscrow");
+
+  // Deploy and initialize Gauge Controller
+  const GaugeController = await ethers.getContractFactory("GaugeController");
+  const gaugeController = await upgrades.deployProxy(GaugeController, [
+    addressesProvider.address,
+  ]);
+
+  console.log("Deployed GaugeController");
+
+  // Deploy and initialize Fee distributor
+  const FeeDistributor = await ethers.getContractFactory("FeeDistributor");
+  const feeDistributor = await upgrades.deployProxy(FeeDistributor, [
+    addressesProvider.address,
+  ]);
+
+  console.log("Deployed FeeDistributor");
+
+  // Deploy and initialize Trading Pool Factory
+  const TradingPoolFactory = await ethers.getContractFactory(
+    "TradingPoolFactory"
+  );
+  tradingPoolFactory = await upgrades.deployProxy(TradingPoolFactory, [
+    addressesProvider.address,
+    "30", // Default swap fee (0.3%)
+    "1000", // Default protocol fee (10%)
+  ]);
+
+  console.log("Deployed TradingPoolFactory");
+
+  console.log("Deployed All Proxies");
+
+  /****************************************************************
+  DEPLOY NON-PROXY CONTRACTS
+  Deploy contracts that are not updatable
+  ******************************************************************/
+
+  // Deploy the Interest Rate contract
   const InterestRate = await ethers.getContractFactory("InterestRate");
-  interestRate = await InterestRate.deploy(8000, 1000, 2500, 10000);
+  const interestRate = await InterestRate.deploy(7000, 500, 2000, 20000);
   await interestRate.deployed();
-  console.log("Interest Rate Address:", interestRate.address);
+
+  // Deploy the NFT Oracle contract
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
-  nftOracle = await NFTOracle.deploy(addressesProvider.address);
+  const nftOracle = await NFTOracle.deploy(addressesProvider.address);
   await nftOracle.deployed();
-  console.log("NFT Oracle Address:", nftOracle.address);
+
+  // Deploy TokenOracle contract
   const TokenOracle = await ethers.getContractFactory("TokenOracle");
-  tokenOracle = await TokenOracle.deploy();
+  const tokenOracle = await TokenOracle.deploy();
   await tokenOracle.deployed();
-  console.log("Token Oracle Address:", tokenOracle.address);
+
+  // Deploy  Swap Router
+  const SwapRouter = await ethers.getContractFactory("SwapRouter");
+  const swapRouter = await SwapRouter.deploy(addressesProvider.address);
+
+  console.log("Deployed SwapRouter");
+
+  // Deploy WETH Gateway contract
   const WETHGateway = await ethers.getContractFactory("WETHGateway");
   wethGateway = await WETHGateway.deploy(addressesProvider.address);
   await wethGateway.deployed();
-  console.log("WETHGateway Address:", wethGateway.address);
+
+  // Deploy WETH contract
+  const WETH = await ethers.getContractFactory("WETH");
+  weth = await WETH.deploy();
+  await weth.deployed();
+
+  // Deploy Test NFT contracts
+  const TestNFT = await ethers.getContractFactory("TestNFT");
+  testNFT = await TestNFT.deploy("Test NFT", "TNFT");
+  await testNFT.deployed();
+  const TestNFT2 = await ethers.getContractFactory("TestNFT");
+  testNFT2 = await TestNFT.deploy("Test NFT2", "TNFT2");
+  await testNFT2.deployed();
+
+  // Deploy price curves contracts
   const ExponentialCurve = await ethers.getContractFactory(
     "ExponentialPriceCurve"
   );
   exponentialCurve = await ExponentialCurve.deploy();
   await exponentialCurve.deployed();
+  const LinearCurve = await ethers.getContractFactory("LinearPriceCurve");
+  linearCurve = await LinearCurve.deploy();
+  await linearCurve.deployed();
 
-  // Deploy Native Token
-  const NativeToken = await ethers.getContractFactory("NativeToken");
-  nativeToken = await NativeToken.deploy();
-  await nativeToken.deployed();
-  console.log("Native Token Address:", nativeToken.address);
+  console.log("Deployed Non-Proxies");
 
-  // Deploy Fee Distributor
-  const FeeDistributor = await ethers.getContractFactory("FeeDistributor");
-  feeDistributor = await FeeDistributor.deploy();
-  await feeDistributor.deployed();
-  console.log("Fee Distributor Address:", feeDistributor.address);
-
-  // Deploy Debt Token
-  const DebtToken = await ethers.getContractFactory("DebtToken");
-  debtToken = await DebtToken.deploy();
-  await debtToken.deployed();
-  console.log("Debt Token Address:", debtToken.address);
-
-  // Deploy Genesis NFT
-  const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
-  genesisNFT = await GenesisNFT.deploy();
-  await genesisNFT.deployed();
-  console.log("Genesis NFT Address:", genesisNFT.address);
-
-  // Deploy Swap Router
-  const SwapRouter = await ethers.getContractFactory("SwapRouter");
-  swapRouter = await SwapRouter.deploy();
-  await swapRouter.deployed();
-  console.log("Swap Router Address:", swapRouter.address);
-
-  // Deploy voting escrow
-  const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
-  votingEscrow = await VotingEscrow.deploy();
-  await votingEscrow.deployed();
-  console.log("Voting Escrow Address:", votingEscrow.address);
-
-  // Deploy Gauge controller
-  const GaugeController = await ethers.getContractFactory("GaugeController");
-  gaugeController = await GaugeController.deploy();
-  await gaugeController.deployed();
-  console.log("Gauge Controller Address:", gaugeController.address);
-
-  // Deploy trading pool factory
-  const TradingPoolFactory = await ethers.getContractFactory(
-    "TradingPoolFactory"
-  );
-  tradingPoolFactory = await TradingPoolFactory.deploy();
-  await tradingPoolFactory.deployed();
-  console.log("Trading Pool Factory Address:", tradingPoolFactory.address);
-
-  // Initialize address provider and add every contract address
-  const initAddressesProviderTx = await addressesProvider.initialize();
-  await initAddressesProviderTx.wait();
+  // Set all contracts in the addresses provider
   const setLendingMarketTx = await addressesProvider.setLendingMarket(
     lendingMarket.address
   );
@@ -186,94 +259,6 @@ let loadEnv = async function () {
   await setGaugeCotrollerTx.wait();
   const setWETHTx = await addressesProvider.setWETH(weth.address);
   await setWETHTx.wait();
-
-  // Initialize lending market
-  const initLendingMarketTx = await lendingMarket.initialize(
-    addressesProvider.address,
-    {
-      liquidationPenalty: "1800", // defaultLiquidationPenalty
-      liquidationFee: "200", // defaultProtocolLiquidationFee
-      maximumUtilizationRate: "8500", // defaultMaximumUtilizationRate
-      tvlSafeguard: "25000000000000000000", // defaultTVLSafeguard
-    }
-  );
-  await initLendingMarketTx.wait();
-
-  //Initialize LoanCenter
-  const initLoanCenterTx = await loanCenter.initialize(
-    addressesProvider.address,
-    "4000" // DefaultMaxCollaterization 40%
-  );
-  await initLoanCenterTx.wait();
-
-  //Initialize swap router
-  const initSwapRouterTx = await swapRouter.initialize(
-    addressesProvider.address
-  );
-  await initSwapRouterTx.wait();
-
-  //Init debt token
-  const initDebtTokenTx = await debtToken.initialize(
-    addressesProvider.address,
-    "DEBT TOKEN",
-    "DEBT"
-  );
-  await initDebtTokenTx.wait();
-
-  //Init native token
-  const initNativeTokenTx = await nativeToken.initialize(
-    addressesProvider.address,
-    "leNFT Token",
-    "LE",
-    "100000000000000000000000000", //100M Max Cap
-    "250000000000000000000000", //0.25M Max Airdrop Cap
-    owner.address,
-    "15000000000000000000000000", // 15M Dev Tokens
-    ONE_DAY * 365 * 2, // 2-year dev vesting
-    "20000000000000000000"
-  );
-  await initNativeTokenTx.wait();
-
-  // Init voting escrow
-  const initVotingEscrowTx = await votingEscrow.initialize(
-    addressesProvider.address
-  );
-  await initVotingEscrowTx.wait();
-
-  // Init fee distributor
-  const initFeeDistributorTx = await feeDistributor.initialize(
-    addressesProvider.address
-  );
-  await initFeeDistributorTx.wait();
-
-  // Init trading pool factory
-  const initTradingPoolFactoryTx = await tradingPoolFactory.initialize(
-    addressesProvider.address,
-    "30", // 0.3% swap fee
-    "1000" // 10% protocol fee
-  );
-  await initTradingPoolFactoryTx.wait();
-
-  // Init gauge controller
-  const initGaugeControllerTx = await gaugeController.initialize(
-    addressesProvider.address
-  );
-  await initGaugeControllerTx.wait();
-
-  //Init Genesis NFT
-  const initGenesisNFTTx = await genesisNFT.initialize(
-    addressesProvider.address,
-    "leNFT Genesis",
-    "LGEN",
-    "9999",
-    "300000000000000000",
-    "250",
-    3000000, // Native Token Mint Factor
-    10368000, // Max locktime (120 days in s)
-    1209600, // Min locktime (14 days in s)
-    owner.address
-  );
-  await initGenesisNFTTx.wait();
 
   // Set trusted price source
   const setTrustedPriceSourceTx = await nftOracle.setTrustedPriceSigner(

@@ -30,7 +30,7 @@ describe("Swap Router", () => {
     const approveNFTTx = await testNFT.setApprovalForAll(sellPoolAddress, true);
     await approveNFTTx.wait();
     // Mint and approve test tokens to the callers address
-    const mintTestTokenTx = await weth.mint(owner.address, "100000000000000");
+    const mintTestTokenTx = await weth.deposit({ value: "100000000000000" });
     await mintTestTokenTx.wait();
     // Deposit the tokens into the market
     const approveTokenTx = await weth.approve(
@@ -39,6 +39,7 @@ describe("Swap Router", () => {
     );
     await approveTokenTx.wait();
     const depositTx = await tradingPool.addLiquidity(
+      owner.address,
       [0],
       "100000000000000",
       exponentialCurve.address,
@@ -76,7 +77,7 @@ describe("Swap Router", () => {
     const approveNFTTx = await testNFT2.setApprovalForAll(buyPoolAddress, true);
     await approveNFTTx.wait();
     // Mint and approve test tokens to the callers address
-    const mintTestTokenTx = await weth.mint(owner.address, "100000000000000");
+    const mintTestTokenTx = await weth.deposit({ value: "100000000000000" });
     await mintTestTokenTx.wait();
     // Deposit the tokens into the market
     const approveTokenTx = await weth.approve(
@@ -85,6 +86,7 @@ describe("Swap Router", () => {
     );
     await approveTokenTx.wait();
     const depositTx = await tradingPool.addLiquidity(
+      owner.address,
       [0],
       "100000000000000",
       exponentialCurve.address,
@@ -99,24 +101,24 @@ describe("Swap Router", () => {
     const mintTestNFTTx = await testNFT.mint(owner.address);
     await mintTestNFTTx.wait();
 
-    // Mint and approve price differente tokens
-    const mintTestTokenTx = await weth.mint(owner.address, "200000000000000");
-    await mintTestTokenTx.wait();
-    // Deposit the tokens into the market
-    const approveTokenTx = await weth.approve(
-      swapRouter.address,
-      "200000000000000"
+    // Approve the token to be swapped
+    const approveNFTTx = await testNFT.setApprovalForAll(
+      wethGateway.address,
+      true
     );
-    await approveTokenTx.wait();
+    await approveNFTTx.wait();
 
-    const swapTx = await swapRouter.swap(
+    const swapTx = await wethGateway.swap(
       buyPoolAddress,
       sellPoolAddress,
       [0],
       "200000000000000",
       [1],
       [0],
-      "50000000000000"
+      "50000000000000",
+      {
+        value: 200000000000000 - 50000000000000,
+      }
     );
     await swapTx.wait();
 

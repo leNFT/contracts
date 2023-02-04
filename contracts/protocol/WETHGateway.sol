@@ -297,6 +297,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         uint256 minimumSellPrice
     ) external payable nonReentrant {
         IWETH weth = IWETH(_addressProvider.getWETH());
+        ISwapRouter swapRouter = ISwapRouter(_addressProvider.getSwapRouter());
 
         require(
             buyPool.getToken() == address(weth),
@@ -327,19 +328,27 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
 
         // Deposit and approve WETH
         weth.deposit{value: msg.value}();
-        weth.approve(address(buyPool), msg.value);
+        weth.approve(address(swapRouter), msg.value);
 
         // Swap
-        uint256 returnedAmount = ISwapRouter(_addressProvider.getSwapRouter())
-            .swap(
-                buyPool,
-                sellPool,
-                buyNftIds,
-                maximumBuyPrice,
-                sellNftIds,
-                sellLps,
-                minimumSellPrice
+        uint256 returnedAmount = swapRouter.swap(
+            buyPool,
+            sellPool,
+            buyNftIds,
+            maximumBuyPrice,
+            sellNftIds,
+            sellLps,
+            minimumSellPrice
+        );
+
+        // Send NFTs back to the user
+        for (uint i = 0; i < buyNftIds.length; i++) {
+            IERC721(buyPool.getNFT()).safeTransferFrom(
+                address(this),
+                _msgSender(),
+                buyNftIds[i]
             );
+        }
 
         // Send ETH back to the user
         weth.withdraw(returnedAmount);

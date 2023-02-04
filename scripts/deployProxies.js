@@ -189,15 +189,6 @@ async function main() {
 
   console.log("Deployed TradingPoolFactory");
 
-  // Deploy and initialize Swap Router
-  const SwapRouter = await ethers.getContractFactory("SwapRouter");
-  const swapRouter = await upgrades.deployProxy(SwapRouter, [
-    addressesProvider.address,
-  ]);
-  addresses["SwapRouter"] = swapRouter.address;
-
-  console.log("Deployed SwapRouter");
-
   console.log("Deployed All Proxies");
 
   /****************************************************************
@@ -222,6 +213,11 @@ async function main() {
   const tokenOracle = await TokenOracle.deploy();
   await tokenOracle.deployed();
   addresses["TokenOracle"] = tokenOracle.address;
+
+  // Deploy Swap Router
+  const SwapRouter = await ethers.getContractFactory("SwapRouter");
+  const swapRouter = await SwapRouter.deploy(addressesProvider.address);
+  addresses["SwapRouter"] = swapRouter.address;
 
   // Deploy WETH Gateway contract
   const WETHGateway = await ethers.getContractFactory("WETHGateway");
