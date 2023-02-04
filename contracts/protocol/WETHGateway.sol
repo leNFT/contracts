@@ -169,8 +169,8 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         ITradingPool(pool).addLiquidity(
             msg.sender,
             nftIds,
-            initialPrice,
             msg.value,
+            initialPrice,
             curve,
             delta,
             fee
