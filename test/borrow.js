@@ -22,7 +22,7 @@ describe("Borrow", function () {
       weth.address
     );
     await createLendingPoolTx.wait();
-    const depositETHTx = await wethGateway.depositETH(
+    const depositETHTx = await wethGateway.depositETHLendingPool(
       await lendingMarket.getLendingPool(testNFT.address, weth.address),
       { value: "1000000000000000000" }
     );

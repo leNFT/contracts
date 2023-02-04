@@ -46,7 +46,7 @@ contract SwapRouter is
         uint256[] memory sellNftIds,
         uint256[] memory sellLps,
         uint256 minimumSellPrice
-    ) external nonReentrant {
+    ) external nonReentrant returns (uint256) {
         // Pools need to be different
         require(
             address(buyPool) != address(sellPool),
@@ -80,12 +80,16 @@ contract SwapRouter is
         uint256 buyPrice = buyPool.buy(msg.sender, buyNftIds, maximumBuyPrice);
 
         // If the price difference + sell price is greater than the buy price, return the difference to the user
+        uint256 returnedAmount = 0;
         if (sellPrice + priceDiff > buyPrice) {
+            returnedAmount = sellPrice + priceDiff - buyPrice;
             IERC20Upgradeable(sellPool.getToken()).safeTransfer(
                 msg.sender,
-                sellPrice + priceDiff - buyPrice
+                returnedAmount
             );
         }
+
+        return returnedAmount;
     }
 
     function approveTradingPool(address token, address tradingPool) external {

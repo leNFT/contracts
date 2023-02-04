@@ -57,7 +57,7 @@ contract TradingPool is
         string memory symbol
     ) ERC721(name, symbol) {
         require(
-            msg.sender == addressProvider.getTradingPoolFactory(),
+            _msgSender() == addressProvider.getTradingPoolFactory(),
             "Trading Pool must be created through Factory"
         );
         _addressProvider = addressProvider;
@@ -86,6 +86,7 @@ contract TradingPool is
     }
 
     function addLiquidity(
+        address receiver,
         uint256[] memory nftIds,
         uint256 tokenAmount,
         address curve,
@@ -109,7 +110,7 @@ contract TradingPool is
         // Send user nfts to the pool
         for (uint i = 0; i < nftIds.length; i++) {
             IERC721(_nft).safeTransferFrom(
-                msg.sender,
+                _msgSender(),
                 address(this),
                 nftIds[i]
             );
@@ -120,7 +121,11 @@ contract TradingPool is
         }
 
         // Send user token to the pool
-        IERC20(_token).safeTransferFrom(msg.sender, address(this), tokenAmount);
+        IERC20(_token).safeTransferFrom(
+            _msgSender(),
+            address(this),
+            tokenAmount
+        );
 
         // Save the user deposit info
         _liquidityPairs[_lpCount] = DataTypes.LiquidityPair({
@@ -132,10 +137,10 @@ contract TradingPool is
         });
 
         // Mint liquidity position NFT
-        ERC721._safeMint(msg.sender, _lpCount);
+        ERC721._safeMint(receiver, _lpCount);
 
         emit AddLiquidity(
-            msg.sender,
+            receiver,
             _lpCount,
             nftIds,
             tokenAmount,
@@ -157,15 +162,15 @@ contract TradingPool is
         for (uint i = 0; i < _liquidityPairs[lpId].nftIds.length; i++) {
             IERC721(_nft).safeTransferFrom(
                 address(this),
-                msg.sender,
+                _msgSender(),
                 _liquidityPairs[lpId].nftIds[i]
             );
             delete _nftToLp[_liquidityPairs[lpId].nftIds[i]];
         }
 
-        // Send user token to the pool
+        // Send pool token back to user
         IERC20(_token).safeTransfer(
-            msg.sender,
+            _msgSender(),
             _liquidityPairs[lpId].tokenAmount
         );
 
@@ -175,7 +180,7 @@ contract TradingPool is
         // Burn liquidity position NFT
         ERC721._burn(lpId);
 
-        emit RemoveLiquidity(msg.sender, lpId);
+        emit RemoveLiquidity(_msgSender(), lpId);
     }
 
     function buy(
@@ -250,7 +255,11 @@ contract TradingPool is
         require(finalPrice <= maximumPrice, "Price higher than maximum price");
 
         // Get tokens from user
-        IERC20(_token).safeTransferFrom(msg.sender, address(this), finalPrice);
+        IERC20(_token).safeTransferFrom(
+            _msgSender(),
+            address(this),
+            finalPrice
+        );
 
         // Send protocol fee to protocol fee distributor
         IERC20(_token).safeTransfer(
@@ -263,7 +272,7 @@ contract TradingPool is
             address(_token)
         );
 
-        emit Buy(msg.sender, nftIds, finalPrice);
+        emit Buy(_msgSender(), nftIds, finalPrice);
 
         return finalPrice;
     }
@@ -281,9 +290,9 @@ contract TradingPool is
             "NFTs and Liquidity Pairs must have same length"
         );
         require(nftIds.length > 0, "Need to sell at least one NFT");
-        if (onBehalfOf != msg.sender) {
+        if (onBehalfOf != _msgSender()) {
             require(
-                msg.sender == _addressProvider.getSwapRouter(),
+                _msgSender() == _addressProvider.getSwapRouter(),
                 "Only SwapRouter can sell on behalf of another address"
             );
         }
@@ -335,7 +344,7 @@ contract TradingPool is
 
         require(finalPrice >= minimumPrice, "Price lower than minimum price");
 
-        IERC20(_token).safeTransfer(msg.sender, finalPrice);
+        IERC20(_token).safeTransfer(_msgSender(), finalPrice);
 
         // Send protocol fee to protocol fee distributor
         IERC20(_token).safeTransfer(
@@ -348,7 +357,7 @@ contract TradingPool is
             address(_token)
         );
 
-        emit Sell(msg.sender, nftIds, finalPrice);
+        emit Sell(_msgSender(), nftIds, finalPrice);
 
         return finalPrice;
     }
