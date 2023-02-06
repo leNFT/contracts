@@ -11,4 +11,8 @@ interface IPricingCurve {
         uint256 price,
         uint256 delta
     ) external pure returns (uint256);
+
+    function validateDelta(uint256 price) external view returns (bool);
+
+    function validateSpotPrice(uint256 price) external view returns (bool);
 }

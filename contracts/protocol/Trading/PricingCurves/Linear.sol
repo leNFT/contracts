@@ -23,6 +23,14 @@ contract LinearPriceCurve is IPricingCurve, ERC165 {
         return price - delta;
     }
 
+    function validateDelta(uint256) external pure override returns (bool) {
+        return true;
+    }
+
+    function validateSpotPrice(uint256) external pure override returns (bool) {
+        return true;
+    }
+
     function supportsInterface(
         bytes4 interfaceId
     ) public view override returns (bool) {

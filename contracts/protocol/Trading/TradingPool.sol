@@ -28,6 +28,8 @@ contract TradingPool is
     ITradingPool,
     Ownable
 {
+    uint public constant MAX_FEE = 9000; // 90%
+
     IAddressesProvider private _addressProvider;
     bool internal _paused;
     IERC20 private _token;
@@ -118,7 +120,7 @@ contract TradingPool is
         address receiver,
         uint256[] memory nftIds,
         uint256 tokenAmount,
-        uint256 initialPrice,
+        uint256 spotPrice,
         address curve,
         uint256 delta,
         uint256 fee
@@ -128,14 +130,23 @@ contract TradingPool is
         // Require that the user is depositing something
         require(tokenAmount > 0 || nftIds.length > 0, "Deposit can't be empty");
 
-        // Require that the inital price is greater than 0
-        require(initialPrice > 0, "Initial price must be greater than 0");
-
         // require that the curve is a valid curve
         require(
             IERC165(curve).supportsInterface(type(IPricingCurve).interfaceId),
             "Curve must be a valid curve contract"
         );
+
+        // Validate delta
+        require(IPricingCurve(curve).validateDelta(delta), "Invalid delta");
+
+        // Validate spot price
+        require(
+            IPricingCurve(curve).validateSpotPrice(spotPrice),
+            "Invalid spot price"
+        );
+
+        // require that the fee is less than 90%
+        require(fee <= MAX_FEE, "Fee must be less than 90%");
 
         // Send user nfts to the pool
         for (uint i = 0; i < nftIds.length; i++) {
@@ -161,7 +172,7 @@ contract TradingPool is
         _liquidityPairs[_lpCount] = DataTypes.LiquidityPair({
             nftIds: nftIds,
             tokenAmount: tokenAmount,
-            price: initialPrice,
+            spotPrice: spotPrice,
             curve: curve,
             delta: delta,
             fee: fee
@@ -175,7 +186,7 @@ contract TradingPool is
             _lpCount,
             nftIds,
             tokenAmount,
-            initialPrice,
+            spotPrice,
             curve,
             delta,
             fee
@@ -244,20 +255,13 @@ contract TradingPool is
         for (uint i = 0; i < nftIds.length; i++) {
             lpIndex = _nftToLp[nftIds[i]].liquidityPair;
             lp = _liquidityPairs[lpIndex];
-            priceAfterBuy = IPricingCurve(lp.curve).priceAfterBuy(
-                lp.price,
-                lp.delta
-            );
-            fee = (priceAfterBuy * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
+            fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
             protocolFee =
                 (fee *
                     ITradingPoolFactory(
                         _addressProvider.getTradingPoolFactory()
                     ).getProtocolFee()) /
                 PercentageMath.PERCENTAGE_FACTOR;
-
-            // Update liquidity pair price
-            _liquidityPairs[lpIndex].price = priceAfterBuy;
 
             // Remove nft from liquidity pair and add token swap amount
             _liquidityPairs[lpIndex].nftIds[
@@ -267,13 +271,17 @@ contract TradingPool is
             ];
             _liquidityPairs[lpIndex].nftIds.pop();
             _liquidityPairs[lpIndex].tokenAmount +=
-                priceAfterBuy +
+                lp.spotPrice +
                 fee -
                 protocolFee;
 
             // Increase total price and fee sum
-            priceQuote += priceAfterBuy;
+            priceQuote += lp.spotPrice;
             totalFee += fee;
+
+            // Update liquidity pair price
+            _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
+                .priceAfterBuy(lp.spotPrice, lp.delta);
 
             console.log("NFT To LP", _nftToLp[nftIds[i]].liquidityPair);
 
@@ -354,7 +362,7 @@ contract TradingPool is
 
             uint256 lpIndex = liquidityPairs[i];
             lp = _liquidityPairs[lpIndex];
-            fee = (lp.price * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
+            fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
             protocolFee =
                 (fee *
                     ITradingPoolFactory(
@@ -363,16 +371,16 @@ contract TradingPool is
                 PercentageMath.PERCENTAGE_FACTOR;
 
             // Update total price quote and fee sum
-            priceQuote += lp.price;
+            priceQuote += lp.spotPrice;
             totalFee += fee;
 
             _liquidityPairs[lpIndex].nftIds.push(nftIds[i]);
             _liquidityPairs[lpIndex].tokenAmount -=
-                lp.price -
+                lp.spotPrice -
                 fee +
                 protocolFee;
             _liquidityPairs[lpIndex].price = IPricingCurve(lp.curve)
-                .priceAfterSell(lp.price, lp.delta);
+                .priceAfterSell(lp.spotPrice, lp.delta);
 
             _nftToLp[nftIds[i]] = DataTypes.NftToLp({
                 liquidityPair: lpIndex,

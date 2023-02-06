@@ -10,7 +10,7 @@ interface ITradingPool is IERC721 {
         uint256 indexed id,
         uint256[] nftIds,
         uint256 tokenAmount,
-        uint256 initalPrice,
+        uint256 spotPrice,
         address curve,
         uint256 delta,
         uint256 fee
