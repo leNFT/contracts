@@ -28,9 +28,9 @@ contract ExponentialPriceCurve is IPricingCurve, ERC165 {
         uint256 delta
     ) external pure override returns (bool) {
         if (delta < PercentageMath.PERCENTAGE_FACTOR) {
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     function validateSpotPrice(uint256) external pure override returns (bool) {
