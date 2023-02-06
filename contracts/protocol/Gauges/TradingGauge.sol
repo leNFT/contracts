@@ -331,7 +331,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
     function calculateLpValue(uint256 lpId) public view returns (uint256) {
         DataTypes.LiquidityPair memory lp = ITradingPool(_lpToken).getLP(lpId);
 
-        uint256 nftsAppraisal = lp.nftIds.length * lp.price;
+        uint256 nftsAppraisal = lp.nftIds.length * lp.spotPrice;
         uint256 returnValue = 0;
 
         // Value is higher if the lp is in equilibrium

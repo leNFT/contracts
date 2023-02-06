@@ -93,13 +93,13 @@ contract TradingPool is
         emit SetLpFee(msg.sender, lpId, fee);
     }
 
-    function setLpPrice(uint256 lpId, uint256 price) external {
+    function setLpSpotPrice(uint256 lpId, uint256 spotPrice) external {
         //Require the caller owns LP
         require(_msgSender() == ERC721.ownerOf(lpId), "Must own LP position");
 
-        _liquidityPairs[lpId].price = price;
+        _liquidityPairs[lpId].spotPrice = spotPrice;
 
-        emit SetLpPrice(msg.sender, lpId, price);
+        emit SetLpSpotPrice(msg.sender, lpId, spotPrice);
     }
 
     function setLpPricingCurve(
@@ -244,7 +244,6 @@ contract TradingPool is
         require(nftIds.length > 0, "Need to buy at least one NFT");
 
         uint256 priceQuote;
-        uint256 priceAfterBuy;
         uint256 finalPrice;
         uint256 lpIndex;
         uint256 fee;
@@ -379,7 +378,7 @@ contract TradingPool is
                 lp.spotPrice -
                 fee +
                 protocolFee;
-            _liquidityPairs[lpIndex].price = IPricingCurve(lp.curve)
+            _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
                 .priceAfterSell(lp.spotPrice, lp.delta);
 
             _nftToLp[nftIds[i]] = DataTypes.NftToLp({

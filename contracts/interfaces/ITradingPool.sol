@@ -21,7 +21,11 @@ interface ITradingPool is IERC721 {
 
     event Sell(address indexed user, uint256[] nftIds, uint256 price);
 
-    event SetLpPrice(address indexed user, uint256 indexed lpId, uint256 price);
+    event SetLpSpotPrice(
+        address indexed user,
+        uint256 indexed lpId,
+        uint256 spotPrice
+    );
 
     event SetLpPricingCurve(
         address indexed user,
