@@ -264,7 +264,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
 
         require(
             userLockedBalance.end > block.timestamp || ratio == 0,
-            "Must have an active lock in order to vote"
+            "Must have an active lock in order to vote unless it's erasing a vote"
         );
 
         require(
@@ -284,42 +284,70 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             votingEscrow.userHistoryLength(msg.sender) - 1
         );
         DataTypes.Point memory oldGaugeVoteWeight;
-        uint256 voteWeight = (userLastPoint.bias * ratio) /
-            PercentageMath.PERCENTAGE_FACTOR;
-        uint256 voteSlope = (userLastPoint.slope * ratio) /
-            PercentageMath.PERCENTAGE_FACTOR;
+        DataTypes.Point memory newGaugeVoteWeight;
 
-        // If we alredy have valid votes in this gauge
+        // Get the updated new gauge vote weight
+        newGaugeVoteWeight.bias =
+            (userLastPoint.bias -
+                (userLastPoint.slope *
+                    (block.timestamp - userLastPoint.timestamp) *
+                    ratio)) /
+            PercentageMath.PERCENTAGE_FACTOR;
+        newGaugeVoteWeight.slope =
+            (userLastPoint.slope * ratio) /
+            PercentageMath.PERCENTAGE_FACTOR;
+        newGaugeVoteWeight.timestamp = block.timestamp;
+
+        // If we already have valid votes in this gauge
         if (
             _userGaugeVoteRatio[msg.sender][gauge] != 0 &&
             block.timestamp < userLockedBalance.end
         ) {
+            // Get the updated old gauge vote weight
+            oldGaugeVoteWeight.bias =
+                _userGaugeVoteWeight[msg.sender][gauge].slope *
+                (block.timestamp -
+                    _userGaugeVoteWeight[msg.sender][gauge].timestamp);
+            oldGaugeVoteWeight.slope = _userGaugeVoteWeight[msg.sender][gauge]
+                .slope;
+            oldGaugeVoteWeight.timestamp = block.timestamp;
+
             _gaugeWeightSlopeChanges[gauge][
                 userLockedBalance.end
-            ] -= _userGaugeVoteWeight[msg.sender][gauge].slope;
+            ] -= oldGaugeVoteWeight.slope;
 
             _totalWeightSlopeChanges[
                 userLockedBalance.end
-            ] -= _userGaugeVoteWeight[msg.sender][gauge].slope;
-
-            oldGaugeVoteWeight = _userGaugeVoteWeight[msg.sender][gauge];
+            ] -= oldGaugeVoteWeight.slope;
         }
 
         // Add new slope updates
-        _gaugeWeightSlopeChanges[gauge][userLockedBalance.end] += voteSlope;
-        _totalWeightSlopeChanges[userLockedBalance.end] += voteSlope;
+        _gaugeWeightSlopeChanges[gauge][
+            userLockedBalance.end
+        ] += newGaugeVoteWeight.slope;
+        _totalWeightSlopeChanges[userLockedBalance.end] += newGaugeVoteWeight
+            .slope;
 
         // Update checkpoints
-        _lastGaugeWeigthCheckpoint[gauge].bias +=
-            voteWeight -
+        _lastGaugeWeigthCheckpoint[gauge].bias =
+            _lastGaugeWeigthCheckpoint[gauge].bias -
+            _lastGaugeWeigthCheckpoint[gauge].slope *
+            (block.timestamp - _lastGaugeWeigthCheckpoint[gauge].timestamp) +
+            newGaugeVoteWeight.bias -
             oldGaugeVoteWeight.bias;
         _lastGaugeWeigthCheckpoint[gauge].slope +=
-            userLastPoint.slope -
+            newGaugeVoteWeight.slope -
             oldGaugeVoteWeight.slope;
         _lastGaugeWeigthCheckpoint[gauge].timestamp = block.timestamp;
-        _lastWeightCheckpoint.bias = voteWeight - oldGaugeVoteWeight.bias;
+
+        _lastWeightCheckpoint.bias =
+            _lastWeightCheckpoint.bias -
+            _lastWeightCheckpoint.slope *
+            (block.timestamp - _lastWeightCheckpoint.timestamp) +
+            newGaugeVoteWeight.bias -
+            oldGaugeVoteWeight.bias;
         _lastWeightCheckpoint.slope +=
-            userLastPoint.slope -
+            newGaugeVoteWeight.slope -
             oldGaugeVoteWeight.slope;
         _lastWeightCheckpoint.timestamp = block.timestamp;
 
@@ -329,12 +357,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             _userVoteRatio[msg.sender] -
             _userGaugeVoteRatio[msg.sender][gauge];
         _userGaugeVoteRatio[msg.sender][gauge] = ratio;
-
-        _userGaugeVoteWeight[msg.sender][gauge] = DataTypes.Point(
-            voteWeight,
-            voteSlope,
-            userLastPoint.timestamp
-        );
+        _userGaugeVoteWeight[msg.sender][gauge] = newGaugeVoteWeight;
 
         emit Vote(msg.sender, gauge, ratio);
     }

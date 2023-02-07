@@ -79,7 +79,7 @@ let loadEnv = async function () {
 
   // Deploy and initialize the native token
   const NativeToken = await ethers.getContractFactory("NativeToken");
-  const nativeToken = await upgrades.deployProxy(NativeToken, [
+  nativeToken = await upgrades.deployProxy(NativeToken, [
     addressesProvider.address,
     "leNFT Token",
     "LE",
@@ -95,12 +95,12 @@ let loadEnv = async function () {
 
   // Deploy and initialize Genesis NFT
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
-  const genesisNFT = await upgrades.deployProxy(GenesisNFT, [
+  genesisNFT = await upgrades.deployProxy(GenesisNFT, [
     addressesProvider.address,
     "leNFT Genesis",
     "LGEN",
     "9999",
-    "30000000000000000",
+    "3000000000000000",
     "250",
     50000000, // Native Token Mint Factor
     ONE_DAY * 120, // Max locktime (120 days in s)

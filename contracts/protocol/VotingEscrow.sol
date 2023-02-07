@@ -143,12 +143,6 @@ contract VotingEscrow is
             oldPoint.bias;
         _lastWeightCheckpoint.slope += newPoint.slope - oldPoint.slope;
         _lastWeightCheckpoint.timestamp = block.timestamp;
-        console.log(
-            "_lastWeightCheckpoint, BIAS: %s, SLOPE: %s, TIMESTAMP: %s",
-            _lastWeightCheckpoint.bias,
-            _lastWeightCheckpoint.slope,
-            _lastWeightCheckpoint.timestamp
-        );
 
         // Read and update slope changes in accordance
         if (oldBalance.end > block.timestamp) {
@@ -161,12 +155,6 @@ contract VotingEscrow is
         }
 
         // Update user history
-        console.log(
-            "newPOint, BIAS: %s, SLOPE: %s, TIMESTAMP: %s",
-            newPoint.bias,
-            newPoint.slope,
-            newPoint.timestamp
-        );
         _userHistory[user].push(newPoint);
     }
 

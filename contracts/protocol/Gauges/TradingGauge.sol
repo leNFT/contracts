@@ -126,20 +126,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
                         votingEscrow.epoch(workingBalance.timestamp)
                     ) {
                         _workingBalancePointer[msg.sender]++;
-                        console.log(
-                            "Incremented working balance pointer",
-                            _workingBalancePointer[msg.sender]
-                        );
                     } else {
-                        console.log(
-                            "Claiming working balance %s with %s tokens out of %s",
-                            gaugeController.getGaugeRewards(
-                                address(this),
-                                nextClaimedEpoch
-                            ),
-                            workingBalance.amount,
-                            _workingSupplyHistory[nextClaimedEpoch]
-                        );
                         if (_workingSupplyHistory[nextClaimedEpoch] != 0) {
                             amountToClaim +=
                                 (gaugeController.getGaugeRewards(
@@ -195,6 +182,8 @@ contract TradingGauge is IGauge, IERC721Receiver {
         uint256 totalVotingSupply = votingEscrow.totalSupply();
         uint256 newAmount;
 
+        writeTotalWeightHistory();
+
         if (totalVotingSupply == 0) {
             newAmount = _userLPValue[user];
         } else {
@@ -222,7 +211,6 @@ contract TradingGauge is IGauge, IERC721Receiver {
             _workingSupply +
             newWorkingBalance.amount -
             oldWorkingBalance.amount;
-        writeTotalWeightHistory();
 
         _workingBalanceHistory[user].push(newWorkingBalance);
     }

@@ -112,10 +112,6 @@ contract LendingGauge is IGauge {
                     _workingBalancePointer[msg.sender] ==
                     workingBalanceHistoryLength - 1
                 ) {
-                    console.log(
-                        "Claiming last working balance",
-                        _workingBalancePointer[msg.sender]
-                    );
                     amountToClaim +=
                         (gaugeController.getGaugeRewards(
                             address(this),
@@ -135,20 +131,7 @@ contract LendingGauge is IGauge {
                         votingEscrow.epoch(workingBalance.timestamp)
                     ) {
                         _workingBalancePointer[msg.sender]++;
-                        console.log(
-                            "Incremented working balance pointer",
-                            _workingBalancePointer[msg.sender]
-                        );
                     } else {
-                        console.log(
-                            "Claiming working balance %s with %s tokens out of %s",
-                            gaugeController.getGaugeRewards(
-                                address(this),
-                                nextClaimedEpoch
-                            ),
-                            workingBalance.amount,
-                            _workingSupplyHistory[nextClaimedEpoch]
-                        );
                         if (_workingSupplyHistory[nextClaimedEpoch] != 0) {
                             amountToClaim +=
                                 (gaugeController.getGaugeRewards(
@@ -185,7 +168,7 @@ contract LendingGauge is IGauge {
             .epoch(block.timestamp);
         for (uint256 i = 0; i < 2 ** 7; i++) {
             //Increase epoch
-            if (currentEpoch > _workingSupplyHistory.length) {
+            if (_workingSupplyHistory.length >= currentEpoch) {
                 break;
             }
 
@@ -203,6 +186,9 @@ contract LendingGauge is IGauge {
         uint256 userVotingBalance = votingEscrow.balanceOf(user);
         uint256 totalVotingSupply = votingEscrow.totalSupply();
         uint256 newAmount;
+
+        // Save the total weight history
+        writeTotalWeightHistory();
 
         if (totalVotingSupply == 0) {
             newAmount = _balanceOf[user];
@@ -231,7 +217,6 @@ contract LendingGauge is IGauge {
             _workingSupply +
             newWorkingBalance.amount -
             oldWorkingBalance.amount;
-        writeTotalWeightHistory();
 
         _workingBalanceHistory[user].push(newWorkingBalance);
     }

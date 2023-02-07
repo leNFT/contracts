@@ -204,7 +204,7 @@ contract GenesisNFT is
         (bool sent, ) = _devAddress.call{value: _price - ethAmount}("");
         require(sent, "Failed to send Ether to dev fund");
 
-        //Mint genesis NFT
+        // Mint genesis NFT
         _safeMint(_msgSender(), tokenId);
 
         //Set URI
