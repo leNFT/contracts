@@ -114,8 +114,10 @@ async function main() {
 
   console.log("Deployed DebtToken");
 
-  // Deploy and initialize the native token
-  const NativeToken = await ethers.getContractFactory("NativeToken");
+  // Deploy and initialize the native token (different for mainnet and goerli)
+  const NativeToken = await ethers.getContractFactory(
+    chainID == 1 ? "NativeToken" : "NativeTokenGoerli"
+  );
   const nativeToken = await upgrades.deployProxy(NativeToken, [
     addressesProvider.address,
     "leNFT Token",
