@@ -36,7 +36,7 @@ describe("GenesisNFT", function () {
   });
   it("Should mint a token", async function () {
     // Mint Genesis NFT
-    const mintGenesisNFTTx = await genesisNFT.mint(2592000, "", {
+    const mintGenesisNFTTx = await genesisNFT.mint([2592000], [""], {
       value: "3000000000000000",
     });
     await mintGenesisNFTTx.wait();
@@ -49,13 +49,13 @@ describe("GenesisNFT", function () {
     await network.provider.send("evm_increaseTime", [2592000]);
     await network.provider.send("evm_mine");
     const balanceBefore = await owner.getBalance();
-    const burnGenesisNFTTx = await genesisNFT.burn(1);
+    const burnGenesisNFTTx = await genesisNFT.burn([1]);
     await burnGenesisNFTTx.wait();
     const balanceAfter = await owner.getBalance();
 
     // Find if the NFT was minted
     expect(balanceAfter.sub(balanceBefore).toString()).to.equal(
-      "199798575613703807"
+      "1776180487749463"
     );
   });
 });

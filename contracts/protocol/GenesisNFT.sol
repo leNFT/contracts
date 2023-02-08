@@ -15,7 +15,6 @@ import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/intr
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
-import {ERC721BurnableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
 import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import {ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -29,7 +28,6 @@ contract GenesisNFT is
     ContextUpgradeable,
     ERC721Upgradeable,
     ERC721EnumerableUpgradeable,
-    ERC721BurnableUpgradeable,
     ERC721URIStorageUpgradeable,
     OwnableUpgradeable,
     IGenesisNFT,
@@ -81,7 +79,6 @@ contract GenesisNFT is
         address payable devAddress
     ) external initializer {
         __ERC721Enumerable_init();
-        __ERC721Burnable_init();
         __Ownable_init();
         __ERC721_init(name, symbol);
         _addressProvider = addressProvider;
@@ -154,25 +151,26 @@ contract GenesisNFT is
     }
 
     function mint(
-        uint256 locktime,
-        string memory uri
-    ) external payable nonReentrant returns (uint256) {
+        uint256[] memory locktimes,
+        string[] memory uris
+    ) external payable nonReentrant {
+        // Make sure the arrays are the same length
+        require(locktimes.length == uris.length, "Array lengths must match");
+
         // Make sure the genesis incentived pool is set
         require(_tradingPool != address(0), "Incentivized pool is not set.");
 
-        // Make sure there's still enough tkens to mint
+        // Make sure there are enough tokens to mint
         uint256 tokenId = _tokenIdCounter.current();
-        require(tokenId <= getCap(), "All NFTs have been minted");
-
-        // Make sure locktime is within limits
-        require(locktime >= _minLocktime, "Locktime is lower than threshold");
-        require(locktime <= _maxLocktime, "Locktime is higher than limit");
+        require(tokenId + locktimes.length <= getCap(), "Maximum cap exceeded");
 
         // Set a buying price
-        require(msg.value == _price, "Tx value is not equal to price");
+        uint256 buyPrice = _price * locktimes.length;
+        // Make sure the user sent enough ETH
+        require(msg.value == buyPrice, "Tx value is not equal to price");
 
         // Get the amount of ETH to deposit to the pool
-        uint256 ethAmount = (2 * _price) / 3;
+        uint256 ethAmount = (2 * buyPrice) / 3;
 
         // Get the amount of LE tokens to pair with the ETH
         uint256[2] memory balances = ICurvePool(_tradingPool).get_balances();
@@ -201,29 +199,39 @@ contract GenesisNFT is
         }([ethAmount, tokenAmount], 0);
 
         // Send the rest of the ETH to the dev address
-        (bool sent, ) = _devAddress.call{value: _price - ethAmount}("");
+        (bool sent, ) = _devAddress.call{value: buyPrice - ethAmount}("");
         require(sent, "Failed to send Ether to dev fund");
 
-        // Mint genesis NFT
-        _safeMint(_msgSender(), tokenId);
+        // Make sure locktimes are within limits and setup the tokens
+        for (uint256 i = 0; i < locktimes.length; i++) {
+            require(
+                locktimes[i] >= _minLocktime,
+                "Locktime is lower than threshold"
+            );
+            require(
+                locktimes[i] <= _maxLocktime,
+                "Locktime is higher than limit"
+            );
 
-        //Set URI
-        _setTokenURI(tokenId, uri);
+            // Mint genesis NFT
+            _safeMint(_msgSender(), tokenId);
 
-        // Add mint details
-        _mintDetails[tokenId] = DataTypes.MintDetails(
-            block.timestamp,
-            locktime,
-            lpAmount,
-            false
-        );
+            //Set URI
+            _setTokenURI(tokenId, uris[i]);
 
-        //Increase supply
-        _tokenIdCounter.increment();
+            // Add mint details
+            _mintDetails[tokenId] = DataTypes.MintDetails(
+                block.timestamp,
+                locktimes[i],
+                lpAmount / locktimes.length,
+                false
+            );
 
-        emit Mint(_msgSender(), tokenId);
+            //Increase supply
+            _tokenIdCounter.increment();
 
-        return tokenId;
+            emit Mint(_msgSender(), tokenId);
+        }
     }
 
     function getPrice() external view returns (uint256) {
@@ -244,18 +252,20 @@ contract GenesisNFT is
         ERC721URIStorageUpgradeable._burn(tokenId);
     }
 
-    function mintRewards(uint256 tokenId) external {
-        //Require the caller owns the token
-        require(
-            _msgSender() == ERC721Upgradeable.ownerOf(tokenId),
-            "Must own token"
-        );
-        // Mint can only be happen after locktime is over
-        require(
-            block.timestamp >= getUnlockTimestamp(tokenId),
-            "Tokens are still locked"
-        );
-        _mintRewards(_msgSender(), tokenId);
+    function mintRewards(uint256[] memory tokenIds) external {
+        for (uint i = 0; i < tokenIds.length; i++) {
+            //Require the caller owns the token
+            require(
+                _msgSender() == ERC721Upgradeable.ownerOf(tokenIds[i]),
+                "Must own token"
+            );
+            // Mint can only be happen after locktime is over
+            require(
+                block.timestamp >= getUnlockTimestamp(tokenIds[i]),
+                "Tokens are still locked"
+            );
+            _mintRewards(_msgSender(), tokenIds[i]);
+        }
     }
 
     function _mintRewards(address receiver, uint256 tokenId) internal {
@@ -271,33 +281,39 @@ contract GenesisNFT is
         _mintDetails[tokenId].mintedRewards = true;
     }
 
-    function burn(uint256 tokenId) public override nonReentrant {
-        //Require the caller owns the token
-        require(
-            _msgSender() == ERC721Upgradeable.ownerOf(tokenId),
-            "Must own token"
-        );
-        // Token can only be burned after locktime is over
-        require(
-            block.timestamp >= getUnlockTimestamp(tokenId),
-            "Token is still locked"
-        );
+    function burn(uint256[] memory tokenIds) external nonReentrant {
+        uint256 lpAmountSum = 0;
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            //Require the caller owns the token
+            require(
+                _msgSender() == ERC721Upgradeable.ownerOf(tokenIds[i]),
+                "Must own token"
+            );
+            // Token can only be burned after locktime is over
+            require(
+                block.timestamp >= getUnlockTimestamp(tokenIds[i]),
+                "Token is still locked"
+            );
+
+            // Mint and send the extra leNFT tokens to the caller if he hasnt done it yet
+            if (!_mintDetails[tokenIds[i]].mintedRewards) {
+                _mintRewards(_msgSender(), tokenIds[i]);
+            }
+
+            // Add the LP amount to the sum
+            lpAmountSum = _mintDetails[tokenIds[i]].lpAmount;
+
+            // Burn genesis NFT
+            _burn(tokenIds[i]);
+            emit Burn(tokenIds[i]);
+        }
 
         // Withdraw LP tokens from the pool
         ICurvePool(_tradingPool).remove_liquidity(
-            _mintDetails[tokenId].lpAmount,
+            lpAmountSum,
             [uint256(0), uint256(0)],
             _msgSender()
         );
-
-        // Mint and send the extra leNFT tokens to the caller if he hasnt done it yet
-        if (!_mintDetails[tokenId].mintedRewards) {
-            _mintRewards(_msgSender(), tokenId);
-        }
-
-        // Burn genesis NFT
-        _burn(tokenId);
-        emit Burn(tokenId);
     }
 
     function _beforeTokenTransfer(
