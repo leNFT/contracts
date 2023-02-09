@@ -22,6 +22,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
     IAddressesProvider private _addressProvider;
     mapping(uint256 => address) private _ownerOf;
     mapping(address => uint256) private _balanceOf;
+    uint256 private _totalSupply;
     mapping(address => mapping(uint256 => uint256)) private _ownedTokens;
     mapping(uint256 => uint256) private _ownedTokensIndex;
     mapping(address => DataTypes.WorkingBalance[])
@@ -239,6 +240,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
         _ownedTokens[msg.sender][lastTokenIndex] = lpId;
         _ownedTokensIndex[lpId] = lastTokenIndex;
         _balanceOf[msg.sender] += 1;
+        _totalSupply += 1;
 
         emit DepositLP(msg.sender, lpId);
     }
@@ -277,6 +279,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
         delete _ownedTokens[msg.sender][lastTokenIndex];
 
         _balanceOf[msg.sender] -= 1;
+        _totalSupply -= 1;
 
         emit WithdrawLP(msg.sender, lpId);
     }
@@ -310,6 +313,10 @@ contract TradingGauge is IGauge, IERC721Receiver {
 
     function balanceOf(address user) external view returns (uint256) {
         return _balanceOf[user];
+    }
+
+    function totalSupply() external view returns (uint256) {
+        return _totalSupply;
     }
 
     function calculateLpValue(uint256 lpId) public view returns (uint256) {

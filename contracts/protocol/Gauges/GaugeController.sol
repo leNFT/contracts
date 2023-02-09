@@ -368,15 +368,6 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     ) external returns (uint256 rewards) {
         require(_isGauge[gauge], "Gauge is not on the gauge list");
 
-        console.log(
-            "getEpochRewards",
-            INativeToken(_addressProvider.getNativeToken()).getEpochRewards(
-                epoch
-            )
-        );
-
-        console.log("getTotalWeightAt", getTotalWeightAt(epoch));
-
         if (getTotalWeightAt(epoch) == 0) {
             return 0;
         }
