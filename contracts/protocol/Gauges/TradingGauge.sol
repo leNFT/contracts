@@ -82,12 +82,6 @@ contract TradingGauge is IGauge, IERC721Receiver {
         uint256 nextClaimedEpoch;
         for (uint256 i = 0; i < 50; i++) {
             nextClaimedEpoch = _userNextClaimedEpoch[msg.sender];
-            console.log(
-                "i = %s, nextClaimedEpoch = %s , votingEscrow.epoch(block.timestamp) = %s",
-                i,
-                nextClaimedEpoch,
-                votingEscrow.epoch(block.timestamp)
-            );
             // Break if the next claimable epoch is the one we are in
             if (nextClaimedEpoch >= votingEscrow.epoch(block.timestamp)) {
                 break;
@@ -107,12 +101,14 @@ contract TradingGauge is IGauge, IERC721Receiver {
                         "Claiming last working balance",
                         _workingBalancePointer[msg.sender]
                     );
-                    amountToClaim +=
-                        (gaugeController.getGaugeRewards(
-                            address(this),
-                            nextClaimedEpoch
-                        ) * workingBalance.amount) /
-                        _workingSupplyHistory[nextClaimedEpoch];
+                    if (_workingSupplyHistory[nextClaimedEpoch] > 0) {
+                        amountToClaim +=
+                            (gaugeController.getGaugeRewards(
+                                address(this),
+                                nextClaimedEpoch
+                            ) * workingBalance.amount) /
+                            _workingSupplyHistory[nextClaimedEpoch];
+                    }
 
                     _userNextClaimedEpoch[msg.sender]++;
                 } else {
@@ -127,7 +123,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
                     ) {
                         _workingBalancePointer[msg.sender]++;
                     } else {
-                        if (_workingSupplyHistory[nextClaimedEpoch] != 0) {
+                        if (_workingSupplyHistory[nextClaimedEpoch] > 0) {
                             amountToClaim +=
                                 (gaugeController.getGaugeRewards(
                                     address(this),

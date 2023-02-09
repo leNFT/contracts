@@ -161,8 +161,10 @@ contract GenesisNFT is
         require(_tradingPool != address(0), "Incentivized pool is not set.");
 
         // Make sure there are enough tokens to mint
-        uint256 tokenId = _tokenIdCounter.current();
-        require(tokenId + locktimes.length <= getCap(), "Maximum cap exceeded");
+        require(
+            _tokenIdCounter.current() + locktimes.length <= getCap(),
+            "Maximum cap exceeded"
+        );
 
         // Set a buying price
         uint256 buyPrice = _price * locktimes.length;
@@ -203,6 +205,7 @@ contract GenesisNFT is
         require(sent, "Failed to send Ether to dev fund");
 
         // Make sure locktimes are within limits and setup the tokens
+        uint256 tokenId;
         for (uint256 i = 0; i < locktimes.length; i++) {
             require(
                 locktimes[i] >= _minLocktime,
@@ -212,6 +215,7 @@ contract GenesisNFT is
                 locktimes[i] <= _maxLocktime,
                 "Locktime is higher than limit"
             );
+            tokenId = _tokenIdCounter.current();
 
             // Mint genesis NFT
             _safeMint(_msgSender(), tokenId);

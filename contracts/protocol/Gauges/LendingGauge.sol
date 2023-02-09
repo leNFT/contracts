@@ -112,12 +112,14 @@ contract LendingGauge is IGauge {
                     _workingBalancePointer[msg.sender] ==
                     workingBalanceHistoryLength - 1
                 ) {
-                    amountToClaim +=
-                        (gaugeController.getGaugeRewards(
-                            address(this),
-                            nextClaimedEpoch
-                        ) * workingBalance.amount) /
-                        _workingSupplyHistory[nextClaimedEpoch];
+                    if (_workingSupplyHistory[nextClaimedEpoch] > 0) {
+                        amountToClaim +=
+                            (gaugeController.getGaugeRewards(
+                                address(this),
+                                nextClaimedEpoch
+                            ) * workingBalance.amount) /
+                            _workingSupplyHistory[nextClaimedEpoch];
+                    }
 
                     _userNextClaimedEpoch[msg.sender]++;
                 } else {
@@ -132,7 +134,7 @@ contract LendingGauge is IGauge {
                     ) {
                         _workingBalancePointer[msg.sender]++;
                     } else {
-                        if (_workingSupplyHistory[nextClaimedEpoch] != 0) {
+                        if (_workingSupplyHistory[nextClaimedEpoch] > 0) {
                             amountToClaim +=
                                 (gaugeController.getGaugeRewards(
                                     address(this),

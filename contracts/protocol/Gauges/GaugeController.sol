@@ -300,7 +300,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
 
         // If we already have valid votes in this gauge
         if (
-            _userGaugeVoteRatio[msg.sender][gauge] != 0 &&
+            _userGaugeVoteRatio[msg.sender][gauge] > 0 &&
             block.timestamp < userLockedBalance.end
         ) {
             // Get the updated old gauge vote weight

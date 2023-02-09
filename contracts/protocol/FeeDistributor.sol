@@ -126,7 +126,7 @@ contract FeeDistributor is
                     votingEscrow.userHistoryLength(msg.sender) - 1
                 ) {
                     // Sum claimable amount if its the last activity
-                    if (votingEscrow.totalSupplyAt(nextClaimedEpoch) != 0) {
+                    if (votingEscrow.totalSupplyAt(nextClaimedEpoch) > 0) {
                         amountToClaim +=
                             (_epochFees[token][nextClaimedEpoch] *
                                 (userHistoryPoint.bias -
@@ -156,7 +156,7 @@ contract FeeDistributor is
                         _userHistoryPointer[token][msg.sender]++;
                     } else {
                         // If the next user activity is in a different epoch we sum the claimable amount for his epoch
-                        if (votingEscrow.totalSupplyAt(nextClaimedEpoch) != 0) {
+                        if (votingEscrow.totalSupplyAt(nextClaimedEpoch) > 0) {
                             amountToClaim +=
                                 (_epochFees[token][nextClaimedEpoch] *
                                     (userHistoryPoint.bias -
