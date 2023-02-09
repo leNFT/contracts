@@ -40,6 +40,13 @@ contract FeeDistributor is
         _addressProvider = addressProvider;
     }
 
+    function totalFeesAt(
+        address token,
+        uint256 epoch
+    ) external view returns (uint256) {
+        return _epochFees[token][epoch];
+    }
+
     function checkpoint(address token) external override {
         // Find epoch we're in
         uint256 epoch = IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(

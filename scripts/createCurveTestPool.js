@@ -43,6 +43,27 @@ async function main() {
   await initPoolTx.wait();
 
   console.log("Initialized pool");
+
+  const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
+  const genesisNFT = GenesisNFT.attach(addresses.GenesisNFT);
+
+  // Set trusted price source
+  const setIncentivizedPoolTx = await genesisNFT.setTradingPool(pool.address);
+  await setIncentivizedPoolTx.wait();
+  console.log("Set " + pool.address + " as genesis incentivized pool.");
+
+  // Write pool address to file
+  const fs = require("fs");
+  addresses.CurvePool = pool.address;
+  contractAddresses[chainID.toString(16)] = addresses;
+  fs.writeFileSync(
+    "../lenft-interface/contractAddresses.json",
+    JSON.stringify(contractAddresses),
+    function (err) {
+      if (err) throw err;
+      console.log("File written to interface folder");
+    }
+  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere
