@@ -81,8 +81,8 @@ library DataTypes {
         uint256 genesisNFTBoost;
         // address of nft asset token
         address nftAsset;
-        // the id of nft token
-        uint256 nftTokenId;
+        // the ids of the token
+        uint256[] nftTokenIds;
         // address of lending pool associated with loan
         address pool;
         // interest rate at which the loan was written
@@ -107,7 +107,7 @@ library DataTypes {
         address asset;
         uint256 amount;
         address nftAddress;
-        uint256 nftTokenID;
+        uint256[] nftTokenIds;
         uint256 genesisNFTId;
         bytes32 request;
         Trustus.TrustusPacket packet;

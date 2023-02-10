@@ -13,7 +13,7 @@ interface ILoanCenter {
         uint256 boost,
         uint256 genesisNFTId,
         address nftAddress,
-        uint256 nftTokenId,
+        uint256[] memory nftTokenIds,
         uint256 borrowRate
     ) external returns (uint256);
 
@@ -57,7 +57,9 @@ interface ILoanCenter {
 
     function getLoanInterest(uint256 loanId) external view returns (uint256);
 
-    function getLoanTokenId(uint256 loanId) external view returns (uint256);
+    function getLoanTokenIds(
+        uint256 loanId
+    ) external view returns (uint256[] memory);
 
     function getLoanTokenAddress(
         uint256 loanId

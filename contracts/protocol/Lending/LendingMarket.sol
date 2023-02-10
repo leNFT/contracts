@@ -66,7 +66,7 @@ contract LendingMarket is
     /// @param asset The address of the asset the be borrowed
     /// @param amount Amount of the asset to be borrowed
     /// @param nftAddress Address of the NFT collateral
-    /// @param nftTokenId Token id of the NFT collateral
+    /// @param nftTokenIds Token id of the NFT collateral
     /// @param request ID of the collateral price request sent by the trusted server
     /// @param packet Signed collateral price request sent by the trusted server
     function borrow(
@@ -74,7 +74,7 @@ contract LendingMarket is
         address asset,
         uint256 amount,
         address nftAddress,
-        uint256 nftTokenId,
+        uint256[] memory nftTokenIds,
         uint256 genesisNFTId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
@@ -88,14 +88,14 @@ contract LendingMarket is
                 asset: asset,
                 amount: amount,
                 nftAddress: nftAddress,
-                nftTokenID: nftTokenId,
+                nftTokenIds: nftTokenIds,
                 genesisNFTId: genesisNFTId,
                 request: request,
                 packet: packet
             })
         );
 
-        emit Borrow(_msgSender(), asset, nftAddress, nftTokenId, amount);
+        emit Borrow(_msgSender(), asset, nftAddress, nftTokenIds, amount);
     }
 
     /// @notice Repay an an active loan

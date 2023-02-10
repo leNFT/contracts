@@ -8,7 +8,7 @@ interface ILendingMarket {
         address indexed user,
         address indexed asset,
         address indexed nftAddress,
-        uint256 nftTokenID,
+        uint256[] nftTokenIds,
         uint256 amount
     );
 
@@ -29,7 +29,7 @@ interface ILendingMarket {
         address asset,
         uint256 amount,
         address nftAddress,
-        uint256 nftTokenID,
+        uint256[] memory nftTokenIds,
         uint256 genesisNFTId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet

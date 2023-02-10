@@ -73,9 +73,9 @@ contract LoanCenter is
         uint256 boost,
         uint256 genesisNFTId,
         address nftAddress,
-        uint256 nftTokenId,
+        uint256[] memory nftTokenIds,
         uint256 borrowRate
-    ) external override onlyMarket returns (uint256) {
+    ) public override onlyMarket returns (uint256) {
         // Create the loan and add it to the list
         _loans[_loansCount].init(
             _loansCount,
@@ -86,12 +86,14 @@ contract LoanCenter is
             boost,
             genesisNFTId,
             nftAddress,
-            nftTokenId,
+            nftTokenIds,
             borrowRate
         );
 
         // Add NFT to loanId mapping
-        _nftToLoanId[nftAddress][nftTokenId] = _loansCount;
+        for (uint256 i = 0; i < nftTokenIds.length; i++) {
+            _nftToLoanId[nftAddress][nftTokenIds[i]] = _loansCount;
+        }
 
         _loansCount++;
 
@@ -111,7 +113,10 @@ contract LoanCenter is
         DataTypes.LoanData storage loan = _loans[loanId];
         loan.state = DataTypes.LoanState.Repaid;
 
-        _nftToLoanId[loan.nftAsset][loan.nftTokenId] = 0;
+        for (uint256 i = 0; i < loan.nftTokenIds.length; i++) {
+            _nftToLoanId[loan.nftAsset][loan.nftTokenIds[i]] = 0;
+        }
+
         _activeLoansCount[loan.borrower][loan.nftAsset]--;
     }
 
@@ -120,7 +125,9 @@ contract LoanCenter is
         DataTypes.LoanData storage loan = _loans[loanId];
         loan.state = DataTypes.LoanState.Defaulted;
 
-        _nftToLoanId[loan.nftAsset][loan.nftTokenId] = 0;
+        for (uint256 i = 0; i < loan.nftTokenIds.length; i++) {
+            _nftToLoanId[loan.nftAsset][loan.nftTokenIds[i]] = 0;
+        }
         _activeLoansCount[loan.borrower][loan.nftAsset]--;
     }
 
@@ -157,17 +164,20 @@ contract LoanCenter is
             "Loan does not exist."
         );
 
-        uint256 tokenPrice = INFTOracle(_addressProvider.getNFTOracle())
-            .getTokenETHPrice(
-                _loans[loanId].nftAsset,
-                _loans[loanId].nftTokenId,
-                request,
-                packet
-            );
+        uint256 priceSum;
+        for (uint256 i = 0; i < _loans[loanId].nftTokenIds.length; i++) {
+            priceSum += INFTOracle(_addressProvider.getNFTOracle())
+                .getTokenETHPrice(
+                    _loans[loanId].nftAsset,
+                    _loans[loanId].nftTokenIds[i],
+                    request,
+                    packet
+                );
+        }
 
         return
             PercentageMath.percentMul(
-                tokenPrice,
+                priceSum,
                 _loans[loanId].maxLTV + _loans[loanId].boost
             );
     }
@@ -185,16 +195,19 @@ contract LoanCenter is
             _addressProvider.getTokenOracle()
         ).getTokenETHPrice(IERC4626(_loans[loanId].pool).asset());
 
-        uint256 collateralETHPrice = (
-            (INFTOracle(_addressProvider.getNFTOracle()).getTokenETHPrice(
-                _loans[loanId].nftAsset,
-                _loans[loanId].nftTokenId,
-                request,
-                packet
-            ) *
-                ITokenOracle(_addressProvider.getTokenOracle())
-                    .getPricePrecision())
-        ) / poolAssetETHPrice;
+        uint256 collateralETHPrice;
+        for (uint256 i = 0; i < _loans[loanId].nftTokenIds.length; i++) {
+            collateralETHPrice +=
+                (INFTOracle(_addressProvider.getNFTOracle()).getTokenETHPrice(
+                    _loans[loanId].nftAsset,
+                    _loans[loanId].nftTokenIds[i],
+                    request,
+                    packet
+                ) *
+                    ITokenOracle(_addressProvider.getTokenOracle())
+                        .getPricePrecision()) /
+                poolAssetETHPrice;
+        }
 
         // Threshold in which the liquidation price starts being equal to debt
         uint256 liquidationThreshold = PercentageMath.percentMul(
@@ -254,15 +267,15 @@ contract LoanCenter is
         return _loans[loanId].getInterest(block.timestamp);
     }
 
-    function getLoanTokenId(
+    function getLoanTokenIds(
         uint256 loanId
-    ) external view override returns (uint256) {
+    ) external view override returns (uint256[] memory) {
         require(
             _loans[loanId].state != DataTypes.LoanState.None,
             "Loan does not exist."
         );
 
-        return _loans[loanId].nftTokenId;
+        return _loans[loanId].nftTokenIds;
     }
 
     function getLoanTokenAddress(

@@ -17,7 +17,7 @@ library LoanLogic {
         uint256 boost,
         uint256 genesisNFTId,
         address nftAsset,
-        uint256 nftTokenId,
+        uint256[] memory nftTokenIds,
         uint256 borrowRate
     ) internal {
         loandata.loanId = loanId;
@@ -28,7 +28,7 @@ library LoanLogic {
         loandata.boost = boost;
         loandata.genesisNFTId = genesisNFTId;
         loandata.nftAsset = nftAsset;
-        loandata.nftTokenId = nftTokenId;
+        loandata.nftTokenIds = nftTokenIds;
         loandata.borrowRate = borrowRate;
         loandata.pool = pool;
         loandata.initTimestamp = block.timestamp;

@@ -66,13 +66,13 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     /// @dev NFT approval needs to be given to the LoanCenter contract
     /// @param amount Amount of the asset to be borrowed
     /// @param nftAddress Address of the NFT collateral
-    /// @param nftTokenId Token id of the NFT collateral
+    /// @param nftTokenIds Token ids of the NFT(s) collateral
     /// @param request ID of the collateral price request sent by the trusted server
     /// @param packet Signed collateral price request sent by the trusted server
     function borrow(
         uint256 amount,
         address nftAddress,
-        uint256 nftTokenId,
+        uint256[] memory nftTokenIds,
         uint256 genesisNFTId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
@@ -83,21 +83,23 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         IWETH weth = IWETH(_addressProvider.getWETH());
 
         // Transfer the collateral to the WETH Gateway
-        IERC721(nftAddress).safeTransferFrom(
-            _msgSender(),
-            address(this),
-            nftTokenId
-        );
+        for (uint256 i = 0; i < nftTokenIds.length; i++) {
+            IERC721(nftAddress).safeTransferFrom(
+                _msgSender(),
+                address(this),
+                nftTokenIds[i]
+            );
 
-        // Approve the collateral to be moved by the market
-        IERC721(nftAddress).approve(address(market), nftTokenId);
+            // Approve the collateral to be moved by the market
+            IERC721(nftAddress).approve(address(market), nftTokenIds[i]);
+        }
 
         market.borrow(
             _msgSender(),
             address(weth),
             amount,
             nftAddress,
-            nftTokenId,
+            nftTokenIds,
             genesisNFTId,
             request,
             packet

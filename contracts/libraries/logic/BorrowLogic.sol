@@ -25,11 +25,13 @@ library BorrowLogic {
         ValidationLogic.validateBorrow(addressesProvider, pools, params);
 
         // Transfer the collateral to the loan center
-        IERC721Upgradeable(params.nftAddress).safeTransferFrom(
-            params.caller,
-            addressesProvider.getLoanCenter(),
-            params.nftTokenID
-        );
+        for (uint256 i = 0; i < params.nftTokenIds.length; i++) {
+            IERC721Upgradeable(params.nftAddress).safeTransferFrom(
+                params.caller,
+                addressesProvider.getLoanCenter(),
+                params.nftTokenIds[i]
+            );
+        }
 
         // Get the borrow rate index
         uint256 borrowRate = ILendingPool(
@@ -65,7 +67,7 @@ library BorrowLogic {
             boost,
             params.genesisNFTId,
             params.nftAddress,
-            params.nftTokenID,
+            params.nftTokenIds,
             borrowRate
         );
 
@@ -122,11 +124,13 @@ library BorrowLogic {
             }
 
             // Transfer the collateral back to the owner
-            IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
-                addressesProvider.getLoanCenter(),
-                loanData.borrower,
-                loanData.nftTokenId
-            );
+            for (uint256 i = 0; i < loanData.nftTokenIds.length; i++) {
+                IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
+                    addressesProvider.getLoanCenter(),
+                    loanData.borrower,
+                    loanData.nftTokenIds[i]
+                );
+            }
 
             // Burn the token representing the debt
             IDebtToken(addressesProvider.getDebtToken()).burn(params.loanId);

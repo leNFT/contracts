@@ -111,11 +111,13 @@ library LiquidationLogic {
         );
 
         // Send collateral to liquidator
-        IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
-            addressesProvider.getLoanCenter(),
-            params.caller,
-            loanData.nftTokenId
-        );
+        for (uint i = 0; i < loanData.nftTokenIds.length; i++) {
+            IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
+                addressesProvider.getLoanCenter(),
+                params.caller,
+                loanData.nftTokenIds[i]
+            );
+        }
 
         // Unlock Genesis NFT
         if (loanData.genesisNFTId != 0) {
