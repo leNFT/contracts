@@ -4,9 +4,9 @@ pragma solidity 0.8.17;
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 
 library DataTypes {
-    struct TokenPrice {
+    struct TokensPrice {
         address collection;
-        uint256 tokenId;
+        uint256[] tokenIds;
         uint256 amount;
     }
 

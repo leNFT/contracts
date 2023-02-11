@@ -164,20 +164,17 @@ contract LoanCenter is
             "Loan does not exist."
         );
 
-        uint256 priceSum;
-        for (uint256 i = 0; i < _loans[loanId].nftTokenIds.length; i++) {
-            priceSum += INFTOracle(_addressProvider.getNFTOracle())
-                .getTokenETHPrice(
-                    _loans[loanId].nftAsset,
-                    _loans[loanId].nftTokenIds[i],
-                    request,
-                    packet
-                );
-        }
+        uint256 tokensPrice = INFTOracle(_addressProvider.getNFTOracle())
+            .getTokensETHPrice(
+                _loans[loanId].nftAsset,
+                _loans[loanId].nftTokenIds,
+                request,
+                packet
+            );
 
         return
             PercentageMath.percentMul(
-                priceSum,
+                tokensPrice,
                 _loans[loanId].maxLTV + _loans[loanId].boost
             );
     }
@@ -195,19 +192,16 @@ contract LoanCenter is
             _addressProvider.getTokenOracle()
         ).getTokenETHPrice(IERC4626(_loans[loanId].pool).asset());
 
-        uint256 collateralETHPrice;
-        for (uint256 i = 0; i < _loans[loanId].nftTokenIds.length; i++) {
-            collateralETHPrice +=
-                (INFTOracle(_addressProvider.getNFTOracle()).getTokenETHPrice(
-                    _loans[loanId].nftAsset,
-                    _loans[loanId].nftTokenIds[i],
-                    request,
-                    packet
-                ) *
-                    ITokenOracle(_addressProvider.getTokenOracle())
-                        .getPricePrecision()) /
-                poolAssetETHPrice;
-        }
+        uint256 collateralETHPrice = (INFTOracle(
+            _addressProvider.getNFTOracle()
+        ).getTokensETHPrice(
+                _loans[loanId].nftAsset,
+                _loans[loanId].nftTokenIds,
+                request,
+                packet
+            ) *
+            ITokenOracle(_addressProvider.getTokenOracle())
+                .getPricePrecision()) / poolAssetETHPrice;
 
         // Threshold in which the liquidation price starts being equal to debt
         uint256 liquidationThreshold = PercentageMath.percentMul(

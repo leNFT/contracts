@@ -63,6 +63,12 @@ library ValidationLogic {
         // Check if borrow amount is bigger than 0
         require(params.amount > 0, "Borrow amount must be bigger than 0");
 
+        // Check if theres at least one asset
+        require(
+            params.nftTokenIds.length > 0,
+            "No assets provided as collateral"
+        );
+
         // Check if the asset is supported
         require(
             lendingPools[params.nftAddress][params.asset] != address(0),
@@ -97,16 +103,14 @@ library ValidationLogic {
         }
 
         // Get assets ETH price
-        uint256 collateralETHPrice;
-        for (uint256 i = 0; i < params.nftTokenIds.length; i++) {
-            collateralETHPrice += INFTOracle(addressesProvider.getNFTOracle())
-                .getTokenETHPrice(
-                    params.nftAddress,
-                    params.nftTokenIds[i],
-                    params.request,
-                    params.packet
-                );
-        }
+        uint256 collateralETHPrice = INFTOracle(
+            addressesProvider.getNFTOracle()
+        ).getTokensETHPrice(
+                params.nftAddress,
+                params.nftTokenIds,
+                params.request,
+                params.packet
+            );
 
         // Check if borrow amount exceeds allowed amount
         require(
