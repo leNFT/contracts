@@ -47,4 +47,6 @@ interface ILendingMarket {
         address collection,
         address asset
     ) external view returns (address);
+
+    function getTVLSafeguard() external view returns (uint256);
 }

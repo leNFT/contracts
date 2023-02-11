@@ -82,7 +82,7 @@ library LiquidationLogic {
         if (fundsLeft > 0) {
             uint256 protocolFee = PercentageMath.percentMul(
                 liquidationPrice,
-                ILendingPool(loanData.pool).getLiquidationFee()
+                ILendingPool(loanData.pool).getPoolConfig().liquidationFee
             );
             if (protocolFee > fundsLeft) {
                 protocolFee = fundsLeft;

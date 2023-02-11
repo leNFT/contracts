@@ -207,8 +207,10 @@ contract LoanCenter is
         uint256 liquidationThreshold = PercentageMath.percentMul(
             collateralETHPrice,
             PercentageMath.PERCENTAGE_FACTOR -
-                ILendingPool(_loans[loanId].pool).getLiquidationPenalty() +
-                ILendingPool(_loans[loanId].pool).getLiquidationFee()
+                ILendingPool(_loans[loanId].pool)
+                    .getPoolConfig()
+                    .liquidationPenalty +
+                ILendingPool(_loans[loanId].pool).getPoolConfig().liquidationFee
         );
         uint256 loanDebt = _getLoanDebt(loanId);
         console.log("liquidationThreshold", liquidationThreshold);

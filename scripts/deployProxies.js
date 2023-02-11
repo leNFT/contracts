@@ -82,11 +82,11 @@ async function main() {
     LendingMarket,
     [
       addressesProvider.address,
+      "25000000000000000000", // TVL Safeguard for pools
       {
         liquidationPenalty: "1800", // defaultLiquidationPenalty
         liquidationFee: "200", // defaultProtocolLiquidationFee
         maximumUtilizationRate: "8500", // defaultMaximumUtilizationRate
-        tvlSafeguard: "25000000000000000000", // defaultTVLSafeguard
       },
     ],
     { unsafeAllow: ["external-library-linking"], timeout: 0 }
@@ -185,6 +185,7 @@ async function main() {
   const tradingPoolFactory = await upgrades.deployProxy(TradingPoolFactory, [
     addressesProvider.address,
     "1000", // Default protocol fee (10%)
+    "25000000000000000000", // TVL Safeguard for pools
   ]);
   addresses["TradingPoolFactory"] = tradingPoolFactory.address;
 

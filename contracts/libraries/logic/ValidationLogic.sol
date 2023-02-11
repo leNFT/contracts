@@ -18,28 +18,34 @@ import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 import "hardhat/console.sol";
 
 library ValidationLogic {
-    function validateDeposit(address reserve, uint256 amount) external view {
+    function validateDeposit(
+        IAddressesProvider addressesProvider,
+        address lendingPool,
+        uint256 amount
+    ) external view {
         // Check if deposit amount is bigger than 0
         require(amount > 0, "Deposit amount must be bigger than 0");
 
-        // Check if reserve will exceed maximum permitted amount
+        // Check if pool will exceed maximum permitted amount
         require(
-            amount + IERC4626(reserve).totalAssets() <
-                ILendingPool(reserve).getTVLSafeguard(),
-            "Reserve exceeds safeguarded limit"
+            amount + IERC4626(lendingPool).totalAssets() <
+                ILendingMarket(addressesProvider.getLendingMarket())
+                    .getTVLSafeguard(),
+            "Lending Pool exceeds safeguarded limit"
         );
     }
 
     function validateWithdrawal(
         IAddressesProvider addressesProvider,
-        address reserve,
+        address lendingPool,
         uint256 amount
     ) external view {
         // Check if the utilization rate doesn't go above maximum
-        uint256 maximumUtilizationRate = ILendingPool(reserve)
-            .getMaximumUtilizationRate();
-        uint256 debt = ILendingPool(reserve).getDebt();
-        uint256 underlyingBalance = ILendingPool(reserve)
+        uint256 maximumUtilizationRate = ILendingPool(lendingPool)
+            .getPoolConfig()
+            .maximumUtilizationRate;
+        uint256 debt = ILendingPool(lendingPool).getDebt();
+        uint256 underlyingBalance = ILendingPool(lendingPool)
             .getUnderlyingBalance();
         uint256 updatedUtilizationRate = IInterestRate(
             addressesProvider.getInterestRate()

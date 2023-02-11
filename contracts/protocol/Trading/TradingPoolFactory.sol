@@ -33,6 +33,7 @@ contract TradingPoolFactory is
     mapping(address => mapping(address => address)) private _pools;
 
     uint256 private _protocolFee;
+    uint256 private _tvlSafeguard;
 
     using ERC165Checker for address;
 
@@ -44,11 +45,13 @@ contract TradingPoolFactory is
     // Initialize the market
     function initialize(
         IAddressesProvider addressesProvider,
-        uint256 protocolFee
+        uint256 protocolFee,
+        uint256 tvlSafeguard
     ) external initializer {
         __Ownable_init();
         _addressProvider = addressesProvider;
         _protocolFee = protocolFee;
+        _tvlSafeguard = tvlSafeguard;
     }
 
     function setProtocolFee(uint256 newProtocolFee) external onlyOwner {
@@ -57,6 +60,14 @@ contract TradingPoolFactory is
 
     function getProtocolFee() external view returns (uint256) {
         return _protocolFee;
+    }
+
+    function getTVLSafeguard() external view returns (uint256) {
+        return _tvlSafeguard;
+    }
+
+    function setTVLSafeguard(uint256 newTVLSafeguard) external onlyOwner {
+        _tvlSafeguard = newTVLSafeguard;
     }
 
     function getTradingPool(

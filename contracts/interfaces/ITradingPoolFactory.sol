@@ -9,4 +9,6 @@ interface ITradingPoolFactory {
     );
 
     function getProtocolFee() external view returns (uint256);
+
+    function getTVLSafeguard() external view returns (uint256);
 }

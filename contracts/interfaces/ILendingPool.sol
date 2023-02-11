@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ConfigTypes} from "../libraries/types/ConfigTypes.sol";
 
 interface ILendingPool is IERC20 {
     function getUnderlyingBalance() external view returns (uint256);
@@ -34,11 +35,8 @@ interface ILendingPool is IERC20 {
 
     function getUtilizationRate() external view returns (uint256);
 
-    function getMaximumUtilizationRate() external view returns (uint256);
-
-    function getLiquidationPenalty() external view returns (uint256);
-
-    function getLiquidationFee() external view returns (uint256);
-
-    function getTVLSafeguard() external view returns (uint256);
+    function getPoolConfig()
+        external
+        view
+        returns (ConfigTypes.LendingPoolConfig memory);
 }

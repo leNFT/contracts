@@ -127,6 +127,14 @@ contract TradingPool is
     ) external {
         require(!_paused, "Pool is paused");
 
+        // Check if pool will exceed maximum permitted amount
+        require(
+            tokenAmount + _token.balanceOf(address(this)) <
+                ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
+                    .getTVLSafeguard(),
+            "Trading pool exceeds safeguarded limit"
+        );
+
         // Require that the user is depositing something
         require(tokenAmount > 0 || nftIds.length > 0, "Deposit can't be empty");
 

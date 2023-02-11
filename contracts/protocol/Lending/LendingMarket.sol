@@ -43,6 +43,9 @@ contract LendingMarket is
     // Number of pools per asset
     mapping(address => uint256) private _poolsCount;
 
+    // The TVL safeguard for the lending pools
+    uint256 private _tvlSafeguard;
+
     IAddressesProvider private _addressProvider;
     ConfigTypes.LendingPoolConfig private _defaultLendingPoolConfig;
 
@@ -54,10 +57,12 @@ contract LendingMarket is
     // Initialize the market
     function initialize(
         IAddressesProvider addressesProvider,
+        uint256 tvlSafeguard,
         ConfigTypes.LendingPoolConfig calldata defaultLendingPoolConfig
     ) external initializer {
         __Ownable_init();
         _addressProvider = addressesProvider;
+        _tvlSafeguard = tvlSafeguard;
         _defaultLendingPoolConfig = defaultLendingPoolConfig;
     }
 
@@ -236,40 +241,25 @@ contract LendingMarket is
         _defaultLendingPoolConfig.liquidationPenalty = liquidationPenalty;
     }
 
-    function setDefaultLiquidationFee(
-        uint256 liquidationFee
+    function setDefaultPoolConfig(
+        ConfigTypes.LendingPoolConfig memory poolConfig
     ) external onlyOwner {
-        _defaultLendingPoolConfig.liquidationFee = liquidationFee;
+        _defaultLendingPoolConfig = poolConfig;
     }
 
-    function setDefaultMaximumUtilizationRate(
-        uint256 maximumUtilizationRate
-    ) external onlyOwner {
-        _defaultLendingPoolConfig
-            .maximumUtilizationRate = maximumUtilizationRate;
-    }
-
-    function setDefaultTVLSafeguard(uint256 tvlSafeguard) external onlyOwner {
-        _defaultLendingPoolConfig.tvlSafeguard = tvlSafeguard;
-    }
-
-    function getDefaultLiquidationPenalty() external view returns (uint256) {
-        return _defaultLendingPoolConfig.liquidationPenalty;
-    }
-
-    function getDefaultLiquidationFee() external view returns (uint256) {
-        return _defaultLendingPoolConfig.liquidationFee;
-    }
-
-    function getDefaultMaximumUtilizationRate()
+    function getDefaultPoolConfig()
         external
         view
-        returns (uint256)
+        returns (ConfigTypes.LendingPoolConfig memory)
     {
-        return _defaultLendingPoolConfig.maximumUtilizationRate;
+        return _defaultLendingPoolConfig;
     }
 
-    function getDefaultTVLSafeguard() external view returns (uint256) {
-        return _defaultLendingPoolConfig.tvlSafeguard;
+    function setTVLSafeguard(uint256 tvlSafeguard) external onlyOwner {
+        _tvlSafeguard = tvlSafeguard;
+    }
+
+    function getTVLSafeguard() external view returns (uint256) {
+        return _tvlSafeguard;
     }
 }
