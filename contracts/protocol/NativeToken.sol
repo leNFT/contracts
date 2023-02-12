@@ -70,7 +70,7 @@ contract NativeToken is
         return _cap;
     }
 
-    function mint(address account, uint256 amount) external onlyOwner {
+    function mint(address account, uint256 amount) external {
         _mintTokens(account, amount);
     }
 

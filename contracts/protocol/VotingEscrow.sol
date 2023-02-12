@@ -33,6 +33,7 @@ contract VotingEscrow is
     uint256 public constant LOCK_FACTOR = 4;
     uint256 public constant MINLOCKTIME = 1 * Time.WEEK;
     uint256 public constant MAXLOCKTIME = 4 * Time.YEAR;
+    uint256 public constant EPOCH = 1 * Time.HOUR;
 
     IAddressesProvider private _addressProvider;
     uint256 _deployTimestamp;
@@ -78,11 +79,11 @@ contract VotingEscrow is
             timestamp > _deployTimestamp,
             "Timestamp before contract deployment"
         );
-        return (timestamp / Time.WEEK - _deployTimestamp / Time.WEEK);
+        return (timestamp / EPOCH - _deployTimestamp / EPOCH);
     }
 
     function epochTimestamp(uint256 _epoch) public view returns (uint256) {
-        return (_deployTimestamp / Time.WEEK + _epoch) * Time.WEEK;
+        return (_deployTimestamp / EPOCH + _epoch) * EPOCH;
     }
 
     function writeTotalWeightHistory() public {
@@ -141,7 +142,10 @@ contract VotingEscrow is
             (block.timestamp - _lastWeightCheckpoint.timestamp) +
             newPoint.bias -
             oldPoint.bias;
-        _lastWeightCheckpoint.slope += newPoint.slope - oldPoint.slope;
+        _lastWeightCheckpoint.slope =
+            _lastWeightCheckpoint.slope +
+            newPoint.slope -
+            oldPoint.slope;
         _lastWeightCheckpoint.timestamp = block.timestamp;
 
         // Read and update slope changes in accordance
