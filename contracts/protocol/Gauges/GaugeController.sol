@@ -10,7 +10,6 @@ import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {IGauge} from "../../interfaces/IGauge.sol";
 import {INativeToken} from "../../interfaces/INativeToken.sol";
 import "hardhat/console.sol";
-import {Time} from "../../libraries/Time.sol";
 
 contract GaugeController is OwnableUpgradeable, IGaugeController {
     IAddressesProvider private _addressProvider;
@@ -189,10 +188,15 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
 
     function writeTotalWeightHistory() public {
         // Update last saved weight checkpoint and record weight for epochs
-        // Will break if is not used for 128 weeks
-        uint256 epochTimestampPointer = IVotingEscrow(
+        // Will break if is not used for 128 epochs
+        IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
-        ).epochTimestamp(_totalWeigthHistory.length);
+        );
+        uint256 epochTimestampPointer = votingEscrow.epochTimestamp(
+            _totalWeigthHistory.length
+        );
+        uint256 epochPeriod = votingEscrow.epochPeriod();
+
         for (uint256 i = 0; i < 2 ** 7; i++) {
             if (epochTimestampPointer > block.timestamp) {
                 break;
@@ -213,11 +217,15 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         }
 
         //Increase epoch timestamp
-        epochTimestampPointer += Time.WEEK;
+        epochTimestampPointer += epochPeriod;
     }
 
     function writeGaugeWeightHistory(address gauge) public {
         require(_isGauge[gauge], "Gauge is not on the gauge list");
+
+        IVotingEscrow votingEscrow = IVotingEscrow(
+            _addressProvider.getVotingEscrow()
+        );
 
         // If the gauge weights are empty set the weight for the first epoch
         if (_gaugeWeightHistory[gauge].length == 0) {
@@ -225,16 +233,17 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             _lastGaugeWeigthCheckpoint[gauge] = DataTypes.Point(
                 0,
                 0,
-                IVotingEscrow(_addressProvider.getVotingEscrow())
-                    .epochTimestamp(0)
+                votingEscrow.epochTimestamp(0)
             );
         }
 
         // Update last saved weight checkpoint and record weight for epochs
-        // Will break if is not used for 128 weeks
-        uint256 epochTimestampPointer = IVotingEscrow(
-            _addressProvider.getVotingEscrow()
-        ).epochTimestamp(_gaugeWeightHistory[gauge].length);
+        // Will break if is not used for 128 epochs
+        uint256 epochPeriod = votingEscrow.epochPeriod();
+        uint256 epochTimestampPointer = votingEscrow.epochTimestamp(
+            _gaugeWeightHistory[gauge].length
+        );
+
         for (uint256 i = 0; i < 2 ** 7; i++) {
             //Increase epoch timestamp
             if (epochTimestampPointer > block.timestamp) {
@@ -255,7 +264,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
                 gauge
             ][epochTimestampPointer];
 
-            epochTimestampPointer += Time.WEEK;
+            epochTimestampPointer += epochPeriod;
         }
     }
 

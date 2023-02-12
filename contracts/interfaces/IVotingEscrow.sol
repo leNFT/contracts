@@ -7,6 +7,8 @@ import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 interface IVotingEscrow {
     function userHistoryLength(address user) external view returns (uint256);
 
+    function epochPeriod() external pure returns (uint256);
+
     function epoch(uint256 timestamp) external view returns (uint256);
 
     function epochTimestamp(uint256 epoch_) external returns (uint256);

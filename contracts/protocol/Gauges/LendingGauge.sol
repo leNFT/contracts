@@ -86,7 +86,7 @@ contract LendingGauge is IGauge {
                 1;
         }
 
-        // Iterate over a max of 50 weeks and/or user epochs
+        // Iterate over a max of 50 epochs and/or user epochs
         uint256 amountToClaim;
         uint256 nextClaimedEpoch;
         for (uint256 i = 0; i < 50; i++) {
@@ -165,7 +165,7 @@ contract LendingGauge is IGauge {
 
     function writeTotalWeightHistory() public {
         // Update last saved weight checkpoint and record weight for epochs
-        // Will break if is not used for 128 weeks
+        // Will break if is not used for 128 epochs
         uint256 currentEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
             .epoch(block.timestamp);
         for (uint256 i = 0; i < 2 ** 7; i++) {

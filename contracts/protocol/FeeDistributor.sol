@@ -9,7 +9,6 @@ import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Cont
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import {Time} from "../libraries/Time.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import "hardhat/console.sol";
 
@@ -104,7 +103,7 @@ contract FeeDistributor is
                 1;
         }
 
-        // Iterate over a max of 50 weeks and/or user epochs
+        // Iterate over a max of 50 epochs and/or user epochs
         uint256 amountToClaim;
         DataTypes.Point memory userHistoryPoint;
         uint256 nextClaimedEpoch;

@@ -12,7 +12,6 @@ import {IGaugeController} from "../interfaces/IGaugeController.sol";
 import {TrustusUpgradable} from "./Trustus/TrustusUpgradable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
-import {Time} from "../libraries/Time.sol";
 
 contract NativeToken is
     Initializable,
@@ -23,6 +22,9 @@ contract NativeToken is
     ReentrancyGuardUpgradeable,
     TrustusUpgradable
 {
+    uint256 public constant INFLATION_PERIOD = 52; // 52 epochs
+    uint256 public constant LOADING_PERIOD = 12; // 12 epochs
+
     IAddressesProvider private _addressProvider;
     address private _devAddress;
     uint256 private _deployTimestamp;
@@ -93,8 +95,11 @@ contract NativeToken is
     function getEpochRewards(
         uint256 epoch
     ) external view override returns (uint256) {
-        uint256 inflationEpoch = epoch / Time.YEAR_IN_WEEKS;
-        return _initialRewards / (2 ** inflationEpoch);
+        // If we are in the loading period, return smaller rewards
+        if (epoch < LOADING_PERIOD) {
+            return (_initialRewards * epoch) / LOADING_PERIOD;
+        }
+        return _initialRewards / (2 ** (epoch / INFLATION_PERIOD));
     }
 
     function mintGaugeRewards(

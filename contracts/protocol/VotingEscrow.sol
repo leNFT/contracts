@@ -17,7 +17,6 @@ import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Cont
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {LockLogic} from "../libraries/logic/LockLogic.sol";
 import {ConfigTypes} from "../libraries/types/ConfigTypes.sol";
-import {Time} from "../libraries/Time.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -31,9 +30,9 @@ contract VotingEscrow is
     ReentrancyGuardUpgradeable
 {
     uint256 public constant LOCK_FACTOR = 4;
-    uint256 public constant MINLOCKTIME = 1 * Time.WEEK;
-    uint256 public constant MAXLOCKTIME = 4 * Time.YEAR;
-    uint256 public constant EPOCH = 1 * Time.HOUR;
+    uint256 public constant MINLOCKTIME = 1 weeks;
+    uint256 public constant MAXLOCKTIME = 4 * 365 days;
+    uint256 public constant EPOCH_PERIOD = 1 hours;
 
     IAddressesProvider private _addressProvider;
     uint256 _deployTimestamp;
@@ -74,21 +73,25 @@ contract VotingEscrow is
         _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);
     }
 
+    function epochPeriod() external pure override returns (uint256) {
+        return EPOCH_PERIOD;
+    }
+
     function epoch(uint256 timestamp) public view returns (uint256) {
         require(
             timestamp > _deployTimestamp,
             "Timestamp before contract deployment"
         );
-        return (timestamp / EPOCH - _deployTimestamp / EPOCH);
+        return (timestamp / EPOCH_PERIOD - _deployTimestamp / EPOCH_PERIOD);
     }
 
     function epochTimestamp(uint256 _epoch) public view returns (uint256) {
-        return (_deployTimestamp / EPOCH + _epoch) * EPOCH;
+        return (_deployTimestamp / EPOCH_PERIOD + _epoch) * EPOCH_PERIOD;
     }
 
     function writeTotalWeightHistory() public {
         // Update last saved weight checkpoint and record weight for epochs
-        // Will break if is not used for 128 weeks
+        // Will break if is not used for 128 epochs
         uint256 epochTimestampPointer = epochTimestamp(
             _totalWeigthHistory.length
         );
@@ -109,7 +112,7 @@ contract VotingEscrow is
             _lastWeightCheckpoint.slope -= _slopeChanges[epochTimestampPointer];
 
             //Increase epoch timestamp
-            epochTimestampPointer += Time.WEEK;
+            epochTimestampPointer += EPOCH_PERIOD;
         }
     }
 
@@ -209,8 +212,8 @@ contract VotingEscrow is
 
     // Locks LE tokens into the contract
     function createLock(uint256 amount, uint256 unlockTime) external {
-        // Round the locktime to whole weeks
-        uint256 roundedUnlockTime = (unlockTime / Time.WEEK) * Time.WEEK;
+        // Round the locktime to whole epochs
+        uint256 roundedUnlockTime = (unlockTime / EPOCH_PERIOD) * EPOCH_PERIOD;
 
         require(
             roundedUnlockTime >= MINLOCKTIME + block.timestamp,
@@ -264,8 +267,9 @@ contract VotingEscrow is
     }
 
     function increaseUnlockTime(uint256 newUnlockTime) external {
-        // Round the locktime to whole weeks
-        uint256 roundedUnlocktime = (newUnlockTime / Time.WEEK) * Time.WEEK;
+        // Round the locktime to whole epochs
+        uint256 roundedUnlocktime = (newUnlockTime / EPOCH_PERIOD) *
+            EPOCH_PERIOD;
         require(
             _userLockedBalance[_msgSender()].end < block.timestamp,
             "User has no active lock"
