@@ -35,7 +35,7 @@ describe("Trading Gauge", () => {
     // Mint 10 native tokens to the callers address
     const mintNativeTokenTx = await nativeToken.mint(
       owner.address,
-      "10000000000000000000"
+      "100000000000000000000"
     );
     await mintNativeTokenTx.wait();
 
@@ -44,13 +44,13 @@ describe("Trading Gauge", () => {
     // Approve tokens for use by the voting escrow contract
     const approveTokenTx = await nativeToken.approve(
       votingEscrow.address,
-      "10000000000000000000"
+      "100000000000000000000"
     );
     await approveTokenTx.wait();
 
     //Lock 10 tokens for 100 days
     await votingEscrow.createLock(
-      "10000000000000000000",
+      "100000000000000000000",
       Math.floor(Date.now() / 1000) + 86400 * 100
     );
     console.log(Math.floor(Date.now() / 1000) + 86400 * 100);
@@ -88,5 +88,16 @@ describe("Trading Gauge", () => {
     expect(await gaugeController.userVoteRatio(owner.address)).to.not.equal(
       "0"
     );
+  });
+  it("Should remove some voting power", async function () {
+    // Use 50% of the locked tokens to vote for the gauge
+    const voteTx = await gaugeController.vote(gauge.address, "0");
+    await voteTx.wait();
+    console.log("Removed voting power");
+
+    expect(
+      await gaugeController.userVoteWeightForGauge(owner.address, gauge.address)
+    ).to.equal("0");
+    expect(await gaugeController.userVoteRatio(owner.address)).to.equal("0");
   });
 });

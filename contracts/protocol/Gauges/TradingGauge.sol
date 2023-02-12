@@ -294,6 +294,10 @@ contract TradingGauge is IGauge, IERC721Receiver {
         return _userLPValue[user];
     }
 
+    function totalLPValue() external view returns (uint256) {
+        return _totalLPValue;
+    }
+
     function userBoost(address user) external view returns (uint256) {
         if (_userLPValue[user] == 0) {
             return 0;

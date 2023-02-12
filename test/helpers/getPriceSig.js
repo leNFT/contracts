@@ -2,7 +2,13 @@ const abi = require("web3-eth-abi");
 const { utils } = require("ethers");
 const { getMessage } = require("eip-712");
 
-function getPriceSig(collection, tokenId, amount, deadline, verifyingContract) {
+function getPriceSig(
+  collection,
+  tokenIds,
+  amount,
+  deadline,
+  verifyingContract
+) {
   const requestID =
     "0x0000000000000000000000000000000000000000000000000000000000000000";
   console.log("deadline", deadline);
@@ -10,13 +16,13 @@ function getPriceSig(collection, tokenId, amount, deadline, verifyingContract) {
     {
       TokenPriceBoost: {
         collection: "address",
-        tokenId: "uint256",
+        tokenIds: "uint256[]",
         amount: "uint256",
       },
     },
     {
       collection: collection,
-      tokenId: tokenId,
+      tokenIds: tokenIds,
       amount: amount, //"100000000000000000000",
     }
   );

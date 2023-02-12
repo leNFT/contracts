@@ -34,7 +34,7 @@ let loadEnv = async function () {
   const AddressesProvider = await ethers.getContractFactory(
     "AddressesProvider"
   );
-  const addressesProvider = await upgrades.deployProxy(AddressesProvider);
+  addressesProvider = await upgrades.deployProxy(AddressesProvider);
 
   // Deploy and initialize market proxy
   const LendingMarket = await ethers.getContractFactory("LendingMarket", {
@@ -48,11 +48,11 @@ let loadEnv = async function () {
     LendingMarket,
     [
       addressesProvider.address,
+      "25000000000000000000", // TVLSafeguard
       {
         liquidationPenalty: "1800", // defaultLiquidationPenalty
         liquidationFee: "200", // defaultProtocolLiquidationFee
         maximumUtilizationRate: "8500", // defaultMaximumUtilizationRate
-        tvlSafeguard: "25000000000000000000", // defaultTVLSafeguard
       },
     ],
     { unsafeAllow: ["external-library-linking"], timeout: 0 }
@@ -112,7 +112,7 @@ let loadEnv = async function () {
 
   // Deploy and initialize Voting Escrow contract
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
-  const votingEscrow = await upgrades.deployProxy(VotingEscrow, [
+  votingEscrow = await upgrades.deployProxy(VotingEscrow, [
     addressesProvider.address,
   ]);
 
@@ -120,7 +120,7 @@ let loadEnv = async function () {
 
   // Deploy and initialize Gauge Controller
   const GaugeController = await ethers.getContractFactory("GaugeController");
-  const gaugeController = await upgrades.deployProxy(GaugeController, [
+  gaugeController = await upgrades.deployProxy(GaugeController, [
     addressesProvider.address,
   ]);
 
@@ -141,6 +141,7 @@ let loadEnv = async function () {
   tradingPoolFactory = await upgrades.deployProxy(TradingPoolFactory, [
     addressesProvider.address,
     "1000", // Default protocol fee (10%)
+    "25000000000000000000", // TVLSafeguard
   ]);
 
   console.log("Deployed TradingPoolFactory");

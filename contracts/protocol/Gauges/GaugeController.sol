@@ -86,12 +86,30 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             memory lastGaugeWeightCheckpoint = _lastGaugeWeigthCheckpoint[
                 gauge
             ];
+        console.log(
+            "lastGaugeWeightCheckpoint.bias",
+            lastGaugeWeightCheckpoint.bias
+        );
+        console.log(
+            "lastGaugeWeightCheckpoint.slope",
+            lastGaugeWeightCheckpoint.slope
+        );
+        console.log(
+            "lastGaugeWeightCheckpoint.timestamp",
+            lastGaugeWeightCheckpoint.timestamp
+        );
+        console.log("block.timestamp", block.timestamp);
+        console.log(
+            "(block.timestamp - lastGaugeWeightCheckpoint.timestamp)",
+            block.timestamp - lastGaugeWeightCheckpoint.timestamp
+        );
 
         if (
             lastGaugeWeightCheckpoint.bias <
             lastGaugeWeightCheckpoint.slope *
                 (block.timestamp - lastGaugeWeightCheckpoint.timestamp)
         ) {
+            console.log("return 0");
             return 0;
         }
 
@@ -252,8 +270,6 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             msg.sender
         );
 
-        require(ratio > 0, "Vote ratio must be higher than 0");
-
         require(
             ratio +
                 _userVoteRatio[msg.sender] -
@@ -285,13 +301,15 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         );
         DataTypes.Point memory oldGaugeVoteWeight;
         DataTypes.Point memory newGaugeVoteWeight;
+        console.log("userLastPoint.bias", userLastPoint.bias);
+        console.log("userLastPoint.slope", userLastPoint.slope);
+        console.log("userLastPoint.timestamp", userLastPoint.timestamp);
 
         // Get the updated new gauge vote weight
         newGaugeVoteWeight.bias =
-            (userLastPoint.bias -
+            ((userLastPoint.bias -
                 (userLastPoint.slope *
-                    (block.timestamp - userLastPoint.timestamp) *
-                    ratio)) /
+                    (block.timestamp - userLastPoint.timestamp))) * ratio) /
             PercentageMath.PERCENTAGE_FACTOR;
         newGaugeVoteWeight.slope =
             (userLastPoint.slope * ratio) /
@@ -335,8 +353,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             (block.timestamp - _lastGaugeWeigthCheckpoint[gauge].timestamp) +
             newGaugeVoteWeight.bias -
             oldGaugeVoteWeight.bias;
-        _lastGaugeWeigthCheckpoint[gauge].slope +=
-            newGaugeVoteWeight.slope -
+        (_lastGaugeWeigthCheckpoint[gauge].slope += newGaugeVoteWeight.slope) -
             oldGaugeVoteWeight.slope;
         _lastGaugeWeigthCheckpoint[gauge].timestamp = block.timestamp;
 
@@ -346,8 +363,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             (block.timestamp - _lastWeightCheckpoint.timestamp) +
             newGaugeVoteWeight.bias -
             oldGaugeVoteWeight.bias;
-        _lastWeightCheckpoint.slope +=
-            newGaugeVoteWeight.slope -
+        (_lastWeightCheckpoint.slope += newGaugeVoteWeight.slope) -
             oldGaugeVoteWeight.slope;
         _lastWeightCheckpoint.timestamp = block.timestamp;
 
