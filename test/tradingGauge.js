@@ -28,20 +28,19 @@ describe("Trading Gauge", () => {
     // Deposit the tokens into the pool
     const TradingPool = await ethers.getContractFactory("TradingPool");
     tradingPool = TradingPool.attach(poolAddress);
-    const approveNFTTx = await testNFT.setApprovalForAll(poolAddress, true);
+    const approveNFTTx = await testNFT.setApprovalForAll(
+      wethGateway.address,
+      true
+    );
     await approveNFTTx.wait();
-    // Mint and approve test tokens to the callers address
-    const mintTestTokenTx = await weth.mint(owner.address, "100000000000000");
-    await mintTestTokenTx.wait();
-    // Deposit the tokens into the market
-    const approveTokenTx = await weth.approve(poolAddress, "100000000000000");
-    await approveTokenTx.wait();
-    const depositTx = await tradingPool.addLiquidity(
+    const depositTx = await wethGateway.depositTradingPool(
+      poolAddress,
       [0],
       "100000000000000",
-      owner.address,
+      exponentialCurve.address,
       "0",
-      "100000000000000"
+      "100",
+      { value: "100000000000000" }
     );
     await depositTx.wait();
   });
@@ -67,7 +66,7 @@ describe("Trading Gauge", () => {
     await depositInGaugeTx.wait();
     console.log("Deposited LP 0 in gauge");
   });
-  it("Should lock tokens", async function () {
+  it("Should lock tokens and vote for gauge", async function () {
     // Mint 10 native tokens to the callers address
     const mintNativeTokenTx = await nativeToken.mint(
       owner.address,
@@ -90,10 +89,14 @@ describe("Trading Gauge", () => {
       Math.floor(Date.now() / 1000) + 86400 * 100
     );
     console.log(Math.floor(Date.now() / 1000) + 86400 * 100);
+
+    // VOte for gauge
+    const voteForGaugeTx = await gaugeController.vote(gauge.address, 1000);
+    await voteForGaugeTx.wait();
   });
   it("Should claim rewards from the gauge", async function () {
-    // 2 weeks pass
-    await ethers.provider.send("evm_increaseTime", [86400 * 14]);
+    // 1 day pass
+    await ethers.provider.send("evm_increaseTime", [56400 * 1]);
     // Mine a new block
     await ethers.provider.send("evm_mine", []);
 

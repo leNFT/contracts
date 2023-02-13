@@ -69,6 +69,8 @@ contract TradingGauge is IGauge, IERC721Receiver {
             return 0;
         }
 
+        console.log("workingBalanceHistoryLength", workingBalanceHistoryLength);
+
         // Set the next claimable epoch if it's the first time the user claims
         if (_userNextClaimedEpoch[msg.sender] == 0) {
             _userNextClaimedEpoch[msg.sender] =
@@ -78,11 +80,19 @@ contract TradingGauge is IGauge, IERC721Receiver {
                 1;
         }
 
+        console.log("userNextClaimedEpoch", _userNextClaimedEpoch[msg.sender]);
+        console.log(
+            "votingEscrow.epoch(block.timestamp)calculateLpValue",
+            votingEscrow.epoch(block.timestamp)
+        );
+
         // Iterate over a max of 50 epochs and/or user epochs
         uint256 amountToClaim;
         uint256 nextClaimedEpoch;
         for (uint256 i = 0; i < 50; i++) {
             nextClaimedEpoch = _userNextClaimedEpoch[msg.sender];
+            console.log("nextClaimedEpoch", nextClaimedEpoch);
+
             // Break if the next claimable epoch is the one we are in
             if (nextClaimedEpoch >= votingEscrow.epoch(block.timestamp)) {
                 break;
@@ -92,6 +102,11 @@ contract TradingGauge is IGauge, IERC721Receiver {
                     memory workingBalance = _workingBalanceHistory[msg.sender][
                         _workingBalancePointer[msg.sender]
                     ];
+
+                console.log(
+                    "  _workingBalancePointer[msg.sender]",
+                    _workingBalancePointer[msg.sender]
+                );
 
                 // Check if the user entire balance history has been iterated
                 if (
