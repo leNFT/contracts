@@ -250,6 +250,10 @@ contract GenesisNFT is
         return _mintDetails[tokenId].mintedRewards;
     }
 
+    function getRewards(uint256 tokenId) external view returns (uint256) {
+        return getNativeTokenReward(_mintDetails[tokenId].locktime);
+    }
+
     function _burn(
         uint256 tokenId
     ) internal override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
