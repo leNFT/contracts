@@ -318,9 +318,11 @@ contract TradingGauge is IGauge, IERC721Receiver {
             return 0;
         }
         return
-            (_workingBalanceHistory[user][
-                _workingBalanceHistory[user].length - 1
-            ].amount * PercentageMath.PERCENTAGE_FACTOR) / _userLPValue[user];
+            (2 *
+                _workingBalanceHistory[user][
+                    _workingBalanceHistory[user].length - 1
+                ].amount *
+                PercentageMath.PERCENTAGE_FACTOR) / _userLPValue[user];
     }
 
     function lpOfOwnerByIndex(

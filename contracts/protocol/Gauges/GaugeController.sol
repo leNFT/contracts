@@ -204,8 +204,8 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
 
             // Save epoch total weight
             uint256 epochTotalWeight = _lastWeightCheckpoint.bias -
-                _lastWeightCheckpoint.slope *
-                (epochTimestampPointer - _lastWeightCheckpoint.timestamp);
+                (_lastWeightCheckpoint.slope *
+                    (epochTimestampPointer - _lastWeightCheckpoint.timestamp));
             _totalWeigthHistory.push(epochTotalWeight);
 
             // Update last weight checkpoint
@@ -214,10 +214,10 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             _lastWeightCheckpoint.slope -= _totalWeightSlopeChanges[
                 epochTimestampPointer
             ];
-        }
 
-        //Increase epoch timestamp
-        epochTimestampPointer += epochPeriod;
+            //Increase epoch timestamp
+            epochTimestampPointer += epochPeriod;
+        }
     }
 
     function writeGaugeWeightHistory(address gauge) public {

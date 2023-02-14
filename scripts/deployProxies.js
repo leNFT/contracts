@@ -125,7 +125,7 @@ async function main() {
     devAddress,
     "15000000000000000000000000", // 15M Dev Tokens
     ONE_DAY * 365 * 2, // 2-year dev vesting
-    "20000000000000000000",
+    "200000000000000000000",
   ]);
   addresses["NativeToken"] = nativeToken.address;
 
