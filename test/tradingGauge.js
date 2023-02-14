@@ -111,7 +111,39 @@ describe("Trading Gauge", () => {
       "20000000000000000000"
     );
   });
+  it("Should create a second pool", async function () {
+    // Create a pool
+    const createPoolTx = await tradingPoolFactory.createTradingPool(
+      testNFT2.address,
+      weth.address
+    );
 
+    newPoolReceipt = await createPoolTx.wait();
+    const event = newPoolReceipt.events.find(
+      (event) => event.event === "CreateTradingPool"
+    );
+    poolAddress = event.args.pool;
+
+    console.log("Created second pool: ", poolAddress);
+  });
+  it("Should create a second gauge", async function () {
+    const Gauge2 = await ethers.getContractFactory("TradingGauge");
+    gauge2 = await Gauge2.deploy(addressesProvider.address, poolAddress);
+    await gauge.deployed();
+    console.log("Gauge2 address: ", gauge.address);
+
+    const setAddGaugeTx = await gaugeController.addGauge(gauge2.address);
+    await setAddGaugeTx.wait();
+    console.log("Added Gauge to Gauge Controller.");
+
+    // Get rewards from gauge
+    const getGaugeRewardsTx = await gaugeController.getGaugeRewards(
+      gauge2.address,
+      5
+    );
+    await getGaugeRewardsTx.wait();
+    console.log("Got gauge rewards");
+  });
   it("Should unstake from the gauge", async function () {
     console.log("UNSTAKING FROM GAUGE");
     // withdraw from gauge

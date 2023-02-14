@@ -249,10 +249,9 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             if (epochTimestampPointer > block.timestamp) {
                 break;
             }
-
             // Save epoch total weight
             uint256 epochGaugeWeight = _lastGaugeWeigthCheckpoint[gauge].bias -
-                _lastWeightCheckpoint.slope *
+                _lastGaugeWeigthCheckpoint[gauge].slope *
                 (epochTimestampPointer -
                     _lastGaugeWeigthCheckpoint[gauge].timestamp);
             _gaugeWeightHistory[gauge].push(epochGaugeWeight);

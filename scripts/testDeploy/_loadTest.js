@@ -189,7 +189,7 @@ let loadEnv = async function () {
   testNFT = await TestNFT.deploy("Test NFT", "TNFT");
   await testNFT.deployed();
   const TestNFT2 = await ethers.getContractFactory("TestNFT");
-  testNFT2 = await TestNFT.deploy("Test NFT2", "TNFT2");
+  testNFT2 = await TestNFT2.deploy("Test NFT2", "TNFT2");
   await testNFT2.deployed();
 
   // Deploy price curves contracts
