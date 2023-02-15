@@ -138,7 +138,7 @@ async function main() {
     "leNFT Genesis",
     "LGEN",
     "9999",
-    "30000000000000000",
+    "3000000000000000",
     "250",
     50000000, // Native Token Mint Factor
     ONE_DAY * 120, // Max locktime (120 days in s)
