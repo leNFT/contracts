@@ -82,7 +82,7 @@ contract VotingEscrow is
             timestamp > _deployTimestamp,
             "Timestamp before contract deployment"
         );
-        return (timestamp / EPOCH_PERIOD - _deployTimestamp / EPOCH_PERIOD);
+        return (timestamp / EPOCH_PERIOD) - (_deployTimestamp / EPOCH_PERIOD);
     }
 
     function epochTimestamp(uint256 _epoch) public view returns (uint256) {
