@@ -139,8 +139,12 @@ contract GenesisNFT is
         uint256 amount,
         uint256 locktime
     ) public view returns (uint256) {
+        if (_tokenIdCounter.current() > _cap) {
+            return 0;
+        }
+
         return
-            ((amount * locktime * (_cap - _tokenIdCounter.current())) /
+            ((amount * locktime * (_cap - _tokenIdCounter.current() / 2)) /
                 _nativeTokenFactor) * 1e18;
     }
 
@@ -180,6 +184,7 @@ contract GenesisNFT is
         uint256[2] memory balances = ICurvePool(_tradingPool).get_balances();
         uint256 tokenAmount;
 
+        // Find the amount of LE tokens to pair with the ETH
         if (balances[0] == 0) {
             tokenAmount = ethAmount * 15000;
         } else {
