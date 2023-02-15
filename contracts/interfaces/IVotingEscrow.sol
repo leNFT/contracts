@@ -24,6 +24,12 @@ interface IVotingEscrow {
 
     function balanceOf(address user) external view returns (uint256);
 
+    function createLock(
+        address receiver,
+        uint256 amount,
+        uint256 unlockTime
+    ) external;
+
     function locked(
         address user
     ) external view returns (DataTypes.LockedBalance memory);

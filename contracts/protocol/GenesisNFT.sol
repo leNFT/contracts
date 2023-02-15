@@ -7,6 +7,7 @@ import {IWETH} from "../interfaces/IWETH.sol";
 import {IGenesisNFT} from "../interfaces/IGenesisNFT.sol";
 import {ICurvePool} from "../interfaces/ICurvePool.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";
+import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
@@ -135,11 +136,12 @@ contract GenesisNFT is
     }
 
     function getNativeTokenReward(
+        uint256 amount,
         uint256 locktime
     ) public view returns (uint256) {
         return
-            ((locktime * (_cap - _tokenIdCounter.current())) /
-                _nativeTokenFactor) * 10 ** 18;
+            ((amount * locktime * (_cap - _tokenIdCounter.current())) /
+                _nativeTokenFactor) * 1e18;
     }
 
     function setTradingPool(address pool) external onlyOwner {
@@ -151,24 +153,24 @@ contract GenesisNFT is
     }
 
     function mint(
-        uint256[] memory locktimes,
+        uint256 locktime,
         string[] memory uris
     ) external payable nonReentrant {
-        // Make sure the arrays are the same length
-        require(locktimes.length == uris.length, "Array lengths must match");
+        // Make sure locktimes are within limits
+        require(locktime >= _minLocktime, "Locktime is lower than threshold");
+        require(locktime <= _maxLocktime, "Locktime is higher than limit");
 
         // Make sure the genesis incentived pool is set
         require(_tradingPool != address(0), "Incentivized pool is not set.");
 
         // Make sure there are enough tokens to mint
         require(
-            _tokenIdCounter.current() + locktimes.length <= getCap(),
+            _tokenIdCounter.current() + uris.length <= getCap(),
             "Maximum cap exceeded"
         );
 
-        // Set a buying price
-        uint256 buyPrice = _price * locktimes.length;
         // Make sure the user sent enough ETH
+        uint256 buyPrice = _price * uris.length;
         require(msg.value == buyPrice, "Tx value is not equal to price");
 
         // Get the amount of ETH to deposit to the pool
@@ -185,8 +187,9 @@ contract GenesisNFT is
         }
 
         // Mint LE tokens
+        uint256 totalRewards = getNativeTokenReward(uris.length, locktime);
         INativeToken(_addressProvider.getNativeToken()).mintGenesisTokens(
-            tokenAmount
+            tokenAmount + totalRewards
         );
 
         // Approve the pool to spend LE tokens
@@ -200,21 +203,24 @@ contract GenesisNFT is
             value: ethAmount
         }([ethAmount, tokenAmount], 0);
 
+        // Approve the voting escrow to spend LE tokens so they can be locked
+        IERC20Upgradeable(_addressProvider.getNativeToken()).approve(
+            _addressProvider.getVotingEscrow(),
+            totalRewards
+        );
+
+        IVotingEscrow(_addressProvider.getVotingEscrow()).createLock(
+            _msgSender(),
+            totalRewards,
+            block.timestamp + locktime
+        );
+
         // Send the rest of the ETH to the dev address
         (bool sent, ) = _devAddress.call{value: buyPrice - ethAmount}("");
         require(sent, "Failed to send Ether to dev fund");
 
-        // Make sure locktimes are within limits and setup the tokens
         uint256 tokenId;
-        for (uint256 i = 0; i < locktimes.length; i++) {
-            require(
-                locktimes[i] >= _minLocktime,
-                "Locktime is lower than threshold"
-            );
-            require(
-                locktimes[i] <= _maxLocktime,
-                "Locktime is higher than limit"
-            );
+        for (uint256 i = 0; i < uris.length; i++) {
             tokenId = _tokenIdCounter.current();
 
             // Mint genesis NFT
@@ -226,9 +232,8 @@ contract GenesisNFT is
             // Add mint details
             _mintDetails[tokenId] = DataTypes.MintDetails(
                 block.timestamp,
-                locktimes[i],
-                lpAmount / locktimes.length,
-                false
+                locktime,
+                lpAmount / uris.length
             );
 
             //Increase supply
@@ -246,47 +251,10 @@ contract GenesisNFT is
         return _mintDetails[tokenId].timestamp + _mintDetails[tokenId].locktime;
     }
 
-    function mintedRewards(uint256 tokenId) external view returns (bool) {
-        return _mintDetails[tokenId].mintedRewards;
-    }
-
-    function getRewards(uint256 tokenId) external view returns (uint256) {
-        return getNativeTokenReward(_mintDetails[tokenId].locktime);
-    }
-
     function _burn(
         uint256 tokenId
     ) internal override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
         ERC721URIStorageUpgradeable._burn(tokenId);
-    }
-
-    function mintRewards(uint256[] memory tokenIds) external {
-        for (uint i = 0; i < tokenIds.length; i++) {
-            //Require the caller owns the token
-            require(
-                _msgSender() == ERC721Upgradeable.ownerOf(tokenIds[i]),
-                "Must own token"
-            );
-            // Mint can only be happen after locktime is over
-            require(
-                block.timestamp >= getUnlockTimestamp(tokenIds[i]),
-                "Tokens are still locked"
-            );
-            _mintRewards(_msgSender(), tokenIds[i]);
-        }
-    }
-
-    function _mintRewards(address receiver, uint256 tokenId) internal {
-        require(!_mintDetails[tokenId].mintedRewards, "Rewards already minted");
-        // Mint and send the extra leNFT tokens to the caller
-        INativeToken(_addressProvider.getNativeToken()).mintGenesisTokens(
-            getNativeTokenReward(_mintDetails[tokenId].locktime)
-        );
-        IERC20Upgradeable(_addressProvider.getNativeToken()).transfer(
-            receiver,
-            getNativeTokenReward(_mintDetails[tokenId].locktime)
-        );
-        _mintDetails[tokenId].mintedRewards = true;
     }
 
     function burn(uint256[] memory tokenIds) external nonReentrant {
@@ -303,11 +271,6 @@ contract GenesisNFT is
                 "Token is still locked"
             );
 
-            // Mint and send the extra leNFT tokens to the caller if he hasnt done it yet
-            if (!_mintDetails[tokenIds[i]].mintedRewards) {
-                _mintRewards(_msgSender(), tokenIds[i]);
-            }
-
             // Add the LP amount to the sum
             lpAmountSum = _mintDetails[tokenIds[i]].lpAmount;
 
@@ -317,10 +280,18 @@ contract GenesisNFT is
         }
 
         // Withdraw LP tokens from the pool
-        ICurvePool(_tradingPool).remove_liquidity(
-            lpAmountSum,
-            [uint256(0), uint256(0)],
-            _msgSender()
+        uint256 withdrawAmount = ICurvePool(_tradingPool)
+            .remove_liquidity_one_coin(lpAmountSum, uint128(1), uint256(0));
+
+        // Burn half of the received LE tokens
+        INativeToken(_addressProvider.getNativeToken()).burnGenesisTokens(
+            withdrawAmount / 2
+        );
+
+        // Send the rest of the LE tokens to the owner of the Genesis NFT
+        IERC20Upgradeable(_addressProvider.getNativeToken()).transfer(
+            _msgSender(),
+            withdrawAmount / 2
         );
     }
 

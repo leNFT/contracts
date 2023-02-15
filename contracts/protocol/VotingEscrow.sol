@@ -211,7 +211,11 @@ contract VotingEscrow is
     }
 
     // Locks LE tokens into the contract
-    function createLock(uint256 amount, uint256 unlockTime) external {
+    function createLock(
+        address receiver,
+        uint256 amount,
+        uint256 unlockTime
+    ) external {
         // Round the locktime to whole epochs
         uint256 roundedUnlockTime = (unlockTime / EPOCH_PERIOD) * EPOCH_PERIOD;
 
@@ -224,18 +228,16 @@ contract VotingEscrow is
             "Locktime higher than maximum locktime"
         );
         require(
-            _userLockedBalance[_msgSender()].amount == 0,
-            "User has lock with non-zero balance"
+            _userLockedBalance[receiver].amount == 0,
+            "Receiver has lock with non-zero balance"
         );
 
         // Save oldLocked and update the locked balance
-        DataTypes.LockedBalance memory oldLocked = _userLockedBalance[
-            _msgSender()
-        ];
-        _userLockedBalance[_msgSender()].init(amount, roundedUnlockTime);
+        DataTypes.LockedBalance memory oldLocked = _userLockedBalance[receiver];
+        _userLockedBalance[receiver].init(amount, roundedUnlockTime);
 
         // Call a checkpoint and update global tracking vars
-        _checkpoint(_msgSender(), oldLocked, _userLockedBalance[_msgSender()]);
+        _checkpoint(receiver, oldLocked, _userLockedBalance[receiver]);
 
         IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransferFrom(
             _msgSender(),

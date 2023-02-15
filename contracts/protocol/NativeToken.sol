@@ -22,8 +22,8 @@ contract NativeToken is
     ReentrancyGuardUpgradeable,
     TrustusUpgradable
 {
-    uint256 public constant INFLATION_PERIOD = 52; // 52 epochs
-    uint256 public constant LOADING_PERIOD = 12; // 12 epochs
+    uint256 public constant INFLATION_PERIOD = 52; // 52 epochs (1 year)
+    uint256 public constant LOADING_PERIOD = 24; // 24 epochs (6 months)
 
     IAddressesProvider private _addressProvider;
     address private _devAddress;
@@ -90,6 +90,14 @@ contract NativeToken is
             "Genesis tokens can only be minted by the Genesis NFT contract"
         );
         _mintTokens(_addressProvider.getGenesisNFT(), amount);
+    }
+
+    function burnGenesisTokens(uint256 amount) external {
+        require(
+            _msgSender() == _addressProvider.getGenesisNFT(),
+            "Genesis tokens can only be burned by the Genesis NFT contract"
+        );
+        _burn(_addressProvider.getGenesisNFT(), amount);
     }
 
     function getEpochRewards(

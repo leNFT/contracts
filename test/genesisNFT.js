@@ -36,7 +36,7 @@ describe("GenesisNFT", function () {
   });
   it("Should mint a token", async function () {
     // Mint Genesis NFT
-    const mintGenesisNFTTx = await genesisNFT.mint([2592000], [""], {
+    const mintGenesisNFTTx = await genesisNFT.mint(2592000, [""], {
       value: "3000000000000000",
     });
     await mintGenesisNFTTx.wait();

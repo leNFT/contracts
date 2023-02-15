@@ -9,9 +9,9 @@ interface ICurvePool {
         uint256 min_mint_amount
     ) external payable returns (uint256);
 
-    function remove_liquidity(
-        uint256 _amount,
-        uint256[2] memory min_amounts,
-        address receiver
-    ) external returns (uint256[2] memory);
+    function remove_liquidity_one_coin(
+        uint256 _burn_amount,
+        uint128 i,
+        uint256 _min_received
+    ) external returns (uint256);
 }
