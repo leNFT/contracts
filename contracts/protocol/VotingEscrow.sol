@@ -246,7 +246,7 @@ contract VotingEscrow is
 
     function increaseAmount(uint256 amount) external {
         require(
-            _userLockedBalance[_msgSender()].end < block.timestamp,
+            _userLockedBalance[_msgSender()].end > block.timestamp,
             "User has no active lock"
         );
 
@@ -271,7 +271,7 @@ contract VotingEscrow is
         uint256 roundedUnlocktime = (newUnlockTime / EPOCH_PERIOD) *
             EPOCH_PERIOD;
         require(
-            _userLockedBalance[_msgSender()].end < block.timestamp,
+            _userLockedBalance[_msgSender()].end > block.timestamp,
             "User has no active lock"
         );
         require(
