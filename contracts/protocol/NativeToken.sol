@@ -9,7 +9,6 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
 import {IGaugeController} from "../interfaces/IGaugeController.sol";
-import {TrustusUpgradable} from "./Trustus/TrustusUpgradable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 
@@ -19,8 +18,7 @@ contract NativeToken is
     INativeToken,
     ERC20Upgradeable,
     OwnableUpgradeable,
-    ReentrancyGuardUpgradeable,
-    TrustusUpgradable
+    ReentrancyGuardUpgradeable
 {
     uint256 public constant INFLATION_PERIOD = 52; // 52 epochs (1 year)
     uint256 public constant LOADING_PERIOD = 24; // 24 epochs (6 months)
@@ -50,7 +48,6 @@ contract NativeToken is
         uint256 initialRewards
     ) external initializer {
         __Ownable_init();
-        __Trustus_init();
         __ERC20_init(name, symbol);
         _addressProvider = addressProvider;
         _cap = cap;
@@ -139,9 +136,5 @@ contract NativeToken is
         );
         _mintTokens(_devAddress, amount);
         _devWithdrawn += amount;
-    }
-
-    function isTrustedSigner(address signer) external view returns (bool) {
-        return (_isTrusted(signer));
     }
 }

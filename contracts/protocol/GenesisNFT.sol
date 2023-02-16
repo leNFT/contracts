@@ -207,6 +207,9 @@ contract GenesisNFT is
         uint256 lpAmount = ICurvePool(_tradingPool).add_liquidity{
             value: ethAmount
         }([ethAmount, tokenAmount], 0);
+        console.log("LP amount: %s", lpAmount);
+        console.log("Token amount: %s", tokenAmount);
+        console.log("Eth amount: %s", ethAmount);
 
         // Approve the voting escrow to spend LE tokens so they can be locked
         IERC20Upgradeable(_addressProvider.getNativeToken()).approve(
@@ -277,7 +280,7 @@ contract GenesisNFT is
             );
 
             // Add the LP amount to the sum
-            lpAmountSum = _mintDetails[tokenIds[i]].lpAmount;
+            lpAmountSum += _mintDetails[tokenIds[i]].lpAmount;
 
             // Burn genesis NFT
             _burn(tokenIds[i]);
@@ -285,8 +288,13 @@ contract GenesisNFT is
         }
 
         // Withdraw LP tokens from the pool
+        console.log("_tradingPool", _tradingPool);
+        console.log("lpAmountSum", lpAmountSum);
+
         uint256 withdrawAmount = ICurvePool(_tradingPool)
-            .remove_liquidity_one_coin(lpAmountSum, uint128(1), uint256(0));
+            .remove_liquidity_one_coin(lpAmountSum, 1, 0);
+
+        console.log("withdrawAmount", withdrawAmount);
 
         // Burn half of the received LE tokens
         INativeToken(_addressProvider.getNativeToken()).burnGenesisTokens(
@@ -298,6 +306,18 @@ contract GenesisNFT is
             _msgSender(),
             withdrawAmount / 2
         );
+    }
+
+    function getLPValue(
+        uint256[] memory tokenIds
+    ) external view returns (uint256) {
+        uint256 lpAmountSum = 0;
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            // Add the LP amount to the sum
+            lpAmountSum += _mintDetails[tokenIds[i]].lpAmount;
+        }
+        return
+            ICurvePool(_tradingPool).calc_withdraw_one_coin(lpAmountSum, 1) / 2;
     }
 
     function _beforeTokenTransfer(

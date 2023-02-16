@@ -122,7 +122,7 @@ async function main() {
     "LE",
     "100000000000000000000000000", //100M Max Cap
     devAddress,
-    "15000000000000000000000000", // 15M Dev Tokens
+    "15000000000000000000000000", // 15M Dev Rewards Tokens
     ONE_DAY * 365 * 2, // 2-year dev vesting
     "200000000000000000000",
   ]);

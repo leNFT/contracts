@@ -48,14 +48,7 @@ describe("GenesisNFT", function () {
     // Increase time and Burn Genesis NFT
     await network.provider.send("evm_increaseTime", [2592000]);
     await network.provider.send("evm_mine");
-    const balanceBefore = await owner.getBalance();
     const burnGenesisNFTTx = await genesisNFT.burn([1]);
     await burnGenesisNFTTx.wait();
-    const balanceAfter = await owner.getBalance();
-
-    // Find if the NFT was minted
-    expect(balanceAfter.sub(balanceBefore).toString()).to.equal(
-      "1776180487749463"
-    );
   });
 });

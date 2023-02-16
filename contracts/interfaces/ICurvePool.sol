@@ -11,7 +11,12 @@ interface ICurvePool {
 
     function remove_liquidity_one_coin(
         uint256 _burn_amount,
-        uint128 i,
+        int128 i,
         uint256 _min_received
     ) external returns (uint256);
+
+    function calc_withdraw_one_coin(
+        uint256 _burn_amount,
+        int128 i
+    ) external view returns (uint256);
 }
