@@ -132,7 +132,7 @@ contract VotingEscrow is
             "Locktime higher than maximum locktime"
         );
 
-        return amount * ((roundedUnlockTime - block.timestamp) / MAXLOCKTIME);
+        return (amount * (roundedUnlockTime - block.timestamp)) / MAXLOCKTIME;
     }
 
     function _checkpoint(
