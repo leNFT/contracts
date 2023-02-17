@@ -116,6 +116,25 @@ contract VotingEscrow is
         }
     }
 
+    function simulateLock(
+        uint256 amount,
+        uint256 end
+    ) external view returns (uint256) {
+        // Round the locktime to whole epochs
+        uint256 roundedUnlockTime = (end / EPOCH_PERIOD) * EPOCH_PERIOD;
+
+        require(
+            roundedUnlockTime >= MINLOCKTIME + block.timestamp,
+            "Locktime smaller than minimum locktime"
+        );
+        require(
+            roundedUnlockTime <= MAXLOCKTIME + block.timestamp,
+            "Locktime higher than maximum locktime"
+        );
+
+        return amount * ((roundedUnlockTime - block.timestamp) / MAXLOCKTIME);
+    }
+
     function _checkpoint(
         address user,
         DataTypes.LockedBalance memory oldBalance,

@@ -18,18 +18,6 @@ async function main() {
   console.log(
     "Added " + process.env.SERVER_ADDRESS + " to trusted price signers."
   );
-
-  // Set trusted airdrop signer
-  const NativeToken = await ethers.getContractFactory("NativeToken");
-  const nativeToken = NativeToken.attach(addresses.NativeToken);
-  const setTrustedAirdropSignerTx = await nativeToken.setTrustedAirdropSigner(
-    process.env.SERVER_ADDRESS,
-    true
-  );
-  await setTrustedAirdropSignerTx.wait();
-  console.log(
-    "Added " + process.env.SERVER_ADDRESS + " to trusted airdrop signers."
-  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere
