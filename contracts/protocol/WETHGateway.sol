@@ -372,6 +372,10 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
                 msg.value == maximumBuyPrice - minimumSellPrice,
                 "Not enough ETH sent to cover swap change"
             );
+
+            // Deposit and approve WETH
+            weth.deposit{value: msg.value}();
+            weth.approve(address(swapRouter), msg.value);
         }
 
         // Send NFTs to this contract and approve them for pool use
@@ -383,10 +387,6 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
             );
         }
         IERC721(sellPool.getNFT()).setApprovalForAll(address(sellPool), true);
-
-        // Deposit and approve WETH
-        weth.deposit{value: msg.value}();
-        weth.approve(address(swapRouter), msg.value);
 
         // Swap
         uint256 returnedAmount = swapRouter.swap(
@@ -409,10 +409,12 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         }
 
         // Send ETH back to the user
-        weth.withdraw(returnedAmount);
+        if (returnedAmount > 0) {
+            weth.withdraw(returnedAmount);
 
-        (bool sent, ) = _msgSender().call{value: returnedAmount}("");
-        require(sent, "Failed to send Ether");
+            (bool sent, ) = _msgSender().call{value: returnedAmount}("");
+            require(sent, "Failed to send Ether");
+        }
     }
 
     // So we can receive the collateral from the user when borrowing

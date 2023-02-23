@@ -52,6 +52,7 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
             minimumSellPrice
         );
 
+        // If the buy price is greater than the sell price, transfer the remaining amount to the swap contract
         uint256 priceDiff = 0;
         if (maximumBuyPrice > minimumSellPrice) {
             priceDiff = maximumBuyPrice - minimumSellPrice;
@@ -62,6 +63,7 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
             );
         }
 
+        // Buy the NFTs
         uint256 buyPrice = buyPool.buy(msg.sender, buyNftIds, maximumBuyPrice);
 
         // If the price difference + sell price is greater than the buy price, return the difference to the user

@@ -254,7 +254,7 @@ async function main() {
     }
   );
   fs.writeFileSync(
-    "../lenft-nft-api/contractAddresses.json",
+    "../lenft-api/contractAddresses.json",
     JSON.stringify(contractAddresses),
     function (err) {
       if (err) throw err;
