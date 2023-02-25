@@ -33,7 +33,7 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         bytes32 request,
         TrustusPacket calldata packet
     ) external view override returns (uint256) {
-        return _getTokenETHPrice(collection, tokenIds, request, packet);
+        return _getTokensETHPrice(collection, tokenIds, request, packet);
     }
 
     /// @notice Gets the token value sent by the off-chain server by unpacking the packet relayed by the caller.
@@ -42,7 +42,7 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
     /// @param request The hash of the packet relayed by the caller
     /// @param packet The packet relayed by the caller
     /// @return The ETH value of the specified tokens
-    function _getTokenETHPrice(
+    function _getTokensETHPrice(
         address collection,
         uint256[] memory tokenIds,
         bytes32 request,

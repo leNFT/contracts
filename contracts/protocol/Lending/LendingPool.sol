@@ -204,6 +204,8 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         _borrowRate = IInterestRate(
             IAddressesProvider(_addressProvider).getInterestRate()
         ).calculateBorrowRate(getUnderlyingBalance(), _debt);
+
+        emit UpdatedBorrowRate(_borrowRate);
     }
 
     /// @notice Updates the cumulative debt borrow rate by adding or subtracting `amount` at `borrowRate`, depending on `increaseDebt`. If the debt reaches zero, the cumulative debt borrow rate is set to zero.

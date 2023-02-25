@@ -283,14 +283,6 @@ async function main() {
   Broadcast transactions whose purpose is to setup the protocol for use
   ******************************************************************/
 
-  //Add a default price to the native token using the token oracle
-  const setNativeTokenPriceTx = await tokenOracle.setTokenETHPrice(
-    nativeToken.address,
-    "100000000000000" //0.0001 nativeToken/ETH
-  );
-  await setNativeTokenPriceTx.wait();
-  console.log("Set Native Token / ETH to 0.0001");
-
   //Set every address in the address provider
   const setLendingMarketTx = await addressesProvider.setLendingMarket(
     lendingMarket.address

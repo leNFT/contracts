@@ -5,6 +5,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ConfigTypes} from "../libraries/types/ConfigTypes.sol";
 
 interface ILendingPool is IERC20 {
+    event UpdatedBorrowRate(uint256 borrowRate);
+
     function getUnderlyingBalance() external view returns (uint256);
 
     function transferUnderlying(

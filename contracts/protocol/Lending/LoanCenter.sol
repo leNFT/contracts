@@ -226,9 +226,8 @@ contract LoanCenter is
         Trustus.TrustusPacket calldata packet
     ) external view override returns (uint256) {
         // Get the price of the collateral asset in the reserve asset. Ex: Punk #42 = 5 USDC
-        uint256 poolAssetETHPrice = ITokenOracle(
-            _addressProvider.getTokenOracle()
-        ).getTokenETHPrice(IERC4626(_loans[loanId].pool).asset());
+        uint256 assetETHPrice = ITokenOracle(_addressProvider.getTokenOracle())
+            .getTokenETHPrice(IERC4626(_loans[loanId].pool).asset());
 
         uint256 collateralETHPrice = (INFTOracle(
             _addressProvider.getNFTOracle()
@@ -239,7 +238,7 @@ contract LoanCenter is
                 packet
             ) *
             ITokenOracle(_addressProvider.getTokenOracle())
-                .getPricePrecision()) / poolAssetETHPrice;
+                .getPricePrecision()) / assetETHPrice;
 
         // Threshold in which the liquidation price starts being equal to debt
         uint256 liquidationThreshold = PercentageMath.percentMul(

@@ -199,7 +199,7 @@ library ValidationLogic {
         ITokenOracle tokenOracle = ITokenOracle(
             addressesProvider.getTokenOracle()
         );
-        uint256 baseTokenETHPrice = tokenOracle.getTokenETHPrice(poolAsset);
+        uint256 assetETHPrice = tokenOracle.getTokenETHPrice(poolAsset);
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         require(
@@ -208,7 +208,7 @@ library ValidationLogic {
                 params.request,
                 params.packet
             ) * pricePrecision) /
-                baseTokenETHPrice <
+                assetETHPrice <
                 loanCenter.getLoanDebt(params.loanId),
             "Collateral / Debt loan relation does not allow for liquidation."
         );
