@@ -20,18 +20,29 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
 
-    // Initialize the market
+    /// @notice Initialize the market
+    /// @param addressesProvider The address of the AddressesProvider contract
     constructor(IAddressesProvider addressesProvider) {
         _addressProvider = addressesProvider;
     }
 
+    /// @notice Swaps tokens between two different trading pools
+    /// @dev The pools must have the same underlying token
+    /// @param buyPool The trading pool where the user will buy NFTs
+    /// @param sellPool The trading pool where the user will sell NFTs
+    /// @param buyNftIds The IDs of the NFTs that the user will buy
+    /// @param maximumBuyPrice The maximum price that the user is willing to pay for the NFTs
+    /// @param sellNftIds The IDs of the NFTs that the user will sell
+    /// @param sellLps The amounts of liquidity provider tokens to be sold
+    /// @param minimumSellPrice The minimum price that the user is willing to accept for the NFTs
+    /// @return The amount of tokens returned to the user
     function swap(
         ITradingPool buyPool,
         ITradingPool sellPool,
-        uint256[] memory buyNftIds,
+        uint256[] calldata buyNftIds,
         uint256 maximumBuyPrice,
-        uint256[] memory sellNftIds,
-        uint256[] memory sellLps,
+        uint256[] calldata sellNftIds,
+        uint256[] calldata sellLps,
         uint256 minimumSellPrice
     ) external nonReentrant returns (uint256) {
         // Pools need to be different
@@ -67,18 +78,21 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
         uint256 buyPrice = buyPool.buy(msg.sender, buyNftIds, maximumBuyPrice);
 
         // If the price difference + sell price is greater than the buy price, return the difference to the user
-        uint256 returnedAmount = 0;
         if (sellPrice + priceDiff > buyPrice) {
-            returnedAmount = sellPrice + priceDiff - buyPrice;
+            uint256 returnedAmount = sellPrice + priceDiff - buyPrice;
             IERC20(sellPool.getToken()).safeTransfer(
                 msg.sender,
                 returnedAmount
             );
+            return returnedAmount;
         }
 
-        return returnedAmount;
+        return 0;
     }
 
+    /// @notice Approves a trading pool to spend an unlimited amount of tokens on behalf of this contract
+    /// @param token The address of the token to approve
+    ///@param tradingPool The address of the trading pool to approve
     function approveTradingPool(address token, address tradingPool) external {
         require(
             msg.sender == _addressProvider.getTradingPoolFactory(),

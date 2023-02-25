@@ -19,9 +19,14 @@ import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ER
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 import "hardhat/console.sol";
 
+/// @title LiquidationLogic
+/// @notice Contains the logic for the liquidate function
 library LiquidationLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+    /// @notice Liquidates a loan
+    /// @param addressesProvider The address of the addresses provider
+    /// @param params A struct with the parameters of the liquidate function
     function liquidate(
         IAddressesProvider addressesProvider,
         DataTypes.LiquidationParams memory params

@@ -24,6 +24,8 @@ import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Cont
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
 
+/// @title GenesisNFT
+/// @notice This contract manages the creation and minting of Genesis NFTs
 contract GenesisNFT is
     Initializable,
     ContextUpgradeable,
@@ -67,6 +69,17 @@ contract GenesisNFT is
         _disableInitializers();
     }
 
+    /// @notice Initializes the contract with the specified parameters
+    /// @param addressProvider Address provider contract
+    /// @param name Name of the NFT
+    /// @param symbol Symbol of the NFT
+    /// @param cap Maximum number of tokens that can be minted
+    /// @param price Price of each NFT in wei
+    /// @param ltvBoost LTV boost factor
+    /// @param nativeTokenFactor Factor for calculating native token reward
+    /// @param maxLocktime Maximum lock time for staking in seconds
+    /// @param minLocktime Minimum lock time for staking in seconds
+    /// @param devAddress Address of the developer
     function initialize(
         IAddressesProvider addressProvider,
         string calldata name,
@@ -95,10 +108,15 @@ contract GenesisNFT is
         _tokenIdCounter.increment();
     }
 
+    /// @notice Returns the base URI for the NFT metadata
+    /// @return The base URI
     function _baseURI() internal pure override returns (string memory) {
         return "ipfs://";
     }
 
+    /// @notice Returns the URI for a given token ID
+    /// @param tokenId ID of the token
+    /// @return The URI
     function tokenURI(
         uint256 tokenId
     )
@@ -110,24 +128,36 @@ contract GenesisNFT is
         return ERC721URIStorageUpgradeable.tokenURI(tokenId);
     }
 
+    /// @notice Returns the maximum number of tokens that can be minted
+    /// @return The maximum number of tokens
     function getCap() public view returns (uint256) {
         return _cap;
     }
 
+    /// @notice Returns the LTV boost factor
+    /// @return The LTV boost factor
     function getLTVBoost() external view override returns (uint256) {
         return _ltvBoost;
     }
 
+    /// @notice Sets the LTV boost factor
+    /// @param newLTVBoost The new LTV boost factor
     function setLTVBoost(uint256 newLTVBoost) external onlyOwner {
         _ltvBoost = newLTVBoost;
     }
 
+    /// @notice Returns the active state of the specified Genesis NFT
+    /// @param tokenId ID of the token
+    /// @return The active state
     function getActiveState(
         uint256 tokenId
     ) external view override returns (bool) {
         return _active[tokenId];
     }
 
+    /// @notice Sets the active state of the specified Genesis NFT
+    /// @param tokenId ID of the token
+    /// @param newState The new active state
     function setActiveState(
         uint256 tokenId,
         bool newState
@@ -135,6 +165,10 @@ contract GenesisNFT is
         _active[tokenId] = newState;
     }
 
+    /// @notice Calculates the native token reward for a given amount and lock time
+    /// @param amount Amount of tokens being staked
+    /// @param locktime Lock time for staking in seconds
+    /// @return The native token reward
     function getNativeTokenReward(
         uint256 amount,
         uint256 locktime
@@ -148,17 +182,24 @@ contract GenesisNFT is
                 _nativeTokenFactor) * 1e18;
     }
 
+    /// @notice Sets the address of the trading pool
+    /// @param pool Address of the trading pool
     function setTradingPool(address pool) external onlyOwner {
         _tradingPool = pool;
     }
 
+    /// @notice Returns the number of tokens that have been minted
+    /// @return The number of tokens
     function mintCount() external view returns (uint256) {
         return _tokenIdCounter.current() - 1;
     }
 
+    /// @notice Mint new Genesis NFTs with locked LE tokens and LP tokens
+    /// @param locktime The locktime for the minted tokens
+    /// @param uris The URIs for the minted tokens
     function mint(
         uint256 locktime,
-        string[] memory uris
+        string[] calldata uris
     ) external payable nonReentrant {
         // Make sure locktimes are within limits
         require(locktime >= _minLocktime, "Locktime is lower than threshold");
@@ -251,10 +292,15 @@ contract GenesisNFT is
         }
     }
 
+    /// @notice Get the current price for minting Genesis NFTs
+    /// @return The current price in wei
     function getPrice() external view returns (uint256) {
         return _price;
     }
 
+    /// @notice Get the unlock timestamp for a specific Genesis NFT
+    /// @param tokenId The ID of the Genesis NFT to check
+    /// @return The unlock timestamp for the specified token
     function getUnlockTimestamp(uint256 tokenId) public view returns (uint256) {
         return _mintDetails[tokenId].timestamp + _mintDetails[tokenId].locktime;
     }
@@ -265,7 +311,9 @@ contract GenesisNFT is
         ERC721URIStorageUpgradeable._burn(tokenId);
     }
 
-    function burn(uint256[] memory tokenIds) external nonReentrant {
+    /// @notice Burn Genesis NFTs and unlock LP tokens and LE tokens
+    /// @param tokenIds The IDs of the Genesis NFTs to burn
+    function burn(uint256[] calldata tokenIds) external nonReentrant {
         uint256 lpAmountSum = 0;
         for (uint256 i = 0; i < tokenIds.length; i++) {
             //Require the caller owns the token
@@ -308,8 +356,11 @@ contract GenesisNFT is
         );
     }
 
+    /// @notice Get the current value of the LP tokens locked in the contract
+    /// @param tokenIds The tokens ids of the genesis NFTs associated with the LP tokens
+    /// @return The value of the LP tokens in wei
     function getLPValue(
-        uint256[] memory tokenIds
+        uint256[] calldata tokenIds
     ) external view returns (uint256) {
         uint256 lpAmountSum = 0;
         for (uint256 i = 0; i < tokenIds.length; i++) {

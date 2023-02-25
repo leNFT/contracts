@@ -18,6 +18,8 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "hardhat/console.sol";
 
+/// @title Trading Gauge Contract
+/// @notice A contract for managing the distribution of rewards to Ttrading LPs
 contract TradingGauge is IGauge, IERC721Receiver {
     IAddressesProvider private _addressProvider;
     mapping(uint256 => address) private _ownerOf;
@@ -47,10 +49,14 @@ contract TradingGauge is IGauge, IERC721Receiver {
         _workingSupplyHistory = [0];
     }
 
+    /// @notice Returns the address of the LP token supported by the gauge
+    /// @return The address of the LP token
     function lpToken() external view returns (address) {
         return _lpToken;
     }
 
+    /// @notice Calculates and returns the amount of rewards a user can claim and updates user's working balance history
+    /// @return The amount of rewards the user can claim
     function claim() external returns (uint256) {
         _checkpoint(msg.sender);
 
@@ -168,6 +174,8 @@ contract TradingGauge is IGauge, IERC721Receiver {
         return amountToClaim;
     }
 
+    /// @notice Updates the total weight history for the contract and records the total weight for epochs.
+    /// @dev This function will break if it is not used for 128 epochs.
     function writeTotalWeightHistory() public {
         // Update last saved weight checkpoint and record weight for epochs
         // Will break if is not used for 128 epochs
@@ -184,6 +192,8 @@ contract TradingGauge is IGauge, IERC721Receiver {
         }
     }
 
+    /// @notice Updates the working balance and total supply for a user.
+    /// @param user The address of the user whose working balance needs to be updated.
     function _checkpoint(address user) internal {
         // Get user ve balance and total ve balance
         IVotingEscrow votingEscrow = IVotingEscrow(
@@ -227,6 +237,8 @@ contract TradingGauge is IGauge, IERC721Receiver {
         _workingBalanceHistory[user].push(newWorkingBalance);
     }
 
+    /// @notice Triggers a checkpoint for a user if their locked balance has ended.
+    /// @param user The address of the user whose locked balance needs to be checked.
     function kick(address user) external {
         // Get user locked balance end time
         if (
@@ -237,6 +249,8 @@ contract TradingGauge is IGauge, IERC721Receiver {
         }
     }
 
+    /// @notice Deposits LP tokens to the contract, updates balances and working balances for the user.
+    /// @param lpId The ID of the LP token being deposited.
     function deposit(uint256 lpId) external {
         // Update owner
         _ownerOf[lpId] = msg.sender;
@@ -260,6 +274,8 @@ contract TradingGauge is IGauge, IERC721Receiver {
         emit DepositLP(msg.sender, lpId);
     }
 
+    /// @notice Allows the owner of a liquidity position to withdraw it and receive their tokens back.
+    /// @param lpId The ID of the liquidity position to be withdrawn.
     function withdraw(uint256 lpId) public {
         require(
             _ownerOf[lpId] == msg.sender,
@@ -299,20 +315,30 @@ contract TradingGauge is IGauge, IERC721Receiver {
         emit WithdrawLP(msg.sender, lpId);
     }
 
-    function withdrawBatch(uint256[] memory lpIds) external {
+    /// @notice Allows a user to withdraw multiple liquidity positions at once.
+    /// @param lpIds An array of IDs of the liquidity positions to be withdrawn.
+    function withdrawBatch(uint256[] calldata lpIds) external {
         for (uint256 i = 0; i < lpIds.length; i++) {
             withdraw(lpIds[i]);
         }
     }
 
+    /// @notice Returns the value of a user's liquidity positions.
+    /// @param user The address of the user whose liquidity positions will be valued.
+    /// @return The total value of the user's liquidity positions.
     function userLPValue(address user) external view returns (uint256) {
         return _userLPValue[user];
     }
 
+    /// @notice Returns the total value of all liquidity positions in the contract.
+    /// @return The total value of all liquidity positions.
     function totalLPValue() external view returns (uint256) {
         return _totalLPValue;
     }
 
+    /// @notice Returns the boost multiplier for a user's liquidity positions.
+    /// @param user The address of the user whose boost multiplier will be returned.
+    /// @return The boost multiplier for the user's liquidity positions.
     function userBoost(address user) external view returns (uint256) {
         if (_userLPValue[user] == 0) {
             return 0;
@@ -325,6 +351,10 @@ contract TradingGauge is IGauge, IERC721Receiver {
                 PercentageMath.PERCENTAGE_FACTOR) / _userLPValue[user];
     }
 
+    /// @notice Returns the ID of the liquidity position at the specified index in a user's list of liquidity positions.
+    /// @param user The address of the user whose list of liquidity positions will be accessed.
+    /// @param index The index of the liquidity position to be returned.
+    /// @return The ID of the liquidity position at the specified index.
     function lpOfOwnerByIndex(
         address user,
         uint256 index
@@ -332,14 +362,22 @@ contract TradingGauge is IGauge, IERC721Receiver {
         return _ownedTokens[user][index];
     }
 
+    /// @notice Retrieves the number of staked liquidity positions a user has staked.
+    /// @param user Address of the account to retrieve balance from.
+    /// @return Returns the balance of the specified address.
     function balanceOf(address user) external view returns (uint256) {
         return _balanceOf[user];
     }
 
+    /// @notice Retrieves the total supply of staked LP's.
+    /// @return Returns the total supply of staked LP's.
     function totalSupply() external view returns (uint256) {
         return _totalSupply;
     }
 
+    /// @notice Calculates the total value of a liquidity pair.
+    /// @param lpId ID of the liquidity pair.
+    /// @return Returns the calculated value of the liquidity pair.
     function calculateLpValue(uint256 lpId) public view returns (uint256) {
         DataTypes.LiquidityPair memory lp = ITradingPool(_lpToken).getLP(lpId);
 

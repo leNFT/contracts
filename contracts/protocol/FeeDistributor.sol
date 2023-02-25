@@ -12,6 +12,8 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import "hardhat/console.sol";
 
+/// @title FeeDistributor
+/// @notice This contract distributes fees from the protocol to the stakers of the respective token, using the VotingEscrow interface to check the user's staked amount
 contract FeeDistributor is
     Initializable,
     ContextUpgradeable,
@@ -32,6 +34,8 @@ contract FeeDistributor is
         _disableInitializers();
     }
 
+    /// @notice Initializes the contract with an AddressesProvider
+    /// @param addressProvider AddressesProvider contract address
     function initialize(
         IAddressesProvider addressProvider
     ) external initializer {
@@ -39,6 +43,10 @@ contract FeeDistributor is
         _addressProvider = addressProvider;
     }
 
+    /// @notice Retrieves the amount of fees for a given token in a given epoch
+    /// @param token Token address
+    /// @param epoch Epoch to retrieve fees from
+    /// @return uint256 Amount of fees in the specified epoch
     function totalFeesAt(
         address token,
         uint256 epoch
@@ -46,6 +54,8 @@ contract FeeDistributor is
         return _epochFees[token][epoch];
     }
 
+    /// @notice Checks the balance of a token and updates the epoch fees for that token
+    /// @param token Token address
     function checkpoint(address token) external override {
         // Find epoch we're in
         uint256 epoch = IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
@@ -61,8 +71,9 @@ contract FeeDistributor is
         _totalFees[token] = balance;
     }
 
-    // If there are any funds stuck in the contract that can't be claimed by users
-    // Hopefully this will never be used
+    /// @notice Allows the owner to retrieve any leftover rewards not claimable by users
+    /// @param token Token address
+    /// @param epoch Epoch to retrieve funds from
     function salvageRewards(address token, uint256 epoch) external {
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
@@ -84,6 +95,9 @@ contract FeeDistributor is
         _epochFees[token][epoch] = 0;
     }
 
+    /// @notice Allows a user to claim their rewards for a specific token
+    /// @param token Token address
+    /// @return uint256 Amount of rewards claimed
     function claim(address token) external override returns (uint256) {
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()

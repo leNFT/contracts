@@ -8,6 +8,8 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 
+/// @title DebtToken
+/// @dev A token representing a debt obligation
 contract DebtToken is
     Initializable,
     ContextUpgradeable,
@@ -22,7 +24,10 @@ contract DebtToken is
         _disableInitializers();
     }
 
-    // Initialize the market
+    /// @notice Initializes the debt token with the given addresses provider, name, and symbol
+    /// @param addressesProvider The contract addresses provider
+    /// @param name The name of the token
+    /// @param symbol The symbol of the token
     function initialize(
         IAddressesProvider addressesProvider,
         string memory name,
@@ -33,6 +38,7 @@ contract DebtToken is
         _addressProvider = addressesProvider;
     }
 
+    /// @notice Throws an error if the caller is not the market contract
     modifier onlyMarket() {
         require(
             _msgSender() == _addressProvider.getLendingMarket(),
@@ -41,12 +47,17 @@ contract DebtToken is
         _;
     }
 
+    /// @notice Mints a new debt token to the given address
+    /// @param to The address to mint the token to
+    /// @param loanId The ID of the loan associated with the token
     function mint(address to, uint256 loanId) external override onlyMarket {
         ERC721Upgradeable._safeMint(to, loanId);
 
         emit Mint(to, loanId);
     }
 
+    /// @notice Burns the debt token with the given ID
+    /// @param loanId The ID of the loan associated with the token to burn
     function burn(uint256 loanId) external override onlyMarket {
         ERC721Upgradeable._burn(loanId);
 

@@ -227,26 +227,28 @@ contract LendingMarket is
         return _pools[collection][asset];
     }
 
+    /// @notice Sets the lending pool addresses for a given collection, asset, and lending pool
+    /// @param collection The collection address
+    /// @param asset The asset address
+    /// @param pool The lending pool address
     function setCollectionLendingPool(
         address collection,
         address asset,
-        address reserve
+        address pool
     ) external onlyOwner {
-        _setLendingPool(collection, asset, reserve);
+        _setLendingPool(collection, asset, pool);
     }
 
-    function setDefaultLiquidationPenalty(
-        uint256 liquidationPenalty
-    ) external onlyOwner {
-        _defaultLendingPoolConfig.liquidationPenalty = liquidationPenalty;
-    }
-
+    /// @notice Sets the default pool configuration
+    /// @param poolConfig The new pool configuration
     function setDefaultPoolConfig(
         ConfigTypes.LendingPoolConfig memory poolConfig
     ) external onlyOwner {
         _defaultLendingPoolConfig = poolConfig;
     }
 
+    /// @notice Returns the default pool configuration
+    /// @return The default pool configuration
     function getDefaultPoolConfig()
         external
         view
@@ -255,10 +257,14 @@ contract LendingMarket is
         return _defaultLendingPoolConfig;
     }
 
+    /// @notice Sets the TVL safeguard value
+    /// @param tvlSafeguard The new TVL safeguard value
     function setTVLSafeguard(uint256 tvlSafeguard) external onlyOwner {
         _tvlSafeguard = tvlSafeguard;
     }
 
+    /// @notice Returns the current TVL safeguard value
+    /// @return The current TVL safeguard value
     function getTVLSafeguard() external view returns (uint256) {
         return _tvlSafeguard;
     }

@@ -17,7 +17,13 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 import "hardhat/console.sol";
 
+/// @title ValidationLogic
+/// @notice Contains the logic for the lending validation functions
 library ValidationLogic {
+    /// @notice Validates a deposit into a lending pool
+    /// @param addressesProvider The address of the addresses provider
+    /// @param lendingPool The address of the lending pool
+    /// @param amount The amount of tokens to deposit
     function validateDeposit(
         IAddressesProvider addressesProvider,
         address lendingPool,
@@ -35,6 +41,10 @@ library ValidationLogic {
         );
     }
 
+    /// @notice Validates a withdraw from a lending pool
+    /// @param addressesProvider The address of the addresses provider
+    /// @param lendingPool The address of the lending pool
+    /// @param amount The amount of tokens to withdraw
     function validateWithdrawal(
         IAddressesProvider addressesProvider,
         address lendingPool,
@@ -60,7 +70,10 @@ library ValidationLogic {
         require(amount > 0, "Withdrawal amount must be bigger than 0");
     }
 
-    // Check if borrowing conditions are valid
+    /// @notice Validates a borrow from a lending pool
+    /// @param addressesProvider The address of the addresses provider
+    /// @param lendingPools The address of the lending pools
+    /// @param params The borrow params
     function validateBorrow(
         IAddressesProvider addressesProvider,
         mapping(address => mapping(address => address)) storage lendingPools,
@@ -140,6 +153,9 @@ library ValidationLogic {
         );
     }
 
+    /// @notice Validates a repay of a loan
+    /// @param addressesProvider The address of the addresses provider
+    /// @param params The repay params
     function validateRepay(
         IAddressesProvider addressesProvider,
         DataTypes.RepayParams memory params
@@ -163,6 +179,9 @@ library ValidationLogic {
         );
     }
 
+    /// @notice Validates a liquidation of a loan
+    /// @param addressesProvider The address of the addresses provider
+    /// @param params The liquidation params
     function validateLiquidation(
         IAddressesProvider addressesProvider,
         DataTypes.LiquidationParams memory params

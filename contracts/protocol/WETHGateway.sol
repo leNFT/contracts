@@ -17,6 +17,9 @@ import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import "hardhat/console.sol";
 
+/// @title WETHGateway Contract
+/// @author leNFT
+/// @notice This contract is the proxy for ETH interactions with the leNFT protocol
 contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     IAddressesProvider private _addressProvider;
 
@@ -25,7 +28,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     }
 
     /// @notice Deposit ETH in a wETH lending pool
-    /// @dev Needs to give approval to the corresponding vault
+    /// @param lendingPool Lending pool to deposit intoto
     function depositLendingPool(
         address lendingPool
     ) external payable nonReentrant {
@@ -43,8 +46,8 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         IERC4626(lendingPool).deposit(msg.value, _msgSender());
     }
 
-    /// @notice Withdraw an asset from a lending pool
-    /// @param amount Amount of the asset to be withdrawn
+    /// @notice Withdraw ETH from a WETH lending pool
+    /// @param amount Amount of ETH to be withdrawn
     function withdrawLendingPool(
         address lendingPool,
         uint256 amount
@@ -62,9 +65,9 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         require(sent, "Failed to send Ether");
     }
 
-    /// @notice Borrow an asset from the pool while an NFT as collateral
+    /// @notice Borrow ETH from a WETH lending pool while an NFT as collateral
     /// @dev NFT approval needs to be given to the LoanCenter contract
-    /// @param amount Amount of the asset to be borrowed
+    /// @param amount Amount of ETH to be borrowed
     /// @param nftAddress Address of the NFT collateral
     /// @param nftTokenIds Token ids of the NFT(s) collateral
     /// @param request ID of the collateral price request sent by the trusted server
@@ -72,7 +75,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     function borrow(
         uint256 amount,
         address nftAddress,
-        uint256[] memory nftTokenIds,
+        uint256[] calldata nftTokenIds,
         uint256 genesisNFTId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
@@ -116,7 +119,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         require(sent, "Failed to send Ether");
     }
 
-    /// @notice Repay an an active loanreceive and
+    /// @notice Repay an an active loan with ETH
     /// @param loanId The ID of the loan to be paid
     function repay(uint256 loanId) external payable nonReentrant {
         address pool = ILoanCenter(_addressProvider.getLoanCenter())
@@ -139,9 +142,16 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         market.repay(loanId, msg.value);
     }
 
+    /// @notice Deposit ETH and/or NFTs into a trading pool to provide liquidity
+    /// @param pool The trading pool address
+    /// @param nftIds Token ids of the NFTs to deposit
+    /// @param initialPrice The initial price of the liquidity provider tokens
+    /// @param curve The curve used to calculate the price of the LP tokens
+    /// @param delta The minimum price change to update the curve
+    /// @param fee The fee charged on trades in the pool
     function depositTradingPool(
         address pool,
-        uint256[] memory nftIds,
+        uint256[] calldata nftIds,
         uint256 initialPrice,
         address curve,
         uint256 delta,
@@ -179,6 +189,9 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         );
     }
 
+    /// @notice Withdraw liquidity from a trading pool
+    /// @param pool The trading pool address
+    /// @param lpId The ID of the liquidity provider tokens to withdraw
     function withdrawTradingPool(
         address pool,
         uint256 lpId
@@ -215,9 +228,12 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         require(sent, "Failed to send Ether");
     }
 
+    /// @notice Withdraws liquidity from a trading pool for a batch of liquidity pairs.
+    /// @param pool The address of the trading pool.
+    /// @param lpIds The array of liquidity pair ids to withdraw.
     function withdrawBatchTradingPool(
         address pool,
-        uint256[] memory lpIds
+        uint256[] calldata lpIds
     ) external nonReentrant {
         IWETH weth = IWETH(_addressProvider.getWETH());
         uint256 totalAmount = 0;
@@ -269,9 +285,13 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         require(sent, "Failed to send Ether");
     }
 
+    /// @notice Buys NFT from a trading pool by depositing WETH and specifying the NFT ids and maximum price to pay.
+    /// @param pool The address of the trading pool.
+    /// @param nftIds The array of NFT ids to buy.
+    /// @param maximumPrice The maximum amount of ETH to pay for the purchase.
     function buy(
         address pool,
-        uint256[] memory nftIds,
+        uint256[] calldata nftIds,
         uint256 maximumPrice
     ) external payable nonReentrant {
         IWETH weth = IWETH(_addressProvider.getWETH());
@@ -307,10 +327,15 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         }
     }
 
+    /// @notice Sells NFTs against a pool's liquidity pairs, specifying the NFT ids, liquidity pairs, and minimum price expected.
+    /// @param pool The address of the trading pool.
+    /// @param nftIds The array of NFT ids to sell.
+    /// @param liquidityPairs The array of liquidity pair to sell the NFTs against.
+    /// @param minimumPrice The minimum amount of ETH to receive for the sale.
     function sell(
         address pool,
-        uint256[] memory nftIds,
-        uint256[] memory liquidityPairs,
+        uint256[] calldata nftIds,
+        uint256[] calldata liquidityPairs,
         uint256 minimumPrice
     ) external nonReentrant {
         IWETH weth = IWETH(_addressProvider.getWETH());
@@ -345,13 +370,21 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         require(sent, "Failed to send Ether");
     }
 
+    /// @notice Swaps NFTs between two trading pools, with one pool acting as the buyer and the other as the seller.
+    /// @param buyPool The address of the buying trading pool.
+    /// @param sellPool The address of the selling trading pool.
+    /// @param buyNftIds The array of NFT ids to buy.
+    /// @param maximumBuyPrice The maximum amount of ETH to pay for the purchase.
+    /// @param sellNftIds The array of NFT ids to sell.
+    /// @param sellLps The array of liquidity pair to sell the NFTs against.
+    /// @param minimumSellPrice The minimum amount of ETH to receive for the sale.
     function swap(
         ITradingPool buyPool,
         ITradingPool sellPool,
-        uint256[] memory buyNftIds,
+        uint256[] calldata buyNftIds,
         uint256 maximumBuyPrice,
-        uint256[] memory sellNftIds,
-        uint256[] memory sellLps,
+        uint256[] calldata sellNftIds,
+        uint256[] calldata sellLps,
         uint256 minimumSellPrice
     ) external payable nonReentrant {
         IWETH weth = IWETH(_addressProvider.getWETH());

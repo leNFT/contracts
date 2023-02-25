@@ -18,6 +18,8 @@ import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Cont
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 import "hardhat/console.sol";
 
+/// @title LoanCenter contract
+/// @dev A smart contract managing loans with NFTs as collateral
 contract LoanCenter is
     Initializable,
     ContextUpgradeable,
@@ -55,7 +57,9 @@ contract LoanCenter is
         _disableInitializers();
     }
 
-    // Initialize the loancenter
+    /// @notice Initializes the contract
+    /// @param addressesProvider The address of the AddressesProvider contract
+    /// @param maxCollaterization The default maximum collaterization value to use for new loans
     function initialize(
         IAddressesProvider addressesProvider,
         uint256 maxCollaterization
@@ -65,6 +69,18 @@ contract LoanCenter is
         _defaultMaxCollaterization = maxCollaterization;
     }
 
+    /// @notice Create a new loan with the specified parameters and add it to the loans list
+    /// @dev Only the market contract can call this function
+    /// @param borrower The address of the borrower
+    /// @param reserve The address of the reserve token
+    /// @param amount The amount of the reserve token to be borrowed
+    /// @param maxLTV The maximum loan-to-value ratio
+    /// @param boost The boost factor to be applied to the LTV ratio
+    /// @param genesisNFTId The ID of the first NFT in the collateral
+    /// @param nftAddress The address of the NFT contract
+    /// @param nftTokenIds An array of NFT token IDs that will be used as collateral
+    /// @param borrowRate The interest rate for the loan
+    /// @return The ID of the newly created loan
     function createLoan(
         address borrower,
         address reserve,
@@ -73,7 +89,7 @@ contract LoanCenter is
         uint256 boost,
         uint256 genesisNFTId,
         address nftAddress,
-        uint256[] memory nftTokenIds,
+        uint256[] calldata nftTokenIds,
         uint256 borrowRate
     ) public override onlyMarket returns (uint256) {
         // Create the loan and add it to the list
@@ -100,6 +116,9 @@ contract LoanCenter is
         return _loansCount - 1;
     }
 
+    /// @notice Activate a loan by setting its state to Active
+    /// @dev Only the market contract can call this function
+    /// @param loanId The ID of the loan to be activated
     function activateLoan(uint256 loanId) external override onlyMarket {
         // Must use storage to update state
         DataTypes.LoanData storage loan = _loans[loanId];
@@ -108,6 +127,9 @@ contract LoanCenter is
         _activeLoansCount[loan.borrower][loan.nftAsset]++;
     }
 
+    /// @notice Repay a loan by setting its state to Repaid
+    /// @dev Only the market contract can call this function
+    /// @param loanId The ID of the loan to be repaid
     function repayLoan(uint256 loanId) external override onlyMarket {
         // Must use storage to update state
         DataTypes.LoanData storage loan = _loans[loanId];
@@ -120,6 +142,9 @@ contract LoanCenter is
         _activeLoansCount[loan.borrower][loan.nftAsset]--;
     }
 
+    /// @notice Liquidate a loan by setting its state to Defaulted and freeing up the NFT collateral
+    /// @dev Only the market contract can call this function
+    /// @param loanId The ID of the loan to be liquidated
     function liquidateLoan(uint256 loanId) external override onlyMarket {
         // Must use storage to update state
         DataTypes.LoanData storage loan = _loans[loanId];
@@ -131,10 +156,16 @@ contract LoanCenter is
         _activeLoansCount[loan.borrower][loan.nftAsset]--;
     }
 
+    /// @notice Get the number of loans in the loans list
+    /// @return The number of loans
     function getLoansCount() external view override returns (uint256) {
         return _loansCount;
     }
 
+    /// @notice Get the number of active loans for a user and an NFT collection
+    /// @param user The address of the user
+    /// @param collection The address of the NFT collection
+    /// @return The number of active loans
     function getActiveLoansCount(
         address user,
         address collection
@@ -142,6 +173,9 @@ contract LoanCenter is
         return _activeLoansCount[user][collection];
     }
 
+    /// @notice Get a loan by its ID
+    /// @param loanId The ID of the loan to be retrieved
+    /// @return The loan data
     function getLoan(
         uint256 loanId
     ) external view override returns (DataTypes.LoanData memory) {
@@ -153,7 +187,11 @@ contract LoanCenter is
         return _loans[loanId];
     }
 
-    // Get the max collaterization for a certain collection and a certain user (includes boost) in ETH
+    /// @notice Get the maximum collateral that can be put up for a loan in ETH
+    /// @param loanId The ID of the loan to be queried
+    /// @param request The Trustus request hash
+    /// @param packet The Trustus packet
+    /// @return The maximum collateral in ETH
     function getLoanMaxETHCollateral(
         uint256 loanId,
         bytes32 request,
@@ -229,6 +267,10 @@ contract LoanCenter is
         return (liquidationPrice);
     }
 
+    /// @notice Get the loan ID associated with the specified NFT
+    /// @param nftAddress The address of the NFT contract
+    /// @param nftTokenId The ID of the NFT
+    /// @return The ID of the loan associated with the NFT
     function getNFTLoanId(
         address nftAddress,
         uint256 nftTokenId
@@ -236,11 +278,17 @@ contract LoanCenter is
         return _nftToLoanId[nftAddress][nftTokenId];
     }
 
+    /// @notice Internal function to get the debt owed on a loan
+    /// @param loanId The ID of the loan
+    /// @return The total amount of debt owed on the loan
     function _getLoanDebt(uint256 loanId) internal view returns (uint256) {
         return
             _loans[loanId].getInterest(block.timestamp) + _loans[loanId].amount;
     }
 
+    /// @notice Get the debt owed on a loan
+    /// @param loanId The ID of the loan
+    /// @return The total amount of debt owed on the loan
     function getLoanDebt(
         uint256 loanId
     ) public view override returns (uint256) {
@@ -252,6 +300,9 @@ contract LoanCenter is
         return _getLoanDebt(loanId);
     }
 
+    /// @notice Get the interest owed on a loan
+    /// @param loanId The ID of the loan
+    /// @return The amount of interest owed on the loan
     function getLoanInterest(
         uint256 loanId
     ) external view override returns (uint256) {
@@ -263,6 +314,9 @@ contract LoanCenter is
         return _loans[loanId].getInterest(block.timestamp);
     }
 
+    /// @notice Get the NFT token IDs associated with a loan
+    /// @param loanId The ID of the loan
+    /// @return An array of the NFT token IDs associated with the loan
     function getLoanTokenIds(
         uint256 loanId
     ) external view override returns (uint256[] memory) {
@@ -274,6 +328,9 @@ contract LoanCenter is
         return _loans[loanId].nftTokenIds;
     }
 
+    /// @notice Get the NFT contract address associated with a loan
+    /// @param loanId The ID of the loan
+    /// @return The address of the NFT contract associated with the loan
     function getLoanTokenAddress(
         uint256 loanId
     ) external view override returns (address) {
@@ -285,6 +342,9 @@ contract LoanCenter is
         return _loans[loanId].nftAsset;
     }
 
+    /// @notice Get the lending pool address associated with a loan
+    /// @param loanId The ID of the loan
+    /// @return The address of the lending pool associated with the loan
     function getLoanLendingPool(
         uint256 loanId
     ) external view override returns (address) {
@@ -296,6 +356,9 @@ contract LoanCenter is
         return _loans[loanId].pool;
     }
 
+    /// @notice Updates the debt timestamp of a loan.
+    /// @param loanId The ID of the loan to update.
+    /// @param newDebtTimestamp The new debt timestamp to set.
     function updateLoanDebtTimestamp(
         uint256 loanId,
         uint256 newDebtTimestamp
@@ -308,6 +371,9 @@ contract LoanCenter is
         _loans[loanId].debtTimestamp = newDebtTimestamp;
     }
 
+    /// @notice Updates the amount of a loan.
+    /// @param loanId The ID of the loan to update.
+    /// @param newAmount The new amount to set.
     function updateLoanAmount(
         uint256 loanId,
         uint256 newAmount
@@ -320,6 +386,9 @@ contract LoanCenter is
         _loans[loanId].amount = newAmount;
     }
 
+    /// @notice Gets the total boost for a loan.
+    /// @param loanId The ID of the loan to get the boost for.
+    /// @return The total boost for the loan.
     function getLoanBoost(
         uint256 loanId
     ) external view override returns (uint256) {
@@ -331,7 +400,9 @@ contract LoanCenter is
         return _loans[loanId].boost + _loans[loanId].genesisNFTBoost;
     }
 
-    // Get the max collaterization price for a collection (10000 = 100%)
+    /// @notice Gets the max collaterization price for a collection.
+    /// @param collection The address of the collection to get the max collaterization price for.
+    /// @return The max collaterization price for the collection (10000 = 100%).
     function getCollectionMaxCollaterization(
         address collection
     ) external view override returns (uint256) {
@@ -341,12 +412,26 @@ contract LoanCenter is
         return _collectionsMaxCollaterization[collection];
     }
 
+    /// @notice Changes the max collaterization price for a collection.
+    /// @param collection The address of the collection to change the max collaterization price for.
+    /// @param maxCollaterization The new max collaterization price to set (10000 = 100%).
     function changeCollectionMaxCollaterization(
         address collection,
         uint256 maxCollaterization
     ) external override onlyOwner {
         //Set the max collaterization
         _collectionsMaxCollaterization[collection] = maxCollaterization;
+    }
+
+    /// @notice Approves a lending market to use all NFTs from a collection.
+    /// @param collection The address of the collection to approve for lending.
+    function approveNFTCollection(
+        address collection
+    ) external override onlyMarket {
+        IERC721Upgradeable(collection).setApprovalForAll(
+            _addressProvider.getLendingMarket(),
+            true
+        );
     }
 
     function onERC721Received(
@@ -359,14 +444,5 @@ contract LoanCenter is
             bytes4(
                 keccak256("onERC721Received(address,address,uint256,bytes)")
             );
-    }
-
-    function approveNFTCollection(
-        address collection
-    ) external override onlyMarket {
-        IERC721Upgradeable(collection).setApprovalForAll(
-            _addressProvider.getLendingMarket(),
-            true
-        );
     }
 }

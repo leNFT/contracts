@@ -63,6 +63,8 @@ contract VotingEscrow is
         _disableInitializers();
     }
 
+    /// @notice Initializes the VotingEscrow contract.
+    /// @param addressProvider The address of the AddressesProvider contract.
     function initialize(
         IAddressesProvider addressProvider
     ) external initializer {
@@ -73,10 +75,15 @@ contract VotingEscrow is
         _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);
     }
 
+    /// @notice Returns the length of an epoch period in seconds.
+    /// @return The length of an epoch period in seconds.
     function epochPeriod() external pure override returns (uint256) {
         return EPOCH_PERIOD;
     }
 
+    /// @notice Returns the epoch number for a given timestamp.
+    /// @param timestamp The timestamp for which to retrieve the epoch number.
+    /// @return The epoch number.
     function epoch(uint256 timestamp) public view returns (uint256) {
         require(
             timestamp > _deployTimestamp,
@@ -85,10 +92,14 @@ contract VotingEscrow is
         return (timestamp / EPOCH_PERIOD) - (_deployTimestamp / EPOCH_PERIOD);
     }
 
+    /// @notice Returns the timestamp of the start of an epoch.
+    /// @param _epoch The epoch number for which to retrieve the start timestamp.
+    /// @return The start timestamp of the epoch.
     function epochTimestamp(uint256 _epoch) public view returns (uint256) {
         return (_deployTimestamp / EPOCH_PERIOD + _epoch) * EPOCH_PERIOD;
     }
 
+    /// @notice Updates the total weight history with the current weight.
     function writeTotalWeightHistory() public {
         // Update last saved weight checkpoint and record weight for epochs
         // Will break if is not used for 128 epochs
@@ -116,6 +127,10 @@ contract VotingEscrow is
         }
     }
 
+    /// @notice Simulates a lock for a given amount of tokens and unlock time.
+    /// @param amount The amount of tokens to be locked.
+    /// @param end The unlock time for the lock operation.
+    /// @return The number of voting escrow tokens that would be minted as a result of the lock operation.
     function simulateLock(
         uint256 amount,
         uint256 end
@@ -135,6 +150,10 @@ contract VotingEscrow is
         return (amount * (roundedUnlockTime - block.timestamp)) / MAXLOCKTIME;
     }
 
+    /// @notice Updates the global tracking variables and the user's history of locked balances.
+    /// @param user The address of the user whose balance is being updated.
+    /// @param oldBalance The user's previous locked balance.
+    /// @param newBalance The user's new locked balance.
     function _checkpoint(
         address user,
         DataTypes.LockedBalance memory oldBalance,
@@ -184,12 +203,19 @@ contract VotingEscrow is
         _userHistory[user].push(newPoint);
     }
 
+    /// @notice Returns the length of the history array for the specified user.
+    /// @param user The address of the user whose history array length should be returned.
+    /// @return The length of the user's history array.
     function userHistoryLength(
         address user
     ) public view override returns (uint256) {
         return _userHistory[user].length;
     }
 
+    /// @notice Returns the user's history point at a given index.
+    /// @param user The user's address.
+    /// @param index The index of the history point to retrieve.
+    /// @return The user's history point at the given index.
     function getUserHistoryPoint(
         address user,
         uint256 index
@@ -197,6 +223,9 @@ contract VotingEscrow is
         return _userHistory[user][index];
     }
 
+    /// @notice Returns the total weight of locked tokens at a given epoch.
+    /// @param _epoch The epoch number for which to retrieve the total weight.
+    /// @return The total weight of locked tokens at the given epoch.
     function totalSupplyAt(uint256 _epoch) external returns (uint256) {
         // Update total weight history
         writeTotalWeightHistory();
@@ -204,6 +233,8 @@ contract VotingEscrow is
         return _totalWeigthHistory[_epoch];
     }
 
+    /// @notice Returns the total weight of locked tokens.
+    /// @return The total weight of locked tokens.
     function totalSupply() public returns (uint256) {
         // Update total weight history
         writeTotalWeightHistory();
@@ -214,6 +245,9 @@ contract VotingEscrow is
             (block.timestamp - _lastWeightCheckpoint.timestamp);
     }
 
+    /// @notice Returns the weight of locked tokens for a given user.
+    /// @param user The account for which to retrieve the locked balance weight.
+    /// @return The weight of locked tokens for the given account.
     function balanceOf(address user) public view returns (uint256) {
         // If the locked token end time has passed
         if (_userLockedBalance[user].end < block.timestamp) {
@@ -229,7 +263,10 @@ contract VotingEscrow is
             (block.timestamp - lastUserPoint.timestamp);
     }
 
-    // Locks LE tokens into the contract
+    /// @dev Locks tokens into the voting escrow contract for a specified amount of time.
+    /// @param receiver The address that will receive the locked tokens.
+    /// @param amount The amount of tokens to be locked.
+    /// @param unlockTime The unlock time for the lock operation.
     function createLock(
         address receiver,
         uint256 amount,
@@ -265,6 +302,11 @@ contract VotingEscrow is
         );
     }
 
+    /// @notice Increases the locked balance of the caller by the given amount and performs a checkpoint
+    /// @param amount The amount to increase the locked balance by
+    /// @dev Requires the caller to have an active lock on their balance
+    /// @dev Transfers the native token from the caller to this contract
+    /// @dev Calls a checkpoint event
     function increaseAmount(uint256 amount) external {
         require(
             _userLockedBalance[_msgSender()].end > block.timestamp,
@@ -287,6 +329,12 @@ contract VotingEscrow is
         );
     }
 
+    /// @notice Increases the unlock time of the caller's lock to the given time and performs a checkpoint
+    /// @param newUnlockTime The new unlock time to set
+    /// @dev Requires the caller to have an active lock on their balance
+    /// @dev Requires the new unlock time to be greater than or equal to the current unlock time
+    /// @dev Requires the new unlock time to be less than or equal to the maximum lock time
+    /// @dev Calls a checkpoint event
     function increaseUnlockTime(uint256 newUnlockTime) external {
         // Round the locktime to whole epochs
         uint256 roundedUnlocktime = (newUnlockTime / EPOCH_PERIOD) *
@@ -315,6 +363,11 @@ contract VotingEscrow is
         _checkpoint(_msgSender(), oldLocked, _userLockedBalance[_msgSender()]);
     }
 
+    /// @notice Withdraws the locked balance of the caller and performs a checkpoint
+    /// @dev Requires the caller to have a non-zero locked balance and an expired lock time
+    /// @dev Requires the caller to have no active votes in the gauge controller
+    /// @dev Transfers the native token from this contract to the caller
+    /// @dev Calls a checkpoint event
     function withdraw() external {
         require(
             _userLockedBalance[_msgSender()].amount > 0,
@@ -348,6 +401,9 @@ contract VotingEscrow is
         );
     }
 
+    /// @notice Returns the current lock object of a given user
+    /// @param user The user to get the lock object of
+    /// @return The locked object of the user
     function locked(
         address user
     ) external view returns (DataTypes.LockedBalance memory) {

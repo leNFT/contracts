@@ -42,7 +42,10 @@ contract TradingPoolFactory is
         _disableInitializers();
     }
 
-    // Initialize the market
+    /// @notice Initialize the contract
+    /// @param addressesProvider Address of the AddressesProvider contract
+    /// @param protocolFee Protocol fee percentage charged on trades
+    /// @param tvlSafeguard default TVL safeguard for pools
     function initialize(
         IAddressesProvider addressesProvider,
         uint256 protocolFee,
@@ -54,22 +57,34 @@ contract TradingPoolFactory is
         _tvlSafeguard = tvlSafeguard;
     }
 
+    /// @notice Set the protocol fee percentage
+    /// @param newProtocolFee New protocol fee percentage
     function setProtocolFee(uint256 newProtocolFee) external onlyOwner {
         _protocolFee = newProtocolFee;
     }
 
+    /// @notice Get the current protocol fee percentage
+    /// @return Current protocol fee percentage
     function getProtocolFee() external view returns (uint256) {
         return _protocolFee;
     }
 
+    /// @notice Get the current TVL safeguard
+    /// @return Current TVL safeguard
     function getTVLSafeguard() external view returns (uint256) {
         return _tvlSafeguard;
     }
 
+    /// @notice Sets a new value for the TVL safeguard
+    /// @param newTVLSafeguard The new TVL safeguard value to be set
     function setTVLSafeguard(uint256 newTVLSafeguard) external onlyOwner {
         _tvlSafeguard = newTVLSafeguard;
     }
 
+    /// @notice Returns the address of the trading pool for a certain collection and token
+    /// @param nft The NFT collection address
+    /// @param token The token address to trade against
+    /// @return The address of the trading pool for the given NFT collection and token
     function getTradingPool(
         address nft,
         address token
@@ -77,9 +92,9 @@ contract TradingPoolFactory is
         return _pools[nft][token];
     }
 
-    /// @notice Create a trading pool for a certain collection
-    /// @param nft The nft collection
-    /// @param token The token to trade against
+    /// @notice Creates a trading pool for a certain collection and token
+    /// @param nft The NFT collection address
+    /// @param token The token address to trade against
     function createTradingPool(address nft, address token) external {
         require(
             nft.supportsInterface(type(IERC721).interfaceId),

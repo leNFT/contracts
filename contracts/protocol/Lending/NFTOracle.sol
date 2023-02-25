@@ -9,14 +9,24 @@ import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {Trustus} from "../Trustus/Trustus.sol";
 import "hardhat/console.sol";
 
+/// @title NFTOracle contract
+/// @dev This contract provides a mechanism for obtaining the ETH value of NFT tokens  using Trustus as the off-chain price oracle.
+/// @dev Trustus provides a mechanism to sign, relay and verify off-chain data.
 contract NFTOracle is INFTOracle, Ownable, Trustus {
     IAddressesProvider private _addressProvider;
 
+    /// @notice NFTOracle contract constructor
+    /// @param addressProvider The address provider contract used to fetch other contract addresses.
     constructor(IAddressesProvider addressProvider) {
         _addressProvider = addressProvider;
     }
 
-    // Get the price for a certain token
+    /// @notice Returns the ETH value of a collection of NFT tokens.
+    /// @param collection The address of the collection contract
+    /// @param tokenIds The IDs of the tokens whose value will be returned
+    /// @param request The hash of the packet relayed by the caller
+    /// @param packet The packet relayed by the caller
+    /// @return The ETH value of the specified tokens
     function getTokensETHPrice(
         address collection,
         uint256[] memory tokenIds,
@@ -26,7 +36,12 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         return _getTokenETHPrice(collection, tokenIds, request, packet);
     }
 
-    // Gets the token value sent by the off-chain server by unpacking the packet relayed by the caller
+    /// @notice Gets the token value sent by the off-chain server by unpacking the packet relayed by the caller.
+    /// @param collection The address of the collection contract
+    /// @param tokenIds The IDs of the tokens whose value will be returned
+    /// @param request The hash of the packet relayed by the caller
+    /// @param packet The packet relayed by the caller
+    /// @return The ETH value of the specified tokens
     function _getTokenETHPrice(
         address collection,
         uint256[] memory tokenIds,
@@ -58,6 +73,9 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         return priceParams.amount;
     }
 
+    /// @notice Allows the owner to set whether a signer is trusted or not.
+    /// @param signer The address of the signer
+    /// @param isTrusted Whether the signer is trusted or not
     function setTrustedPriceSigner(
         address signer,
         bool isTrusted
@@ -65,6 +83,9 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         _setIsTrusted(signer, isTrusted);
     }
 
+    /// @notice Checks whether a signer is trusted to provide token price information
+    /// @param signer The address of the signer to check
+    /// @return A boolean indicating whether the signer is trusted or not
     function isTrustedSigner(address signer) external view returns (bool) {
         return (_isTrusted(signer));
     }

@@ -11,6 +11,8 @@ import {IGauge} from "../../interfaces/IGauge.sol";
 import {INativeToken} from "../../interfaces/INativeToken.sol";
 import "hardhat/console.sol";
 
+/// @title Gauge Controller
+/// @dev Contract that manages gauge vote weights, total vote weight, user vote power in each gauge, and user vote ratios.
 contract GaugeController is OwnableUpgradeable, IGaugeController {
     IAddressesProvider private _addressProvider;
 
@@ -41,6 +43,8 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         _disableInitializers();
     }
 
+    /// @notice Initializes the contract by setting up the owner and the addresses provider contract.
+    /// @param addressProvider Address provider contract.
     function initialize(
         IAddressesProvider addressProvider
     ) external initializer {
@@ -50,7 +54,9 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);
     }
 
-    // Add a gauge (should be done by the admin)
+    /// @notice Adds a gauge contract to the list of registered gauges.
+    /// @dev Only the contract owner can call this method.
+    /// @param gauge Address of the gauge contract to add.
     function addGauge(address gauge) external onlyOwner {
         address liquidityPool = IGauge(gauge).lpToken();
         _liquidityPoolToGauge[liquidityPool] = gauge;
@@ -59,7 +65,9 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         emit AddGauge(gauge, liquidityPool);
     }
 
-    // Remove a gauge (should be done by the admin)
+    /// @notice Remove a gauge
+    /// @dev Only the contract owner can call this method.
+    /// @param gauge The address of the gauge to be removed
     function removeGauge(address gauge) external onlyOwner {
         require(_isGauge[gauge], "Gauge is not on the gauge list");
 
@@ -70,14 +78,23 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         emit RemoveGauge(gauge, liquidityPool);
     }
 
+    /// @notice Check if a gauge exists
+    /// @param gauge The address of the gauge to check
+    /// @return A boolean indicating whether the gauge exists
     function isGauge(address gauge) external view override returns (bool) {
         return _isGauge[gauge];
     }
 
+    /// @notice Get the gauge associated with a given liquidity pool
+    /// @param liquidityPool The address of the liquidity pool to check
+    /// @return The address of the gauge associated with the liquidity pool
     function getGauge(address liquidityPool) external view returns (address) {
         return _liquidityPoolToGauge[liquidityPool];
     }
 
+    /// @notice Get the current weight of a gauge
+    /// @param gauge The address of the gauge to check
+    /// @return The current weight of the gauge
     function getGaugeWeight(address gauge) external view returns (uint256) {
         require(_isGauge[gauge], "Gauge is not on the gauge list");
 
@@ -85,30 +102,12 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             memory lastGaugeWeightCheckpoint = _lastGaugeWeigthCheckpoint[
                 gauge
             ];
-        console.log(
-            "lastGaugeWeightCheckpoint.bias",
-            lastGaugeWeightCheckpoint.bias
-        );
-        console.log(
-            "lastGaugeWeightCheckpoint.slope",
-            lastGaugeWeightCheckpoint.slope
-        );
-        console.log(
-            "lastGaugeWeightCheckpoint.timestamp",
-            lastGaugeWeightCheckpoint.timestamp
-        );
-        console.log("block.timestamp", block.timestamp);
-        console.log(
-            "(block.timestamp - lastGaugeWeightCheckpoint.timestamp)",
-            block.timestamp - lastGaugeWeightCheckpoint.timestamp
-        );
 
         if (
             lastGaugeWeightCheckpoint.bias <
             lastGaugeWeightCheckpoint.slope *
                 (block.timestamp - lastGaugeWeightCheckpoint.timestamp)
         ) {
-            console.log("return 0");
             return 0;
         }
 
@@ -118,6 +117,10 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             (block.timestamp - lastGaugeWeightCheckpoint.timestamp);
     }
 
+    /// @notice Get the weight of a gauge at a specific epoch
+    /// @param gauge The address of the gauge to check
+    /// @param epoch The epoch for which to retrieve the gauge weight
+    /// @return The weight of the gauge at the specified epoch
     function getGaugeWeightAt(
         address gauge,
         uint256 epoch
@@ -129,6 +132,8 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         return _gaugeWeightHistory[gauge][epoch];
     }
 
+    /// @notice Get the total weight sum of all gauges
+    /// @return The total weight sum of all gauges
     function getTotalWeight() external view returns (uint256) {
         if (
             _lastWeightCheckpoint.bias <
@@ -144,6 +149,9 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             (block.timestamp - _lastWeightCheckpoint.timestamp);
     }
 
+    /// @notice Get the total weight of all gauges at a specific epoch
+    /// @param epoch The epoch for which to retrieve the total weight
+    /// @return The total weight of all gauges at the specified epoch
     function getTotalWeightAt(uint256 epoch) public returns (uint256) {
         // Update total weight history
         writeTotalWeightHistory();
@@ -151,11 +159,17 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         return _totalWeigthHistory[epoch];
     }
 
-    // Get current used vote power for user
+    /// @notice Get the current used vote power for a given user.
+    /// @param user The address of the user.
+    /// @return The current used vote power.
     function userVoteRatio(address user) external view returns (uint256) {
         return _userVoteRatio[user];
     }
 
+    /// @notice  Get the current used vote power for a given user in a specific gauge.
+    /// @param user The address of the user.
+    /// @param gauge The address of the gauge.
+    /// @return The current used vote power for the given user in the specified gauge.
     function userVoteRatioForGauge(
         address user,
         address gauge
@@ -165,6 +179,10 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         return _userGaugeVoteRatio[user][gauge];
     }
 
+    /// @notice Get the vote weight for a user in a specific gauge.
+    ///@param user The address of the user.
+    /// @param gauge The address of the gauge.
+    /// @return The vote weight for the user in the specified gauge.
     function userVoteWeightForGauge(
         address user,
         address gauge
@@ -186,6 +204,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             (block.timestamp - _userGaugeVoteWeight[user][gauge].timestamp);
     }
 
+    /// @notice Update the total weight history
     function writeTotalWeightHistory() public {
         // Update last saved weight checkpoint and record weight for epochs
         // Will break if is not used for 128 epochs
@@ -220,6 +239,8 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         }
     }
 
+    /// @notice Update the weight history of a gauge
+    /// @param gauge The address of the gauge to update
     function writeGaugeWeightHistory(address gauge) public {
         require(_isGauge[gauge], "Gauge is not on the gauge list");
 
@@ -267,7 +288,9 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         }
     }
 
-    // Vote for a gauge, ratio is % of user ve weighted balance
+    /// @notice Vote for a gauge
+    /// @param gauge The address of the gauge to vote for
+    /// @param ratio The ratio of the vote power to use
     function vote(address gauge, uint256 ratio) external {
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
@@ -309,9 +332,6 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         );
         DataTypes.Point memory oldGaugeVoteWeight;
         DataTypes.Point memory newGaugeVoteWeight;
-        console.log("userLastPoint.bias", userLastPoint.bias);
-        console.log("userLastPoint.slope", userLastPoint.slope);
-        console.log("userLastPoint.timestamp", userLastPoint.timestamp);
 
         // Get the updated ne w gauge vote weight
         newGaugeVoteWeight.bias =
@@ -390,6 +410,10 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         emit Vote(msg.sender, gauge, ratio);
     }
 
+    /// @notice Get the LE reward for a gauge in a given epoch
+    /// @param gauge The address of the gauge
+    /// @param epoch The epoch to get the reward for
+    /// @return rewards The LE reward for the gauge in the given epoch
     function getGaugeRewards(
         address gauge,
         uint256 epoch

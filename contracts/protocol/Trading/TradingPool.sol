@@ -20,6 +20,9 @@ import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
 import "hardhat/console.sol";
 
+/// @title Trading Pool Contract
+/// @notice A contract that enables the creation of liquidity pools and the trading of NFTs and ERC20 tokens.
+/// @dev This contract manages liquidity pairs, each consisting of a set of NFTs and an ERC20 token, as well as the trading of these pairs.
 contract TradingPool is
     Context,
     ERC721,
@@ -48,6 +51,14 @@ contract TradingPool is
         _;
     }
 
+    /// @notice Trading Pool constructor.
+    /// @param addressProvider The address provider contract.
+    /// @param owner The owner of the Trading Pool contract.
+    /// @param token The ERC20 token used in the trading pool.
+    /// @param nft The address of the ERC721 contract.
+    /// @param name The name of the ERC721 token.
+    /// @param symbol The symbol of the ERC721 token.
+    /// @notice The constructor should only be called by the Trading Pool
     constructor(
         IAddressesProvider addressProvider,
         address owner,
@@ -66,24 +77,38 @@ contract TradingPool is
         _transferOwnership(owner);
     }
 
+    /// @notice Gets the address of the ERC721 traded in the pool.
+    /// @return The address of the ERC721 token.
     function getNFT() external view returns (address) {
         return _nft;
     }
 
+    /// @notice Gets the address of the ERC20 token traded in the pool.
+    /// @return The address of the ERC20 token.
     function getToken() external view returns (address) {
         return address(_token);
     }
 
+    /// @notice Gets the liquidity pair with the specified ID.
+    /// @param lpId The ID of the liquidity pair.
+    /// @return The liquidity pair.
     function getLP(
         uint256 lpId
     ) external view returns (DataTypes.LiquidityPair memory) {
         return _liquidityPairs[lpId];
     }
 
+    /// @notice Gets the ID of the liquidity pair associated with the specified NFT.
+    /// @param nftId The ID of the NFT.
+    /// @return The ID of the liquidity pair.
     function nftToLp(uint256 nftId) external view returns (uint256) {
         return _nftToLp[nftId].liquidityPair;
     }
 
+    /// @notice Sets the fee for the specified liquidity pair.
+    /// @dev The caller must own the liquidity pair.
+    /// @param lpId The ID of the liquidity pair.
+    /// @param fee The new fee.
     function setLpFee(uint256 lpId, uint256 fee) external {
         //Require the caller owns LP
         require(_msgSender() == ERC721.ownerOf(lpId), "Must own LP position");
@@ -93,6 +118,10 @@ contract TradingPool is
         emit SetLpFee(msg.sender, lpId, fee);
     }
 
+    /// @notice Sets the spot price for the specified liquidity pair.
+    /// @dev The caller must own the liquidity pair.
+    /// @param lpId The ID of the liquidity pair.
+    /// @param spotPrice The new spot price.
     function setLpSpotPrice(uint256 lpId, uint256 spotPrice) external {
         //Require the caller owns LP
         require(_msgSender() == ERC721.ownerOf(lpId), "Must own LP position");
@@ -102,6 +131,11 @@ contract TradingPool is
         emit SetLpSpotPrice(msg.sender, lpId, spotPrice);
     }
 
+    /// @notice The caller must own the liquidity pair.
+    /// @dev Sets the pricing curve for the specified liquidity pair.
+    /// @param lpId The ID of the liquidity pair.
+    /// @param curve The new pricing curve.
+    /// @param delta The new delta.
     function setLpPricingCurve(
         uint256 lpId,
         address curve,
@@ -116,9 +150,18 @@ contract TradingPool is
         emit SetLpPricingCurve(msg.sender, lpId, curve, delta);
     }
 
+    /// @notice Adds liquidity to the trading pool.
+    /// @dev At least one of nftIds or tokenAmount must be greater than zero.
+    /// @param receiver The recipient of the liquidity pool tokens.
+    /// @param nftIds The IDs of the NFTs being deposited.
+    /// @param tokenAmount The amount of the ERC20 token being deposited.
+    /// @param spotPrice The spot price of the liquidity pair being created.
+    /// @param curve The pricing curve for the liquidity pair being created.
+    /// @param delta The delta for the liquidity pair being created.
+    /// @param fee The fee for the liquidity pair being created.
     function addLiquidity(
         address receiver,
-        uint256[] memory nftIds,
+        uint256[] calldata nftIds,
         uint256 tokenAmount,
         uint256 spotPrice,
         address curve,
@@ -203,6 +246,8 @@ contract TradingPool is
         _lpCount++;
     }
 
+    /// @notice Removes liquidity, sending back deposited tokens and transferring the NFTs to the user
+    /// @param lpId The ID of the LP token to remove
     function removeLiquidity(uint256 lpId) public {
         require(!_paused, "Pool is paused");
 
@@ -234,7 +279,9 @@ contract TradingPool is
         emit RemoveLiquidity(_msgSender(), lpId);
     }
 
-    function removeLiquidityBatch(uint256[] memory lpIds) external {
+    /// @notice Removes liquidity in batches by calling the removeLiquidity function for each LP token ID in the lpIds array
+    /// @param lpIds The IDs of the LP tokens to remove liquidity from
+    function removeLiquidityBatch(uint256[] calldata lpIds) external {
         require(!_paused, "Pool is paused");
 
         for (uint i = 0; i < lpIds.length; i++) {
@@ -242,9 +289,15 @@ contract TradingPool is
         }
     }
 
+    /// @notice Buys NFTs and deposits them into the pool in exchange for pool tokens
+    /// @dev Buys NFTs and deposits them into the pool in exchange for pool tokens
+    /// @param onBehalfOf The address to deposit the NFTs to
+    /// @param nftIds The IDs of the NFTs to buy
+    /// @param maximumPrice The maximum price the user is willing to pay for the NFTs
+    /// @return The final price paid for the NFTs
     function buy(
         address onBehalfOf,
-        uint256[] memory nftIds,
+        uint256[] calldata nftIds,
         uint256 maximumPrice
     ) external returns (uint256) {
         require(!_paused, "Pool is paused");
@@ -332,10 +385,16 @@ contract TradingPool is
         return finalPrice;
     }
 
+    /// @notice Allows an address to sell one or more NFTs in exchange for a token amount.
+    /// @param onBehalfOf The address that owns the NFT(s) and will receive the token amount.
+    /// @param nftIds An array of the IDs of the NFTs to sell.
+    /// @param liquidityPairs An array of the IDs of the liquidity pairs to use for the sale.
+    /// @param minimumPrice The minimum acceptable price in tokens for the sale.
+    /// @return The final price in tokens received from the sale.
     function sell(
         address onBehalfOf,
-        uint256[] memory nftIds,
-        uint256[] memory liquidityPairs,
+        uint256[] calldata nftIds,
+        uint256[] calldata liquidityPairs,
         uint256 minimumPrice
     ) external returns (uint256) {
         require(!_paused, "Pool is paused");
@@ -417,6 +476,8 @@ contract TradingPool is
         return finalPrice;
     }
 
+    /// @notice Allows the owner of the contract to pause or unpause the contract.
+    /// @param paused A boolean indicating whether to pause or unpause the contract.
     function setPause(bool paused) external onlyOwner {
         _paused = paused;
     }

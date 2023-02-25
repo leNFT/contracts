@@ -15,7 +15,14 @@ import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC7
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 
+/// @title BorrowLogic
+/// @notice Contains the logic for the borrow and repay functions
 library BorrowLogic {
+    /// @notice Creates a new loan, transfers the collateral to the loan center and mints the debt token
+    /// @param addressesProvider The address of the addresses provider
+    /// @param pools The array of pools
+    /// @param params A struct with the parameters of the borrow function
+    /// @return The id of the new loan
     function borrow(
         IAddressesProvider addressesProvider,
         mapping(address => mapping(address => address)) storage pools,
@@ -90,6 +97,9 @@ library BorrowLogic {
         return loanId;
     }
 
+    /// @notice Repays a loan, transfers the principal and interest to the lending pool and returns the collateral to the owner
+    /// @param addressesProvider The address of the addresses provider
+    /// @param params A struct with the parameters of the repay function
     function repay(
         IAddressesProvider addressesProvider,
         DataTypes.RepayParams memory params

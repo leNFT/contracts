@@ -14,6 +14,9 @@ import "hardhat/console.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 
+/// @title LendingGauge contract
+/// @notice Liquidity Gauge contract. Distributes incentives to users who have deposited into the LendingPool.
+/// @dev The gauge tracks the balance and work done by users, which are then used to calculate rewards.
 contract LendingGauge is IGauge {
     IAddressesProvider private _addressProvider;
     mapping(address => uint256) private _balanceOf;
@@ -27,28 +30,43 @@ contract LendingGauge is IGauge {
 
     using SafeERC20 for IERC20;
 
+    /// @notice Constructor function for LendingGauge
+    /// @param addressProvider The address provider contract
+    /// @param lpToken_ The address of the LendingPool token
     constructor(IAddressesProvider addressProvider, address lpToken_) {
         _addressProvider = addressProvider;
         _lpToken = lpToken_;
         _workingSupplyHistory = [0];
     }
 
+    /// @notice Returns the address of the LendingPool token
+    /// @return The address of the LendingPool token
     function lpToken() external view returns (address) {
         return _lpToken;
     }
 
+    /// @notice Returns the total supply of the LendingPool token in the contract
+    /// @return The total supply of the LendingPool token in the contract
     function totalSupply() public view returns (uint256) {
         return IERC20(_lpToken).balanceOf(address(this));
     }
 
+    /// @notice Returns the working supply of the LendingPool token in the contract
+    /// @return The working supply of the LendingPool token in the contract
     function workingSupply() external view returns (uint256) {
         return _workingSupply;
     }
 
+    /// @notice Returns the balance of staked LP tokens for a given user
+    /// @param user The address of the user to check balance for
+    /// @return The balance of the user
     function balanceOf(address user) external view returns (uint256) {
         return _balanceOf[user];
     }
 
+    /// @notice Returns the working balance of a given user
+    /// @param user The address of the user to check working balance for
+    /// @return The working balance of the user
     function workingBalanceOf(address user) external view returns (uint256) {
         if (_workingBalanceHistory[user].length == 0) {
             return 0;
@@ -59,6 +77,8 @@ contract LendingGauge is IGauge {
             ].amount;
     }
 
+    /// @notice Claims the gauge rewards for the user and updates the user's next claimable epoch
+    /// @return The amount of gauge rewards claimed
     function claim() external returns (uint256) {
         _checkpoint(msg.sender);
 
@@ -163,6 +183,8 @@ contract LendingGauge is IGauge {
         return amountToClaim;
     }
 
+    /// @notice Updates the total weight history by recording the current total weight for the current epoch and 128 previous epochs.
+    /// @dev This function will break if it is not used for 128 epochs.
     function writeTotalWeightHistory() public {
         // Update last saved weight checkpoint and record weight for epochs
         // Will break if is not used for 128 epochs
@@ -179,6 +201,9 @@ contract LendingGauge is IGauge {
         }
     }
 
+    /// @notice Updates the working balance of a user by computing the new amount based on the user's voting balance and the total voting supply.
+    /// @dev This function also saves the total weight history and the user's working balance history.
+    /// @param user The address of the user.
     function _checkpoint(address user) internal {
         // Get user ve balance and total ve balance
         IVotingEscrow votingEscrow = IVotingEscrow(
@@ -223,6 +248,9 @@ contract LendingGauge is IGauge {
         _workingBalanceHistory[user].push(newWorkingBalance);
     }
 
+    /// @notice Computes the boost of a user based on their working balance and their balance.
+    /// @param user The address of the user.
+    /// @return The boost of the user.
     function userBoost(address user) external view returns (uint256) {
         if (_balanceOf[user] == 0) {
             return 0;
@@ -235,6 +263,8 @@ contract LendingGauge is IGauge {
                 PercentageMath.PERCENTAGE_FACTOR) / _balanceOf[user];
     }
 
+    /// @notice Updates the working balance of a user if their locked has expired.
+    /// @param user The address of the user.
     function kick(address user) external {
         // Get user locked balance end time
         uint256 lockEnd = IVotingEscrow(_addressProvider.getVotingEscrow())
@@ -246,6 +276,8 @@ contract LendingGauge is IGauge {
         }
     }
 
+    /// @notice Deposits LP tokens into the contract and updates the user's balance and working balance.
+    /// @param amount The amount of LP tokens to deposit.
     function deposit(uint256 amount) external {
         // Update balance
         _balanceOf[msg.sender] += amount;
@@ -255,6 +287,8 @@ contract LendingGauge is IGauge {
         IERC20(_lpToken).safeTransferFrom(msg.sender, address(this), amount);
     }
 
+    /// @notice Withdraws LP tokens from the contract and updates the user's balance and working balance.
+    /// @param amount The amount of LP tokens to withdraw.
     function withdraw(uint256 amount) external {
         require(
             amount <= _balanceOf[msg.sender],
