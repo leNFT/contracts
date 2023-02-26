@@ -344,7 +344,7 @@ contract VotingEscrow is
             "User has no active lock"
         );
         require(
-            roundedUnlocktime >= _userLockedBalance[_msgSender()].end,
+            roundedUnlocktime > _userLockedBalance[_msgSender()].end,
             "Lock time can only increase"
         );
 

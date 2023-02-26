@@ -24,6 +24,7 @@ describe("Fee Distributor ", () => {
 
     //Lock 10 tokens for 100 days
     await votingEscrow.createLock(
+      owner.address,
       "10000000000000000000",
       Math.floor(Date.now() / 1000) + 86400 * 100
     );
@@ -32,31 +33,41 @@ describe("Fee Distributor ", () => {
 
   it("Should deposit into the fee distributor contract", async function () {
     // Add 1 weeks to the time
-    await ethers.provider.send("evm_increaseTime", [86400 * 7]);
+    await ethers.provider.send("evm_increaseTime", [3 * 3600]);
     // Mine a new block
     await ethers.provider.send("evm_mine", []);
 
     // Mint weth tokens to the fee distributor contract
-    const mintTestTokenTx = await weth.mint(
+    const mintNativeTokenTx = await nativeToken.mint(
       feeDistributor.address,
-      "100000000000000"
+      "10000000000000000000"
     );
-    await mintTestTokenTx.wait();
+    await mintNativeTokenTx.wait();
+
+    console.log("Minted tokens");
 
     // Call for a fee checkpoint on the fee distributor contract
-    const checkpointTx = await feeDistributor.checkpoint(weth.address);
+    const checkpointTx = await feeDistributor.checkpoint(nativeToken.address);
     await checkpointTx.wait();
   });
+  it("Should be able to add to the unlock time", async function () {
+    //Lock 10 tokens for 100 days
+    await votingEscrow.increaseUnlockTime(
+      Math.floor(Date.now() / 1000) + 86400 * 200
+    );
+  });
   it("Should be able to claim the tokens after the epoch is over", async function () {
-    // Add 2 weeks to the time
-    await ethers.provider.send("evm_increaseTime", [86400 * 7]);
+    // Add 2 hours to the time
+    await ethers.provider.send("evm_increaseTime", [2 * 3600]);
     // Mine a new block
     await ethers.provider.send("evm_mine", []);
 
     // Claim fees
-    const claimFeesTx = await feeDistributor.claim(weth.address);
+    const claimFeesTx = await feeDistributor.claim(nativeToken.address);
     await claimFeesTx.wait();
 
-    expect(await weth.balanceOf(owner.address)).to.equal("100000000000000");
+    expect(await nativeToken.balanceOf(owner.address)).to.equal(
+      "10000000000000000000"
+    );
   });
 });

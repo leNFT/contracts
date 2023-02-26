@@ -30,7 +30,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
     mapping(address => DataTypes.WorkingBalance[])
         private _workingBalanceHistory;
     mapping(address => uint256) private _workingBalancePointer;
-    mapping(address => uint256) private _userNextClaimedEpoch;
+    mapping(address => uint256) private _userNextClaimableEpoch;
     uint256 private _workingSupply;
     uint256[] private _workingSupplyHistory;
     address private _lpToken;
@@ -78,15 +78,18 @@ contract TradingGauge is IGauge, IERC721Receiver {
         console.log("workingBalanceHistoryLength", workingBalanceHistoryLength);
 
         // Set the next claimable epoch if it's the first time the user claims
-        if (_userNextClaimedEpoch[msg.sender] == 0) {
-            _userNextClaimedEpoch[msg.sender] =
+        if (_userNextClaimableEpoch[msg.sender] == 0) {
+            _userNextClaimableEpoch[msg.sender] =
                 votingEscrow.epoch(
                     _workingBalanceHistory[msg.sender][0].timestamp
                 ) +
                 1;
         }
 
-        console.log("userNextClaimedEpoch", _userNextClaimedEpoch[msg.sender]);
+        console.log(
+            "userNextClaimedEpoch",
+            _userNextClaimableEpoch[msg.sender]
+        );
         console.log(
             "votingEscrow.epoch(block.timestamp)calculateLpValue",
             votingEscrow.epoch(block.timestamp)
@@ -96,7 +99,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
         uint256 amountToClaim;
         uint256 nextClaimedEpoch;
         for (uint256 i = 0; i < 50; i++) {
-            nextClaimedEpoch = _userNextClaimedEpoch[msg.sender];
+            nextClaimedEpoch = _userNextClaimableEpoch[msg.sender];
             console.log("nextClaimedEpoch", nextClaimedEpoch);
 
             // Break if the next claimable epoch is the one we are in
@@ -132,7 +135,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
                             _workingSupplyHistory[nextClaimedEpoch];
                     }
 
-                    _userNextClaimedEpoch[msg.sender]++;
+                    _userNextClaimableEpoch[msg.sender]++;
                 } else {
                     DataTypes.WorkingBalance
                         memory nextWorkingBalance = _workingBalanceHistory[
@@ -153,10 +156,11 @@ contract TradingGauge is IGauge, IERC721Receiver {
                                 ) * workingBalance.amount) /
                                 _workingSupplyHistory[nextClaimedEpoch];
                         }
-                        _userNextClaimedEpoch[msg.sender]++;
+                        _userNextClaimableEpoch[msg.sender]++;
                         if (
-                            votingEscrow.epoch(nextWorkingBalance.timestamp) ==
-                            _userNextClaimedEpoch[msg.sender]
+                            votingEscrow.epoch(nextWorkingBalance.timestamp) +
+                                1 ==
+                            _userNextClaimableEpoch[msg.sender]
                         ) {
                             _workingBalancePointer[msg.sender]++;
                         }

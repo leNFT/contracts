@@ -23,7 +23,7 @@ contract LendingGauge is IGauge {
     mapping(address => DataTypes.WorkingBalance[])
         private _workingBalanceHistory;
     mapping(address => uint256) private _workingBalancePointer;
-    mapping(address => uint256) private _userNextClaimedEpoch;
+    mapping(address => uint256) private _userNextClaimableEpoch;
     uint256 _workingSupply;
     uint256[] private _workingSupplyHistory;
     address private _lpToken;
@@ -98,8 +98,8 @@ contract LendingGauge is IGauge {
         }
 
         // Set the next claimable epoch if it's the first time the user claims
-        if (_userNextClaimedEpoch[msg.sender] == 0) {
-            _userNextClaimedEpoch[msg.sender] =
+        if (_userNextClaimableEpoch[msg.sender] == 0) {
+            _userNextClaimableEpoch[msg.sender] =
                 votingEscrow.epoch(
                     _workingBalanceHistory[msg.sender][0].timestamp
                 ) +
@@ -110,7 +110,7 @@ contract LendingGauge is IGauge {
         uint256 amountToClaim;
         uint256 nextClaimedEpoch;
         for (uint256 i = 0; i < 50; i++) {
-            nextClaimedEpoch = _userNextClaimedEpoch[msg.sender];
+            nextClaimedEpoch = _userNextClaimableEpoch[msg.sender];
             console.log(
                 "i = %s, nextClaimedEpoch = %s , votingEscrow.epoch(block.timestamp) = %s",
                 i,
@@ -141,7 +141,7 @@ contract LendingGauge is IGauge {
                             _workingSupplyHistory[nextClaimedEpoch];
                     }
 
-                    _userNextClaimedEpoch[msg.sender]++;
+                    _userNextClaimableEpoch[msg.sender]++;
                 } else {
                     DataTypes.WorkingBalance
                         memory nextWorkingBalance = _workingBalanceHistory[
@@ -162,10 +162,11 @@ contract LendingGauge is IGauge {
                                 ) * workingBalance.amount) /
                                 _workingSupplyHistory[nextClaimedEpoch];
                         }
-                        _userNextClaimedEpoch[msg.sender]++;
+                        _userNextClaimableEpoch[msg.sender]++;
                         if (
-                            votingEscrow.epoch(nextWorkingBalance.timestamp) ==
-                            _userNextClaimedEpoch[msg.sender]
+                            votingEscrow.epoch(nextWorkingBalance.timestamp) +
+                                1 ==
+                            _userNextClaimableEpoch[msg.sender]
                         ) {
                             _workingBalancePointer[msg.sender]++;
                         }

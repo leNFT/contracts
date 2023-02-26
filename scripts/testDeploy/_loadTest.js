@@ -127,7 +127,7 @@ let loadEnv = async function () {
 
   // Deploy and initialize Fee distributor
   const FeeDistributor = await ethers.getContractFactory("FeeDistributor");
-  const feeDistributor = await upgrades.deployProxy(FeeDistributor, [
+  feeDistributor = await upgrades.deployProxy(FeeDistributor, [
     addressesProvider.address,
   ]);
 
