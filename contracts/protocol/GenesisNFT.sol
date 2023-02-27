@@ -166,8 +166,8 @@ contract GenesisNFT is
     }
 
     /// @notice Calculates the native token reward for a given amount and lock time
-    /// @param amount Amount of tokens being staked
-    /// @param locktime Lock time for staking in seconds
+    /// @param amount Amount of tokens to be minted
+    /// @param locktime Lock time for lock in seconds
     /// @return The native token reward
     function getNativeTokenReward(
         uint256 amount,

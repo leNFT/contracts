@@ -125,7 +125,11 @@ contract NativeToken is
         if (epoch < LOADING_PERIOD) {
             return (_initialRewards * epoch) / LOADING_PERIOD;
         }
-        return _initialRewards / (2 ** (epoch / INFLATION_PERIOD));
+
+        uint256 inflationEpoch = epoch / INFLATION_PERIOD;
+
+        return
+            (_initialRewards * (3 ** inflationEpoch)) / (4 ** inflationEpoch);
     }
 
     /// @notice Mints the specified amount of gauge rewards to the specified receiver.

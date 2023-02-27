@@ -124,7 +124,7 @@ async function main() {
     devAddress,
     "15000000000000000000000000", // 15M Dev Rewards Tokens
     ONE_DAY * 365 * 2, // 2-year dev vesting
-    "200000000000000000000",
+    "280000000000000000000", // Initial epoch rewards
   ]);
   addresses["NativeToken"] = nativeToken.address;
 
@@ -136,10 +136,10 @@ async function main() {
     addressesProvider.address,
     "leNFT Genesis",
     "LGEN",
-    "4999",
-    "3000000000000000",
-    "250",
-    50000000, // Native Token Mint Factor
+    "4999", // 4999 of total supply
+    "3000000000000000", // 0.003 ETH Price
+    "250", // 2.5% LTV Boost for Genesis NFT
+    30000000, // Native Token Mint Factor
     ONE_DAY * 120, // Max locktime (120 days in s)
     ONE_DAY * 14, // Min locktime (14 days in s)
     devAddress,
