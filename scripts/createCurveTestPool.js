@@ -38,7 +38,7 @@ async function main() {
       ethers.constants.AddressZero,
     ],
     [ethers.utils.parseUnits("1", 18), ethers.utils.parseUnits("1", 18), 0, 0],
-    10000,
+    400000,
     300
   );
   await initPoolTx.wait();

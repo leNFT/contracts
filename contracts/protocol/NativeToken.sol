@@ -26,11 +26,7 @@ contract NativeToken is
     uint256 public constant LOADING_PERIOD = 24; // 24 epochs (6 months)
 
     IAddressesProvider private _addressProvider;
-    address private _devAddress;
     uint256 private _deployTimestamp;
-    uint256 private _devReward;
-    uint256 private _devVestingTime;
-    uint256 private _devWithdrawn;
     uint256 private _cap;
     uint256 private _initialRewards;
 
@@ -44,18 +40,12 @@ contract NativeToken is
     /// @param name The name of the token
     /// @param symbol The symbol of the token
     /// @param cap The maximum supply of the token
-    /// @param devAddress The address of the developer
-    /// @param devReward The amount of tokens allocated to the developer
-    /// @param devVestingTime The duration of the developer's vesting period in seconds
     /// @param initialRewards The initial rewards rate for the token
     function initialize(
         IAddressesProvider addressProvider,
         string calldata name,
         string calldata symbol,
         uint256 cap,
-        address devAddress,
-        uint256 devReward,
-        uint256 devVestingTime,
         uint256 initialRewards
     ) external initializer {
         __Ownable_init();
@@ -63,9 +53,6 @@ contract NativeToken is
         _addressProvider = addressProvider;
         _cap = cap;
         _deployTimestamp = block.timestamp;
-        _devAddress = devAddress;
-        _devReward = devReward;
-        _devVestingTime = devVestingTime;
         _initialRewards = initialRewards;
     }
 
@@ -147,36 +134,5 @@ contract NativeToken is
             "Gauge rewards can only be minted by an approved gauge"
         );
         _mintTokens(receiver, amount);
-    }
-
-    /// @notice Returns the amount of unvested developer reward tokens.
-    /// @return The amount of unvested developer reward tokens.
-    function getDevRewardTokens() public view returns (uint256) {
-        uint256 unvestedTokens;
-        if (block.timestamp - _deployTimestamp < _devVestingTime) {
-            unvestedTokens = ((_devReward *
-                (block.timestamp - _deployTimestamp)) / _devVestingTime);
-        } else {
-            unvestedTokens = _devReward;
-        }
-
-        return unvestedTokens - _devWithdrawn;
-    }
-
-    /// @notice Mints the specified amount of developer reward tokens to the developer address.
-    /// @dev The caller must be the developer.
-    /// @dev The amount must be less than or equal to the unvested developer reward tokens.
-    /// @param amount The amount of developer reward tokens to mint.
-    function mintDevRewardTokens(uint256 amount) external {
-        // Require that the caller is the developer
-        require(_msgSender() == _devAddress, "Caller must be dev");
-
-        //Should only be able to withdrawn unvested tokens
-        require(
-            getDevRewardTokens() >= amount,
-            "Amount bigger than allowed by vesting"
-        );
-        _mintTokens(_devAddress, amount);
-        _devWithdrawn += amount;
     }
 }

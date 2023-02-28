@@ -14,6 +14,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
@@ -29,7 +30,8 @@ contract TradingPool is
     ERC721Enumerable,
     ERC721Holder,
     ITradingPool,
-    Ownable
+    Ownable,
+    ReentrancyGuard
 {
     uint public constant MAX_FEE = 9000; // 90%
 
@@ -167,7 +169,7 @@ contract TradingPool is
         address curve,
         uint256 delta,
         uint256 fee
-    ) external {
+    ) external nonReentrant {
         require(!_paused, "Pool is paused");
 
         // Check if pool will exceed maximum permitted amount
@@ -248,7 +250,7 @@ contract TradingPool is
 
     /// @notice Removes liquidity, sending back deposited tokens and transferring the NFTs to the user
     /// @param lpId The ID of the LP token to remove
-    function removeLiquidity(uint256 lpId) public {
+    function removeLiquidity(uint256 lpId) public nonReentrant {
         require(!_paused, "Pool is paused");
 
         //Require the caller owns LP
@@ -299,7 +301,7 @@ contract TradingPool is
         address onBehalfOf,
         uint256[] calldata nftIds,
         uint256 maximumPrice
-    ) external returns (uint256) {
+    ) external nonReentrant returns (uint256) {
         require(!_paused, "Pool is paused");
 
         require(nftIds.length > 0, "Need to buy at least one NFT");
@@ -396,7 +398,7 @@ contract TradingPool is
         uint256[] calldata nftIds,
         uint256[] calldata liquidityPairs,
         uint256 minimumPrice
-    ) external returns (uint256) {
+    ) external nonReentrant returns (uint256) {
         require(!_paused, "Pool is paused");
 
         require(

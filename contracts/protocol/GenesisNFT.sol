@@ -178,7 +178,7 @@ contract GenesisNFT is
         }
 
         return
-            ((amount * locktime * (_cap - _tokenIdCounter.current() / 2)) /
+            ((amount * locktime * (_cap - (_tokenIdCounter.current() / 2))) /
                 _nativeTokenFactor) * 1e18;
     }
 
@@ -227,7 +227,7 @@ contract GenesisNFT is
 
         // Find the amount of LE tokens to pair with the ETH
         if (balances[0] == 0) {
-            tokenAmount = ethAmount * 15000;
+            tokenAmount = ethAmount * 12000;
         } else {
             tokenAmount = (ethAmount * balances[1]) / balances[0];
         }

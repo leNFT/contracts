@@ -95,7 +95,10 @@ contract TradingPoolFactory is
     /// @notice Creates a trading pool for a certain collection and token
     /// @param nft The NFT collection address
     /// @param token The token address to trade against
-    function createTradingPool(address nft, address token) external {
+    function createTradingPool(
+        address nft,
+        address token
+    ) external nonReentrant {
         require(
             nft.supportsInterface(type(IERC721).interfaceId),
             "Collection address is not ERC721 compliant."

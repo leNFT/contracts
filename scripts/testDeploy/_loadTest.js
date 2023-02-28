@@ -84,10 +84,7 @@ let loadEnv = async function () {
     "leNFT Token",
     "LE",
     "100000000000000000000000000", //100M Max Cap
-    "0x91A7cEeAf399e9f933FF13F9575A2B74ac9c3EA7", // Dev Address
-    "15000000000000000000000000", // 15M Dev Tokens
-    ONE_DAY * 365 * 2, // 2-year dev vesting
-    "20000000000000000000",
+    "280000000000000000000", // Initial epoch rewards
   ]);
 
   console.log("Deployed NativeToken");
