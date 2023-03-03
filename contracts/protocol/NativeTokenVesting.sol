@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.19;
+pragma solidity 0.8.17;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
@@ -10,7 +10,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 contract NativeTokenVesting is Ownable {
     IAddressesProvider private _addressProvider;
 
-    mapping(address => DataTypes.VestingParams) private _vested;
+    mapping(address => DataTypes.VestingParams) private _vestingParams;
     mapping(address => uint256) _withdrawn;
 
     using SafeERC20 for IERC20;
@@ -25,7 +25,7 @@ contract NativeTokenVesting is Ownable {
     function getVesting(
         address account
     ) external view returns (DataTypes.VestingParams memory) {
-        return _vested[account];
+        return _vestingParams[account];
     }
 
     /// @notice Sets the vesting parameters for the specified account
@@ -39,7 +39,7 @@ contract NativeTokenVesting is Ownable {
         uint256 cliff,
         uint256 amount
     ) external onlyOwner {
-        _vested[account] = DataTypes.VestingParams(
+        _vestingParams[account] = DataTypes.VestingParams(
             block.timestamp,
             period,
             cliff,
@@ -53,12 +53,12 @@ contract NativeTokenVesting is Ownable {
     function getAvailableToWithdraw(
         address account
     ) public view returns (uint256) {
-        DataTypes.VestingParams memory vestingParams = _vested[account];
+        DataTypes.VestingParams memory vestingParams = _vestingParams[account];
         uint256 unvestedTokens;
 
-        // If the vesting period has passed
-        if (block.timestamp > vestingParams.timestamp + vestingParams.period) {
-            // If we are still in the cliff period
+        // If the cliff period has passed
+        if (block.timestamp > vestingParams.timestamp + vestingParams.cliff) {
+            // If we are still in the vesting period
             if (
                 block.timestamp <
                 vestingParams.timestamp +
@@ -67,9 +67,8 @@ contract NativeTokenVesting is Ownable {
             ) {
                 unvestedTokens =
                     (vestingParams.amount *
-                        (block.timestamp -
-                            (vestingParams.timestamp + vestingParams.period))) /
-                    vestingParams.cliff;
+                        (block.timestamp - vestingParams.timestamp)) /
+                    (vestingParams.cliff + vestingParams.period);
             } else {
                 unvestedTokens = vestingParams.amount;
             }

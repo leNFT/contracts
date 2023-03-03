@@ -37,7 +37,7 @@ contract TradingPool is
 
     IAddressesProvider private _addressProvider;
     bool internal _paused;
-    IERC20 private _token;
+    address private _token;
     address private _nft;
     mapping(uint256 => DataTypes.LiquidityPair) _liquidityPairs;
     mapping(uint256 => DataTypes.NftToLp) _nftToLp;
@@ -64,7 +64,7 @@ contract TradingPool is
     constructor(
         IAddressesProvider addressProvider,
         address owner,
-        IERC20 token,
+        address token,
         address nft,
         string memory name,
         string memory symbol
@@ -88,7 +88,7 @@ contract TradingPool is
     /// @notice Gets the address of the ERC20 token traded in the pool.
     /// @return The address of the ERC20 token.
     function getToken() external view returns (address) {
-        return address(_token);
+        return _token;
     }
 
     /// @notice Gets the liquidity pair with the specified ID.
@@ -174,7 +174,7 @@ contract TradingPool is
 
         // Check if pool will exceed maximum permitted amount
         require(
-            tokenAmount + _token.balanceOf(address(this)) <
+            tokenAmount + IERC20(_token).balanceOf(address(this)) <
                 ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
                     .getTVLSafeguard(),
             "Trading pool exceeds safeguarded limit"
@@ -379,7 +379,7 @@ contract TradingPool is
                     .getProtocolFee()) / PercentageMath.PERCENTAGE_FACTOR
         );
         IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
-            address(_token)
+            _token
         );
 
         emit Buy(_msgSender(), nftIds, finalPrice);
@@ -471,7 +471,7 @@ contract TradingPool is
                     .getProtocolFee()) / PercentageMath.PERCENTAGE_FACTOR
         );
         IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
-            address(_token)
+            _token
         );
 
         emit Sell(_msgSender(), nftIds, finalPrice);

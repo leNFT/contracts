@@ -110,7 +110,7 @@ contract TradingPoolFactory is
         ITradingPool newTradingPool = new TradingPool(
             _addressProvider,
             owner(),
-            IERC20(token),
+            token,
             nft,
             string.concat(
                 "leNFT Trading Pool ",
