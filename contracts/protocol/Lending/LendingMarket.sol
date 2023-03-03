@@ -126,22 +126,52 @@ contract LendingMarket is
     /// @param loanId The ID of the loan to be paid
     /// @param request ID of the collateral price request sent by the trusted server
     /// @param packet Signed collateral price request sent by the trusted server
-    function liquidate(
+    function createLiquidationAuction(
         uint256 loanId,
+        uint256 bid,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external override nonReentrant {
-        LiquidationLogic.liquidate(
+        LiquidationLogic.createLiquidationAuction(
             _addressProvider,
-            DataTypes.LiquidationParams({
+            DataTypes.AuctionBidParams({
                 caller: _msgSender(),
                 loanId: loanId,
+                bid: bid,
                 request: request,
                 packet: packet
             })
         );
 
-        emit Liquidate(_msgSender(), loanId);
+        emit CreateLiquidationAuction(_msgSender(), loanId, bid);
+    }
+
+    function bidLiquidationAuction(
+        uint256 loanId,
+        uint256 bid,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
+    ) external override nonReentrant {
+        LiquidationLogic.bidLiquidationAuction(
+            _addressProvider,
+            DataTypes.AuctionBidParams({
+                caller: _msgSender(),
+                loanId: loanId,
+                bid: bid,
+                request: request,
+                packet: packet
+            })
+        );
+
+        emit BidLiquidationAuction(_msgSender(), loanId, bid);
+    }
+
+    function claimLiquidation(uint256 loanId) external override {
+        LiquidationLogic.claimLiquidation(
+            _addressProvider,
+            DataTypes.ClaimLiquidationParams({loanId: loanId})
+        );
+        emit ClaimLiquidation(_msgSender(), loanId);
     }
 
     function _setLendingPool(

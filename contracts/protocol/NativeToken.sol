@@ -22,13 +22,9 @@ contract NativeToken is
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    uint256 public constant INFLATION_PERIOD = 52; // 52 epochs (1 year)
-    uint256 public constant LOADING_PERIOD = 24; // 24 epochs (6 months)
-
     IAddressesProvider private _addressProvider;
     uint256 private _deployTimestamp;
     uint256 private _cap;
-    uint256 private _initialRewards;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -40,20 +36,17 @@ contract NativeToken is
     /// @param name The name of the token
     /// @param symbol The symbol of the token
     /// @param cap The maximum supply of the token
-    /// @param initialRewards The initial rewards rate for the token
     function initialize(
         IAddressesProvider addressProvider,
         string calldata name,
         string calldata symbol,
-        uint256 cap,
-        uint256 initialRewards
+        uint256 cap
     ) external initializer {
         __Ownable_init();
         __ERC20_init(name, symbol);
         _addressProvider = addressProvider;
         _cap = cap;
         _deployTimestamp = block.timestamp;
-        _initialRewards = initialRewards;
     }
 
     /// @notice Gets the maximum supply of the token
@@ -91,7 +84,7 @@ contract NativeToken is
         _mintTokens(_addressProvider.getGenesisNFT(), amount);
     }
 
-    /// @notice Burns the specified amount of Genesis tokens.
+    /// @notice Burns the specified amount of tokens for the Genesis contract.
     /// @dev The caller must be the Genesis NFT contract.
     ///@param amount The amount of Genesis tokens to burn.
     function burnGenesisTokens(uint256 amount) external {
@@ -100,23 +93,6 @@ contract NativeToken is
             "Genesis tokens can only be burned by the Genesis NFT contract"
         );
         _burn(_addressProvider.getGenesisNFT(), amount);
-    }
-
-    /// @notice Returns the amount of tokens to distribute as rewards for the specified epoch.
-    /// @param epoch The epoch for which to get the rewards.
-    /// @return The amount of tokens to distribute as rewards for the specified epoch.
-    function getEpochRewards(
-        uint256 epoch
-    ) external view override returns (uint256) {
-        // If we are in the loading period, return smaller rewards
-        if (epoch < LOADING_PERIOD) {
-            return (_initialRewards * epoch) / LOADING_PERIOD;
-        }
-
-        uint256 inflationEpoch = epoch / INFLATION_PERIOD;
-
-        return
-            (_initialRewards * (3 ** inflationEpoch)) / (4 ** inflationEpoch);
     }
 
     /// @notice Mints the specified amount of gauge rewards to the specified receiver.

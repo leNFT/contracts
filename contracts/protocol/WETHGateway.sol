@@ -22,9 +22,11 @@ import "hardhat/console.sol";
 /// @notice This contract is the proxy for ETH interactions with the leNFT protocol
 contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     IAddressesProvider private _addressProvider;
+    IWETH private _weth;
 
-    constructor(IAddressesProvider addressesProvider) {
+    constructor(IAddressesProvider addressesProvider, address weth) {
         _addressProvider = addressesProvider;
+        _weth = IWETH(weth);
     }
 
     /// @notice Deposit ETH in a wETH lending pool
@@ -32,16 +34,14 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     function depositLendingPool(
         address lendingPool
     ) external payable nonReentrant {
-        IWETH weth = IWETH(_addressProvider.getWETH());
-
         require(
-            IERC4626(lendingPool).asset() == address(weth),
+            IERC4626(lendingPool).asset() == address(_weth),
             "Pool underlying is not WETH"
         );
 
         // Deposit and approve WETH
-        weth.deposit{value: msg.value}();
-        weth.approve(lendingPool, msg.value);
+        _weth.deposit{value: msg.value}();
+        _weth.approve(lendingPool, msg.value);
 
         IERC4626(lendingPool).deposit(msg.value, _msgSender());
     }
@@ -52,14 +52,13 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         address lendingPool,
         uint256 amount
     ) external nonReentrant {
-        IWETH weth = IWETH(_addressProvider.getWETH());
         require(
-            IERC4626(lendingPool).asset() == address(weth),
+            IERC4626(lendingPool).asset() == address(_weth),
             "Pool underlying is not WETH"
         );
 
         IERC4626(lendingPool).withdraw(amount, address(this), _msgSender());
-        weth.withdraw(amount);
+        _weth.withdraw(amount);
 
         (bool sent, ) = _msgSender().call{value: amount}("");
         require(sent, "Failed to send Ether");
@@ -83,7 +82,6 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         ILendingMarket market = ILendingMarket(
             _addressProvider.getLendingMarket()
         );
-        IWETH weth = IWETH(_addressProvider.getWETH());
 
         // Transfer the collateral to the WETH Gateway
         for (uint256 i = 0; i < nftTokenIds.length; i++) {
@@ -99,7 +97,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
 
         market.borrow(
             _msgSender(),
-            address(weth),
+            address(_weth),
             amount,
             nftAddress,
             nftTokenIds,
@@ -108,12 +106,10 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
             packet
         );
 
-        require(
-            weth.balanceOf(address(this)) == amount,
-            "Not enough WETH received."
-        );
+        // Make sure enough ETH was received
+        assert(_weth.balanceOf(address(this)) == amount);
 
-        weth.withdraw(amount);
+        _weth.withdraw(amount);
 
         (bool sent, ) = _msgSender().call{value: amount}("");
         require(sent, "Failed to send Ether");
@@ -127,16 +123,15 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         ILendingMarket market = ILendingMarket(
             _addressProvider.getLendingMarket()
         );
-        IWETH weth = IWETH(_addressProvider.getWETH());
 
         require(
-            IERC4626(pool).asset() == address(weth),
+            IERC4626(pool).asset() == address(_weth),
             "Loan pool underlying is not WETH"
         );
 
         // Deposit and approve WETH
-        weth.deposit{value: msg.value}();
-        weth.approve(pool, msg.value);
+        _weth.deposit{value: msg.value}();
+        _weth.approve(pool, msg.value);
 
         // Repay loan
         market.repay(loanId, msg.value);
@@ -157,10 +152,8 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         uint256 delta,
         uint256 fee
     ) external payable nonReentrant {
-        IWETH weth = IWETH(_addressProvider.getWETH());
-
         require(
-            ITradingPool(pool).getToken() == address(weth),
+            ITradingPool(pool).getToken() == address(_weth),
             "Pool underlying is not WETH"
         );
 
@@ -175,8 +168,8 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         IERC721(ITradingPool(pool).getNFT()).setApprovalForAll(pool, true);
 
         // Deposit and approve WETH
-        weth.deposit{value: msg.value}();
-        weth.approve(pool, msg.value);
+        _weth.deposit{value: msg.value}();
+        _weth.approve(pool, msg.value);
 
         ITradingPool(pool).addLiquidity(
             msg.sender,
@@ -196,10 +189,8 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         address pool,
         uint256 lpId
     ) external nonReentrant {
-        IWETH weth = IWETH(_addressProvider.getWETH());
-
         require(
-            ITradingPool(pool).getToken() == address(weth),
+            ITradingPool(pool).getToken() == address(_weth),
             "Pool underlying is not WETH"
         );
 
@@ -222,7 +213,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         }
 
         // Send ETH back to the user
-        weth.withdraw(lp.tokenAmount);
+        _weth.withdraw(lp.tokenAmount);
 
         (bool sent, ) = _msgSender().call{value: lp.tokenAmount}("");
         require(sent, "Failed to send Ether");
@@ -235,12 +226,11 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         address pool,
         uint256[] calldata lpIds
     ) external nonReentrant {
-        IWETH weth = IWETH(_addressProvider.getWETH());
         uint256 totalAmount = 0;
         uint256[][] memory nftIds = new uint256[][](lpIds.length);
 
         require(
-            ITradingPool(pool).getToken() == address(weth),
+            ITradingPool(pool).getToken() == address(_weth),
             "Pool underlying is not WETH"
         );
 
@@ -279,7 +269,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         }
 
         // Send ETH back to the user
-        weth.withdraw(totalAmount);
+        _weth.withdraw(totalAmount);
 
         (bool sent, ) = _msgSender().call{value: totalAmount}("");
         require(sent, "Failed to send Ether");
@@ -294,10 +284,8 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         uint256[] calldata nftIds,
         uint256 maximumPrice
     ) external payable nonReentrant {
-        IWETH weth = IWETH(_addressProvider.getWETH());
-
         require(
-            ITradingPool(pool).getToken() == address(weth),
+            ITradingPool(pool).getToken() == address(_weth),
             "Pool underlying is not WETH"
         );
 
@@ -307,8 +295,8 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         );
 
         // Deposit and approve WETH
-        weth.deposit{value: msg.value}();
-        weth.approve(pool, msg.value);
+        _weth.deposit{value: msg.value}();
+        _weth.approve(pool, msg.value);
 
         uint256 finalPrice = ITradingPool(pool).buy(
             msg.sender,
@@ -318,7 +306,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
 
         // Send ETH back to the user
         if (msg.value > finalPrice) {
-            weth.withdraw(msg.value - finalPrice);
+            _weth.withdraw(msg.value - finalPrice);
 
             (bool sent, ) = _msgSender().call{value: msg.value - finalPrice}(
                 ""
@@ -338,10 +326,8 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         uint256[] calldata liquidityPairs,
         uint256 minimumPrice
     ) external nonReentrant {
-        IWETH weth = IWETH(_addressProvider.getWETH());
-
         require(
-            ITradingPool(pool).getToken() == address(weth),
+            ITradingPool(pool).getToken() == address(_weth),
             "Pool underlying is not WETH"
         );
 
@@ -364,7 +350,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         );
 
         // Send ETH back to the user
-        weth.withdraw(finalPrice);
+        _weth.withdraw(finalPrice);
 
         (bool sent, ) = _msgSender().call{value: finalPrice}("");
         require(sent, "Failed to send Ether");
@@ -387,15 +373,14 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         uint256[] calldata sellLps,
         uint256 minimumSellPrice
     ) external payable nonReentrant {
-        IWETH weth = IWETH(_addressProvider.getWETH());
         ISwapRouter swapRouter = ISwapRouter(_addressProvider.getSwapRouter());
 
         require(
-            buyPool.getToken() == address(weth),
+            buyPool.getToken() == address(_weth),
             "Buy pool underlying is not WETH"
         );
         require(
-            sellPool.getToken() == address(weth),
+            sellPool.getToken() == address(_weth),
             "Sell pool underlying is not WETH"
         );
 
@@ -407,8 +392,8 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
             );
 
             // Deposit and approve WETH
-            weth.deposit{value: msg.value}();
-            weth.approve(address(swapRouter), msg.value);
+            _weth.deposit{value: msg.value}();
+            _weth.approve(address(swapRouter), msg.value);
         }
 
         // Send NFTs to this contract and approve them for pool use
@@ -443,7 +428,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
 
         // Send ETH back to the user
         if (returnedAmount > 0) {
-            weth.withdraw(returnedAmount);
+            _weth.withdraw(returnedAmount);
 
             (bool sent, ) = _msgSender().call{value: returnedAmount}("");
             require(sent, "Failed to send Ether");
@@ -467,9 +452,10 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     // Intended to receive ETH from WETH contract
     receive() external payable {
         require(
-            _msgSender() == _addressProvider.getWETH(),
-            "Receive not allowed"
+            msg.sender == address(_weth),
+            "Received ETH from unknown source not allowed"
         );
+        console.log("Received ETH");
     }
 
     /**

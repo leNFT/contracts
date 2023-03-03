@@ -48,9 +48,9 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         bytes32 request,
         TrustusPacket calldata packet
     ) internal view verifyPacket(request, packet) returns (uint256) {
-        DataTypes.TokensPrice memory priceParams = abi.decode(
+        DataTypes.AssetsPrice memory priceParams = abi.decode(
             packet.payload,
-            (DataTypes.TokensPrice)
+            (DataTypes.AssetsPrice)
         );
         // Make sure the request is for the right token
         require(
@@ -75,12 +75,12 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
 
     /// @notice Allows the owner to set whether a signer is trusted or not.
     /// @param signer The address of the signer
-    /// @param isTrusted Whether the signer is trusted or not
+    /// @param isTrusted_ Whether the signer is trusted or not
     function setTrustedPriceSigner(
         address signer,
-        bool isTrusted
+        bool isTrusted_
     ) external onlyOwner {
-        _setIsTrusted(signer, isTrusted);
+        _setIsTrusted(signer, isTrusted_);
     }
 
     /// @notice Checks whether a signer is trusted to provide token price information

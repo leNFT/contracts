@@ -27,12 +27,48 @@ library LiquidationLogic {
     /// @notice Liquidates a loan
     /// @param addressesProvider The address of the addresses provider
     /// @param params A struct with the parameters of the liquidate function
-    function liquidate(
+    function createLiquidationAuction(
         IAddressesProvider addressesProvider,
-        DataTypes.LiquidationParams memory params
+        DataTypes.AuctionBidParams memory params
     ) external {
         // Verify if liquidation conditions are met
-        ValidationLogic.validateLiquidation(addressesProvider, params);
+        ValidationLogic.validateCreateLiquidationAuction(
+            addressesProvider,
+            params
+        );
+
+        // Get the loan
+        DataTypes.LoanData memory loanData = (
+            ILoanCenter(addressesProvider.getLoanCenter())
+        ).getLoan(params.loanId);
+
+        // Get the address of this asset's pool
+        address poolAsset = IERC4626(loanData.pool).asset();
+
+        // Add auction to the loan
+        ILoanCenter(addressesProvider.getLoanCenter()).auctionLoan(
+            params.loanId,
+            params.caller,
+            params.bid
+        );
+
+        // Get the payment from the bidder
+        IERC20Upgradeable(poolAsset).safeTransferFrom(
+            params.caller,
+            address(this),
+            params.bid
+        );
+    }
+
+    function bidLiquidationAuction(
+        IAddressesProvider addressesProvider,
+        DataTypes.AuctionBidParams memory params
+    ) external {
+        // Verify if bid conditions are met
+        ValidationLogic.validateBidLiquidationAuction(
+            addressesProvider,
+            params
+        );
 
         // Get the loan
         DataTypes.LoanData memory loanData = (
@@ -42,22 +78,43 @@ library LiquidationLogic {
         // Get the address of this asset's reserve
         address poolAsset = IERC4626(loanData.pool).asset();
 
-        // Find the liquidation price
-        uint256 liquidationPrice = ILoanCenter(
-            addressesProvider.getLoanCenter()
-        ).getLoanLiquidationPrice(params.loanId, params.request, params.packet);
+        // Send the old liquidator their funds back
+        IERC20Upgradeable(poolAsset).safeTransfer(
+            loanData.liquidator,
+            loanData.auctionMaxBid
+        );
 
-        console.log("liquidationPrice", liquidationPrice);
+        // Update the auction bid
+        ILoanCenter(addressesProvider.getLoanCenter()).updateLoanAuctionBid(
+            params.loanId,
+            params.caller,
+            params.bid
+        );
 
         // Get the payment from the liquidator
         IERC20Upgradeable(poolAsset).safeTransferFrom(
             params.caller,
             address(this),
-            liquidationPrice
+            params.bid
         );
+    }
 
+    function claimLiquidation(
+        IAddressesProvider addressesProvider,
+        DataTypes.ClaimLiquidationParams memory params
+    ) external {
+        // Verify if claim conditions are met
+        ValidationLogic.validateClaimLiquidation(addressesProvider, params);
+
+        // Get the loan
+        DataTypes.LoanData memory loanData = (
+            ILoanCenter(addressesProvider.getLoanCenter())
+        ).getLoan(params.loanId);
+
+        // Get the address of this asset's reserve
+        address poolAsset = IERC4626(loanData.pool).asset();
         // Repay loan...
-        uint256 fundsLeft = liquidationPrice;
+        uint256 fundsLeft = loanData.auctionMaxBid;
         uint256 loanInterest = ILoanCenter(addressesProvider.getLoanCenter())
             .getLoanInterest(params.loanId);
         uint256 loanDebt = loanData.amount + loanInterest;
@@ -86,7 +143,7 @@ library LiquidationLogic {
         // ... then get the protocol liquidation fee (if there are still funds available) ...
         if (fundsLeft > 0) {
             uint256 protocolFee = PercentageMath.percentMul(
-                liquidationPrice,
+                loanData.auctionMaxBid,
                 ILendingPool(loanData.pool).getPoolConfig().liquidationFee
             );
             if (protocolFee > fundsLeft) {
@@ -119,7 +176,7 @@ library LiquidationLogic {
         for (uint i = 0; i < loanData.nftTokenIds.length; i++) {
             IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
                 addressesProvider.getLoanCenter(),
-                params.caller,
+                loanData.liquidator,
                 loanData.nftTokenIds[i]
             );
         }

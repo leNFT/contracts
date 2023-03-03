@@ -227,7 +227,7 @@ contract GenesisNFT is
 
         // Find the amount of LE tokens to pair with the ETH
         if (balances[0] == 0) {
-            tokenAmount = ethAmount * 12000;
+            tokenAmount = ethAmount * 20000;
         } else {
             tokenAmount = (ethAmount * balances[1]) / balances[0];
         }

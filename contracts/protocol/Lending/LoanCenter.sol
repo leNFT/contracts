@@ -148,12 +148,35 @@ contract LoanCenter is
     function liquidateLoan(uint256 loanId) external override onlyMarket {
         // Must use storage to update state
         DataTypes.LoanData storage loan = _loans[loanId];
-        loan.state = DataTypes.LoanState.Defaulted;
+        loan.state = DataTypes.LoanState.Liquidated;
 
         for (uint256 i = 0; i < loan.nftTokenIds.length; i++) {
             _nftToLoanId[loan.nftAsset][loan.nftTokenIds[i]] = 0;
         }
         _activeLoansCount[loan.borrower][loan.nftAsset]--;
+    }
+
+    function auctionLoan(
+        uint256 loanId,
+        address user,
+        uint256 bid
+    ) external override onlyMarket {
+        DataTypes.LoanData storage loan = _loans[loanId];
+        loan.state = DataTypes.LoanState.Auctioned;
+        loan.auctioner = user;
+        loan.liquidator = user;
+        loan.auctionMaxBid = bid;
+        loan.auctionStartTimestamp = block.timestamp;
+    }
+
+    function updateLoanAuctionBid(
+        uint256 loanId,
+        address user,
+        uint256 bid
+    ) external override onlyMarket {
+        DataTypes.LoanData storage loan = _loans[loanId];
+        loan.liquidator = user;
+        loan.auctionMaxBid = bid;
     }
 
     /// @notice Get the number of loans in the loans list
@@ -215,55 +238,6 @@ contract LoanCenter is
                 tokensPrice,
                 _loans[loanId].maxLTV + _loans[loanId].boost
             );
-    }
-
-    /// @notice Get the price a liquidator would have to pay to liquidate a loan and the rewards associated
-    /// @param loanId The ID of the loan to be liquidated
-    /// @return price The price of the liquidation in borrowed asset token
-    function getLoanLiquidationPrice(
-        uint256 loanId,
-        bytes32 request,
-        Trustus.TrustusPacket calldata packet
-    ) external view override returns (uint256) {
-        // Get the price of the collateral asset in the reserve asset. Ex: Punk #42 = 5 USDC
-        uint256 assetETHPrice = ITokenOracle(_addressProvider.getTokenOracle())
-            .getTokenETHPrice(IERC4626(_loans[loanId].pool).asset());
-
-        uint256 collateralETHPrice = (INFTOracle(
-            _addressProvider.getNFTOracle()
-        ).getTokensETHPrice(
-                _loans[loanId].nftAsset,
-                _loans[loanId].nftTokenIds,
-                request,
-                packet
-            ) *
-            ITokenOracle(_addressProvider.getTokenOracle())
-                .getPricePrecision()) / assetETHPrice;
-
-        // Threshold in which the liquidation price starts being equal to debt
-        uint256 liquidationThreshold = PercentageMath.percentMul(
-            collateralETHPrice,
-            PercentageMath.PERCENTAGE_FACTOR -
-                ILendingPool(_loans[loanId].pool)
-                    .getPoolConfig()
-                    .liquidationPenalty +
-                ILendingPool(_loans[loanId].pool).getPoolConfig().liquidationFee
-        );
-        uint256 loanDebt = _getLoanDebt(loanId);
-        console.log("liquidationThreshold", liquidationThreshold);
-        console.log("loanDebt", loanDebt);
-
-        // Find the cost of liquidation
-        uint256 liquidationPrice;
-        if (loanDebt < liquidationThreshold) {
-            liquidationPrice = liquidationThreshold;
-        } else {
-            liquidationPrice = loanDebt;
-        }
-
-        console.log("liquidationPrice", liquidationPrice);
-
-        return (liquidationPrice);
     }
 
     /// @notice Get the loan ID associated with the specified NFT
@@ -396,7 +370,7 @@ contract LoanCenter is
             "Loan does not exist."
         );
 
-        return _loans[loanId].boost + _loans[loanId].genesisNFTBoost;
+        return _loans[loanId].boost;
     }
 
     /// @notice Gets the max collaterization price for a collection.

@@ -25,6 +25,14 @@ interface ILoanCenter {
 
     function liquidateLoan(uint256 loanId) external;
 
+    function auctionLoan(uint256 loanId, address user, uint256 bid) external;
+
+    function updateLoanAuctionBid(
+        uint256 loanId,
+        address user,
+        uint256 bid
+    ) external;
+
     function activateLoan(uint256 loanId) external;
 
     function getLoansCount() external view returns (uint256);
@@ -42,12 +50,6 @@ interface ILoanCenter {
     function getLoanLendingPool(uint256 loanId) external view returns (address);
 
     function getLoanMaxETHCollateral(
-        uint256 loanId,
-        bytes32 request,
-        Trustus.TrustusPacket calldata packet
-    ) external view returns (uint256);
-
-    function getLoanLiquidationPrice(
         uint256 loanId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet

@@ -10,14 +10,18 @@ import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 /// @title BorrowLogic
 /// @notice Contains the logic for the borrow and repay functions
 library BorrowLogic {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
+
     /// @notice Creates a new loan, transfers the collateral to the loan center and mints the debt token
     /// @param addressesProvider The address of the addresses provider
     /// @param pools The array of pools
@@ -114,6 +118,28 @@ library BorrowLogic {
 
         // If we are paying the entire loan debt
         if (params.amount == loanCenter.getLoanDebt(params.loanId)) {
+            // If the loan was being liquidated we send the liquidators payment back with a fee
+            if (loanData.state == DataTypes.LoanState.Auctioned) {
+                // Get the payment from the liquidator
+                IERC20Upgradeable(IERC4626(loanData.pool).asset())
+                    .safeTransferFrom(
+                        address(this),
+                        loanData.liquidator,
+                        loanData.auctionMaxBid
+                    );
+                // Get the fee from the user
+                IERC20Upgradeable(IERC4626(loanData.pool).asset())
+                    .safeTransferFrom(
+                        params.caller,
+                        loanData.auctioner,
+                        (loanData.auctionMaxBid *
+                            ILendingPool(loanData.pool)
+                                .getPoolConfig()
+                                .auctionerFee) /
+                            PercentageMath.PERCENTAGE_FACTOR
+                    );
+            }
+
             // Return the principal + interest
             ILendingPool(loanData.pool).receiveUnderlying(
                 params.caller,

@@ -5,8 +5,9 @@ import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 
 library ConfigTypes {
     struct LendingPoolConfig {
-        uint256 liquidationPenalty;
+        uint256 maxLiquidatorDiscount;
+        uint256 auctionerFee;
         uint256 liquidationFee;
-        uint256 maximumUtilizationRate;
+        uint256 maxUtilizationRate;
     }
 }

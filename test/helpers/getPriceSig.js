@@ -14,7 +14,7 @@ function getPriceSig(
   console.log("deadline", deadline);
   const payload = abi.encodeParameter(
     {
-      TokenPriceBoost: {
+      AssetsPrice: {
         collection: "address",
         tokenIds: "uint256[]",
         amount: "uint256",

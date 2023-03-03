@@ -44,15 +44,16 @@ let loadEnv = async function () {
       ValidationLogic: validationLogicLib.address,
     },
   });
-  const lendingMarket = await upgrades.deployProxy(
+  lendingMarket = await upgrades.deployProxy(
     LendingMarket,
     [
       addressesProvider.address,
       "25000000000000000000", // TVLSafeguard
       {
-        liquidationPenalty: "1800", // defaultLiquidationPenalty
+        maxLiquidatorDiscount: "2000", // maxLiquidatorDiscount
+        auctionerFee: "50", // defaultAuctionerFee
         liquidationFee: "200", // defaultProtocolLiquidationFee
-        maximumUtilizationRate: "8500", // defaultMaximumUtilizationRate
+        maxUtilizationRate: "8500", // defaultmaxUtilizationRate
       },
     ],
     { unsafeAllow: ["external-library-linking"], timeout: 0 }
@@ -60,7 +61,7 @@ let loadEnv = async function () {
 
   // Deploy and initialize loan center provider proxy
   const LoanCenter = await ethers.getContractFactory("LoanCenter");
-  const loanCenter = await upgrades.deployProxy(LoanCenter, [
+  loanCenter = await upgrades.deployProxy(LoanCenter, [
     addressesProvider.address,
     "4000", // DefaultMaxCollaterization 40%
   ]);
@@ -84,7 +85,6 @@ let loadEnv = async function () {
     "leNFT Token",
     "LE",
     "100000000000000000000000000", //100M Max Cap
-    "280000000000000000000", // Initial epoch rewards
   ]);
 
   console.log("Deployed NativeToken");
@@ -118,6 +118,7 @@ let loadEnv = async function () {
   const GaugeController = await ethers.getContractFactory("GaugeController");
   gaugeController = await upgrades.deployProxy(GaugeController, [
     addressesProvider.address,
+    "280000000000000000000", // Initial epoch rewards
   ]);
 
   console.log("Deployed GaugeController");
@@ -156,7 +157,7 @@ let loadEnv = async function () {
 
   // Deploy the NFT Oracle contract
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
-  const nftOracle = await NFTOracle.deploy(addressesProvider.address);
+  nftOracle = await NFTOracle.deploy(addressesProvider.address);
   await nftOracle.deployed();
 
   // Deploy TokenOracle contract
@@ -170,15 +171,18 @@ let loadEnv = async function () {
 
   console.log("Deployed SwapRouter");
 
-  // Deploy WETH Gateway contract
-  const WETHGateway = await ethers.getContractFactory("WETHGateway");
-  wethGateway = await WETHGateway.deploy(addressesProvider.address);
-  await wethGateway.deployed();
-
   // Deploy WETH contract
   const WETH = await ethers.getContractFactory("WETH");
   weth = await WETH.deploy();
   await weth.deployed();
+
+  // Deploy WETH Gateway contract
+  const WETHGateway = await ethers.getContractFactory("WETHGateway");
+  wethGateway = await WETHGateway.deploy(
+    addressesProvider.address,
+    weth.address
+  );
+  await wethGateway.deployed();
 
   // Deploy Test NFT contracts
   const TestNFT = await ethers.getContractFactory("TestNFT");
@@ -253,8 +257,6 @@ let loadEnv = async function () {
     gaugeController.address
   );
   await setGaugeControllerTx.wait();
-  const setWETHTx = await addressesProvider.setWETH(weth.address);
-  await setWETHTx.wait();
 
   // Set trusted price source
   const setTrustedPriceSourceTx = await nftOracle.setTrustedPriceSigner(

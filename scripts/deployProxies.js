@@ -84,9 +84,10 @@ async function main() {
       addressesProvider.address,
       "25000000000000000000", // TVL Safeguard for pools
       {
-        liquidationPenalty: "1800", // defaultLiquidationPenalty
+        maxLiquidatorDiscount: "2000", // maxLiquidatorDiscount
+        auctionerFee: "50", // defaultAuctionerFee
         liquidationFee: "200", // defaultProtocolLiquidationFee
-        maximumUtilizationRate: "8500", // defaultMaximumUtilizationRate
+        maxUtilizationRate: "8500", // defaultmaxUtilizationRate
       },
     ],
     { unsafeAllow: ["external-library-linking"], timeout: 0 }
@@ -121,7 +122,6 @@ async function main() {
     "leNFT Token",
     "LE",
     "100000000000000000000000000", //100M Max Cap
-    "280000000000000000000", // Initial epoch rewards
   ]);
   addresses["NativeToken"] = nativeToken.address;
 
@@ -158,6 +158,7 @@ async function main() {
   const GaugeController = await ethers.getContractFactory("GaugeController");
   const gaugeController = await upgrades.deployProxy(GaugeController, [
     addressesProvider.address,
+    "280000000000000000000", // Initial epoch rewards
   ]);
   addresses["GaugeController"] = gaugeController.address;
 
@@ -217,9 +218,14 @@ async function main() {
 
   // Deploy WETH Gateway contract
   const WETHGateway = await ethers.getContractFactory("WETHGateway");
-  const wethGateway = await WETHGateway.deploy(addressesProvider.address);
+  const wethGateway = await WETHGateway.deploy(
+    addressesProvider.address,
+    addresses["ETH"].address
+  );
   await wethGateway.deployed();
   addresses["WETHGateway"] = wethGateway.address;
+
+  console.log("Set WETHGateway with WETH @ " + addresses["ETH"].address);
 
   // Deploy price curves contracts
   const ExponentialCurve = await ethers.getContractFactory(
@@ -334,9 +340,6 @@ async function main() {
     swapRouter.address
   );
   await setSwapRouterTx.wait();
-  const setWETHTx = await addressesProvider.setWETH(addresses["ETH"].address);
-  await setWETHTx.wait();
-  console.log("Set WETH @ " + addresses["ETH"].address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -14,7 +14,18 @@ interface ILendingMarket {
 
     event Repay(address indexed user, uint256 indexed loanId);
 
-    event Liquidate(address indexed user, uint256 indexed loanId);
+    event CreateLiquidationAuction(
+        address indexed user,
+        uint256 indexed loanId,
+        uint256 bid
+    );
+    event BidLiquidationAuction(
+        address indexed user,
+        uint256 indexed loanId,
+        uint256 bid
+    );
+
+    event ClaimLiquidation(address indexed user, uint256 indexed loanId);
 
     event CreateLendingPool(address indexed lendingPool);
 
@@ -37,11 +48,21 @@ interface ILendingMarket {
 
     function repay(uint256 loanId, uint256 amount) external;
 
-    function liquidate(
+    function createLiquidationAuction(
         uint256 loanId,
+        uint256 bid,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
     ) external;
+
+    function bidLiquidationAuction(
+        uint256 loanId,
+        uint256 bid,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
+    ) external;
+
+    function claimLiquidation(uint256 loanId) external;
 
     function getLendingPool(
         address collection,

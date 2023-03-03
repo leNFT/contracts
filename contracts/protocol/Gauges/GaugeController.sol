@@ -14,6 +14,9 @@ import "hardhat/console.sol";
 /// @title Gauge Controller
 /// @dev Contract that manages gauge vote weights, total vote weight, user vote power in each gauge, and user vote ratios.
 contract GaugeController is OwnableUpgradeable, IGaugeController {
+    uint256 public constant INFLATION_PERIOD = 52; // 52 epochs (1 year)
+    uint256 public constant LOADING_PERIOD = 24; // 24 epochs (6 months)
+
     IAddressesProvider private _addressProvider;
 
     // Epoch history of gauge vote weight
@@ -37,6 +40,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     mapping(address => mapping(address => DataTypes.Point)) _userGaugeVoteWeight;
     mapping(address => bool) _isGauge;
     mapping(address => address) _liquidityPoolToGauge;
+    uint256 private _initialRewards;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -45,11 +49,14 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
 
     /// @notice Initializes the contract by setting up the owner and the addresses provider contract.
     /// @param addressProvider Address provider contract.
+    /// @param initialRewards The initial rewards rate for the token
     function initialize(
-        IAddressesProvider addressProvider
+        IAddressesProvider addressProvider,
+        uint256 initialRewards
     ) external initializer {
         __Ownable_init();
         _addressProvider = addressProvider;
+        _initialRewards = initialRewards;
         _totalWeigthHistory.push(0);
         _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);
     }
@@ -410,6 +417,21 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         emit Vote(msg.sender, gauge, ratio);
     }
 
+    /// @notice Returns the amount of tokens to distribute as rewards for the specified epoch.
+    /// @param epoch The epoch for which to get the rewards.
+    /// @return The amount of tokens to distribute as rewards for the specified epoch.
+    function getEpochRewards(uint256 epoch) public view returns (uint256) {
+        // If we are in the loading period, return smaller rewards
+        if (epoch < LOADING_PERIOD) {
+            return (_initialRewards * epoch) / LOADING_PERIOD;
+        }
+
+        uint256 inflationEpoch = epoch / INFLATION_PERIOD;
+
+        return
+            (_initialRewards * (3 ** inflationEpoch)) / (4 ** inflationEpoch);
+    }
+
     /// @notice Get the LE reward for a gauge in a given epoch
     /// @param gauge The address of the gauge
     /// @param epoch The epoch to get the reward for
@@ -425,8 +447,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         }
 
         return
-            (INativeToken(_addressProvider.getNativeToken()).getEpochRewards(
-                epoch
-            ) * getGaugeWeightAt(gauge, epoch)) / getTotalWeightAt(epoch);
+            (getEpochRewards(epoch) * getGaugeWeightAt(gauge, epoch)) /
+            getTotalWeightAt(epoch);
     }
 }

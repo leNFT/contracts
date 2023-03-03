@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 
 library DataTypes {
-    struct TokensPrice {
+    struct AssetsPrice {
         address collection;
         uint256[] tokenIds;
         uint256 amount;
@@ -51,15 +51,17 @@ library DataTypes {
      * 0 - None (Default Value): We need a default that is not 'Created' - this is the zero value
      * 1 - Created: The loan data is stored; but not initiated yet.
      * 2 - Active: The loan has been initialized; funds have been delivered to the borrower and the collateral is held.
-     * 3 - Repaid: The loan has been repaid; and the collateral has been returned to the borrower. This is a terminal state.
-     * 4 - Defaulted: The loan was delinquent and collateral claimed by the liquidator. This is a terminal state.
+     * 3 - Repaid: The loan has been repaid; and the collateral has been returned to the borrower. This can be a terminal state.
+     * 3 - Actioned: The loan's collateral has been auctioned off and its in the process of being liquidated.
+     * 4 - Liquidated: The loan's collateral was claimed by the liquidator. This is a terminal state.
      */
     enum LoanState {
         None,
         Created,
         Active,
         Repaid,
-        Defaulted
+        Auctioned,
+        Liquidated
     }
 
     struct LoanData {
@@ -73,12 +75,10 @@ library DataTypes {
         uint256 amount;
         // maxLTV
         uint256 maxLTV;
-        // ltv boost gotten through vote staking
+        // ltv boost gotten from the use of a genesis NFT
         uint256 boost;
-        // The boost given by the use of a genesis NFT
+        // The genesis NFT id for the boost (0 if not used)
         uint256 genesisNFTId;
-        // The boost given by the use of a genesis NFT
-        uint256 genesisNFTBoost;
         // address of nft asset token
         address nftAsset;
         // the ids of the token
@@ -91,6 +91,14 @@ library DataTypes {
         uint256 initTimestamp;
         // timestamp for debt computation ()
         uint256 debtTimestamp;
+        // address of the user who first auctioned the loan
+        address auctioner;
+        // address of the liquidator withe highest bid
+        address liquidator;
+        // highes liquidation auction bid
+        uint256 auctionMaxBid;
+        // timestamp of the liquidation auction start
+        uint256 auctionStartTimestamp;
     }
 
     // Mint details for the Genesis NFT mint
@@ -118,10 +126,22 @@ library DataTypes {
         uint256 amount;
     }
 
-    struct LiquidationParams {
+    struct AuctionBidParams {
         address caller;
         uint256 loanId;
+        uint256 bid;
         bytes32 request;
         Trustus.TrustusPacket packet;
+    }
+
+    struct ClaimLiquidationParams {
+        uint256 loanId;
+    }
+
+    struct VestingParams {
+        uint256 timestamp;
+        uint256 period;
+        uint256 cliff;
+        uint256 amount;
     }
 }
