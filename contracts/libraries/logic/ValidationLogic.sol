@@ -183,8 +183,8 @@ library ValidationLogic {
         // Can only do partial repayments if the loan is not being auctioned
         if (params.amount < loanCenter.getLoanDebt(params.loanId)) {
             require(
-                loanData.state == DataTypes.LoanState.Auctioned,
-                "Cannot repay a loan that is being auctioned"
+                loanData.state != DataTypes.LoanState.Auctioned,
+                "Cannot partially repay a loan that is being auctioned"
             );
         }
     }
