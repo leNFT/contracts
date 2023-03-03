@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
@@ -418,6 +418,7 @@ contract TradingPool is
         uint256 finalPrice;
         uint256 protocolFee;
         DataTypes.LiquidityPair memory lp;
+        uint256 lpIndex;
 
         // Transfer the NFTs to the pool
         for (uint i = 0; i < nftIds.length; i++) {
@@ -428,7 +429,7 @@ contract TradingPool is
                 nftIds[i]
             );
 
-            uint256 lpIndex = liquidityPairs[i];
+            lpIndex = liquidityPairs[i];
             lp = _liquidityPairs[lpIndex];
             fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
             protocolFee =

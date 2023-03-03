@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import {IWETH} from "../interfaces/IWETH.sol";
 import {ILendingMarket} from "../interfaces/ILendingMarket.sol";
@@ -15,7 +15,6 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Trustus} from "./Trustus/Trustus.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
-import "hardhat/console.sol";
 
 /// @title WETHGateway Contract
 /// @author leNFT
@@ -47,7 +46,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     }
 
     /// @notice Withdraw ETH from a WETH lending pool
-    /// @param amount Amount of ETH to be withdrawn
+    /// @param amount Amount of ETH to be withdrawn100
     function withdrawLendingPool(
         address lendingPool,
         uint256 amount
@@ -455,7 +454,6 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
             msg.sender == address(_weth),
             "Received ETH from unknown source not allowed"
         );
-        console.log("Received ETH");
     }
 
     /**

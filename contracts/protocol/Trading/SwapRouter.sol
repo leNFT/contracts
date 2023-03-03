@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
@@ -79,12 +79,11 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
 
         // If the price difference + sell price is greater than the buy price, return the difference to the user
         if (sellPrice + priceDiff > buyPrice) {
-            uint256 returnedAmount = sellPrice + priceDiff - buyPrice;
             IERC20(sellPool.getToken()).safeTransfer(
                 msg.sender,
-                returnedAmount
+                sellPrice + priceDiff - buyPrice
             );
-            return returnedAmount;
+            return sellPrice + priceDiff - buyPrice;
         }
 
         return 0;

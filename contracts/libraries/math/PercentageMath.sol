@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 /**
  * @title PercentageMath library
@@ -23,11 +23,10 @@ library PercentageMath {
      * @param percentage The percentage of the value to be calculated
      * @return result value percentmul percentage
      **/
-    function percentMul(uint256 value, uint256 percentage)
-        internal
-        pure
-        returns (uint256 result)
-    {
+    function percentMul(
+        uint256 value,
+        uint256 percentage
+    ) internal pure returns (uint256 result) {
         // to avoid overflow, value <= (type(uint256).max - HALF_PERCENTAGE_FACTOR) / percentage
         assembly {
             if iszero(
@@ -58,11 +57,10 @@ library PercentageMath {
      * @param percentage The percentage of the value to be calculated
      * @return result value percentdiv percentage
      **/
-    function percentDiv(uint256 value, uint256 percentage)
-        internal
-        pure
-        returns (uint256 result)
-    {
+    function percentDiv(
+        uint256 value,
+        uint256 percentage
+    ) internal pure returns (uint256 result) {
         // to avoid overflow, value <= (type(uint256).max - halfPercentage) / PERCENTAGE_FACTOR
         assembly {
             if or(

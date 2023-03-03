@@ -1,4 +1,8 @@
 /**
+ *Submitted for verification at Etherscan.io on 2019-07-31
+ */
+
+/**
  *Submitted for verification at Etherscan.io on 2017-12-12
  */
 
@@ -17,45 +21,44 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity 0.8.17;
+pragma solidity ^0.4.18;
 
-import {IWETH} from "../interfaces/IWETH.sol";
-
-contract WETH is IWETH {
+contract WETH {
     string public name = "Wrapped Ether";
     string public symbol = "WETH";
     uint8 public decimals = 18;
 
+    event Approval(address indexed src, address indexed guy, uint wad);
+    event Transfer(address indexed src, address indexed dst, uint wad);
     event Deposit(address indexed dst, uint wad);
     event Withdrawal(address indexed src, uint wad);
 
     mapping(address => uint) public balanceOf;
     mapping(address => mapping(address => uint)) public allowance;
 
-    receive() external payable {
+    function() public payable {
         deposit();
     }
 
     function deposit() public payable {
         balanceOf[msg.sender] += msg.value;
-        emit Deposit(msg.sender, msg.value);
+        Deposit(msg.sender, msg.value);
     }
 
     function withdraw(uint wad) public {
         require(balanceOf[msg.sender] >= wad);
         balanceOf[msg.sender] -= wad;
-        (bool sent, ) = msg.sender.call{value: wad}("");
-        require(sent, "Failed to send Ether");
-        emit Withdrawal(msg.sender, wad);
+        msg.sender.transfer(wad);
+        Withdrawal(msg.sender, wad);
     }
 
     function totalSupply() public view returns (uint) {
-        return 0;
+        return this.balance;
     }
 
     function approve(address guy, uint wad) public returns (bool) {
         allowance[msg.sender][guy] = wad;
-        emit Approval(msg.sender, guy, wad);
+        Approval(msg.sender, guy, wad);
         return true;
     }
 
@@ -70,7 +73,7 @@ contract WETH is IWETH {
     ) public returns (bool) {
         require(balanceOf[src] >= wad);
 
-        if (src != msg.sender && allowance[src][msg.sender] != type(uint).max) {
+        if (src != msg.sender && allowance[src][msg.sender] != uint(-1)) {
             require(allowance[src][msg.sender] >= wad);
             allowance[src][msg.sender] -= wad;
         }
@@ -78,7 +81,7 @@ contract WETH is IWETH {
         balanceOf[src] -= wad;
         balanceOf[dst] += wad;
 
-        emit Transfer(src, dst, wad);
+        Transfer(src, dst, wad);
 
         return true;
     }

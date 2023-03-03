@@ -46,7 +46,7 @@ function getPriceSig(
     domain: {
       name: "leNFT",
       version: "1",
-      chainId: 31337,
+      chainId: "31337",
       verifyingContract: verifyingContract,
     },
     message: {
