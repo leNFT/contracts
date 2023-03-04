@@ -2,136 +2,143 @@ const { expect } = require("chai");
 const { getPriceSig } = require("./helpers/getPriceSig.js");
 const load = require("../scripts/testDeploy/_loadTest.js");
 
-describe("Liquidate", function () {
+describe("Borrow", function () {
   this.timeout(10000);
   load.loadTest();
-  var tokenId;
-  it("Create NFT asset", async function () {
-    // Mint NFT collateral
+  var tokenID;
+  it("Create NFT asset 1", async function () {
+    // Mint 2 NFT collaterals
     const mintTestNftTx = await testNFT.mint(owner.address);
-    tokenIDReceipt = await mintTestNftTx.wait();
+    const tokenIDReceipt = await mintTestNftTx.wait();
     const event = tokenIDReceipt.events.find((event) => event.event === "Mint");
-    tokenId = event.args.tokenId.toNumber();
+    tokenID1 = event.args.tokenId.toNumber();
 
     // Find if the NFT was minted accordingly
-    expect(await testNFT.ownerOf(tokenId)).to.equal(owner.address);
+    expect(await testNFT.ownerOf(tokenID1)).to.equal(owner.address);
   });
-  it("Deposit underlying to the reserve", async function () {
-    // Mint 1000 test tokens to the callers address
-    const mintTestTokenTx = await weth.mint(
-      owner.address,
-      "1000000000000000000000"
-    );
-    await mintTestTokenTx.wait();
+  it("Create NFT asset 2", async function () {
+    // Mint 2 NFT collaterals
+    const mintTestNftTx = await testNFT.mint(owner.address);
+    const tokenIDReceipt = await mintTestNftTx.wait();
+    const event = tokenIDReceipt.events.find((event) => event.event === "Mint");
+    tokenID2 = event.args.tokenId.toNumber();
 
-    // Deposit the 1000 tokens into the market
-    const approveTokenTx = await weth.approve(
-      wethReserve.address,
-      "1000000000000000000000"
+    // Find if the NFT was minted accordingly
+    expect(await testNFT.ownerOf(tokenID2)).to.equal(owner.address);
+  });
+  it("Deposit underlying to the lending pool", async function () {
+    const createLendingPoolTx = await lendingMarket.createLendingPool(
+      testNFT.address,
+      weth.address
     );
-    await approveTokenTx.wait();
-    const depositTx = await market.deposit(
-      weth.address,
-      "1000000000000000000000"
+    await createLendingPoolTx.wait();
+    const depositTx = await wethGateway.depositLendingPool(
+      await lendingMarket.getLendingPool(testNFT.address, weth.address),
+      { value: "1000000000000000000" }
     );
     await depositTx.wait();
-
-    // Find if the reserve tokens were sent accordingly
-    expect(await wethReserve.balanceOf(owner.address)).to.equal(
-      "1000000000000000000000"
-    );
   });
   it("Borrow using NFT asset as collateral", async function () {
-    // Approve asset to be used by the market
-    const approveNftTx = await testNFT.approve(market.address, tokenId);
-    await approveNftTx.wait();
+    // Approve assets to be used by the lending market
+    const approveNftTx1 = await testNFT.approve(wethGateway.address, tokenID1);
+    await approveNftTx1.wait();
+    const approveNftTx2 = await testNFT.approve(wethGateway.address, tokenID2);
+    await approveNftTx2.wait();
 
     const priceSig = getPriceSig(
       testNFT.address,
-      0,
-      "500000000000000000000", //Price is 500 Tokens
+      [tokenID1, tokenID2],
+      "8000000000000000", //Price of 0.8 ETH
       "1694784579",
       nftOracle.address
     );
-
-    // Ask the market to borrow 100 tokens underlying using the collateral (worth 500 tokens with max collateral 20%)
-    const borrowTx = await market.borrow(
-      weth.address,
-      "100000000000000000000",
+    console.log("Got price sig for: ", [tokenID1, tokenID2]);
+    // Ask the market to borrow underlying using the collateral
+    const balanceBeforeBorrow = await owner.getBalance();
+    console.log("Balance before borrow: ", balanceBeforeBorrow.toString());
+    const borrowTx = await wethGateway.borrow(
+      "1000000000000000",
       testNFT.address,
-      tokenId,
+      [tokenID1, tokenID2],
       0,
       priceSig.request,
       priceSig
     );
-    await borrowTx.wait();
+    const receipt = await borrowTx.wait();
+    console.log("Gas used: ", receipt.gasUsed.toString());
+    const balanceAfterBorrow = await owner.getBalance();
+    console.log("Balance after borrow: ", balanceAfterBorrow.toString());
+    const gasUsedETH = receipt.effectiveGasPrice * receipt.gasUsed;
 
-    // Find if the borrower received the funds
-    expect(await weth.balanceOf(owner.address)).to.equal(
-      "100000000000000000000"
-    );
+    // Find if the user received the borrowed amountS
+    expect(
+      balanceAfterBorrow.sub(balanceBeforeBorrow).add(gasUsedETH)
+    ).to.be.eq("1000000000000000");
 
     // Find if the protocol received the asset
-    expect(await testNFT.ownerOf(tokenId)).to.equal(loanCenter.address);
+    expect(await testNFT.ownerOf(tokenID1)).to.equal(loanCenter.address);
+    expect(await testNFT.ownerOf(tokenID2)).to.equal(loanCenter.address);
   });
-  it("Liquidate loan", async function () {
-    // Change nft collection price to 100
+  it("Start the liquidation auction", async function () {
     const priceSig = getPriceSig(
       testNFT.address,
-      0,
-      "100000000000000000000",
+      [tokenID1, tokenID2],
+      "800000000000000", //Price of 0.08 ETH (10x lower than the borrow)
       "1694784579",
       nftOracle.address
     );
-
-    //Mint 328 tokens to liquidator se he can pay the liquidation
-    const mintTestTokenTx = await weth.mint(
-      addr1.address,
-      "328000000000000000000"
+    console.log("Got price sig for: ", [tokenID1, tokenID2]);
+    // Get WETH from the weth contract
+    const getWETHTx = await weth.deposit({ value: "100000000000000000" });
+    await getWETHTx.wait();
+    console.log("owner.address", owner.address);
+    console.log("weth.address", weth.address);
+    // Approve the WETH to be used by the lending market
+    const approveWETHTx = await weth.approve(
+      lendingMarket.address,
+      "100000000000000000"
     );
-    await mintTestTokenTx.wait();
-    // Approve the tokens to the market
-    const approveTokenTx = await weth
-      .connect(addr1)
-      .approve(market.address, "328000000000000000000");
-    await approveTokenTx.wait();
+    await approveWETHTx.wait();
 
-    //Mint Native Tokens to native token vault
-    console.log("Minting native tokens owned by vault...");
-    const mintNativeTokenTx = await nativeToken.mint(
-      nativeTokenVault.address,
-      "100000000000000000000000000"
+    const createLiquidationAuctionTx =
+      await lendingMarket.createLiquidationAuction(
+        0,
+        "700000000000000", //Bid of 0.07 ETH
+        priceSig.request,
+        priceSig
+      );
+    await createLiquidationAuctionTx.wait();
+  });
+  it("Bid on the liquidation auction with a lower bid", async function () {
+    await expect(
+      lendingMarket.bidLiquidationAuction(
+        0,
+        "600000000000000" //Bid of 0.06 ETH
+      )
+    ).to.be.revertedWith("Bid amount is not higher than current bid");
+  });
+  it("Bid on the liquidation auction with a higher bid", async function () {
+    const bidTx = await lendingMarket.bidLiquidationAuction(
+      0,
+      "750000000000000" //Bid of 0.075 ETH
     );
-    await mintNativeTokenTx.wait();
-
-    //Liquidate the loan
-    console.log("Liquidating...");
-    const liquidateTx = await market
-      .connect(addr1)
-      .liquidate(0, priceSig.request, priceSig);
-    await liquidateTx.wait();
-
-    // Find if the liquidator received the asset
-    expect(await testNFT.ownerOf(tokenId)).to.equal(addr1.address);
-
-    // Find if the liquidator sent the token
-    expect(await weth.balanceOf(addr1.address)).to.equal(
-      "148000000000000000000"
+    await bidTx.wait();
+  });
+  it("Claim the liquidation auction before the auction is over", async function () {
+    await expect(lendingMarket.claimLiquidation(0)).to.be.revertedWith(
+      "Auction is still active"
     );
+  });
+  it("Claim the liquidation after the auction is over", async function () {
+    // Make the auction end (24 hours)
+    await ethers.provider.send("evm_increaseTime", [86401]);
+    await ethers.provider.send("evm_mine", []);
 
-    //Find if the reserve debt was paid
-    expect(await weth.balanceOf(wethReserve.address)).to.equal(
-      "1000000001268391679350"
-    );
+    const claimTx = await lendingMarket.claimLiquidation(0);
+    await claimTx.wait();
 
-    // Find if the borrower received the funds left from the liquidations
-    expect(await weth.balanceOf(owner.address)).to.equal(
-      "176399998731608320650"
-    );
-
-    //Find if the liquidation fee was paid
-    expect(await weth.balanceOf(feeTreasuryAddress)).to.equal(
-      "3600000000000000000"
-    );
+    // Find if the liquidator received the NFT
+    expect(await testNFT.ownerOf(tokenID1)).to.equal(owner.address);
+    expect(await testNFT.ownerOf(tokenID2)).to.equal(owner.address);
   });
 });

@@ -55,12 +55,7 @@ interface ILendingMarket {
         Trustus.TrustusPacket calldata packet
     ) external;
 
-    function bidLiquidationAuction(
-        uint256 loanId,
-        uint256 bid,
-        bytes32 request,
-        Trustus.TrustusPacket calldata packet
-    ) external;
+    function bidLiquidationAuction(uint256 loanId, uint256 bid) external;
 
     function claimLiquidation(uint256 loanId) external;
 

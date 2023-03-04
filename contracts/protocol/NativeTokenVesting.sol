@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
@@ -7,6 +7,8 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+/// @title NativeTokenVesting
+/// @notice Contract that allows to set vesting parameters for a specified account
 contract NativeTokenVesting is Ownable {
     IAddressesProvider private _addressProvider;
 
@@ -78,6 +80,8 @@ contract NativeTokenVesting is Ownable {
         }
     }
 
+    /// @notice Withdraws the specified amount of unvested tokens
+    /// @param amount The amount of unvested tokens to withdraw
     function withdraw(uint256 amount) external {
         require(
             getAvailableToWithdraw(_msgSender()) >= amount,

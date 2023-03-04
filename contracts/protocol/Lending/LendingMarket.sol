@@ -134,7 +134,7 @@ contract LendingMarket is
     ) external override nonReentrant {
         LiquidationLogic.createLiquidationAuction(
             _addressProvider,
-            DataTypes.AuctionBidParams({
+            DataTypes.CreateAuctionParams({
                 caller: _msgSender(),
                 loanId: loanId,
                 bid: bid,
@@ -148,18 +148,14 @@ contract LendingMarket is
 
     function bidLiquidationAuction(
         uint256 loanId,
-        uint256 bid,
-        bytes32 request,
-        Trustus.TrustusPacket calldata packet
+        uint256 bid
     ) external override nonReentrant {
         LiquidationLogic.bidLiquidationAuction(
             _addressProvider,
             DataTypes.AuctionBidParams({
                 caller: _msgSender(),
                 loanId: loanId,
-                bid: bid,
-                request: request,
-                packet: packet
+                bid: bid
             })
         );
 

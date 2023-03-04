@@ -126,12 +126,18 @@ library DataTypes {
         uint256 amount;
     }
 
-    struct AuctionBidParams {
+    struct CreateAuctionParams {
         address caller;
         uint256 loanId;
         uint256 bid;
         bytes32 request;
         Trustus.TrustusPacket packet;
+    }
+
+    struct AuctionBidParams {
+        address caller;
+        uint256 loanId;
+        uint256 bid;
     }
 
     struct ClaimLiquidationParams {

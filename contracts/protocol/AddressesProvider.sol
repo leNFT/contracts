@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 
+/// @title AddressesProvider
+/// @notice This contract is responsible for storing and providing all the protocol contract addresses
 contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _lendingMarket;
     address private _debtToken;

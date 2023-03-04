@@ -194,7 +194,7 @@ library ValidationLogic {
     /// @param params The liquidation params
     function validateCreateLiquidationAuction(
         IAddressesProvider addressesProvider,
-        DataTypes.AuctionBidParams memory params
+        DataTypes.CreateAuctionParams memory params
     ) external view {
         //Require the loan exists
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());

@@ -29,7 +29,7 @@ library LiquidationLogic {
     /// @param params A struct with the parameters of the liquidate function
     function createLiquidationAuction(
         IAddressesProvider addressesProvider,
-        DataTypes.AuctionBidParams memory params
+        DataTypes.CreateAuctionParams memory params
     ) external {
         // Verify if liquidation conditions are met
         ValidationLogic.validateCreateLiquidationAuction(
@@ -42,9 +42,6 @@ library LiquidationLogic {
             ILoanCenter(addressesProvider.getLoanCenter())
         ).getLoan(params.loanId);
 
-        // Get the address of this asset's pool
-        address poolAsset = IERC4626(loanData.pool).asset();
-
         // Add auction to the loan
         ILoanCenter(addressesProvider.getLoanCenter()).auctionLoan(
             params.loanId,
@@ -52,8 +49,18 @@ library LiquidationLogic {
             params.bid
         );
 
+        console.log("  params.caller", params.caller);
+        console.log("  params.bid", params.bid);
+        console.log("asset", IERC4626(loanData.pool).asset());
+        console.log(
+            "callet balance",
+            IERC20Upgradeable(IERC4626(loanData.pool).asset()).balanceOf(
+                params.caller
+            )
+        );
+
         // Get the payment from the bidder
-        IERC20Upgradeable(poolAsset).safeTransferFrom(
+        IERC20Upgradeable(IERC4626(loanData.pool).asset()).safeTransferFrom(
             params.caller,
             address(this),
             params.bid
