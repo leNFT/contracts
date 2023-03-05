@@ -54,7 +54,10 @@ contract LendingMarket is
         _disableInitializers();
     }
 
-    // Initialize the market
+    /// @notice Initialize the LendingMarket contract
+    /// @param addressesProvider Address of the addresses provider contract
+    /// @param tvlSafeguard The TVL safeguard for the lending pools
+    /// @param defaultLendingPoolConfig The default lending pool configuration
     function initialize(
         IAddressesProvider addressesProvider,
         uint256 tvlSafeguard,
@@ -146,6 +149,10 @@ contract LendingMarket is
         emit CreateLiquidationAuction(_msgSender(), loanId, bid);
     }
 
+    /// @notice Bid on a liquidation auction
+    /// @dev Needs to approve WETH transfers from Market address
+    /// @param loanId The ID of the loan to be paid
+    /// @param bid The bid amount
     function bidLiquidationAuction(
         uint256 loanId,
         uint256 bid
@@ -162,6 +169,8 @@ contract LendingMarket is
         emit BidLiquidationAuction(_msgSender(), loanId, bid);
     }
 
+    /// @notice Claim the collateral of a liquidated loan
+    /// @param loanId The ID of the loan to be claimmed
     function claimLiquidation(uint256 loanId) external override {
         LiquidationLogic.claimLiquidation(
             _addressProvider,
@@ -170,6 +179,10 @@ contract LendingMarket is
         emit ClaimLiquidation(_msgSender(), loanId);
     }
 
+    /// @notice Set the lending pool address for a certain collection and asset
+    /// @param collection The collection using this lending vault
+    /// @param asset The address of the asset the lending vault controls
+    /// @param lendingPool The address of the lending pool
     function _setLendingPool(
         address collection,
         address asset,

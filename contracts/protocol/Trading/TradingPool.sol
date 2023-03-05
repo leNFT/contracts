@@ -154,6 +154,7 @@ contract TradingPool is
 
     /// @notice Adds liquidity to the trading pool.
     /// @dev At least one of nftIds or tokenAmount must be greater than zero.
+    /// @dev The caller must approve the Trading Pool contract to transfer the NFTs and ERC20 tokens.
     /// @param receiver The recipient of the liquidity pool tokens.
     /// @param nftIds The IDs of the NFTs being deposited.
     /// @param tokenAmount The amount of the ERC20 token being deposited.
@@ -183,7 +184,7 @@ contract TradingPool is
         // Require that the user is depositing something
         require(tokenAmount > 0 || nftIds.length > 0, "Deposit can't be empty");
 
-        // require that the curve is a valid curve
+        // Require that the curve conforms to the curve interface
         require(
             IERC165(curve).supportsInterface(type(IPricingCurve).interfaceId),
             "Curve must be a valid curve contract"
@@ -345,14 +346,10 @@ contract TradingPool is
             _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
                 .priceAfterBuy(lp.spotPrice, lp.delta);
 
-            console.log("NFT To LP", _nftToLp[nftIds[i]].liquidityPair);
-
             // Delete NFT from tracker
             delete _nftToLp[nftIds[i]];
 
             // Send NFT to user
-            console.log("Sending NFT to user", onBehalfOf);
-            console.log("NFT ID", nftIds[i]);
             IERC721(_nft).safeTransferFrom(
                 address(this),
                 onBehalfOf,
@@ -362,7 +359,10 @@ contract TradingPool is
 
         finalPrice = priceQuote + totalFee;
 
-        require(finalPrice <= maximumPrice, "Price higher than maximum price");
+        require(
+            finalPrice <= maximumPrice,
+            "Price higher than maximum price set by caller"
+        );
 
         // Get tokens from user
         IERC20(_token).safeTransferFrom(
@@ -459,7 +459,10 @@ contract TradingPool is
 
         finalPrice = priceQuote - totalFee;
 
-        require(finalPrice >= minimumPrice, "Price lower than minimum price");
+        require(
+            finalPrice >= minimumPrice,
+            "Price lower than minimum price set by caller"
+        );
 
         IERC20(_token).safeTransfer(_msgSender(), finalPrice);
 

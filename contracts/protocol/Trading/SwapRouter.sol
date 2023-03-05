@@ -48,7 +48,7 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
         // Pools need to be different
         require(
             address(buyPool) != address(sellPool),
-            "Pools need to be different."
+            "Pools can't be the same."
         );
         // Pools need to have the same underlying token
         require(

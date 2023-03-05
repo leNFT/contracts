@@ -340,7 +340,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         DataTypes.Point memory oldGaugeVoteWeight;
         DataTypes.Point memory newGaugeVoteWeight;
 
-        // Get the updated ne w gauge vote weight
+        // Get the updated gauge vote weight
         newGaugeVoteWeight.bias =
             ((userLastPoint.bias -
                 (userLastPoint.slope *

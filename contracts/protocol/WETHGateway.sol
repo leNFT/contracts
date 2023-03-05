@@ -23,9 +23,12 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     IAddressesProvider private _addressProvider;
     IWETH private _weth;
 
-    constructor(IAddressesProvider addressesProvider, address weth) {
+    /// @notice Constructor for the WETHGateway contract
+    /// @param addressesProvider The address of the AddressesProvider contract
+    /// @param weth The address of the Wrapped ETH contract
+    constructor(IAddressesProvider addressesProvider, IWETH weth) {
         _addressProvider = addressesProvider;
-        _weth = IWETH(weth);
+        _weth = weth;
     }
 
     /// @notice Deposit ETH in a wETH lending pool

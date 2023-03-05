@@ -84,15 +84,14 @@ contract FeeDistributor is
             "Funds are claimable by users"
         );
         // THere needs to be funds to salvage
-        require(_epochFees[token][epoch] > 0, "No funds left to salvage");
+        require(_epochFees[token][epoch] > 0, "No funds to salvage");
 
         // Tranfer rewards to current epoch
         _epochFees[token][epoch] += _epochFees[token][
             votingEscrow.epoch(block.timestamp)
         ];
 
-        // Reset epoch fees so they can't be salvaged again
-        _epochFees[token][epoch] = 0;
+        delete _epochFees[token][epoch];
     }
 
     /// @notice Returns the next claimable epoch for a user
@@ -110,7 +109,6 @@ contract FeeDistributor is
     /// @param token Token address
     /// @return uint256 Amount of rewards claimed
     function claim(address token) external override returns (uint256) {
-        console.log("claiming");
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         );
@@ -161,15 +159,6 @@ contract FeeDistributor is
                 ) {
                     // Sum claimable amount if its the last activity
                     if (votingEscrow.totalSupplyAt(nextClaimableEpoch) > 0) {
-                        console.log("nextClaimableEpoch", nextClaimableEpoch);
-                        console.log(
-                            "nextClaimableEpochTimestamp",
-                            nextClaimableEpochTimestamp
-                        );
-                        console.log(
-                            "userHistoryPoint.timestamp",
-                            userHistoryPoint.timestamp
-                        );
                         amountToClaim +=
                             (_epochFees[token][nextClaimableEpoch] *
                                 (userHistoryPoint.bias -
@@ -191,7 +180,6 @@ contract FeeDistributor is
                             )
                             .timestamp
                     );
-                    console.log("nextPointEpoch", nextPointEpoch);
                     if (
                         nextPointEpoch ==
                         votingEscrow.epoch(userHistoryPoint.timestamp)
@@ -219,7 +207,6 @@ contract FeeDistributor is
                             nextPointEpoch + 1 ==
                             _userNextClaimableEpoch[token][msg.sender]
                         ) {
-                            console.log("incrementing");
                             _userHistoryPointer[token][msg.sender]++;
                         }
                     }

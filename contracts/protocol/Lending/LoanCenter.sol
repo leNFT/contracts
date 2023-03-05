@@ -111,6 +111,7 @@ contract LoanCenter is
             _nftToLoanId[nftAddress][nftTokenIds[i]] = _loansCount;
         }
 
+        // Increment the loans count
         _loansCount++;
 
         return _loansCount - 1;
@@ -357,20 +358,6 @@ contract LoanCenter is
         );
 
         _loans[loanId].amount = newAmount;
-    }
-
-    /// @notice Gets the total boost for a loan.
-    /// @param loanId The ID of the loan to get the boost for.
-    /// @return The total boost for the loan.
-    function getLoanBoost(
-        uint256 loanId
-    ) external view override returns (uint256) {
-        require(
-            _loans[loanId].state != DataTypes.LoanState.None,
-            "Loan does not exist."
-        );
-
-        return _loans[loanId].boost;
     }
 
     /// @notice Gets the max collaterization price for a collection.

@@ -92,9 +92,9 @@ contract GenesisNFT is
         uint256 minLocktime,
         address payable devAddress
     ) external initializer {
+        __ERC721_init(name, symbol);
         __ERC721Enumerable_init();
         __Ownable_init();
-        __ERC721_init(name, symbol);
         _addressProvider = addressProvider;
         _cap = cap;
         _price = price;
@@ -104,7 +104,7 @@ contract GenesisNFT is
         _minLocktime = minLocktime;
         _devAddress = devAddress;
 
-        // Start from token_id 1 to reserve 0
+        // Start from token_id 1 in order to reserve '0' for the null token
         _tokenIdCounter.increment();
     }
 
@@ -248,9 +248,6 @@ contract GenesisNFT is
         uint256 lpAmount = ICurvePool(_tradingPool).add_liquidity{
             value: ethAmount
         }([ethAmount, tokenAmount], 0);
-        console.log("LP amount: %s", lpAmount);
-        console.log("Token amount: %s", tokenAmount);
-        console.log("Eth amount: %s", ethAmount);
 
         // Approve the voting escrow to spend LE tokens so they can be locked
         IERC20Upgradeable(_addressProvider.getNativeToken()).approve(
@@ -404,6 +401,6 @@ contract GenesisNFT is
         return ERC721EnumerableUpgradeable.supportsInterface(interfaceId);
     }
 
-    // Function to receive Ether. msg.data must be empty
+    // Function to receive Ether
     receive() external payable {}
 }

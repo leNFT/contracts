@@ -22,6 +22,8 @@ import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
 
+/// @title VotingEscrow
+/// @notice Provides functionality for locking LE tokens for a specified period of time and is the center of the epoch logic
 contract VotingEscrow is
     Initializable,
     ContextUpgradeable,
@@ -87,7 +89,7 @@ contract VotingEscrow is
     function epoch(uint256 timestamp) public view returns (uint256) {
         require(
             timestamp > _deployTimestamp,
-            "Timestamp before contract deployment"
+            "Timestamp prior to contract deployment"
         );
         return (timestamp / EPOCH_PERIOD) - (_deployTimestamp / EPOCH_PERIOD);
     }
@@ -99,7 +101,7 @@ contract VotingEscrow is
         return (_deployTimestamp / EPOCH_PERIOD + _epoch) * EPOCH_PERIOD;
     }
 
-    /// @notice Updates the total weight history with the current weight.
+    /// @notice Updates the total weight history array and checkpoint with the current weight.
     function writeTotalWeightHistory() public {
         // Update last saved weight checkpoint and record weight for epochs
         // Will break if is not used for 128 epochs

@@ -75,8 +75,6 @@ contract TradingGauge is IGauge, IERC721Receiver {
             return 0;
         }
 
-        console.log("workingBalanceHistoryLength", workingBalanceHistoryLength);
-
         // Set the next claimable epoch if it's the first time the user claims
         if (_userNextClaimableEpoch[msg.sender] == 0) {
             _userNextClaimableEpoch[msg.sender] =
@@ -85,16 +83,6 @@ contract TradingGauge is IGauge, IERC721Receiver {
                 ) +
                 1;
         }
-
-        console.log(
-            "userNextClaimedEpoch",
-            _userNextClaimableEpoch[msg.sender]
-        );
-        console.log(
-            "votingEscrow.epoch(block.timestamp)calculateLpValue",
-            votingEscrow.epoch(block.timestamp)
-        );
-
         // Iterate over a max of 50 epochs and/or user epochs
         uint256 amountToClaim;
         uint256 nextClaimedEpoch;
@@ -111,21 +99,11 @@ contract TradingGauge is IGauge, IERC721Receiver {
                     memory workingBalance = _workingBalanceHistory[msg.sender][
                         _workingBalancePointer[msg.sender]
                     ];
-
-                console.log(
-                    "  _workingBalancePointer[msg.sender]",
-                    _workingBalancePointer[msg.sender]
-                );
-
                 // Check if the user entire balance history has been iterated
                 if (
                     _workingBalancePointer[msg.sender] ==
                     workingBalanceHistoryLength - 1
                 ) {
-                    console.log(
-                        "Claiming last working balance",
-                        _workingBalancePointer[msg.sender]
-                    );
                     if (_workingSupplyHistory[nextClaimedEpoch] > 0) {
                         amountToClaim +=
                             (gaugeController.getGaugeRewards(

@@ -105,7 +105,7 @@ contract TradingPoolFactory is
         );
         require(
             _pools[nft][token] == address(0),
-            "Trading Pool already exists"
+            "Trading Pool for pair already exists"
         );
         ITradingPool newTradingPool = new TradingPool(
             _addressProvider,

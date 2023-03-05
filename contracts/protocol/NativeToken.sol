@@ -59,18 +59,18 @@ contract NativeToken is
     /// @param account The account to receive the tokens
     /// @param amount The amount of tokens to mint
     function mint(address account, uint256 amount) external {
-        _mintTokens(account, amount);
+        _mint(account, amount);
     }
 
     /// @notice Internal function to mint tokens and assign them to the specified account
     /// @param account The account to receive the tokens
     /// @param amount The amount of tokens to mint
-    function _mintTokens(address account, uint256 amount) internal {
+    function _mint(address account, uint256 amount) internal override {
         require(
             ERC20Upgradeable.totalSupply() + amount <= getCap(),
             "NativeToken: cap exceeded"
         );
-        _mint(account, amount);
+        ERC20Upgradeable._mint(account, amount);
     }
 
     /// @notice Mints genesis tokens and assigns them to the Genesis NFT contract
@@ -81,7 +81,7 @@ contract NativeToken is
             _msgSender() == _addressProvider.getGenesisNFT(),
             "Genesis tokens can only be minted by the Genesis NFT contract"
         );
-        _mintTokens(_addressProvider.getGenesisNFT(), amount);
+        _mint(_addressProvider.getGenesisNFT(), amount);
     }
 
     /// @notice Burns the specified amount of tokens for the Genesis contract.
@@ -109,6 +109,6 @@ contract NativeToken is
             ),
             "Gauge rewards can only be minted by an approved gauge"
         );
-        _mintTokens(receiver, amount);
+        _mint(receiver, amount);
     }
 }

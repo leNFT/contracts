@@ -18,12 +18,12 @@ import {ValidationLogic} from "../../libraries/logic/ValidationLogic.sol";
 /// @dev The LendingPool contract uses the ERC4626 contract to track the shares in a liquidity pool held by users
 contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     IAddressesProvider private _addressProvider;
-    IERC20 internal _asset;
-    uint256 internal _debt;
-    uint256 internal _borrowRate;
-    uint256 internal _cumulativeDebtBorrowRate;
-    bool internal _paused;
-    ConfigTypes.LendingPoolConfig internal _lendingPoolConfig;
+    IERC20 private _asset;
+    uint256 private _debt;
+    uint256 private _borrowRate;
+    uint256 private _cumulativeDebtBorrowRate;
+    bool private _paused;
+    ConfigTypes.LendingPoolConfig private _lendingPoolConfig;
 
     using SafeERC20 for IERC20;
 

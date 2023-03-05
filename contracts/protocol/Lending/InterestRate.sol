@@ -73,18 +73,6 @@ contract InterestRate is IInterestRate {
             _baseBorrowRate;
     }
 
-    /// @notice Gets the low slope
-    /// @return The low slope
-    function getLowSlope() external view returns (uint256) {
-        return _lowSlope;
-    }
-
-    /// @notice Gets the high slope
-    /// @return The high slope
-    function getHighSlope() external view returns (uint256) {
-        return _highSlope;
-    }
-
     /// @notice Calculates the utilization rate based on the assets and debt
     /// @param assets The total assets
     /// @param debt The total debt

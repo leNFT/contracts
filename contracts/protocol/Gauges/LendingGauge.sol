@@ -111,12 +111,6 @@ contract LendingGauge is IGauge {
         uint256 nextClaimedEpoch;
         for (uint256 i = 0; i < 50; i++) {
             nextClaimedEpoch = _userNextClaimableEpoch[msg.sender];
-            console.log(
-                "i = %s, nextClaimedEpoch = %s , votingEscrow.epoch(block.timestamp) = %s",
-                i,
-                nextClaimedEpoch,
-                votingEscrow.epoch(block.timestamp)
-            );
             // Break if the next claimable epoch is the one we are in
             if (nextClaimedEpoch >= votingEscrow.epoch(block.timestamp)) {
                 break;
