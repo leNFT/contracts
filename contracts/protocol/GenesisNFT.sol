@@ -5,7 +5,7 @@ import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {ILendingMarket} from "../interfaces/ILendingMarket.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
 import {IGenesisNFT} from "../interfaces/IGenesisNFT.sol";
-import {ICurvePool} from "../interfaces/ICurvePool.sol";
+import {IBalancerPool} from "../interfaces/IBalancerPool.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
@@ -45,7 +45,8 @@ contract GenesisNFT is
     uint256 _maxLocktime;
     uint256 _minLocktime;
     uint256 _nativeTokenFactor;
-    address _tradingPool;
+    DataTypes.BalancerDetails _balancerDetails;
+    address _balancerPoolId;
     address payable _devAddress;
     uint256 _ltvBoost;
     CountersUpgradeable.Counter private _tokenIdCounter;
@@ -182,10 +183,12 @@ contract GenesisNFT is
                 _nativeTokenFactor) * 1e18;
     }
 
-    /// @notice Sets the address of the trading pool
-    /// @param pool Address of the trading pool
-    function setTradingPool(address pool) external onlyOwner {
-        _tradingPool = pool;
+    /// @notice Sets the details of the balancer subsidized trading pool
+    /// @param balancerDetails ID of the trading pool
+    function setBalancerDetails(
+        DataTypes.BalancerDetails balancerDetails
+    ) external onlyOwner {
+        _balancerDetails = balancerDetails;
     }
 
     /// @notice Returns the number of tokens that have been minted
@@ -206,7 +209,11 @@ contract GenesisNFT is
         require(locktime <= _maxLocktime, "Locktime is higher than limit");
 
         // Make sure the genesis incentived pool is set
-        require(_tradingPool != address(0), "Incentivized pool is not set.");
+        require(
+            _balancerDetails.poolId != bytes32(0) &&
+                _balancerDetails.poolAddress != address(0),
+            "Balancer Details not set."
+        );
 
         // Make sure there are enough tokens to mint
         require(
@@ -222,7 +229,6 @@ contract GenesisNFT is
         uint256 ethAmount = (2 * buyPrice) / 3;
 
         // Get the amount of LE tokens to pair with the ETH
-        uint256[2] memory balances = ICurvePool(_tradingPool).get_balances();
         uint256 tokenAmount;
 
         // Find the amount of LE tokens to pair with the ETH
@@ -245,7 +251,7 @@ contract GenesisNFT is
         );
 
         // Deposit tokens to the pool and the LP amount
-        uint256 lpAmount = ICurvePool(_tradingPool).add_liquidity{
+        uint256 lpAmount = IBalancerPool(_tradingPool).add_liquidity{
             value: ethAmount
         }([ethAmount, tokenAmount], 0);
 
@@ -336,7 +342,7 @@ contract GenesisNFT is
         console.log("_tradingPool", _tradingPool);
         console.log("lpAmountSum", lpAmountSum);
 
-        uint256 withdrawAmount = ICurvePool(_tradingPool)
+        uint256 withdrawAmount = IBalancerPool(_tradingPool)
             .remove_liquidity_one_coin(lpAmountSum, 1, 0);
 
         console.log("withdrawAmount", withdrawAmount);
@@ -365,7 +371,8 @@ contract GenesisNFT is
             lpAmountSum += _mintDetails[tokenIds[i]].lpAmount;
         }
         return
-            ICurvePool(_tradingPool).calc_withdraw_one_coin(lpAmountSum, 1) / 2;
+            IBalancerPool(_tradingPool).calc_withdraw_one_coin(lpAmountSum, 1) /
+            2;
     }
 
     function _beforeTokenTransfer(

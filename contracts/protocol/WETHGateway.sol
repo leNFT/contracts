@@ -31,6 +31,12 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         _weth = weth;
     }
 
+    /// @notice Returns the canonical WETH address
+    /// @return The WETH address
+    function WETH() external view returns (address) {
+        return address(_weth);
+    }
+
     /// @notice Deposit ETH in a wETH lending pool
     /// @param lendingPool Lending pool to deposit intoto
     function depositLendingPool(

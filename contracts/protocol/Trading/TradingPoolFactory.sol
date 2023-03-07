@@ -114,15 +114,15 @@ contract TradingPoolFactory is
             nft,
             string.concat(
                 "leNFT Trading Pool ",
-                IERC20Metadata(token).symbol(),
+                IERC721Metadata(nft).symbol(),
                 " - ",
-                IERC721Metadata(nft).symbol()
+                IERC20Metadata(token).symbol()
             ),
             string.concat(
                 "leT",
-                IERC20Metadata(token).symbol(),
+                IERC721Metadata(nft).symbol(),
                 "-",
-                IERC721Metadata(nft).symbol()
+                IERC20Metadata(token).symbol()
             )
         );
 

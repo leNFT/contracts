@@ -150,4 +150,9 @@ library DataTypes {
         uint256 cliff;
         uint256 amount;
     }
+
+    struct BalancerDetails {
+        bytes32 poolId;
+        address vault;
+    }
 }

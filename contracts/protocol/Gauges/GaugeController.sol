@@ -33,13 +33,14 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     // Slope changes for total weight
     mapping(uint256 => uint256) private _totalWeightSlopeChanges;
     // Uset vote ratio used by each user (%), smallest tick is 0.01%
-    mapping(address => uint256) _userVoteRatio;
+    mapping(address => uint256) private _userVoteRatio;
     // User vote ratio used by each user at each gauge (%), smallest tick is 0.01%
-    mapping(address => mapping(address => uint256)) _userGaugeVoteRatio;
+    mapping(address => mapping(address => uint256)) private _userGaugeVoteRatio;
     // Weight vote power each user has in each gauge
-    mapping(address => mapping(address => DataTypes.Point)) _userGaugeVoteWeight;
-    mapping(address => bool) _isGauge;
-    mapping(address => address) _liquidityPoolToGauge;
+    mapping(address => mapping(address => DataTypes.Point))
+        private _userGaugeVoteWeight;
+    mapping(address => bool) private _isGauge;
+    mapping(address => address) private _liquidityPoolToGauge;
     uint256 private _initialRewards;
 
     /// @custom:oz-upgrades-unsafe-allow constructor

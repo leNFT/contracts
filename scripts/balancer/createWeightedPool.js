@@ -5,6 +5,8 @@
 // Runtime Environment's members available in the global scope.
 
 const { ethers } = require("hardhat");
+const weightedPoolFactoryABI = require("./weightedPoolFactoryABI.json");
+const vaultABI = require("./vaultABI.json");
 
 // const hre = require("hardhat");
 require("dotenv").config();
@@ -16,46 +18,49 @@ async function main() {
   // If this script is run directly using `node` you may want to call compile
   // manually to make sure everything is compiled
   // await hre.run('compile');
-  var contractAddresses = require("../../lenft-interface/contractAddresses.json");
+  var contractAddresses = require("../../../lenft-interface/contractAddresses.json");
   let chainID = hre.network.config.chainId;
   console.log("chainID: ", chainID);
   var addresses = contractAddresses[chainID.toString(16)];
+  const poolFactoryAddress = "0x26575A44755E0aaa969FDda1E4291Df22C5624Ea";
+  const vaultAddress = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
 
-  const Pool = await ethers.getContractFactory("CurvePool");
-  console.log("Deploying CurvePool...");
-  const pool = await Pool.deploy();
-  await pool.deployed();
-  console.log("Pool address: ", pool.address);
-
-  // Init pool
-  const initPoolTx = await pool.initialize(
-    "leNFT",
-    "LE",
-    [
-      "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", // Burn address
-      addresses.NativeToken,
-      ethers.constants.AddressZero,
-      ethers.constants.AddressZero,
-    ],
-    [ethers.utils.parseUnits("1", 18), ethers.utils.parseUnits("1", 18), 0, 0],
-    400000,
-    300
+  const factoryContract = await ethers.getContractAt(
+    weightedPoolFactoryABI,
+    poolFactoryAddress
   );
-  await initPoolTx.wait();
 
-  console.log("Initialized pool");
+  console.log("Deploying Balancer pool...");
+  console.log("LE address: ", addresses.NativeToken);
+  console.log("WETH address: ", addresses.ETH.address);
+  const createTx = await factoryContract.create(
+    "Balancer Pool 80 LE 20 WETH",
+    "B-80LE-20WETH",
+    [addresses.ETH.address, addresses.NativeToken],
+    ["200000000000000000", "800000000000000000"],
+    [ethers.constants.AddressZero, ethers.constants.AddressZero],
+    "2500000000000000",
+    "0xba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1b"
+  );
+  const createTxReceipt = await createTx.wait();
+  const poolId = createTxReceipt.logs[1].topics[1];
+
+  console.log("BalancerPool deployed with ID: ", poolId);
 
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
   const genesisNFT = GenesisNFT.attach(addresses.GenesisNFT);
 
   // Set trusted price source
-  const setIncentivizedPoolTx = await genesisNFT.setTradingPool(pool.address);
-  await setIncentivizedPoolTx.wait();
-  console.log("Set " + pool.address + " as genesis incentivized pool.");
+  const setBalancerDetailsTx = await genesisNFT.setBalancerDetails({
+    poolId: poolId,
+    vault: vaultAddress,
+  });
+  await setBalancerDetailsTx.wait();
+  console.log("Set " + poolId + " as genesis incentivized pool.");
 
-  // Write pool address to file
+  // Write pool id to file
   const fs = require("fs");
-  addresses.CurvePool = pool.address;
+  addresses.BalancerPool = poolAddress;
   contractAddresses[chainID.toString(16)] = addresses;
   fs.writeFileSync(
     "../lenft-interface/contractAddresses.json",
