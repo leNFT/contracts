@@ -5,11 +5,9 @@ import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {ILendingMarket} from "../interfaces/ILendingMarket.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
 import {IGenesisNFT} from "../interfaces/IGenesisNFT.sol";
-import {IBalancerPool} from "../interfaces/IBalancerPool.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
-import {IWETH} from "../interfaces/IWETH.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
@@ -22,6 +20,10 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {IVault} from "@balancer-labs/v2-interfaces/contracts/vault/IVault.sol";
+import {WeightedPoolUserData} from "@balancer-labs/v2-interfaces/contracts/pool-weighted/WeightedPoolUserData.sol";
+import {IBalancerQueries} from "@balancer-labs/v2-interfaces/contracts/standalone-utils/IBalancerQueries.sol";
+import "@balancer-labs/v2-solidity-utils/contracts/helpers/ERC20Helpers.sol";
 import "hardhat/console.sol";
 
 /// @title GenesisNFT
@@ -36,6 +38,7 @@ contract GenesisNFT is
     IGenesisNFT,
     ReentrancyGuardUpgradeable
 {
+    uint256 constant LP_LE_AMOUNT = 1000e18;
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -184,9 +187,9 @@ contract GenesisNFT is
     }
 
     /// @notice Sets the details of the balancer subsidized trading pool
-    /// @param balancerDetails ID of the trading pool
+    /// @param balancerDetails Addresses of the balancer contracts
     function setBalancerDetails(
-        DataTypes.BalancerDetails balancerDetails
+        DataTypes.BalancerDetails calldata balancerDetails
     ) external onlyOwner {
         _balancerDetails = balancerDetails;
     }
@@ -211,7 +214,7 @@ contract GenesisNFT is
         // Make sure the genesis incentived pool is set
         require(
             _balancerDetails.poolId != bytes32(0) &&
-                _balancerDetails.poolAddress != address(0),
+                _balancerDetails.pool != address(0),
             "Balancer Details not set."
         );
 
@@ -221,42 +224,92 @@ contract GenesisNFT is
             "Maximum cap exceeded"
         );
 
+        // Get the native token address to save on gas
+        address nativeToken = _addressProvider.getNativeToken();
+
         // Make sure the user sent enough ETH
         uint256 buyPrice = _price * uris.length;
         require(msg.value == buyPrice, "Tx value is not equal to price");
 
         // Get the amount of ETH to deposit to the pool
         uint256 ethAmount = (2 * buyPrice) / 3;
-
-        // Get the amount of LE tokens to pair with the ETH
-        uint256 tokenAmount;
-
-        // Find the amount of LE tokens to pair with the ETH
-        if (balances[0] == 0) {
-            tokenAmount = ethAmount * 20000;
-        } else {
-            tokenAmount = (ethAmount * balances[1]) / balances[0];
-        }
+        uint256 leAmount = LP_LE_AMOUNT * uris.length;
 
         // Mint LE tokens
         uint256 totalRewards = getNativeTokenReward(uris.length, locktime);
-        INativeToken(_addressProvider.getNativeToken()).mintGenesisTokens(
-            tokenAmount + totalRewards
+        INativeToken(nativeToken).mintGenesisTokens(leAmount + totalRewards);
+
+        // Mint WETH tokens
+        IWETH(_addressProvider.getWETH()).deposit{value: ethAmount}();
+
+        // Approve the vault to spend LE & WETH tokens
+        IERC20Upgradeable(nativeToken).approve(
+            _balancerDetails.vault,
+            leAmount
+        );
+        IERC20Upgradeable(_addressProvider.getWETH()).approve(
+            _balancerDetails.vault,
+            ethAmount
         );
 
-        // Approve the pool to spend LE tokens
-        IERC20Upgradeable(_addressProvider.getNativeToken()).approve(
-            _tradingPool,
-            tokenAmount
-        );
+        // Deposit tokens to the pool and get the LP amount
+        uint256 oldLPBalance = IERC20Upgradeable(_balancerDetails.pool)
+            .balanceOf(address(this));
+        console.log("oldLPBalance", oldLPBalance);
 
-        // Deposit tokens to the pool and the LP amount
-        uint256 lpAmount = IBalancerPool(_tradingPool).add_liquidity{
-            value: ethAmount
-        }([ethAmount, tokenAmount], 0);
+        (IERC20[] memory tokens, , ) = IVault(_balancerDetails.vault)
+            .getPoolTokens(_balancerDetails.poolId);
+
+        uint256[] memory maxAmountsIn = new uint256[](2);
+        uint256[] memory amountsToEncode = new uint256[](2);
+
+        amountsToEncode[
+            _findTokenIndex(tokens, IERC20(nativeToken))
+        ] = leAmount;
+        amountsToEncode[
+            _findTokenIndex(tokens, IERC20(_addressProvider.getWETH()))
+        ] = ethAmount;
+        maxAmountsIn[0] = type(uint256).max;
+        maxAmountsIn[1] = type(uint256).max;
+        bytes memory userData;
+
+        if (IERC20Upgradeable(_balancerDetails.pool).totalSupply() == 0) {
+            console.log("Initializing pool");
+            userData = abi.encode(
+                WeightedPoolUserData.JoinKind.INIT,
+                amountsToEncode
+            );
+        } else {
+            userData = abi.encode(
+                WeightedPoolUserData.JoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
+                amountsToEncode,
+                "0"
+            );
+        }
+        IVault.JoinPoolRequest memory request = IVault.JoinPoolRequest({
+            assets: _asIAsset(tokens),
+            maxAmountsIn: maxAmountsIn,
+            userData: userData,
+            fromInternalBalance: false
+        });
+
+        console.log("Joining pool", _balancerDetails.pool);
+        // Call the Vault to join the pool
+        IVault(_balancerDetails.vault).joinPool(
+            _balancerDetails.poolId,
+            address(this),
+            address(this),
+            request
+        );
+        console.log("Joined pool");
+
+        uint256 lpAmount = IERC20Upgradeable(_balancerDetails.pool).balanceOf(
+            address(this)
+        ) - oldLPBalance;
+        console.log("lpAmount", lpAmount);
 
         // Approve the voting escrow to spend LE tokens so they can be locked
-        IERC20Upgradeable(_addressProvider.getNativeToken()).approve(
+        IERC20Upgradeable(nativeToken).approve(
             _addressProvider.getVotingEscrow(),
             totalRewards
         );
@@ -337,42 +390,102 @@ contract GenesisNFT is
             _burn(tokenIds[i]);
             emit Burn(tokenIds[i]);
         }
+        // Get the native token address to save on gas
+        address nativeToken = _addressProvider.getNativeToken();
 
         // Withdraw LP tokens from the pool
-        console.log("_tradingPool", _tradingPool);
-        console.log("lpAmountSum", lpAmountSum);
+        (IERC20[] memory tokens, , ) = IVault(_balancerDetails.vault)
+            .getPoolTokens(_balancerDetails.poolId);
+        uint256 oldLEBalance = IERC20Upgradeable(nativeToken).balanceOf(
+            address(this)
+        );
 
-        uint256 withdrawAmount = IBalancerPool(_tradingPool)
-            .remove_liquidity_one_coin(lpAmountSum, 1, 0);
+        uint256[] memory minAmountsOut = new uint256[](2);
+        IVault.ExitPoolRequest memory request = IVault.ExitPoolRequest({
+            assets: _asIAsset(tokens),
+            minAmountsOut: minAmountsOut,
+            userData: abi.encode(
+                WeightedPoolUserData.ExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
+                lpAmountSum,
+                _findTokenIndex(tokens, IERC20(nativeToken))
+            ),
+            toInternalBalance: false
+        });
 
+        // Call the Vault to exit the pool
+        IVault(_balancerDetails.vault).exitPool(
+            _balancerDetails.poolId,
+            address(this),
+            payable(this),
+            request
+        );
+
+        uint256 withdrawAmount = IERC20Upgradeable(nativeToken).balanceOf(
+            address(this)
+        ) - oldLEBalance;
         console.log("withdrawAmount", withdrawAmount);
-
-        // Burn half of the received LE tokens
-        INativeToken(_addressProvider.getNativeToken()).burnGenesisTokens(
-            withdrawAmount / 2
-        );
-
-        // Send the rest of the LE tokens to the owner of the Genesis NFT
-        IERC20Upgradeable(_addressProvider.getNativeToken()).transfer(
-            _msgSender(),
-            withdrawAmount / 2
-        );
+        uint256 burnTokens = LP_LE_AMOUNT * tokenIds.length;
+        console.log("burnTokens", burnTokens);
+        if (withdrawAmount > burnTokens) {
+            // Send the rest of the LE tokens to the owner of the Genesis NFT
+            IERC20Upgradeable(nativeToken).transfer(
+                _msgSender(),
+                withdrawAmount - burnTokens
+            );
+        } else {
+            burnTokens = withdrawAmount;
+        }
+        INativeToken(nativeToken).burnGenesisTokens(burnTokens);
     }
 
     /// @notice Get the current value of the LP tokens locked in the contract
     /// @param tokenIds The tokens ids of the genesis NFTs associated with the LP tokens
     /// @return The value of the LP tokens in wei
-    function getLPValue(
+    function getLPValueInLE(
         uint256[] calldata tokenIds
-    ) external view returns (uint256) {
+    ) external returns (uint256) {
         uint256 lpAmountSum = 0;
+        IVault vault = IVault(_balancerDetails.vault);
         for (uint256 i = 0; i < tokenIds.length; i++) {
             // Add the LP amount to the sum
             lpAmountSum += _mintDetails[tokenIds[i]].lpAmount;
         }
-        return
-            IBalancerPool(_tradingPool).calc_withdraw_one_coin(lpAmountSum, 1) /
-            2;
+
+        (IERC20[] memory tokens, , ) = vault.getPoolTokens(
+            _balancerDetails.poolId
+        );
+        uint256 leIndex = _findTokenIndex(
+            tokens,
+            IERC20(_addressProvider.getNativeToken())
+        );
+        uint256[] memory minAmountsOut = new uint256[](2);
+        IVault.ExitPoolRequest memory request = IVault.ExitPoolRequest({
+            assets: _asIAsset(tokens),
+            minAmountsOut: minAmountsOut,
+            userData: abi.encode(
+                WeightedPoolUserData.ExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
+                lpAmountSum,
+                leIndex
+            ),
+            toInternalBalance: false
+        });
+
+        // Calculate the value of the LP tokens in LE tokens
+        (, uint256[] memory amountsOut) = IBalancerQueries(
+            _balancerDetails.queries
+        ).queryExit(
+                _balancerDetails.poolId,
+                address(this),
+                address(this),
+                request
+            );
+
+        uint256 burnTokens = LP_LE_AMOUNT * tokenIds.length;
+        if (amountsOut[leIndex] > burnTokens) {
+            return amountsOut[leIndex] - burnTokens;
+        }
+
+        return 0;
     }
 
     function _beforeTokenTransfer(

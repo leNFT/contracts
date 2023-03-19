@@ -6,7 +6,6 @@ import {PercentageMath} from "../math/PercentageMath.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
-import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";

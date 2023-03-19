@@ -78,6 +78,7 @@ contract LendingGauge is IGauge {
     }
 
     /// @notice Claims the gauge rewards for the user and updates the user's next claimable epoch
+    /// @dev Will give a maximum of 50 epochs worth of rewards
     /// @return The amount of gauge rewards claimed
     function claim() external returns (uint256) {
         _checkpoint(msg.sender);
@@ -201,12 +202,13 @@ contract LendingGauge is IGauge {
     /// @param user The address of the user.
     function _checkpoint(address user) internal {
         // Get user ve balance and total ve balance
-        IVotingEscrow votingEscrow = IVotingEscrow(
-            _addressProvider.getVotingEscrow()
-        );
+        address votingEscrow = _addressProvider.getVotingEscrow();
 
-        uint256 userVotingBalance = votingEscrow.balanceOf(user);
-        uint256 totalVotingSupply = votingEscrow.totalSupply();
+        // Make sure the voting escrow's total supply is up to date
+        IVotingEscrow(votingEscrow).writeTotalWeightHistory();
+
+        uint256 userVotingBalance = IERC20(votingEscrow).balanceOf(user);
+        uint256 totalVotingSupply = IERC20(votingEscrow).totalSupply();
         uint256 newAmount;
 
         // Save the total weight history

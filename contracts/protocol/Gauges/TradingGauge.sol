@@ -56,6 +56,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
     }
 
     /// @notice Calculates and returns the amount of rewards a user can claim and updates user's working balance history
+    /// @dev Will give a maximum of 50 epochs worth of rewards
     /// @return The amount of rewards the user can claim
     function claim() external returns (uint256) {
         _checkpoint(msg.sender);
@@ -160,7 +161,6 @@ contract TradingGauge is IGauge, IERC721Receiver {
     /// @dev This function will break if it is not used for 128 epochs.
     function writeTotalWeightHistory() public {
         // Update last saved weight checkpoint and record weight for epochs
-        // Will break if is not used for 128 epochs
         uint256 currentEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
             .epoch(block.timestamp);
         for (uint256 i = 0; i < 2 ** 7; i++) {
@@ -178,12 +178,13 @@ contract TradingGauge is IGauge, IERC721Receiver {
     /// @param user The address of the user whose working balance needs to be updated.
     function _checkpoint(address user) internal {
         // Get user ve balance and total ve balance
-        IVotingEscrow votingEscrow = IVotingEscrow(
-            _addressProvider.getVotingEscrow()
-        );
+        address votingEscrow = _addressProvider.getVotingEscrow();
 
-        uint256 userVotingBalance = votingEscrow.balanceOf(user);
-        uint256 totalVotingSupply = votingEscrow.totalSupply();
+        // Make sure the voting escrow's total supply is up to date
+        IVotingEscrow(votingEscrow).writeTotalWeightHistory();
+
+        uint256 userVotingBalance = IERC20(votingEscrow).balanceOf(user);
+        uint256 totalVotingSupply = IERC20(votingEscrow).totalSupply();
         uint256 newAmount;
 
         writeTotalWeightHistory();

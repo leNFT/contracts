@@ -142,4 +142,12 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     function getGenesisNFT() external view override returns (address) {
         return _genesisNFT;
     }
+
+    function setWETH(address weth) external override onlyOwner {
+        _weth = weth;
+    }
+
+    function getWETH() external view override returns (address) {
+        return _weth;
+    }
 }

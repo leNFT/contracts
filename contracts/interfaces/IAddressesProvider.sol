@@ -53,4 +53,8 @@ interface IAddressesProvider {
     function setGenesisNFT(address genesisNFT) external;
 
     function getGenesisNFT() external view returns (address);
+
+    function setWETH(address weth) external;
+
+    function getWETH() external view returns (address);
 }

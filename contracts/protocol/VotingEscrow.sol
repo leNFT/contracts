@@ -18,6 +18,7 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {LockLogic} from "../libraries/logic/LockLogic.sol";
 import {ConfigTypes} from "../libraries/types/ConfigTypes.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
@@ -28,6 +29,7 @@ contract VotingEscrow is
     Initializable,
     ContextUpgradeable,
     IVotingEscrow,
+    IERC20MetadataUpgradeable,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
@@ -43,7 +45,7 @@ contract VotingEscrow is
     // History of user ve related actions
     mapping(address => DataTypes.Point[]) private _userHistory;
     // Epoch history of total weight
-    uint256[] private _totalWeigthHistory;
+    uint256[] private _totalWeightHistory;
     // Last checkpoint for the total weight
     DataTypes.Point _lastWeightCheckpoint;
     // Slope Changes per timestamp
@@ -73,8 +75,36 @@ contract VotingEscrow is
         __Ownable_init();
         _addressProvider = addressProvider;
         _deployTimestamp = block.timestamp;
-        _totalWeigthHistory.push(0);
+        _totalWeightHistory.push(0);
         _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);
+    }
+
+    /// @notice Returns the name of the token.
+    /// @return The name of the token.
+    function name() external view override returns (string memory) {
+        return
+            string.concat(
+                "Vote Escrowed ",
+                IERC20MetadataUpgradeable(_addressProvider.getNativeToken())
+                    .symbol()
+            );
+    }
+
+    /// @notice Returns the symbol of the token.
+    /// @return The symbol of the token.
+    function symbol() external view override returns (string memory) {
+        return
+            string.concat(
+                "ve",
+                IERC20MetadataUpgradeable(_addressProvider.getNativeToken())
+                    .symbol()
+            );
+    }
+
+    /// @notice Returns the decimals of the token.
+    /// @return The decimals of the token.
+    function decimals() external pure override returns (uint8) {
+        return 18;
     }
 
     /// @notice Returns the length of an epoch period in seconds.
@@ -102,11 +132,11 @@ contract VotingEscrow is
     }
 
     /// @notice Updates the total weight history array and checkpoint with the current weight.
+    /// @dev This function will break if it is not called for 128 epochs.
     function writeTotalWeightHistory() public {
         // Update last saved weight checkpoint and record weight for epochs
-        // Will break if is not used for 128 epochs
         uint256 epochTimestampPointer = epochTimestamp(
-            _totalWeigthHistory.length
+            _totalWeightHistory.length
         );
         for (uint256 i = 0; i < 2 ** 7; i++) {
             if (epochTimestampPointer > block.timestamp) {
@@ -117,7 +147,7 @@ contract VotingEscrow is
             uint256 epochTotalWeight = _lastWeightCheckpoint.bias -
                 _lastWeightCheckpoint.slope *
                 (epochTimestampPointer - _lastWeightCheckpoint.timestamp);
-            _totalWeigthHistory.push(epochTotalWeight);
+            _totalWeightHistory.push(epochTotalWeight);
 
             // Update last weight checkpoint
             _lastWeightCheckpoint.bias = epochTotalWeight;
@@ -232,15 +262,13 @@ contract VotingEscrow is
         // Update total weight history
         writeTotalWeightHistory();
 
-        return _totalWeigthHistory[_epoch];
+        return _totalWeightHistory[_epoch];
     }
 
     /// @notice Returns the total weight of locked tokens.
+    /// @dev Might not return the most up-to-date value if the total weight has not been updated in the current epoch.
     /// @return The total weight of locked tokens.
-    function totalSupply() public returns (uint256) {
-        // Update total weight history
-        writeTotalWeightHistory();
-
+    function totalSupply() public view override returns (uint256) {
         return
             _lastWeightCheckpoint.bias -
             _lastWeightCheckpoint.slope *
@@ -250,7 +278,7 @@ contract VotingEscrow is
     /// @notice Returns the weight of locked tokens for a given user.
     /// @param user The account for which to retrieve the locked balance weight.
     /// @return The weight of locked tokens for the given account.
-    function balanceOf(address user) public view returns (uint256) {
+    function balanceOf(address user) public view override returns (uint256) {
         // If the locked token end time has passed
         if (_userLockedBalance[user].end < block.timestamp) {
             return 0;
@@ -410,5 +438,36 @@ contract VotingEscrow is
         address user
     ) external view returns (DataTypes.LockedBalance memory) {
         return _userLockedBalance[user];
+    }
+
+    /// @notice ERC20 approve function
+    /// @dev Reverts if called
+    function approve(address, uint256) public pure override returns (bool) {
+        revert("Approve not allowed");
+    }
+
+    /// @notice ERC20 allowance function
+    /// @dev Reverts if called
+    function allowance(
+        address,
+        address
+    ) public pure override returns (uint256) {
+        revert("Allowance not allowed");
+    }
+
+    /// @notice ERC20 transfer function
+    /// @dev Reverts if called
+    function transfer(address, uint256) public pure override returns (bool) {
+        revert("Transfer not allowed");
+    }
+
+    /// @notice ERC20 transferFrom function
+    /// @dev Reverts if called
+    function transferFrom(
+        address,
+        address,
+        uint256
+    ) public pure override returns (bool) {
+        revert("TransferFrom not allowed");
     }
 }

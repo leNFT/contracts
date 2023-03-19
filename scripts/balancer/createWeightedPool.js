@@ -6,7 +6,6 @@
 
 const { ethers } = require("hardhat");
 const weightedPoolFactoryABI = require("./weightedPoolFactoryABI.json");
-const vaultABI = require("./vaultABI.json");
 
 // const hre = require("hardhat");
 require("dotenv").config();
@@ -24,6 +23,7 @@ async function main() {
   var addresses = contractAddresses[chainID.toString(16)];
   const poolFactoryAddress = "0x26575A44755E0aaa969FDda1E4291Df22C5624Ea";
   const vaultAddress = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
+  const queryAddress = "0xE39B5e3B6D74016b2F6A9673D7d7493B6DF549d5";
 
   const factoryContract = await ethers.getContractAt(
     weightedPoolFactoryABI,
@@ -44,19 +44,28 @@ async function main() {
   );
   const createTxReceipt = await createTx.wait();
   const poolId = createTxReceipt.logs[1].topics[1];
+  const poolAddress = poolId.slice(0, 42);
 
   console.log("BalancerPool deployed with ID: ", poolId);
+  console.log("BalancerPool deployed at address: ", poolAddress);
 
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
+  console.log("GenesisNFT address: ", addresses.GenesisNFT);
   const genesisNFT = GenesisNFT.attach(addresses.GenesisNFT);
+  const balancerDetails = {
+    poolId: poolId,
+    pool: poolAddress,
+    vault: vaultAddress,
+    queries: queryAddress,
+  };
+  console.log("Balancer details: ", balancerDetails);
 
   // Set trusted price source
-  const setBalancerDetailsTx = await genesisNFT.setBalancerDetails({
-    poolId: poolId,
-    vault: vaultAddress,
-  });
+  const setBalancerDetailsTx = await genesisNFT.setBalancerDetails(
+    balancerDetails
+  );
   await setBalancerDetailsTx.wait();
-  console.log("Set " + poolId + " as genesis incentivized pool.");
+  console.log("Set Balancer details");
 
   // Write pool id to file
   const fs = require("fs");

@@ -13,16 +13,14 @@ interface IVotingEscrow {
 
     function epochTimestamp(uint256 epoch_) external returns (uint256);
 
+    function writeTotalWeightHistory() external;
+
     function getUserHistoryPoint(
         address user,
         uint256 index
     ) external view returns (DataTypes.Point memory);
 
     function totalSupplyAt(uint256 epoch_) external returns (uint256);
-
-    function totalSupply() external returns (uint256);
-
-    function balanceOf(address user) external view returns (uint256);
 
     function createLock(
         address receiver,

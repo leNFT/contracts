@@ -5,6 +5,11 @@ let loadEnv = async function () {
   console.log("Setting up enviroment...");
 
   [owner, addr1, addr2] = await ethers.getSigners();
+  wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+  weth = await ethers.getContractAt(
+    "contracts/interfaces/IWETH.sol:IWETH",
+    wethAddress
+  );
 
   //Deploy libraries
   ValidationLogicLib = await ethers.getContractFactory("ValidationLogic");
@@ -171,16 +176,11 @@ let loadEnv = async function () {
 
   console.log("Deployed SwapRouter");
 
-  // Deploy WETH contract
-  const WETH = await ethers.getContractFactory("WETH");
-  weth = await WETH.deploy();
-  await weth.deployed();
-
   // Deploy WETH Gateway contract
   const WETHGateway = await ethers.getContractFactory("WETHGateway");
   wethGateway = await WETHGateway.deploy(
     addressesProvider.address,
-    weth.address
+    wethAddress
   );
   await wethGateway.deployed();
 
@@ -258,6 +258,10 @@ let loadEnv = async function () {
   );
   await setGaugeControllerTx.wait();
 
+  // Set WETH address in addresses provider
+  const setWETHTx = await addressesProvider.setWETH(weth.address);
+  await setWETHTx.wait();
+
   // Set trusted price source
   const setTrustedPriceSourceTx = await nftOracle.setTrustedPriceSigner(
     "0xfEa2AF8BB65c34ee64A005057b4C749310321Fa0",
@@ -274,7 +278,7 @@ let loadEnv = async function () {
 
   //Add a price to test token ( test token = 1 weth)
   const setTestTokenPriceTx = await tokenOracle.setTokenETHPrice(
-    weth.address,
+    wethAddress,
     "1000000000000000000" //1 testToken/ETH
   );
   await setTestTokenPriceTx.wait();

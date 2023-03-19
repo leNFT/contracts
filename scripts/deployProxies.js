@@ -17,15 +17,15 @@ async function main() {
   // await hre.run('compile');
   var contractAddresses = require("../../lenft-interface/contractAddresses.json");
   let chainID = hre.network.config.chainId;
-  console.log("chainID: ", chainID);
-  var addresses = contractAddresses[chainID.toString(16)];
+  console.log("chainID: ", chainID.toString());
+  var addresses = contractAddresses[chainID.toString()];
   const ONE_DAY = 86400;
 
   var devAddress;
   if (chainID == 1) {
     devAddress = process.env.MAINNET_DEV_ADDRESS;
-  } else if (chainID == 5) {
-    devAddress = process.env.GOERLI_DEV_ADDRESS;
+  } else {
+    devAddress = process.env.TESTNET_DEV_ADDRESS;
   }
 
   /****************************************************************
@@ -137,7 +137,7 @@ async function main() {
     "3000000000000000", // 0.003 ETH Price
     "250", // 2.5% LTV Boost for Genesis NFT
     25000000, // Native Token Mint Factor
-    ONE_DAY * 120, // Max locktime (120 days in s)
+    ONE_DAY * 180, // Max locktime (180 days in s)
     ONE_DAY * 14, // Min locktime (14 days in s)
     devAddress,
   ]);
@@ -247,7 +247,7 @@ async function main() {
   ******************************************************************/
 
   var fs = require("fs");
-  contractAddresses[chainID.toString(16)] = addresses;
+  contractAddresses[chainID.toString()] = addresses;
   fs.writeFileSync(
     "../lenft-interface/contractAddresses.json",
     JSON.stringify(contractAddresses),
@@ -340,6 +340,10 @@ async function main() {
     swapRouter.address
   );
   await setSwapRouterTx.wait();
+
+  // Set WETH address
+  const setWETHTx = await addressesProvider.setWETH(addresses["ETH"].address);
+  await setWETHTx.wait();
 }
 
 // We recommend this pattern to be able to use async/await everywhere

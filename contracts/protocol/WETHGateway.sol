@@ -25,16 +25,9 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
 
     /// @notice Constructor for the WETHGateway contract
     /// @param addressesProvider The address of the AddressesProvider contract
-    /// @param weth The address of the Wrapped ETH contract
     constructor(IAddressesProvider addressesProvider, IWETH weth) {
         _addressProvider = addressesProvider;
         _weth = weth;
-    }
-
-    /// @notice Returns the canonical WETH address
-    /// @return The WETH address
-    function WETH() external view returns (address) {
-        return address(_weth);
     }
 
     /// @notice Deposit ETH in a wETH lending pool

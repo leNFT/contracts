@@ -10,6 +10,7 @@ import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
 
 /// @title FeeDistributor
@@ -18,7 +19,8 @@ contract FeeDistributor is
     Initializable,
     ContextUpgradeable,
     OwnableUpgradeable,
-    IFeeDistributor
+    IFeeDistributor,
+    ReentrancyGuardUpgradeable
 {
     IAddressesProvider private _addressProvider;
     mapping(address => mapping(address => uint256)) private _userHistoryPointer;
@@ -108,7 +110,9 @@ contract FeeDistributor is
     /// @notice Allows a user to claim their rewards for a specific token
     /// @param token Token address
     /// @return uint256 Amount of rewards claimed
-    function claim(address token) external override returns (uint256) {
+    function claim(
+        address token
+    ) external override nonReentrant returns (uint256) {
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         );

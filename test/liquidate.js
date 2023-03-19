@@ -2,8 +2,7 @@ const { expect } = require("chai");
 const { getPriceSig } = require("./helpers/getPriceSig.js");
 const load = require("../scripts/testDeploy/_loadTest.js");
 
-describe("Borrow", function () {
-  this.timeout(10000);
+describe("Liquidate", function () {
   load.loadTest();
   var tokenID;
   it("Create NFT asset 1", async function () {

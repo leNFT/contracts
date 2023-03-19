@@ -10,8 +10,14 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 /// @title NativeTokenVesting
 /// @notice Contract that allows to set vesting parameters for a specified account
 contract NativeTokenVesting is Ownable {
+    event VestingWithdrawn(address indexed account, uint256 amount);
+    event VestingAdded(
+        address indexed account,
+        uint256 period,
+        uint256 cliff,
+        uint256 amount
+    );
     IAddressesProvider private _addressProvider;
-
     mapping(address => DataTypes.VestingParams) private _vestingParams;
     mapping(address => uint256) _withdrawn;
 
@@ -41,12 +47,18 @@ contract NativeTokenVesting is Ownable {
         uint256 cliff,
         uint256 amount
     ) external onlyOwner {
+        require(
+            _vestingParams[account].amount == 0,
+            "Vesting already exists for this account"
+        );
         _vestingParams[account] = DataTypes.VestingParams(
             block.timestamp,
             period,
             cliff,
             amount
         );
+
+        emit VestingAdded(account, period, cliff, amount);
     }
 
     /// @notice Returns the amount of unvested tokens that can be withdrawn by the specified account.
@@ -92,5 +104,7 @@ contract NativeTokenVesting is Ownable {
             _msgSender(),
             amount
         );
+
+        emit VestingWithdrawn(_msgSender(), amount);
     }
 }

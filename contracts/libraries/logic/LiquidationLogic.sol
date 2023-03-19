@@ -49,16 +49,6 @@ library LiquidationLogic {
             params.bid
         );
 
-        console.log("  params.caller", params.caller);
-        console.log("  params.bid", params.bid);
-        console.log("asset", IERC4626(loanData.pool).asset());
-        console.log(
-            "callet balance",
-            IERC20Upgradeable(IERC4626(loanData.pool).asset()).balanceOf(
-                params.caller
-            )
-        );
-
         // Get the payment from the bidder
         IERC20Upgradeable(IERC4626(loanData.pool).asset()).safeTransferFrom(
             params.caller,

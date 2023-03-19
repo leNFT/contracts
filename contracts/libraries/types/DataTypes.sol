@@ -153,6 +153,8 @@ library DataTypes {
 
     struct BalancerDetails {
         bytes32 poolId;
+        address pool;
         address vault;
+        address queries;
     }
 }
