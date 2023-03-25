@@ -115,7 +115,7 @@ async function main() {
 
   console.log("Deployed DebtToken");
 
-  // Deploy and initialize the native token (different for mainnet and goerli)
+  // Deploy and initialize the native token (different for mainnet and sepolia)
   const NativeToken = await ethers.getContractFactory("NativeToken");
   const nativeToken = await upgrades.deployProxy(NativeToken, [
     addressesProvider.address,

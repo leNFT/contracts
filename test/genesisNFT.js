@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const load = require("../scripts/testDeploy/_loadTest.js");
 const weightedPoolFactoryABI = require("../scripts/balancer/weightedPoolFactoryABI.json");
 
-// Should be used in a forked mainnet/goerli env so to use the balancer pool
+// Should be used in a forked mainnet/sepolia env so to use the balancer pool
 describe("GenesisNFT", function () {
   load.loadTest();
   it("Set the balancer details", async function () {
