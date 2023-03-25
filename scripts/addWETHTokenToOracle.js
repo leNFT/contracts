@@ -4,7 +4,7 @@ const hre = require("hardhat");
 async function main() {
   let contractAddresses = require("../../lenft-interface/contractAddresses.json");
   let chainID = hre.network.config.chainId;
-  let addresses = contractAddresses[chainID.toString(16)];
+  let addresses = contractAddresses[chainID];
 
   console.log("Adding wETH to token Oracle");
 

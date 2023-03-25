@@ -5,7 +5,7 @@ require("dotenv").config();
 async function main() {
   let contractAddresses = require("../../lenft-interface/contractAddresses.json");
   let chainID = hre.network.config.chainId;
-  let addresses = contractAddresses[chainID.toString(16)];
+  let addresses = contractAddresses[chainID];
 
   // Set trusted price signer
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
