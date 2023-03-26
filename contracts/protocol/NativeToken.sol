@@ -58,7 +58,7 @@ contract NativeToken is
     /// @notice Mints tokens and assigns them to the specified account
     /// @param account The account to receive the tokens
     /// @param amount The amount of tokens to mint
-    function mint(address account, uint256 amount) external {
+    function mint(address account, uint256 amount) external onlyOwner {
         _mint(account, amount);
     }
 

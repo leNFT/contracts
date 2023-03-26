@@ -286,20 +286,18 @@ contract GenesisNFT is
                 "0"
             );
         }
-        IVault.JoinPoolRequest memory request = IVault.JoinPoolRequest({
-            assets: _asIAsset(tokens),
-            maxAmountsIn: maxAmountsIn,
-            userData: userData,
-            fromInternalBalance: false
-        });
 
-        console.log("Joining pool", _balancerDetails.pool);
         // Call the Vault to join the pool
         IVault(_balancerDetails.vault).joinPool(
             _balancerDetails.poolId,
             address(this),
             address(this),
-            request
+            IVault.JoinPoolRequest({
+                assets: _asIAsset(tokens),
+                maxAmountsIn: maxAmountsIn,
+                userData: userData,
+                fromInternalBalance: false
+            })
         );
         console.log("Joined pool");
 
@@ -401,23 +399,23 @@ contract GenesisNFT is
         );
 
         uint256[] memory minAmountsOut = new uint256[](2);
-        IVault.ExitPoolRequest memory request = IVault.ExitPoolRequest({
-            assets: _asIAsset(tokens),
-            minAmountsOut: minAmountsOut,
-            userData: abi.encode(
-                WeightedPoolUserData.ExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
-                lpAmountSum,
-                _findTokenIndex(tokens, IERC20(nativeToken))
-            ),
-            toInternalBalance: false
-        });
-
         // Call the Vault to exit the pool
         IVault(_balancerDetails.vault).exitPool(
             _balancerDetails.poolId,
             address(this),
             payable(this),
-            request
+            IVault.ExitPoolRequest({
+                assets: _asIAsset(tokens),
+                minAmountsOut: minAmountsOut,
+                userData: abi.encode(
+                    WeightedPoolUserData
+                        .ExitKind
+                        .EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
+                    lpAmountSum,
+                    _findTokenIndex(tokens, IERC20(nativeToken))
+                ),
+                toInternalBalance: false
+            })
         );
 
         uint256 withdrawAmount = IERC20Upgradeable(nativeToken).balanceOf(
@@ -459,16 +457,6 @@ contract GenesisNFT is
             IERC20(_addressProvider.getNativeToken())
         );
         uint256[] memory minAmountsOut = new uint256[](2);
-        IVault.ExitPoolRequest memory request = IVault.ExitPoolRequest({
-            assets: _asIAsset(tokens),
-            minAmountsOut: minAmountsOut,
-            userData: abi.encode(
-                WeightedPoolUserData.ExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
-                lpAmountSum,
-                leIndex
-            ),
-            toInternalBalance: false
-        });
 
         // Calculate the value of the LP tokens in LE tokens
         (, uint256[] memory amountsOut) = IBalancerQueries(
@@ -477,7 +465,18 @@ contract GenesisNFT is
                 _balancerDetails.poolId,
                 address(this),
                 address(this),
-                request
+                IVault.ExitPoolRequest({
+                    assets: _asIAsset(tokens),
+                    minAmountsOut: minAmountsOut,
+                    userData: abi.encode(
+                        WeightedPoolUserData
+                            .ExitKind
+                            .EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
+                        lpAmountSum,
+                        leIndex
+                    ),
+                    toInternalBalance: false
+                })
             );
 
         uint256 burnTokens = LP_LE_AMOUNT * tokenIds.length;

@@ -158,7 +158,7 @@ async function main() {
   const GaugeController = await ethers.getContractFactory("GaugeController");
   const gaugeController = await upgrades.deployProxy(GaugeController, [
     addressesProvider.address,
-    "280000000000000000000", // Initial epoch rewards
+    "280000000000000000000000", // Initial epoch rewards
   ]);
   addresses["GaugeController"] = gaugeController.address;
 

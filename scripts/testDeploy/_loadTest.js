@@ -100,11 +100,11 @@ let loadEnv = async function () {
     addressesProvider.address,
     "leNFT Genesis",
     "LGEN",
-    "9999",
-    "3000000000000000",
+    "4999", // 4999 of total supply
+    "300000000000000000", // 0.3 ETH Price
     "250",
-    50000000, // Native Token Mint Factor
-    ONE_DAY * 120, // Max locktime (120 days in s)
+    25000000, // Native Token Mint Factor
+    ONE_DAY * 180, // Max locktime (120 days in s)
     ONE_DAY * 14, // Min locktime (14 days in s)
     "0x91A7cEeAf399e9f933FF13F9575A2B74ac9c3EA7",
   ]);
