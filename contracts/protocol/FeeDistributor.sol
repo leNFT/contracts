@@ -14,7 +14,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import "hardhat/console.sol";
 
 /// @title FeeDistributor
-/// @notice This contract distributes fees from the protocol to the stakers of the respective token, using the VotingEscrow interface to check the user's staked amount
+/// @notice This contract distributes fees from the protocol to LE stakers, using the VotingEscrow interface to check the user's staked amount
 contract FeeDistributor is
     Initializable,
     ContextUpgradeable,
