@@ -16,7 +16,7 @@ async function main() {
 
   // Deploy test NFT
   const TestNFT = await ethers.getContractFactory("TestNFT");
-  const testNFT = await TestNFT.deploy("leNFT Test NFT", "leTestNFT");
+  const testNFT = await TestNFT.deploy("leNFT Test NFT 2", "leTestNFT2");
   await testNFT.deployed();
   console.log("TestNFT: ", testNFT.address);
 }

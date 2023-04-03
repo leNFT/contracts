@@ -16,8 +16,8 @@ async function main() {
   var contractAddresses = require("../../lenft-interface/contractAddresses.json");
   let chainID = hre.network.config.chainId;
   console.log("chainID: ", chainID);
-  var addresses = contractAddresses[chainID.toString(16)];
-  const lendingPool = "0xf549688312210Fe1A6a959Bb52EAe6D574e59BD5";
+  var addresses = contractAddresses[chainID];
+  const lendingPool = "0x86C352f0988426AeD0A82aB3C0bFcbF29cA8a163";
 
   // Deploy gauge
   const Gauge = await ethers.getContractFactory("LendingGauge");
