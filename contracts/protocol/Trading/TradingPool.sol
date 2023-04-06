@@ -164,7 +164,7 @@ contract TradingPool is
     /// @param fee The fee for the liquidity pair being created.
     function addLiquidity(
         address receiver,
-        DataTypes.LpType lpType,
+        DataTypes.LPType lpType,
         uint256[] calldata nftIds,
         uint256 tokenAmount,
         uint256 spotPrice,
@@ -183,17 +183,17 @@ contract TradingPool is
         );
 
         // Require that the user is depositing something
-        if (lpType == DataTypes.LpType.Trade) {
+        if (lpType == DataTypes.LPType.Trade) {
             require(
                 tokenAmount > 0 || nftIds.length > 0,
                 "Deposit can't be empty"
             );
-        } else if (lpType == DataTypes.LpType.Buy) {
+        } else if (lpType == DataTypes.LPType.Buy) {
             require(
                 tokenAmount > 0 && nftIds.length == 0,
                 "Deposit should only contain tokens"
             );
-        } else if (lpType == DataTypes.LpType.Sell) {
+        } else if (lpType == DataTypes.LPType.Sell) {
             require(
                 nftIds.length > 0 && tokenAmount == 0,
                 "Deposit should only contain NFTs"
@@ -338,7 +338,7 @@ contract TradingPool is
             lp = _liquidityPairs[lpIndex];
 
             // Can't buy from buy LP
-            require(lp.lpType != DataTypes.LpType.Buy, "Can't buy from buy LP");
+            require(lp.lpType != DataTypes.LPType.Buy, "Can't buy from buy LP");
 
             fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
             protocolFee =
@@ -456,7 +456,7 @@ contract TradingPool is
 
             // Can't sell to sell LP
             require(
-                lp.lpType != DataTypes.LpType.Sell,
+                lp.lpType != DataTypes.LPType.Sell,
                 "Can't sell to sell LP"
             );
 

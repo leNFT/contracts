@@ -10,14 +10,14 @@ library DataTypes {
         uint256 amount;
     }
 
-    enum LpType {
+    enum LPType {
         Trade,
         Buy,
         Sell
     }
 
     struct LiquidityPair {
-        LpType lpType;
+        LPType lpType;
         uint256[] nftIds;
         uint256 tokenAmount;
         uint256 spotPrice;
