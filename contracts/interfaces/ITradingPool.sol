@@ -39,6 +39,7 @@ interface ITradingPool is IERC721 {
 
     function addLiquidity(
         address receiver,
+        DataTypes.LPType lpType,
         uint256[] memory nftIds,
         uint256 tokenAmount,
         uint256 initialPrice,

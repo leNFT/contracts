@@ -241,6 +241,19 @@ async function main() {
 
   console.log("Deployed Non-Proxies");
 
+  // If we are not on mainnet, deploy a faucet contract
+  var nativeTokenFaucet;
+  if (chainID != 1) {
+    const NativeTokenFaucet = await ethers.getContractFactory(
+      "NativeTokenFaucet"
+    );
+    nativeTokenFaucet = await NativeTokenFaucet.deploy(
+      addressesProvider.address
+    );
+    await nativeTokenFaucet.deployed();
+    addresses["NativeTokenFaucet"] = nativeTokenFaucet.address;
+  }
+
   /****************************************************************
   SAVE TO DISK
   Write contract addresses to file
@@ -344,6 +357,15 @@ async function main() {
   // Set WETH address
   const setWETHTx = await addressesProvider.setWETH(addresses["ETH"].address);
   await setWETHTx.wait();
+
+  // If we are not on mainnet mint LE and fund the faucet
+  if (chainID != 1) {
+    const mintTx = await nativeToken.mint(
+      nativeTokenFaucet.address,
+      ethers.utils.parseEther("100000")
+    );
+    await mintTx.wait();
+  }
 }
 
 // We recommend this pattern to be able to use async/await everywhere

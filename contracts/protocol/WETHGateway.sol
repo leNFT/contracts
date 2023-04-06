@@ -147,6 +147,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
     /// @param fee The fee charged on trades in the pool
     function depositTradingPool(
         address pool,
+        DataTypes.LPType lpType,
         uint256[] calldata nftIds,
         uint256 initialPrice,
         address curve,
@@ -174,6 +175,7 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
 
         ITradingPool(pool).addLiquidity(
             msg.sender,
+            lpType,
             nftIds,
             msg.value,
             initialPrice,
