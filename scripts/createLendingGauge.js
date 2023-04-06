@@ -17,7 +17,7 @@ async function main() {
   let chainID = hre.network.config.chainId;
   console.log("chainID: ", chainID);
   var addresses = contractAddresses[chainID];
-  const lendingPool = "0x86C352f0988426AeD0A82aB3C0bFcbF29cA8a163";
+  const lendingPool = "0x83058E9B2d2Fa35F96956770bFc87E961D5d60a0";
 
   // Deploy gauge
   const Gauge = await ethers.getContractFactory("LendingGauge");

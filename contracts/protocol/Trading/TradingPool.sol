@@ -164,6 +164,7 @@ contract TradingPool is
     /// @param fee The fee for the liquidity pair being created.
     function addLiquidity(
         address receiver,
+        DataTypes.LpType lpType,
         uint256[] calldata nftIds,
         uint256 tokenAmount,
         uint256 spotPrice,
@@ -182,7 +183,22 @@ contract TradingPool is
         );
 
         // Require that the user is depositing something
-        require(tokenAmount > 0 || nftIds.length > 0, "Deposit can't be empty");
+        if (lpType == DataTypes.LpType.Trade) {
+            require(
+                tokenAmount > 0 || nftIds.length > 0,
+                "Deposit can't be empty"
+            );
+        } else if (lpType == DataTypes.LpType.Buy) {
+            require(
+                tokenAmount > 0 && nftIds.length == 0,
+                "Deposit should only contain tokens"
+            );
+        } else if (lpType == DataTypes.LpType.Sell) {
+            require(
+                nftIds.length > 0 && tokenAmount == 0,
+                "Deposit should only contain NFTs"
+            );
+        }
 
         // Require that the curve conforms to the curve interface
         require(
@@ -224,6 +240,7 @@ contract TradingPool is
 
         // Save the user deposit info
         _liquidityPairs[_lpCount] = DataTypes.LiquidityPair({
+            lpType: lpType,
             nftIds: nftIds,
             tokenAmount: tokenAmount,
             spotPrice: spotPrice,
@@ -238,6 +255,7 @@ contract TradingPool is
         emit AddLiquidity(
             receiver,
             _lpCount,
+            lpType,
             nftIds,
             tokenAmount,
             spotPrice,
@@ -318,6 +336,10 @@ contract TradingPool is
         for (uint i = 0; i < nftIds.length; i++) {
             lpIndex = _nftToLp[nftIds[i]].liquidityPair;
             lp = _liquidityPairs[lpIndex];
+
+            // Can't buy from buy LP
+            require(lp.lpType != DataTypes.LpType.Buy, "Can't buy from buy LP");
+
             fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
             protocolFee =
                 (fee *
@@ -431,6 +453,13 @@ contract TradingPool is
 
             lpIndex = liquidityPairs[i];
             lp = _liquidityPairs[lpIndex];
+
+            // Can't sell to sell LP
+            require(
+                lp.lpType != DataTypes.LpType.Sell,
+                "Can't sell to sell LP"
+            );
+
             fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
             protocolFee =
                 (fee *
