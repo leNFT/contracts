@@ -235,8 +235,6 @@ contract TradingGauge is IGauge, IERC721Receiver {
     /// @notice Deposits LP tokens to the contract, updates balances and working balances for the user.
     /// @param lpId The ID of the LP token being deposited.
     function deposit(uint256 lpId) external {
-        DataTypes.LiquidityPair memory lp = ITradingPool(_lpToken).getLP(lpId);
-
         // Only Trade type LPs can be staked
         require(
             lp.lpType == DataTypes.LPType.Trade,
@@ -247,11 +245,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
         _ownerOf[lpId] = msg.sender;
 
         // Add token value
-        uint256 depositLpValue = calculateLpValue(
-            lp.tokenAmount,
-            lp.nftIds.length,
-            lp.spotPrice
-        );
+        uint256 depositLpValue = calculateLpValue(lpId);
         _lpValue[lpId] = depositLpValue;
         _userLPValue[msg.sender] += depositLpValue;
         _totalLPValue += depositLpValue;
@@ -371,28 +365,18 @@ contract TradingGauge is IGauge, IERC721Receiver {
     }
 
     /// @notice Calculates the total value of a liquidity pair.
-    /// @param tokenAmount The amount of tokens in the liquidity pair.
-    /// @param nftAmount The amount of NFTs in the liquidity pair.
-    /// @param spotPrice The current spot price of the NFTs in the liquidity pair.
+    /// @param lpId The ID of the liquidity pair to be valued.
     /// @return Returns the calculated value of the liquidity pair.
-    function calculateLpValue(
-        uint256 tokenAmount,
-        uint256 nftAmount,
-        uint256 spotPrice
-    ) public view returns (uint256) {
-        uint256 nftsAppraisal = nftAmount * spotPrice;
-        uint256 returnValue = 0;
+    function calculateLpValue(uint256 lpId) public view returns (uint256) {
+        DataTypes.LiquidityPair memory lp = ITradingPool(_lpToken).getLP(lpId);
+
+        uint256 nftsAppraisal = lp.nftAmount * lp.spotPrice;
+        uint256 tokenAmount = lp.tokenAmount > lp.spotPrice
+            ? lp.tokenAmount
+            : 0;
 
         // Value is higher if the lp is in equilibrium
-        if (nftsAppraisal > tokenAmount) {
-            returnValue = tokenAmount;
-        } else {
-            returnValue = nftsAppraisal;
-        }
-
-        console.log("LP VALUE", returnValue);
-
-        return returnValue;
+        return nftsAppraisal > tokenAmount ? tokenAmount : nftsAppraisal;
     }
 
     function onERC721Received(
