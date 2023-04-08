@@ -248,7 +248,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
 
         // Add token value
         uint256 depositLpValue = calculateLpValue(
-            lp.nftAmount,
+            lp.nftIds.length,
             lp.tokenAmount,
             lp.spotPrice
         );
@@ -379,7 +379,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
         uint256 nftAmount,
         uint256 tokenAmount,
         uint256 spotPrice
-    ) public view returns (uint256) {
+    ) public pure returns (uint256) {
         uint256 nftsAppraisal = nftAmount * spotPrice;
         uint256 validTokenAmount = tokenAmount > spotPrice ? tokenAmount : 0;
 
