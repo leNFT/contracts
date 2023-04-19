@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {MathUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IGaugeController} from "../interfaces/IGaugeController.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";
@@ -17,8 +18,11 @@ import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Cont
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {LockLogic} from "../libraries/logic/LockLogic.sol";
 import {ConfigTypes} from "../libraries/types/ConfigTypes.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import {PercentageMath} from "../libraries/math/PercentageMath.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
@@ -29,7 +33,9 @@ contract VotingEscrow is
     Initializable,
     ContextUpgradeable,
     IVotingEscrow,
-    IERC20MetadataUpgradeable,
+    ERC165Upgradeable,
+    ERC721Upgradeable,
+    ERC721EnumerableUpgradeable,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
@@ -40,17 +46,21 @@ contract VotingEscrow is
 
     IAddressesProvider private _addressProvider;
     uint256 _deployTimestamp;
-    // Locked balance for each user
-    mapping(address => DataTypes.LockedBalance) private _userLockedBalance;
-    // History of user ve related actions
-    mapping(address => DataTypes.Point[]) private _userHistory;
+    // Locked balance for each lock
+    mapping(uint256 => DataTypes.LockedBalance) private _lockedBalance;
+    // History of actions for each lock
+    mapping(uint256 => DataTypes.Point[]) private _lockHistory;
     // Epoch history of total weight
     uint256[] private _totalWeightHistory;
+    // Epoch history of locked ratio
+    uint256[] private _lockedRatioHistory;
     // Last checkpoint for the total weight
     DataTypes.Point _lastWeightCheckpoint;
     // Slope Changes per timestamp
     mapping(uint256 => uint256) private _slopeChanges;
+    CountersUpgradeable.Counter private _tokenIdCounter;
 
+    using CountersUpgradeable for CountersUpgradeable.Counter;
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using LockLogic for DataTypes.LockedBalance;
 
@@ -72,39 +82,24 @@ contract VotingEscrow is
     function initialize(
         IAddressesProvider addressProvider
     ) external initializer {
+        __ERC721_init(
+            string.concat(
+                "Vote Escrowed ",
+                IERC20MetadataUpgradeable(_addressProvider.getNativeToken())
+                    .symbol()
+            ),
+            string.concat(
+                "ve",
+                IERC20MetadataUpgradeable(_addressProvider.getNativeToken())
+                    .symbol()
+            )
+        );
+        __ERC721Enumerable_init();
         __Ownable_init();
         _addressProvider = addressProvider;
         _deployTimestamp = block.timestamp;
         _totalWeightHistory.push(0);
         _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);
-    }
-
-    /// @notice Returns the name of the token.
-    /// @return The name of the token.
-    function name() external view override returns (string memory) {
-        return
-            string.concat(
-                "Vote Escrowed ",
-                IERC20MetadataUpgradeable(_addressProvider.getNativeToken())
-                    .symbol()
-            );
-    }
-
-    /// @notice Returns the symbol of the token.
-    /// @return The symbol of the token.
-    function symbol() external view override returns (string memory) {
-        return
-            string.concat(
-                "ve",
-                IERC20MetadataUpgradeable(_addressProvider.getNativeToken())
-                    .symbol()
-            );
-    }
-
-    /// @notice Returns the decimals of the token.
-    /// @return The decimals of the token.
-    function decimals() external pure override returns (uint8) {
-        return 18;
     }
 
     /// @notice Returns the length of an epoch period in seconds.
@@ -154,6 +149,15 @@ contract VotingEscrow is
             _lastWeightCheckpoint.timestamp = epochTimestampPointer;
             _lastWeightCheckpoint.slope -= _slopeChanges[epochTimestampPointer];
 
+            // Update total locked ratio
+            _lockedRatioHistory.push(
+                (IERC20Upgradeable(_addressProvider.getNativeToken()).balanceOf(
+                    address(this)
+                ) * PercentageMath.PERCENTAGE_FACTOR) /
+                    IERC20Upgradeable(_addressProvider.getNativeToken())
+                        .totalSupply()
+            );
+
             //Increase epoch timestamp
             epochTimestampPointer += EPOCH_PERIOD;
         }
@@ -183,11 +187,11 @@ contract VotingEscrow is
     }
 
     /// @notice Updates the global tracking variables and the user's history of locked balances.
-    /// @param user The address of the user whose balance is being updated.
+    /// @param tokenId The veLock token id whose balance is being updated.
     /// @param oldBalance The user's previous locked balance.
     /// @param newBalance The user's new locked balance.
     function _checkpoint(
-        address user,
+        uint256 tokenId,
         DataTypes.LockedBalance memory oldBalance,
         DataTypes.LockedBalance memory newBalance
     ) internal {
@@ -232,33 +236,39 @@ contract VotingEscrow is
         }
 
         // Update user history
-        _userHistory[user].push(newPoint);
+        _lockHistory[tokenId].push(newPoint);
     }
 
     /// @notice Returns the length of the history array for the specified user.
-    /// @param user The address of the user whose history array length should be returned.
+    /// @param tokenId The token id of the lock for which to retrieve the history length.
     /// @return The length of the user's history array.
-    function userHistoryLength(
-        address user
+    function lockHistoryLength(
+        uint256 tokenId
     ) public view override returns (uint256) {
-        return _userHistory[user].length;
+        return _lockHistory[tokenId].length;
     }
 
     /// @notice Returns the user's history point at a given index.
-    /// @param user The user's address.
+    /// @param tokenId The token id of the lock for which to retrieve the history point.
     /// @param index The index of the history point to retrieve.
     /// @return The user's history point at the given index.
-    function getUserHistoryPoint(
-        address user,
+    function getLockHistoryPoint(
+        uint256 tokenId,
         uint256 index
     ) public view override returns (DataTypes.Point memory) {
-        return _userHistory[user][index];
+        return _lockHistory[tokenId][index];
+    }
+
+    function getLockedRatioAt(
+        uint256 _epoch
+    ) external view override returns (uint256) {
+        return _lockedRatioHistory[_epoch];
     }
 
     /// @notice Returns the total weight of locked tokens at a given epoch.
     /// @param _epoch The epoch number for which to retrieve the total weight.
     /// @return The total weight of locked tokens at the given epoch.
-    function totalSupplyAt(uint256 _epoch) external returns (uint256) {
+    function totalWeightAt(uint256 _epoch) external returns (uint256) {
         // Update total weight history
         writeTotalWeightHistory();
 
@@ -268,29 +278,38 @@ contract VotingEscrow is
     /// @notice Returns the total weight of locked tokens.
     /// @dev Might not return the most up-to-date value if the total weight has not been updated in the current epoch.
     /// @return The total weight of locked tokens.
-    function totalSupply() public view override returns (uint256) {
+    function totalWeight() public view returns (uint256) {
         return
             _lastWeightCheckpoint.bias -
             _lastWeightCheckpoint.slope *
             (block.timestamp - _lastWeightCheckpoint.timestamp);
     }
 
-    /// @notice Returns the weight of locked tokens for a given user.
-    /// @param user The account for which to retrieve the locked balance weight.
+    /// @notice Returns the weight of locked tokens for a given lock.
+    /// @param tokenId The tokenid for which to retrieve the locked balance weight.
     /// @return The weight of locked tokens for the given account.
-    function balanceOf(address user) public view override returns (uint256) {
+    function lockWeight(uint256 tokenId) public view returns (uint256) {
         // If the locked token end time has passed
-        if (_userLockedBalance[user].end < block.timestamp) {
+        if (_lockedBalance[tokenId].end < block.timestamp) {
             return 0;
         }
-        DataTypes.Point memory lastUserPoint = _userHistory[user][
-            _userHistory[user].length - 1
+        DataTypes.Point memory lastUserPoint = _lockHistory[tokenId][
+            _lockHistory[tokenId].length - 1
         ];
 
         return
             lastUserPoint.bias -
             lastUserPoint.slope *
             (block.timestamp - lastUserPoint.timestamp);
+    }
+
+    function userWeight(address user) external view returns (uint256) {
+        uint256 balance = 0;
+        uint256 length = balanceOf(user);
+        for (uint256 i = 0; i < length; i++) {
+            balance += lockWeight(tokenOfOwnerByIndex(user, i));
+        }
+        return balance;
     }
 
     /// @dev Locks tokens into the voting escrow contract for a specified amount of time.
@@ -301,7 +320,7 @@ contract VotingEscrow is
         address receiver,
         uint256 amount,
         uint256 unlockTime
-    ) external {
+    ) external nonReentrant {
         // Round the locktime to whole epochs
         uint256 roundedUnlockTime = (unlockTime / EPOCH_PERIOD) * EPOCH_PERIOD;
 
@@ -313,17 +332,18 @@ contract VotingEscrow is
             roundedUnlockTime <= MAXLOCKTIME + block.timestamp,
             "Locktime higher than maximum locktime"
         );
-        require(
-            _userLockedBalance[receiver].amount == 0,
-            "Receiver has lock with non-zero balance"
-        );
+
+        // Mint a veNFT to represent the lock and increase the token id counter
+        uint256 tokenId = _tokenIdCounter.current();
+        _safeMint(receiver, tokenId);
+        _tokenIdCounter.increment();
 
         // Save oldLocked and update the locked balance
-        DataTypes.LockedBalance memory oldLocked = _userLockedBalance[receiver];
-        _userLockedBalance[receiver].init(amount, roundedUnlockTime);
+        DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
+        _lockedBalance[tokenId].init(amount, roundedUnlockTime);
 
         // Call a checkpoint and update global tracking vars
-        _checkpoint(receiver, oldLocked, _userLockedBalance[receiver]);
+        _checkpoint(tokenId, oldLocked, _lockedBalance[tokenId]);
 
         IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransferFrom(
             _msgSender(),
@@ -333,24 +353,24 @@ contract VotingEscrow is
     }
 
     /// @notice Increases the locked balance of the caller by the given amount and performs a checkpoint
+    /// @param tokenId The token id of the lock to increase the amount of
     /// @param amount The amount to increase the locked balance by
     /// @dev Requires the caller to have an active lock on their balance
     /// @dev Transfers the native token from the caller to this contract
     /// @dev Calls a checkpoint event
-    function increaseAmount(uint256 amount) external {
-        require(
-            _userLockedBalance[_msgSender()].end > block.timestamp,
-            "User has no active lock"
-        );
+    function increaseAmount(
+        uint256 tokenId,
+        uint256 amount
+    ) external nonReentrant {
+        require(_lockedBalance[tokenId].end > block.timestamp, "Inactive Lock");
+        require(ownerOf(tokenId) == _msgSender(), "Not the owner of the lock");
 
         // Save oldLocked and update the locked balance
-        DataTypes.LockedBalance memory oldLocked = _userLockedBalance[
-            _msgSender()
-        ];
-        _userLockedBalance[_msgSender()].amount += amount;
+        DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
+        _lockedBalance[tokenId].amount += amount;
 
         // Call a checkpoint and update global tracking vars
-        _checkpoint(_msgSender(), oldLocked, _userLockedBalance[_msgSender()]);
+        _checkpoint(tokenId, oldLocked, _lockedBalance[tokenId]);
 
         IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransferFrom(
             _msgSender(),
@@ -360,21 +380,23 @@ contract VotingEscrow is
     }
 
     /// @notice Increases the unlock time of the caller's lock to the given time and performs a checkpoint
+    /// @param tokenId The token id of the lock to increase the unlock time of
     /// @param newUnlockTime The new unlock time to set
     /// @dev Requires the caller to have an active lock on their balance
     /// @dev Requires the new unlock time to be greater than or equal to the current unlock time
     /// @dev Requires the new unlock time to be less than or equal to the maximum lock time
     /// @dev Calls a checkpoint event
-    function increaseUnlockTime(uint256 newUnlockTime) external {
+    function increaseUnlockTime(
+        uint256 tokenId,
+        uint256 newUnlockTime
+    ) external nonReentrant {
         // Round the locktime to whole epochs
         uint256 roundedUnlocktime = (newUnlockTime / EPOCH_PERIOD) *
             EPOCH_PERIOD;
+        require(ownerOf(tokenId) == _msgSender(), "Not the owner of the lock");
+        require(_lockedBalance[tokenId].end > block.timestamp, "Inactive Lock");
         require(
-            _userLockedBalance[_msgSender()].end > block.timestamp,
-            "User has no active lock"
-        );
-        require(
-            roundedUnlocktime > _userLockedBalance[_msgSender()].end,
+            roundedUnlocktime > _lockedBalance[tokenId].end,
             "Lock time can only increase"
         );
 
@@ -384,27 +406,24 @@ contract VotingEscrow is
         );
 
         // Save oldLocked and update the locked balance
-        DataTypes.LockedBalance memory oldLocked = _userLockedBalance[
-            _msgSender()
-        ];
-        _userLockedBalance[_msgSender()].end = roundedUnlocktime;
+        DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
+        _lockedBalance[tokenId].end = roundedUnlocktime;
 
         // Call a checkpoint and update global tracking vars
-        _checkpoint(_msgSender(), oldLocked, _userLockedBalance[_msgSender()]);
+        _checkpoint(tokenId, oldLocked, _lockedBalance[tokenId]);
     }
 
     /// @notice Withdraws the locked balance of the caller and performs a checkpoint
+    /// @param tokenId The token id of the lock to withdraw from
     /// @dev Requires the caller to have a non-zero locked balance and an expired lock time
     /// @dev Requires the caller to have no active votes in the gauge controller
     /// @dev Transfers the native token from this contract to the caller
     /// @dev Calls a checkpoint event
-    function withdraw() external {
+    function withdraw(uint256 tokenId) external {
+        require(ownerOf(tokenId) == _msgSender(), "Not the owner of the lock");
+        require(_lockedBalance[tokenId].amount > 0, "Nothing to withdraw");
         require(
-            _userLockedBalance[_msgSender()].amount > 0,
-            "Nothing to withdraw"
-        );
-        require(
-            block.timestamp > _userLockedBalance[_msgSender()].end,
+            block.timestamp > _lockedBalance[tokenId].end,
             "Locktime is not over"
         );
 
@@ -412,62 +431,67 @@ contract VotingEscrow is
         require(
             IGaugeController(_addressProvider.getGaugeController())
                 .userVoteRatio(_msgSender()) == 0,
-            "User has active  gauge votes"
+            "User has active gauge votes"
         );
 
         // Save oldLocked and update the locked balance
-        DataTypes.LockedBalance memory oldLocked = _userLockedBalance[
-            _msgSender()
-        ];
-        delete _userLockedBalance[_msgSender()];
+        DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
+        delete _lockedBalance[tokenId];
 
         // Call a checkpoint and update global tracking vars
-        _checkpoint(_msgSender(), oldLocked, _userLockedBalance[_msgSender()]);
+        _checkpoint(tokenId, oldLocked, _lockedBalance[tokenId]);
 
         // Send locked amount back to user
         IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransfer(
             _msgSender(),
             oldLocked.amount
         );
+
+        // Burn the veNFT
+        _burn(tokenId);
     }
 
-    /// @notice Returns the current lock object of a given user
-    /// @param user The user to get the lock object of
+    /// @notice Returns the details for a single lock
+    /// @param tokenId The token id of the lock to get the locked balance of and end time of
     /// @return The locked object of the user
     function locked(
-        address user
+        uint256 tokenId
     ) external view returns (DataTypes.LockedBalance memory) {
-        return _userLockedBalance[user];
+        return _lockedBalance[tokenId];
     }
 
-    /// @notice ERC20 approve function
-    /// @dev Reverts if called
-    function approve(address, uint256) public pure override returns (bool) {
-        revert("Approve not allowed");
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 batchSize
+    ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
+        require(
+            false == false,
+            "Cannot transfer token - currently locked in an active loan"
+        );
+        ERC721EnumerableUpgradeable._beforeTokenTransfer(
+            from,
+            to,
+            tokenId,
+            batchSize
+        );
     }
 
-    /// @notice ERC20 allowance function
-    /// @dev Reverts if called
-    function allowance(
-        address,
-        address
-    ) public pure override returns (uint256) {
-        revert("Allowance not allowed");
-    }
-
-    /// @notice ERC20 transfer function
-    /// @dev Reverts if called
-    function transfer(address, uint256) public pure override returns (bool) {
-        revert("Transfer not allowed");
-    }
-
-    /// @notice ERC20 transferFrom function
-    /// @dev Reverts if called
-    function transferFrom(
-        address,
-        address,
-        uint256
-    ) public pure override returns (bool) {
-        revert("TransferFrom not allowed");
+    function supportsInterface(
+        bytes4 interfaceId
+    )
+        public
+        view
+        override(
+            ERC721EnumerableUpgradeable,
+            ERC721Upgradeable,
+            ERC165Upgradeable
+        )
+        returns (bool)
+    {
+        return
+            ERC721EnumerableUpgradeable.supportsInterface(interfaceId) ||
+            ERC165Upgradeable.supportsInterface(interfaceId);
     }
 }

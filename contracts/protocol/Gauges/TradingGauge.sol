@@ -183,7 +183,9 @@ contract TradingGauge is IGauge, IERC721Receiver {
         // Make sure the voting escrow's total supply is up to date
         IVotingEscrow(votingEscrow).writeTotalWeightHistory();
 
-        uint256 userVotingBalance = IERC20(votingEscrow).balanceOf(user);
+        uint256 userVotingBalance = IVotingEscrow(votingEscrow).userWeight(
+            user
+        );
         uint256 totalVotingSupply = IERC20(votingEscrow).totalSupply();
         uint256 newAmount;
 
@@ -221,14 +223,15 @@ contract TradingGauge is IGauge, IERC721Receiver {
     }
 
     /// @notice Triggers a checkpoint for a user if their locked balance has ended.
-    /// @param user The address of the user whose locked balance needs to be checked.
-    function kick(address user) external {
+    /// @param tokenId The ID of token
+    function kick(uint256 tokenId) external {
+        address votingEscrowAddress = _addressProvider.getVotingEscrow();
         // Get user locked balance end time
         if (
-            IVotingEscrow(_addressProvider.getVotingEscrow()).locked(user).end <
+            IVotingEscrow(votingEscrowAddress).locked(tokenId).end <
             block.timestamp
         ) {
-            _checkpoint(user);
+            _checkpoint(IERC721(votingEscrowAddress).ownerOf(tokenId));
         }
     }
 

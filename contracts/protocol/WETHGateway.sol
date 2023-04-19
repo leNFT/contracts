@@ -438,6 +438,8 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         }
     }
 
+    function depositBribe
+
     // So we can receive the collateral from the user when borrowing
     function onERC721Received(
         address,

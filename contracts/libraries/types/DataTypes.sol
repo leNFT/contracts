@@ -31,11 +31,6 @@ library DataTypes {
         uint256 index;
     }
 
-    struct AirdropTokens {
-        address user;
-        uint256 amount;
-    }
-
     struct WorkingBalance {
         uint256 amount;
         uint256 timestamp;

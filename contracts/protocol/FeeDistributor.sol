@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {IFeeDistributor} from "../interfaces/IFeeDistributor.sol";
+import {IGaugeController} from "../interfaces/IGaugeController.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
@@ -23,11 +24,14 @@ contract FeeDistributor is
     ReentrancyGuardUpgradeable
 {
     IAddressesProvider private _addressProvider;
-    mapping(address => mapping(address => uint256)) private _userHistoryPointer;
+    // Token + Lock token id = Epoch
+    mapping(address => mapping(uint256 => uint256)) private _lockHistoryPointer;
+    // Token + Epoch = Amount
     mapping(address => mapping(uint256 => uint256)) private _epochFees;
-    mapping(address => mapping(address => uint256))
-        private _userNextClaimableEpoch;
-    mapping(address => uint256) private _totalFees;
+    mapping(address => mapping(uint256 => uint256))
+        private _lockNextClaimableEpoch;
+    // Token + epoch = amount
+    mapping(address => uint256) private _accountedFees;
 
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -67,13 +71,14 @@ contract FeeDistributor is
         uint256 balance = IERC20Upgradeable(token).balanceOf(address(this));
 
         // Add unaccounted fees to current epoch
-        _epochFees[token][epoch] += balance - _totalFees[token];
+        _epochFees[token][epoch] += balance - _accountedFees[token];
 
         // Update total fees accounted for
-        _totalFees[token] = balance;
+        _accountedFees[token] = balance;
     }
 
-    /// @notice Allows the owner to retrieve any leftover rewards not claimable by users
+    /// @notice Allows the owner to retrieve any leftover rewards unclaimable by users
+    /// @dev This function is only meant to be used in case of no users locking in an epoch
     /// @param token Token address
     /// @param epoch Epoch to retrieve funds from
     function salvageRewards(address token, uint256 epoch) external {
@@ -98,35 +103,37 @@ contract FeeDistributor is
 
     /// @notice Returns the next claimable epoch for a user
     /// @param token Token address to claim for
-    /// @param user User address
+    /// @param tokenId the token id of the lock
     /// @return uint256 Next claimable epoch
-    function userNextClaimableEpoch(
+    function lockNextClaimableEpoch(
         address token,
-        address user
+        uint256 tokenId
     ) external view returns (uint256) {
-        return _userNextClaimableEpoch[token][user];
+        return _lockNextClaimableEpoch[token][tokenId];
     }
 
     /// @notice Allows a user to claim their rewards for a specific token
     /// @param token Token address
+    /// @param tokenId the token id of the lock
     /// @return uint256 Amount of rewards claimed
     function claim(
-        address token
-    ) external override nonReentrant returns (uint256) {
+        address token,
+        uint256 tokenId
+    ) external nonReentrant returns (uint256) {
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         );
 
         // Check if user has any user actions and therefore possibly something to claim
-        if (votingEscrow.userHistoryLength(msg.sender) == 0) {
+        if (votingEscrow.lockHistoryLength(tokenId) == 0) {
             return 0;
         }
 
         // Set the next claimable epoch if it's the first time the user claims
-        if (_userNextClaimableEpoch[token][msg.sender] == 0) {
-            _userNextClaimableEpoch[token][msg.sender] =
+        if (_lockNextClaimableEpoch[token][tokenId] == 0) {
+            _lockNextClaimableEpoch[token][tokenId] =
                 votingEscrow.epoch(
-                    votingEscrow.getUserHistoryPoint(msg.sender, 0).timestamp
+                    votingEscrow.getLockHistoryPoint(tokenId, 0).timestamp
                 ) +
                 1;
         }
@@ -139,16 +146,16 @@ contract FeeDistributor is
         uint256 nextPointEpoch;
         console.log("epoch", votingEscrow.epoch(block.timestamp));
         for (uint i = 0; i < 50; i++) {
-            nextClaimableEpoch = _userNextClaimableEpoch[token][msg.sender];
+            nextClaimableEpoch = _lockNextClaimableEpoch[token][tokenId];
             console.log("nextClaimableEpoch", nextClaimableEpoch);
             // Break if the next claimable epoch is the one we are in
             if (nextClaimableEpoch >= votingEscrow.epoch(block.timestamp)) {
                 break;
             } else {
                 // Get the current user history point
-                userHistoryPoint = votingEscrow.getUserHistoryPoint(
-                    msg.sender,
-                    _userHistoryPointer[token][msg.sender]
+                userHistoryPoint = votingEscrow.getLockHistoryPoint(
+                    tokenId,
+                    _lockHistoryPointer[token][tokenId]
                 );
 
                 // Get the user's next claimable epoch and its timestamp
@@ -158,8 +165,8 @@ contract FeeDistributor is
 
                 // Check if the user entire activity history has been iterated
                 if (
-                    _userHistoryPointer[token][msg.sender] ==
-                    votingEscrow.userHistoryLength(msg.sender) - 1
+                    _lockHistoryPointer[token][tokenId] ==
+                    votingEscrow.lockHistoryLength(tokenId) - 1
                 ) {
                     // Sum claimable amount if its the last activity
                     if (votingEscrow.totalSupplyAt(nextClaimableEpoch) > 0) {
@@ -173,14 +180,14 @@ contract FeeDistributor is
                     }
 
                     // Increment next claimable epoch
-                    _userNextClaimableEpoch[token][msg.sender]++;
+                    _lockNextClaimableEpoch[token][tokenId]++;
                 } else {
                     // Find the epoch of the next user history point
                     nextPointEpoch = votingEscrow.epoch(
                         votingEscrow
-                            .getUserHistoryPoint(
-                                msg.sender,
-                                _userHistoryPointer[token][msg.sender] + 1
+                            .getLockHistoryPoint(
+                                tokenId,
+                                _lockHistoryPointer[token][tokenId] + 1
                             )
                             .timestamp
                     );
@@ -189,7 +196,7 @@ contract FeeDistributor is
                         votingEscrow.epoch(userHistoryPoint.timestamp)
                     ) {
                         // If the next user activity is in the same epoch we increase the pointer
-                        _userHistoryPointer[token][msg.sender]++;
+                        _lockHistoryPointer[token][tokenId]++;
                     } else {
                         // If the next user activity is in a different epoch we sum the claimable amount for his epoch
                         if (
@@ -205,13 +212,13 @@ contract FeeDistributor is
                         }
 
                         // Increment next claimable epoch
-                        _userNextClaimableEpoch[token][msg.sender]++;
+                        _lockNextClaimableEpoch[token][tokenId]++;
                         // If the next user activity is in the next epoch to claim we increase the user history pointer
                         if (
                             nextPointEpoch + 1 ==
-                            _userNextClaimableEpoch[token][msg.sender]
+                            _lockNextClaimableEpoch[token][tokenId]
                         ) {
-                            _userHistoryPointer[token][msg.sender]++;
+                            _lockHistoryPointer[token][tokenId]++;
                         }
                     }
                 }

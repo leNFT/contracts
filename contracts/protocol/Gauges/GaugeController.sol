@@ -5,6 +5,8 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {IERC721Upgradable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IGaugeController} from "../../interfaces/IGaugeController.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {IGauge} from "../../interfaces/IGauge.sol";
@@ -15,6 +17,7 @@ import "hardhat/console.sol";
 /// @dev Contract that manages gauge vote weights, total vote weight, user vote power in each gauge, and user vote ratios.
 contract GaugeController is OwnableUpgradeable, IGaugeController {
     uint256 public constant INFLATION_PERIOD = 52; // 52 epochs (1 year)
+    uint256 public constant MAX_INFLATION_PERIOD = 8; // Maximum 6 inflation periods (8 years) and then base tail emissions
     uint256 public constant LOADING_PERIOD = 24; // 24 epochs (6 months)
 
     IAddressesProvider private _addressProvider;
@@ -32,13 +35,13 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     DataTypes.Point _lastWeightCheckpoint;
     // Slope changes for total weight
     mapping(uint256 => uint256) private _totalWeightSlopeChanges;
-    // Uset vote ratio used by each user (%), smallest tick is 0.01%
-    mapping(address => uint256) private _userVoteRatio;
-    // User vote ratio used by each user at each gauge (%), smallest tick is 0.01%
-    mapping(address => mapping(address => uint256)) private _userGaugeVoteRatio;
-    // Weight vote power each user has in each gauge
-    mapping(address => mapping(address => DataTypes.Point))
-        private _userGaugeVoteWeight;
+    // vote ratio being used by each lock (%), smallest tick is 0.01%
+    mapping(uint256 => uint256) private _lockVoteRatio;
+    // User vote ratio used by each lock at each gauge (%), smallest tick is 0.01%
+    mapping(uint256 => mapping(address => uint256)) private _lockGaugeVoteRatio;
+    // Weight vote power each lock has in each gauge
+    mapping(uint256 => mapping(address => DataTypes.Point))
+        private _lockGaugeVotePoint;
     mapping(address => bool) private _isGauge;
     mapping(address => address) private _liquidityPoolToGauge;
     uint256 private _initialRewards;
@@ -167,49 +170,58 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         return _totalWeigthHistory[epoch];
     }
 
-    /// @notice Get the current used vote power for a given user.
-    /// @param user The address of the user.
+    /// @notice Get the current used vote power for a given lock.
+    /// @param tokenId The tokenId of the lock.
     /// @return The current used vote power.
-    function userVoteRatio(address user) external view returns (uint256) {
-        return _userVoteRatio[user];
+    function lockVoteRatio(uint256 tokenId) external view returns (uint256) {
+        return _lockVoteRatio[tokenId];
     }
 
     /// @notice  Get the current used vote power for a given user in a specific gauge.
-    /// @param user The address of the user.
+    /// @param tokenId The tokenId of the lock.
     /// @param gauge The address of the gauge.
     /// @return The current used vote power for the given user in the specified gauge.
-    function userVoteRatioForGauge(
-        address user,
+    function lockVoteRatioForGauge(
+        uint256 tokenId,
         address gauge
     ) external view returns (uint256) {
         require(_isGauge[gauge], "Gauge is not on the gauge list");
 
-        return _userGaugeVoteRatio[user][gauge];
+        return _lockGaugeVoteRatio[tokenId][gauge];
+    }
+
+    function lockVotePointForGauge(
+        uint256 tokenId,
+        address gauge
+    ) external view returns (uint256) {
+        require(_isGauge[gauge], "Gauge is not on the gauge list");
+
+        return _lockGaugeVotePoint[tokenId][gauge];
     }
 
     /// @notice Get the vote weight for a user in a specific gauge.
-    ///@param user The address of the user.
+    /// @param tokenId The tokenId of the lock.
     /// @param gauge The address of the gauge.
     /// @return The vote weight for the user in the specified gauge.
-    function userVoteWeightForGauge(
-        address user,
+    function lockVoteWeightForGauge(
+        uint256 tokenId,
         address gauge
     ) external view returns (uint256) {
         require(_isGauge[gauge], "Gauge is not on the gauge list");
 
         if (
-            _userGaugeVoteWeight[user][gauge].slope *
+            _lockGaugeVotePoint[tokenId][gauge].slope *
                 (block.timestamp -
-                    _userGaugeVoteWeight[user][gauge].timestamp) >
-            _userGaugeVoteWeight[user][gauge].bias
+                    _lockGaugeVotePoint[tokenId][gauge].timestamp) >
+            _lockGaugeVotePoint[tokenId][gauge].bias
         ) {
             return 0;
         }
 
         return
-            _userGaugeVoteWeight[user][gauge].bias -
-            _userGaugeVoteWeight[user][gauge].slope *
-            (block.timestamp - _userGaugeVoteWeight[user][gauge].timestamp);
+            _lockGaugeVotePoint[tokenId][gauge].bias -
+            _lockGaugeVotePoint[tokenId][gauge].slope *
+            (block.timestamp - _lockGaugeVotePoint[tokenId][gauge].timestamp);
     }
 
     /// @notice Update the total weight history
@@ -297,33 +309,38 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     }
 
     /// @notice Vote for a gauge
+    /// @param tokenId The tokenId of the lock.
     /// @param gauge The address of the gauge to vote for
     /// @param ratio The ratio of the vote power to use
-    function vote(address gauge, uint256 ratio) external {
-        IVotingEscrow votingEscrow = IVotingEscrow(
-            _addressProvider.getVotingEscrow()
+    function vote(uint256 tokenId, address gauge, uint256 ratio) external {
+        //Must be the owner of the lock to use it to vote
+        address votingEscrowAddress = _addressProvider.getVotingEscrow();
+        require(
+            IERC721Upgradable(votingEscrowAddress).ownerOf(tokenId) ==
+                msg.sender,
+            "Must be the owner of the lock to use it to vote"
         );
 
         // Get user locked balance
-        DataTypes.LockedBalance memory userLockedBalance = votingEscrow.locked(
-            msg.sender
-        );
+        DataTypes.LockedBalance memory lockedBalance = IVotingEscrow(
+            votingEscrowAddress
+        ).locked(tokenId);
 
         require(
             ratio +
-                _userVoteRatio[msg.sender] -
-                _userGaugeVoteRatio[msg.sender][gauge] <=
+                _lockVoteRatio[tokenId] -
+                _lockGaugeVoteRatio[tokenId][gauge] <=
                 PercentageMath.PERCENTAGE_FACTOR, // 100%
             "Total vote ratio must be smaller than 100%"
         );
 
         require(
-            userLockedBalance.end > block.timestamp || ratio == 0,
+            lockedBalance.end > block.timestamp || ratio == 0,
             "Must have an active lock in order to vote unless it's erasing a vote"
         );
 
         require(
-            userLockedBalance.amount > 0,
+            lockedBalance.amount > 0,
             "Must have locked balance bigger than 0 to vote"
         );
 
@@ -333,54 +350,54 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         writeTotalWeightHistory();
         writeGaugeWeightHistory(gauge);
 
-        // Get user  last action
-        DataTypes.Point memory userLastPoint = votingEscrow.getUserHistoryPoint(
-            msg.sender,
-            votingEscrow.userHistoryLength(msg.sender) - 1
-        );
+        // Get lock last action
+        DataTypes.Point memory lockLastPoint = IVotingEscrow(
+            votingEscrowAddress
+        ).getLockHistoryPoint(
+                tokenId,
+                IVotingEscrow(votingEscrowAddress).lockHistoryLength(tokenId) -
+                    1
+            );
         DataTypes.Point memory oldGaugeVoteWeight;
         DataTypes.Point memory newGaugeVoteWeight;
 
         // Get the updated gauge vote weight
         newGaugeVoteWeight.bias =
-            ((userLastPoint.bias -
-                (userLastPoint.slope *
-                    (block.timestamp - userLastPoint.timestamp))) * ratio) /
+            ((lockLastPoint.bias -
+                (lockLastPoint.slope *
+                    (block.timestamp - lockLastPoint.timestamp))) * ratio) /
             PercentageMath.PERCENTAGE_FACTOR;
         newGaugeVoteWeight.slope =
-            (userLastPoint.slope * ratio) /
+            (lockLastPoint.slope * ratio) /
             PercentageMath.PERCENTAGE_FACTOR;
         newGaugeVoteWeight.timestamp = block.timestamp;
 
         // If we already have valid votes in this gauge
         if (
-            _userGaugeVoteRatio[msg.sender][gauge] > 0 &&
-            block.timestamp < userLockedBalance.end
+            _lockGaugeVoteRatio[tokenId][gauge] > 0 &&
+            block.timestamp < lockedBalance.end
         ) {
             // Get the updated old gauge vote weight
             oldGaugeVoteWeight.bias =
-                _userGaugeVoteWeight[msg.sender][gauge].slope *
+                _lockGaugeVotePoint[tokenId][gauge].slope *
                 (block.timestamp -
-                    _userGaugeVoteWeight[msg.sender][gauge].timestamp);
-            oldGaugeVoteWeight.slope = _userGaugeVoteWeight[msg.sender][gauge]
+                    _lockGaugeVotePoint[tokenId][gauge].timestamp);
+            oldGaugeVoteWeight.slope = _lockGaugeVotePoint[tokenId][gauge]
                 .slope;
             oldGaugeVoteWeight.timestamp = block.timestamp;
 
             _gaugeWeightSlopeChanges[gauge][
-                userLockedBalance.end
+                lockedBalance.end
             ] -= oldGaugeVoteWeight.slope;
 
-            _totalWeightSlopeChanges[
-                userLockedBalance.end
-            ] -= oldGaugeVoteWeight.slope;
+            _totalWeightSlopeChanges[lockedBalance.end] -= oldGaugeVoteWeight
+                .slope;
         }
 
         // Add new slope updates
-        _gaugeWeightSlopeChanges[gauge][
-            userLockedBalance.end
-        ] += newGaugeVoteWeight.slope;
-        _totalWeightSlopeChanges[userLockedBalance.end] += newGaugeVoteWeight
+        _gaugeWeightSlopeChanges[gauge][lockedBalance.end] += newGaugeVoteWeight
             .slope;
+        _totalWeightSlopeChanges[lockedBalance.end] += newGaugeVoteWeight.slope;
 
         // Update checkpoints
         _lastGaugeWeigthCheckpoint[gauge].bias =
@@ -408,29 +425,40 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         _lastWeightCheckpoint.timestamp = block.timestamp;
 
         // Update user vote info
-        _userVoteRatio[msg.sender] =
+        _lockVoteRatio[msg.sender] =
             ratio +
-            _userVoteRatio[msg.sender] -
-            _userGaugeVoteRatio[msg.sender][gauge];
-        _userGaugeVoteRatio[msg.sender][gauge] = ratio;
-        _userGaugeVoteWeight[msg.sender][gauge] = newGaugeVoteWeight;
+            _lockVoteRatio[tokenId] -
+            _lockGaugeVoteRatio[tokenId][gauge];
+        _lockGaugeVoteRatio[tokenId][gauge] = ratio;
+        _lockGaugeVotePoint[tokenId][gauge] = newGaugeVoteWeight;
 
-        emit Vote(msg.sender, gauge, ratio);
+        emit Vote(msg.sender, tokenId, gauge, ratio);
     }
 
-    /// @notice Returns the amount of tokens to distribute as rewards for the specified epoch.
-    /// @param epoch The epoch for which to get the rewards.
-    /// @return The amount of tokens to distribute as rewards for the specified epoch.
-    function getEpochRewards(uint256 epoch) public view returns (uint256) {
+    function getRewardsCeiling(uint256 epoch) public view returns (uint256) {
+        uint256 inflationEpoch = epoch / INFLATION_PERIOD;
         // If we are in the loading period, return smaller rewards
         if (epoch < LOADING_PERIOD) {
             return (_initialRewards * epoch) / LOADING_PERIOD;
+        } else if (inflationEpoch > MAX_INFLATION_PERIOD) {
+            inflationEpoch = MAX_INFLATION_PERIOD;
         }
-
-        uint256 inflationEpoch = epoch / INFLATION_PERIOD;
 
         return
             (_initialRewards * (3 ** inflationEpoch)) / (4 ** inflationEpoch);
+    }
+
+    /// @notice Returns the amount of tokens to distribute as rewards for the specified epoch.
+    /// @dev The amount of tokens to distribute goes down as the number of locked tokens goes up.
+    /// @param epoch The epoch for which to get the rewards.
+    /// @return The amount of tokens to distribute as rewards for the specified epoch.
+    function getEpochRewards(uint256 epoch) public view returns (uint256) {
+        return
+            (((PercentageMath.PERCENTAGE_FACTOR -
+                IVotingEscrow(addressProvider.getVotingEscrow())
+                    .getLockedRatioAt(epoch)) ** 3) *
+                getRewardsCeiling(epoch)) /
+            (PercentageMath.PERCENTAGE_FACTOR ** 3);
     }
 
     /// @notice Get the LE reward for a gauge in a given epoch

@@ -173,6 +173,15 @@ async function main() {
 
   console.log("Deployed FeeDistributor");
 
+  // Deploy and initialize the Bribes contract
+  const Bribes = await ethers.getContractFactory("Bribes");
+  const bribes = await upgrades.deployProxy(Bribes, [
+    addressesProvider.address,
+  ]);
+  addresses["Bribes"] = bribes.address;
+
+  console.log("Deployed Bribes");
+
   // Deploy and initialize Trading Pool Factory
   const TradingPoolFactory = await ethers.getContractFactory(
     "TradingPoolFactory"

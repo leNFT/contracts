@@ -10,6 +10,7 @@ import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -31,6 +32,7 @@ import "hardhat/console.sol";
 contract GenesisNFT is
     Initializable,
     ContextUpgradeable,
+    ERC165Upgradeable,
     ERC721Upgradeable,
     ERC721EnumerableUpgradeable,
     ERC721URIStorageUpgradeable,
@@ -511,13 +513,16 @@ contract GenesisNFT is
         public
         view
         override(
-            IERC165Upgradeable,
+            ERC165Upgradeable,
+            ERC721EnumerableUpgradeable,
             ERC721Upgradeable,
-            ERC721EnumerableUpgradeable
+            IERC165Upgradeable
         )
         returns (bool)
     {
-        return ERC721EnumerableUpgradeable.supportsInterface(interfaceId);
+        return
+            ERC721EnumerableUpgradeable.supportsInterface(interfaceId) ||
+            ERC165Upgradeable.supportsInterface(interfaceId);
     }
 
     // Function to receive Ether

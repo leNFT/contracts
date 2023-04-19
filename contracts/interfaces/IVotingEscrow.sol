@@ -5,7 +5,7 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 
 interface IVotingEscrow {
-    function userHistoryLength(address user) external view returns (uint256);
+    function lockHistoryLength(uint256 tokenId) external view returns (uint256);
 
     function epochPeriod() external pure returns (uint256);
 
@@ -15,12 +15,16 @@ interface IVotingEscrow {
 
     function writeTotalWeightHistory() external;
 
-    function getUserHistoryPoint(
-        address user,
+    function getLockHistoryPoint(
+        uint256 tokenId,
         uint256 index
     ) external view returns (DataTypes.Point memory);
 
-    function totalSupplyAt(uint256 epoch_) external returns (uint256);
+    function getLockedRatioAt(uint256 _epoch) external view returns (uint256);
+
+    function totalWeightAt(uint256 epoch_) external returns (uint256);
+
+    function userWeight(address user) external view returns (uint256);
 
     function createLock(
         address receiver,
@@ -29,6 +33,6 @@ interface IVotingEscrow {
     ) external;
 
     function locked(
-        address user
+        uint256 tokenId
     ) external view returns (DataTypes.LockedBalance memory);
 }
