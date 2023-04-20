@@ -42,7 +42,7 @@ contract VotingEscrow is
     uint256 public constant LOCK_FACTOR = 4;
     uint256 public constant MINLOCKTIME = 1 weeks;
     uint256 public constant MAXLOCKTIME = 4 * 365 days;
-    uint256 public constant EPOCH_PERIOD = 1 days;
+    uint256 public constant EPOCH_PERIOD = 2 hours;
 
     IAddressesProvider private _addressProvider;
     uint256 _deployTimestamp;
@@ -80,20 +80,11 @@ contract VotingEscrow is
     /// @notice Initializes the VotingEscrow contract.
     /// @param addressProvider The address of the AddressesProvider contract.
     function initialize(
-        IAddressesProvider addressProvider
+        IAddressesProvider addressProvider,
+        string calldata name,
+        string calldata symbol
     ) external initializer {
-        __ERC721_init(
-            string.concat(
-                "Vote Escrowed ",
-                IERC20MetadataUpgradeable(_addressProvider.getNativeToken())
-                    .symbol()
-            ),
-            string.concat(
-                "ve",
-                IERC20MetadataUpgradeable(_addressProvider.getNativeToken())
-                    .symbol()
-            )
-        );
+        __ERC721_init(name, symbol);
         __ERC721Enumerable_init();
         __Ownable_init();
         _addressProvider = addressProvider;
@@ -427,10 +418,10 @@ contract VotingEscrow is
             "Locktime is not over"
         );
 
-        // Make sure the user has no active votes
+        // Make sure the tokenId has no active votes
         require(
             IGaugeController(_addressProvider.getGaugeController())
-                .userVoteRatio(_msgSender()) == 0,
+                .lockVoteRatio(tokenId) == 0,
             "User has active gauge votes"
         );
 

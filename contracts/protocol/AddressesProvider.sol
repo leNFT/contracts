@@ -21,6 +21,7 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _genesisNFT;
     address private _gaugeController;
     address private _tradingPoolFactory;
+    address private _bribes;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -149,5 +150,13 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
 
     function getWETH() external view override returns (address) {
         return _weth;
+    }
+
+    function setBribes(address bribes) external override onlyOwner {
+        _bribes = bribes;
+    }
+
+    function getBribes() external view override returns (address) {
+        return _bribes;
     }
 }

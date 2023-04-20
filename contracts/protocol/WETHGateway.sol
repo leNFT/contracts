@@ -8,6 +8,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
+import {IBribes} from "../interfaces/IBribes.sol";
 import {ISwapRouter} from "../interfaces/ISwapRouter.sol";
 import {ITradingPool} from "../interfaces/ITradingPool.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
@@ -438,7 +439,16 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         }
     }
 
-    function depositBribe
+    function depositBribe(address gauge, uint256 amount) external nonReentrant {
+        _weth.deposit{value: amount}();
+        _weth.approve(address(_addressProvider.getBribes()), amount);
+        IBribes(_addressProvider.getBribes()).depositBribe(
+            _msgSender(),
+            address(_weth),
+            gauge,
+            amount
+        );
+    }
 
     // So we can receive the collateral from the user when borrowing
     function onERC721Received(

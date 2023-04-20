@@ -149,6 +149,8 @@ async function main() {
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   const votingEscrow = await upgrades.deployProxy(VotingEscrow, [
     addressesProvider.address,
+    "Vote Escrowed LE",
+    "veLE",
   ]);
   addresses["VotingEscrow"] = votingEscrow.address;
 
@@ -271,6 +273,14 @@ async function main() {
   var fs = require("fs");
   contractAddresses[chainID.toString()] = addresses;
   fs.writeFileSync(
+    "../lenft-interface-v2/contractAddresses.json",
+    JSON.stringify(contractAddresses),
+    function (err) {
+      if (err) throw err;
+      console.log("File written to interface folder");
+    }
+  );
+  fs.writeFileSync(
     "../lenft-interface/contractAddresses.json",
     JSON.stringify(contractAddresses),
     function (err) {
@@ -362,6 +372,10 @@ async function main() {
     swapRouter.address
   );
   await setSwapRouterTx.wait();
+
+  // Set bribes address
+  const setBribesTx = await addressesProvider.setBribes(bribes.address);
+  await setBribesTx.wait();
 
   // Set WETH address
   const setWETHTx = await addressesProvider.setWETH(addresses["ETH"].address);

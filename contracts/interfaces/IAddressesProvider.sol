@@ -57,4 +57,8 @@ interface IAddressesProvider {
     function setWETH(address weth) external;
 
     function getWETH() external view returns (address);
+
+    function setBribes(address bribes) external;
+
+    function getBribes() external view returns (address);
 }

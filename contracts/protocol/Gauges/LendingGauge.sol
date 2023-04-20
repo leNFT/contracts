@@ -6,6 +6,7 @@ import {INativeToken} from "../../interfaces/INativeToken.sol";
 import {IGaugeController} from "../../interfaces/IGaugeController.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
@@ -261,15 +262,16 @@ contract LendingGauge is IGauge {
     }
 
     /// @notice Updates the working balance of a user if their locked has expired.
-    /// @param user The address of the user.
-    function kick(address user) external {
+    /// @param tokenId The tokenId of the user's locked balance.
+    function kick(uint256 tokenId) external {
+        address votingEscrowAddress = _addressProvider.getVotingEscrow();
         // Get user locked balance end time
-        uint256 lockEnd = IVotingEscrow(_addressProvider.getVotingEscrow())
-            .locked(user)
+        uint256 lockEnd = IVotingEscrow(votingEscrowAddress)
+            .locked(tokenId)
             .end;
 
         if (lockEnd < block.timestamp) {
-            _checkpoint(user);
+            _checkpoint(IERC721(votingEscrowAddress).ownerOf(tokenId));
         }
     }
 

@@ -6,7 +6,7 @@ import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import {IERC721Upgradable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IGaugeController} from "../../interfaces/IGaugeController.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {IGauge} from "../../interfaces/IGauge.sol";
@@ -173,7 +173,9 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @notice Get the current used vote power for a given lock.
     /// @param tokenId The tokenId of the lock.
     /// @return The current used vote power.
-    function lockVoteRatio(uint256 tokenId) external view returns (uint256) {
+    function lockVoteRatio(
+        uint256 tokenId
+    ) external view override returns (uint256) {
         return _lockVoteRatio[tokenId];
     }
 
@@ -193,7 +195,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function lockVotePointForGauge(
         uint256 tokenId,
         address gauge
-    ) external view returns (uint256) {
+    ) external view returns (DataTypes.Point memory) {
         require(_isGauge[gauge], "Gauge is not on the gauge list");
 
         return _lockGaugeVotePoint[tokenId][gauge];
@@ -316,7 +318,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         //Must be the owner of the lock to use it to vote
         address votingEscrowAddress = _addressProvider.getVotingEscrow();
         require(
-            IERC721Upgradable(votingEscrowAddress).ownerOf(tokenId) ==
+            IERC721Upgradeable(votingEscrowAddress).ownerOf(tokenId) ==
                 msg.sender,
             "Must be the owner of the lock to use it to vote"
         );
@@ -425,7 +427,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         _lastWeightCheckpoint.timestamp = block.timestamp;
 
         // Update user vote info
-        _lockVoteRatio[msg.sender] =
+        _lockVoteRatio[tokenId] =
             ratio +
             _lockVoteRatio[tokenId] -
             _lockGaugeVoteRatio[tokenId][gauge];
@@ -455,7 +457,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function getEpochRewards(uint256 epoch) public view returns (uint256) {
         return
             (((PercentageMath.PERCENTAGE_FACTOR -
-                IVotingEscrow(addressProvider.getVotingEscrow())
+                IVotingEscrow(_addressProvider.getVotingEscrow())
                     .getLockedRatioAt(epoch)) ** 3) *
                 getRewardsCeiling(epoch)) /
             (PercentageMath.PERCENTAGE_FACTOR ** 3);

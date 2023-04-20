@@ -87,7 +87,7 @@ contract FeeDistributor is
         );
         // Funds not claimable by users are epoch in which there was no locked supply
         require(
-            votingEscrow.totalSupplyAt(epoch) == 0,
+            votingEscrow.totalWeightAt(epoch) == 0,
             "Funds are claimable by users"
         );
         // THere needs to be funds to salvage
@@ -169,14 +169,14 @@ contract FeeDistributor is
                     votingEscrow.lockHistoryLength(tokenId) - 1
                 ) {
                     // Sum claimable amount if its the last activity
-                    if (votingEscrow.totalSupplyAt(nextClaimableEpoch) > 0) {
+                    if (votingEscrow.totalWeightAt(nextClaimableEpoch) > 0) {
                         amountToClaim +=
                             (_epochFees[token][nextClaimableEpoch] *
                                 (userHistoryPoint.bias -
                                     userHistoryPoint.slope *
                                     (nextClaimableEpochTimestamp -
                                         userHistoryPoint.timestamp))) /
-                            votingEscrow.totalSupplyAt(nextClaimableEpoch);
+                            votingEscrow.totalWeightAt(nextClaimableEpoch);
                     }
 
                     // Increment next claimable epoch
@@ -200,7 +200,7 @@ contract FeeDistributor is
                     } else {
                         // If the next user activity is in a different epoch we sum the claimable amount for his epoch
                         if (
-                            votingEscrow.totalSupplyAt(nextClaimableEpoch) > 0
+                            votingEscrow.totalWeightAt(nextClaimableEpoch) > 0
                         ) {
                             amountToClaim +=
                                 (_epochFees[token][nextClaimableEpoch] *
@@ -208,7 +208,7 @@ contract FeeDistributor is
                                         userHistoryPoint.slope *
                                         (nextClaimableEpochTimestamp -
                                             userHistoryPoint.timestamp))) /
-                                votingEscrow.totalSupplyAt(nextClaimableEpoch);
+                                votingEscrow.totalWeightAt(nextClaimableEpoch);
                         }
 
                         // Increment next claimable epoch
