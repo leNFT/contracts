@@ -24,6 +24,8 @@ interface IVotingEscrow {
 
     function totalWeightAt(uint256 epoch_) external returns (uint256);
 
+    function totalWeight() external returns (uint256);
+
     function userWeight(address user) external view returns (uint256);
 
     function createLock(

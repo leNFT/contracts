@@ -439,14 +439,14 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         }
     }
 
-    function depositBribe(address gauge, uint256 amount) external nonReentrant {
-        _weth.deposit{value: amount}();
-        _weth.approve(address(_addressProvider.getBribes()), amount);
+    function depositBribe(address gauge) external payable nonReentrant {
+        _weth.deposit{value: msg.value}();
+        _weth.approve(address(_addressProvider.getBribes()), msg.value);
         IBribes(_addressProvider.getBribes()).depositBribe(
             _msgSender(),
             address(_weth),
             gauge,
-            amount
+            msg.value
         );
     }
 

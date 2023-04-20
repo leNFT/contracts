@@ -186,7 +186,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
         uint256 userVotingBalance = IVotingEscrow(votingEscrow).userWeight(
             user
         );
-        uint256 totalVotingSupply = IERC20(votingEscrow).totalSupply();
+        uint256 totalVotingSupply = IVotingEscrow(votingEscrow).totalWeight();
         uint256 newAmount;
 
         writeTotalWeightHistory();
