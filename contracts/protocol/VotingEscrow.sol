@@ -269,7 +269,9 @@ contract VotingEscrow is
     /// @notice Returns the total weight of locked tokens.
     /// @dev Might not return the most up-to-date value if the total weight has not been updated in the current epoch.
     /// @return The total weight of locked tokens.
-    function totalWeight() public view returns (uint256) {
+    function totalWeight() public returns (uint256) {
+        // Update total weight history
+        writeTotalWeightHistory();
         return
             _lastWeightCheckpoint.bias -
             _lastWeightCheckpoint.slope *
