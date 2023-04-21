@@ -128,14 +128,19 @@ contract Bribes is
             "Caller is not the owner of the token"
         );
 
-        // Find epoch we're in
-        uint256 currentEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
-            .epoch(block.timestamp);
-
         // Get lock vote point and its epoch
         DataTypes.Point memory lockLastPoint = IGaugeController(
             _addressProvider.getGaugeController()
         ).lockVotePointForGauge(tokenId, gauge);
+
+        // Make sure the token has voting power for the gauge
+        if (lockLastPoint.bias == 0) {
+            return 0;
+        }
+
+        // Find epoch we're in
+        uint256 currentEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
+            .epoch(block.timestamp);
         uint256 lockLastPointEpoch = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         ).epoch(lockLastPoint.timestamp);
