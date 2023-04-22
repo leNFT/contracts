@@ -178,15 +178,15 @@ contract TradingGauge is IGauge, IERC721Receiver {
     /// @param user The address of the user whose working balance needs to be updated.
     function _checkpoint(address user) internal {
         // Get user ve balance and total ve balance
-        address votingEscrow = _addressProvider.getVotingEscrow();
+        IVotingEscrow votingEscrow = IVotingEscrow(
+            _addressProvider.getVotingEscrow()
+        );
 
         // Make sure the voting escrow's total supply is up to date
-        IVotingEscrow(votingEscrow).writeTotalWeightHistory();
+        votingEscrow.writeTotalWeightHistory();
 
-        uint256 userVotingBalance = IVotingEscrow(votingEscrow).userWeight(
-            user
-        );
-        uint256 totalVotingSupply = IVotingEscrow(votingEscrow).totalWeight();
+        uint256 userVotingBalance = votingEscrow.userWeight(user);
+        uint256 totalVotingSupply = votingEscrow.totalWeight();
         uint256 newAmount;
 
         writeTotalWeightHistory();
@@ -211,8 +211,13 @@ contract TradingGauge is IGauge, IERC721Receiver {
                 _workingBalanceHistory[user].length - 1
             ];
         }
+
+        // New working balance should only be effective after the next epoch
         DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
-            .WorkingBalance({amount: newAmount, timestamp: block.timestamp});
+            .WorkingBalance({
+                amount: newAmount,
+                timestamp: block.timestamp + votingEscrow.epochPeriod()
+            });
 
         _workingSupply =
             _workingSupply +

@@ -8,4 +8,11 @@ interface IBribes {
         address gauge,
         uint256 amount
     ) external;
+
+    function withdrawBribe(
+        address receiver,
+        address token,
+        address gauge,
+        uint256 amount
+    ) external;
 }

@@ -454,7 +454,15 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @dev The amount of tokens to distribute goes down as the number of locked tokens goes up.
     /// @param epoch The epoch for which to get the rewards.
     /// @return The amount of tokens to distribute as rewards for the specified epoch.
-    function getEpochRewards(uint256 epoch) public view returns (uint256) {
+    function getEpochRewards(uint256 epoch) public returns (uint256) {
+        require(
+            epoch <=
+                IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
+                    block.timestamp
+                ),
+            "Epoch is in the future"
+        );
+
         return
             (((PercentageMath.PERCENTAGE_FACTOR -
                 IVotingEscrow(_addressProvider.getVotingEscrow())
@@ -472,6 +480,13 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         uint256 epoch
     ) external returns (uint256 rewards) {
         require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(
+            epoch <=
+                IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
+                    block.timestamp
+                ),
+            "Epoch is in the future"
+        );
 
         if (getTotalWeightAt(epoch) == 0) {
             return 0;

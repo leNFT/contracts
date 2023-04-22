@@ -55,9 +55,9 @@ contract Bribes is
         address gauge,
         uint256 amount
     ) external override nonReentrant {
-        // Find epoch we're in
+        // Find what's the next epoch
         uint256 nextEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
-            .epoch(block.timestamp);
+            .epoch(block.timestamp) + 1;
 
         // Add the amount to the bribes
         _gaugeBribes[token][gauge][nextEpoch] += amount;
@@ -69,6 +69,30 @@ contract Bribes is
             address(this),
             amount
         );
+    }
+
+    function withdrawBribe(
+        address receiver,
+        address token,
+        address gauge,
+        uint256 amount
+    ) external override nonReentrant {
+        // Find what's the next epoch
+        uint256 nextEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
+            .epoch(block.timestamp) + 1;
+
+        // Make sure there are enough funds to withdraw
+        require(
+            _userBribes[token][gauge][nextEpoch][msg.sender] >= amount,
+            "Not enough funds to withdraw"
+        );
+
+        // Subtract the amount from the bribes
+        _gaugeBribes[token][gauge][nextEpoch] -= amount;
+        _userBribes[token][gauge][nextEpoch][msg.sender] -= amount;
+
+        // Transfer the bribe tokens back to the user
+        IERC20Upgradeable(token).safeTransfer(receiver, amount);
     }
 
     function salvageBribes(

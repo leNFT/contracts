@@ -40,7 +40,7 @@ contract VotingEscrow is
     ReentrancyGuardUpgradeable
 {
     uint256 public constant LOCK_FACTOR = 4;
-    uint256 public constant MINLOCKTIME = 1 weeks;
+    uint256 public constant MINLOCKTIME = 2 weeks;
     uint256 public constant MAXLOCKTIME = 4 * 365 days;
     uint256 public constant EPOCH_PERIOD = 2 hours;
 
@@ -252,7 +252,11 @@ contract VotingEscrow is
 
     function getLockedRatioAt(
         uint256 _epoch
-    ) external view override returns (uint256) {
+    ) external override returns (uint256) {
+        require(_epoch <= epoch(block.timestamp), "Invalid epoch");
+
+        // Update total weight history
+        writeTotalWeightHistory();
         return _lockedRatioHistory[_epoch];
     }
 
@@ -260,6 +264,8 @@ contract VotingEscrow is
     /// @param _epoch The epoch number for which to retrieve the total weight.
     /// @return The total weight of locked tokens at the given epoch.
     function totalWeightAt(uint256 _epoch) external returns (uint256) {
+        require(_epoch <= epoch(block.timestamp), "Invalid epoch");
+
         // Update total weight history
         writeTotalWeightHistory();
 
@@ -383,11 +389,13 @@ contract VotingEscrow is
         uint256 tokenId,
         uint256 newUnlockTime
     ) external nonReentrant {
+        require(ownerOf(tokenId) == _msgSender(), "Not the owner of the lock");
+        require(_lockedBalance[tokenId].end > block.timestamp, "Inactive Lock");
+
         // Round the locktime to whole epochs
         uint256 roundedUnlocktime = (newUnlockTime / EPOCH_PERIOD) *
             EPOCH_PERIOD;
-        require(ownerOf(tokenId) == _msgSender(), "Not the owner of the lock");
-        require(_lockedBalance[tokenId].end > block.timestamp, "Inactive Lock");
+
         require(
             roundedUnlocktime > _lockedBalance[tokenId].end,
             "Lock time can only increase"
@@ -424,7 +432,7 @@ contract VotingEscrow is
         require(
             IGaugeController(_addressProvider.getGaugeController())
                 .lockVoteRatio(tokenId) == 0,
-            "User has active gauge votes"
+            "Lock has active gauge votes"
         );
 
         // Save oldLocked and update the locked balance

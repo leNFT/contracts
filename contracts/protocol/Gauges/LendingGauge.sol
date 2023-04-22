@@ -203,13 +203,15 @@ contract LendingGauge is IGauge {
     /// @param user The address of the user.
     function _checkpoint(address user) internal {
         // Get user ve balance and total ve balance
-        address votingEscrow = _addressProvider.getVotingEscrow();
+        IVotingEscrow votingEscrow = IVotingEscrow(
+            _addressProvider.getVotingEscrow()
+        );
 
         // Make sure the voting escrow's total supply is up to date
         IVotingEscrow(votingEscrow).writeTotalWeightHistory();
 
-        uint256 userVotingBalance = IERC20(votingEscrow).balanceOf(user);
-        uint256 totalVotingSupply = IERC20(votingEscrow).totalSupply();
+        uint256 userVotingBalance = votingEscrow.userWeight(user);
+        uint256 totalVotingSupply = votingEscrow.totalWeight();
         uint256 newAmount;
 
         // Save the total weight history
@@ -236,7 +238,10 @@ contract LendingGauge is IGauge {
             ];
         }
         DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
-            .WorkingBalance({amount: newAmount, timestamp: block.timestamp});
+            .WorkingBalance({
+                amount: newAmount,
+                timestamp: block.timestamp + votingEscrow.epochPeriod()
+            });
 
         _workingSupply =
             _workingSupply +

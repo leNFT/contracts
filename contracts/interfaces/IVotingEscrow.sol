@@ -20,7 +20,7 @@ interface IVotingEscrow {
         uint256 index
     ) external view returns (DataTypes.Point memory);
 
-    function getLockedRatioAt(uint256 _epoch) external view returns (uint256);
+    function getLockedRatioAt(uint256 _epoch) external returns (uint256);
 
     function totalWeightAt(uint256 epoch_) external returns (uint256);
 
