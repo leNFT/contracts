@@ -141,13 +141,20 @@ contract VotingEscrow is
             _lastWeightCheckpoint.slope -= _slopeChanges[epochTimestampPointer];
 
             // Update total locked ratio
-            _lockedRatioHistory.push(
-                (IERC20Upgradeable(_addressProvider.getNativeToken()).balanceOf(
-                    address(this)
-                ) * PercentageMath.PERCENTAGE_FACTOR) /
-                    IERC20Upgradeable(_addressProvider.getNativeToken())
-                        .totalSupply()
-            );
+            if (
+                IERC20Upgradeable(_addressProvider.getNativeToken())
+                    .totalSupply() != 0
+            ) {
+                _lockedRatioHistory.push(
+                    (IERC20Upgradeable(_addressProvider.getNativeToken())
+                        .balanceOf(address(this)) *
+                        PercentageMath.PERCENTAGE_FACTOR) /
+                        IERC20Upgradeable(_addressProvider.getNativeToken())
+                            .totalSupply()
+                );
+            } else {
+                _lockedRatioHistory.push(0);
+            }
 
             //Increase epoch timestamp
             epochTimestampPointer += EPOCH_PERIOD;
