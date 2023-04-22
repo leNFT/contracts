@@ -42,7 +42,7 @@ contract VotingEscrow is
     uint256 public constant LOCK_FACTOR = 4;
     uint256 public constant MINLOCKTIME = 2 weeks;
     uint256 public constant MAXLOCKTIME = 4 * 365 days;
-    uint256 public constant EPOCH_PERIOD = 2 hours;
+    uint256 public constant EPOCH_PERIOD = 30 minutes;
 
     IAddressesProvider private _addressProvider;
     uint256 _deployTimestamp;
