@@ -17,7 +17,7 @@ async function main() {
   let chainID = hre.network.config.chainId;
   console.log("chainID: ", chainID);
   var addresses = contractAddresses[chainID];
-  const tradingPool = "0xB770EaB9774C65DD25f89ef8eA824587B8dA42a6";
+  const tradingPool = "0xa1ACb4282c4dC743d79F759fb1292749DEd801c8";
 
   // Deploy gauge
   const Gauge = await ethers.getContractFactory("TradingGauge");

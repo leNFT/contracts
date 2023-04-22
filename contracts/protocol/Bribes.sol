@@ -192,8 +192,8 @@ contract Bribes is
             ).epochTimestamp(epoch);
 
             uint256 lockWeightAtEpoch = lockLastPoint.bias -
-                lockLastPoint.slope *
-                (epochTimestamp - lockLastPoint.timestamp);
+                (lockLastPoint.slope *
+                    (epochTimestamp - lockLastPoint.timestamp));
 
             uint256 gaugeWeightAtEpoch = IGaugeController(
                 _addressProvider.getGaugeController()
