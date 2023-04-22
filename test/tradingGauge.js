@@ -35,6 +35,7 @@ describe("Trading Gauge", () => {
     await approveNFTTx.wait();
     const depositTx = await wethGateway.depositTradingPool(
       poolAddress,
+      0,
       [0],
       "100000000000000",
       exponentialCurve.address,
@@ -70,7 +71,7 @@ describe("Trading Gauge", () => {
     // Mint 10 native tokens to the callers address
     const mintNativeTokenTx = await nativeToken.mint(
       owner.address,
-      "10000000000000000000"
+      "20000000000000000000"
     );
     await mintNativeTokenTx.wait();
 
@@ -85,18 +86,19 @@ describe("Trading Gauge", () => {
 
     //Lock 10 tokens for 100 days
     await votingEscrow.createLock(
+      owner.address,
       "10000000000000000000",
       Math.floor(Date.now() / 1000) + 86400 * 100
     );
     console.log(Math.floor(Date.now() / 1000) + 86400 * 100);
 
     // VOte for gauge
-    const voteForGaugeTx = await gaugeController.vote(gauge.address, 1000);
+    const voteForGaugeTx = await gaugeController.vote(0, gauge.address, 5000);
     await voteForGaugeTx.wait();
   });
   it("Should claim rewards from the gauge", async function () {
-    // 1 day pass
-    await ethers.provider.send("evm_increaseTime", [56400 * 1]);
+    // 2 day pass
+    await ethers.provider.send("evm_increaseTime", [56400 * 2]);
     // Mine a new block
     await ethers.provider.send("evm_mine", []);
 
@@ -108,7 +110,7 @@ describe("Trading Gauge", () => {
 
     // Find if the user received the asset
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      "20000000000000000000"
+      "10000000000000000000"
     );
   });
   it("Should unstake from the gauge", async function () {

@@ -115,6 +115,8 @@ let loadEnv = async function () {
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   votingEscrow = await upgrades.deployProxy(VotingEscrow, [
     addressesProvider.address,
+    "Vote Escrowed LE",
+    "veLE",
   ]);
 
   console.log("Deployed VotingEscrow");

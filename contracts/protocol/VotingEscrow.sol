@@ -91,6 +91,7 @@ contract VotingEscrow is
         _deployTimestamp = block.timestamp;
         _totalWeightHistory.push(0);
         _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);
+        _lockedRatioHistory.push(0);
     }
 
     /// @notice Returns the length of an epoch period in seconds.
@@ -143,7 +144,7 @@ contract VotingEscrow is
             // Update total locked ratio
             if (
                 IERC20Upgradeable(_addressProvider.getNativeToken())
-                    .totalSupply() != 0
+                    .totalSupply() > 0
             ) {
                 _lockedRatioHistory.push(
                     (IERC20Upgradeable(_addressProvider.getNativeToken())

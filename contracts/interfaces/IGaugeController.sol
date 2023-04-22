@@ -29,6 +29,8 @@ interface IGaugeController {
         uint256 epoch
     ) external returns (uint256 rewards);
 
+    function getEpochRewards(uint256 epoch) external returns (uint256 rewards);
+
     function lockVotePointForGauge(
         uint256 tokenId,
         address gauge
