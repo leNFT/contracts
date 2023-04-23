@@ -89,7 +89,6 @@ contract TradingGauge is IGauge, IERC721Receiver {
         uint256 nextClaimedEpoch;
         for (uint256 i = 0; i < 50; i++) {
             nextClaimedEpoch = _userNextClaimableEpoch[msg.sender];
-            console.log("nextClaimedEpoch", nextClaimedEpoch);
 
             // Break if the next claimable epoch is the one we are in
             if (nextClaimedEpoch >= votingEscrow.epoch(block.timestamp)) {
@@ -148,7 +147,6 @@ contract TradingGauge is IGauge, IERC721Receiver {
             }
         }
 
-        console.log("amountToClaim", amountToClaim);
         INativeToken(_addressProvider.getNativeToken()).mintGaugeRewards(
             msg.sender,
             amountToClaim

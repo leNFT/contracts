@@ -123,7 +123,7 @@ library LiquidationLogic {
                 loanData.borrowRate,
                 loanData.amount
             );
-            console.log("receiveUnderlyingDefaulted", fundsLeft);
+
             fundsLeft = 0;
             // If we have funds to cover the whole debt associated with the loan
         } else {
@@ -133,7 +133,7 @@ library LiquidationLogic {
                 loanData.borrowRate,
                 loanInterest
             );
-            console.log("receiveUnderlying", loanDebt);
+
             fundsLeft -= loanDebt;
         }
 

@@ -454,7 +454,6 @@ contract TradingPool is
 
         // Transfer the NFTs to the pool
         for (uint i = 0; i < nftIds.length; i++) {
-            console.log("Transfering NFT %s to pool", nftIds[i]);
             IERC721(_nft).safeTransferFrom(
                 onBehalfOf,
                 address(this),

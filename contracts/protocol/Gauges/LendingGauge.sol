@@ -171,7 +171,6 @@ contract LendingGauge is IGauge {
             }
         }
 
-        console.log("amountToClaim", amountToClaim);
         INativeToken(_addressProvider.getNativeToken()).mintGaugeRewards(
             msg.sender,
             amountToClaim

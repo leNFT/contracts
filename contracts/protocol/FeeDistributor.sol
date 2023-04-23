@@ -144,10 +144,8 @@ contract FeeDistributor is
         uint256 nextClaimableEpoch;
         uint256 nextClaimableEpochTimestamp;
         uint256 nextPointEpoch;
-        console.log("epoch", votingEscrow.epoch(block.timestamp));
         for (uint i = 0; i < 50; i++) {
             nextClaimableEpoch = _lockNextClaimableEpoch[token][tokenId];
-            console.log("nextClaimableEpoch", nextClaimableEpoch);
             // Break if the next claimable epoch is the one we are in
             if (nextClaimableEpoch >= votingEscrow.epoch(block.timestamp)) {
                 break;

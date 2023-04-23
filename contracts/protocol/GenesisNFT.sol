@@ -277,7 +277,6 @@ contract GenesisNFT is
         // Deposit tokens to the pool and get the LP amount
         uint256 oldLPBalance = IERC20Upgradeable(_balancerDetails.pool)
             .balanceOf(address(this));
-        console.log("oldLPBalance", oldLPBalance);
 
         (IERC20[] memory tokens, , ) = IVault(_balancerDetails.vault)
             .getPoolTokens(_balancerDetails.poolId);
@@ -296,7 +295,6 @@ contract GenesisNFT is
         bytes memory userData;
 
         if (IERC20Upgradeable(_balancerDetails.pool).totalSupply() == 0) {
-            console.log("Initializing pool");
             userData = abi.encode(
                 WeightedPoolUserData.JoinKind.INIT,
                 amountsToEncode
@@ -321,12 +319,10 @@ contract GenesisNFT is
                 fromInternalBalance: false
             })
         );
-        console.log("Joined pool");
 
         uint256 lpAmount = IERC20Upgradeable(_balancerDetails.pool).balanceOf(
             address(this)
         ) - oldLPBalance;
-        console.log("lpAmount", lpAmount);
 
         // Approve the voting escrow to spend LE tokens so they can be locked
         IERC20Upgradeable(nativeToken).approve(
@@ -434,9 +430,7 @@ contract GenesisNFT is
         uint256 withdrawAmount = IERC20Upgradeable(nativeToken).balanceOf(
             address(this)
         ) - oldLEBalance;
-        console.log("withdrawAmount", withdrawAmount);
         uint256 burnTokens = LP_LE_AMOUNT * tokenIds.length;
-        console.log("burnTokens", burnTokens);
         if (withdrawAmount > burnTokens) {
             // Send the rest of the LE tokens to the owner of the Genesis NFT
             IERC20Upgradeable(nativeToken).transfer(

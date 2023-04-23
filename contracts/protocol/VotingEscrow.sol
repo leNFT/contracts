@@ -168,7 +168,7 @@ contract VotingEscrow is
                                     Strings.toString(
                                         _lockedBalance[tokenId].amount
                                     ),
-                                    '" },'
+                                    '" }'
                                 )
                             ),
                             "]",
