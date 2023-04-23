@@ -2,6 +2,8 @@
 pragma solidity 0.8.19;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {MathUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
@@ -116,6 +118,65 @@ contract VotingEscrow is
     /// @return The start timestamp of the epoch.
     function epochTimestamp(uint256 _epoch) public view returns (uint256) {
         return (_deployTimestamp / EPOCH_PERIOD + _epoch) * EPOCH_PERIOD;
+    }
+
+    function tokenURI(
+        uint256 tokenId
+    ) public view override(ERC721Upgradeable) returns (string memory) {
+        return
+            string(
+                abi.encodePacked(
+                    "data:application/json;base64,",
+                    Base64.encode(
+                        abi.encodePacked(
+                            "{",
+                            '"name": "veLE Lock #',
+                            Strings.toString(tokenId),
+                            '",',
+                            '"description": "Vote Escrowed LE Lock",',
+                            '"image": ',
+                            '"data:image/svg+xml;base64,',
+                            Base64.encode(
+                                abi.encodePacked(
+                                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" style="width:100%;background:#eaeaea;fill:black;font-family:monospace">',
+                                    '<text x="50%" y="30%" text-anchor="middle" font-size="18">',
+                                    "veLE Lock #",
+                                    Strings.toString(tokenId),
+                                    "</text>",
+                                    '<text x="50%" y="50%" text-anchor="middle" font-size="14">',
+                                    Strings.toString(
+                                        _lockedBalance[tokenId].amount
+                                    ),
+                                    " LE",
+                                    "</text>",
+                                    "</svg>"
+                                )
+                            ),
+                            '",',
+                            '"attributes": [',
+                            string(
+                                abi.encodePacked(
+                                    '{ "trait_type": "end", "value": "',
+                                    Strings.toString(
+                                        _lockedBalance[tokenId].end
+                                    ),
+                                    '" },',
+                                    '{ "trait_type": "weight", "value": "',
+                                    Strings.toString(lockWeight(tokenId)),
+                                    '" },',
+                                    '{ "trait_type": "amount", "value": "',
+                                    Strings.toString(
+                                        _lockedBalance[tokenId].amount
+                                    ),
+                                    '" },'
+                                )
+                            ),
+                            "]",
+                            "}"
+                        )
+                    )
+                )
+            );
     }
 
     /// @notice Updates the total weight history array and checkpoint with the current weight.

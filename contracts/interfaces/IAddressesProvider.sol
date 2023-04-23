@@ -61,4 +61,10 @@ interface IAddressesProvider {
     function setBribes(address bribes) external;
 
     function getBribes() external view returns (address);
+
+    function setLiquidityPositionMetadata(
+        address liquidityPositionMetadata
+    ) external;
+
+    function getLiquidityPositionMetadata() external view returns (address);
 }

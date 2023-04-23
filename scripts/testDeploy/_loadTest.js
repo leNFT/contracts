@@ -163,6 +163,13 @@ let loadEnv = async function () {
   Deploy contracts that are not updatable
   ******************************************************************/
 
+  // Deploy liquidity position metadata contract
+  const LiquidityPositionMetadata = await ethers.getContractFactory(
+    "LiquidityPositionMetadata"
+  );
+  liquidityPositionMetadata = await LiquidityPositionMetadata.deploy();
+  await liquidityPositionMetadata.deployed();
+
   // Deploy the Interest Rate contract
   const InterestRate = await ethers.getContractFactory("InterestRate");
   const interestRate = await InterestRate.deploy(7000, 500, 2000, 20000);
@@ -221,6 +228,11 @@ let loadEnv = async function () {
     debtToken.address
   );
   await setDebtTokenTx.wait();
+  const setLiquidityPositionMetadataTx =
+    await addressesProvider.setLiquidityPositionMetadata(
+      liquidityPositionMetadata.address
+    );
+  await setLiquidityPositionMetadataTx.wait();
   const setInterestRateTx = await addressesProvider.setInterestRate(
     interestRate.address
   );

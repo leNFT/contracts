@@ -69,6 +69,9 @@ describe("GenesisNFT", function () {
 
     // Find if the NFT was minted
     expect(await genesisNFT.ownerOf(1)).to.equal(owner.address);
+
+    // Print the NFT's token URI
+    console.log("Token URI: ", await genesisNFT.tokenURI(1));
   });
   it("Should burn a token", async function () {
     const lpValue = await genesisNFT.callStatic.getLPValueInLE([1, 2]);

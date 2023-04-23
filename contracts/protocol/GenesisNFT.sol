@@ -4,6 +4,8 @@ pragma solidity 0.8.19;
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {ILendingMarket} from "../interfaces/ILendingMarket.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
+import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IGenesisNFT} from "../interfaces/IGenesisNFT.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
@@ -14,7 +16,6 @@ import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/intro
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import {ERC721URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import {ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -35,7 +36,6 @@ contract GenesisNFT is
     ERC165Upgradeable,
     ERC721Upgradeable,
     ERC721EnumerableUpgradeable,
-    ERC721URIStorageUpgradeable,
     OwnableUpgradeable,
     IGenesisNFT,
     ReentrancyGuardUpgradeable
@@ -114,24 +114,44 @@ contract GenesisNFT is
         _tokenIdCounter.increment();
     }
 
-    /// @notice Returns the base URI for the NFT metadata
-    /// @return The base URI
-    function _baseURI() internal pure override returns (string memory) {
-        return "ipfs://";
-    }
-
     /// @notice Returns the URI for a given token ID
     /// @param tokenId ID of the token
     /// @return The URI
     function tokenURI(
         uint256 tokenId
-    )
-        public
-        view
-        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
-        returns (string memory)
-    {
-        return ERC721URIStorageUpgradeable.tokenURI(tokenId);
+    ) public pure override(ERC721Upgradeable) returns (string memory) {
+        return
+            string(
+                abi.encodePacked(
+                    "data:application/json;base64,",
+                    Base64.encode(
+                        abi.encodePacked(
+                            "{",
+                            '"name": "Genesis NFT #',
+                            Strings.toString(tokenId),
+                            '",',
+                            '"description": "leNFT Genesis Collection NFT.",',
+                            '"image": ',
+                            '"data:image/svg+xml;base64,',
+                            Base64.encode(
+                                abi.encodePacked(
+                                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" style="width:100%;background:#eaeaea;fill:black;font-family:monospace">',
+                                    '<text x="50%" y="30%" text-anchor="middle" font-size="18">',
+                                    "leNFT Genesis",
+                                    "</text>",
+                                    '<text x="50%" y="50%" text-anchor="middle" font-size="28">',
+                                    "#",
+                                    Strings.toString(tokenId),
+                                    "</text>",
+                                    "</svg>"
+                                )
+                            ),
+                            '",',
+                            "}"
+                        )
+                    )
+                )
+            );
     }
 
     /// @notice Returns the maximum number of tokens that can be minted
@@ -331,9 +351,6 @@ contract GenesisNFT is
             // Mint genesis NFT
             _safeMint(_msgSender(), tokenId);
 
-            //Set URI
-            _setTokenURI(tokenId, uris[i]);
-
             // Add mint details
             _mintDetails[tokenId] = DataTypes.MintDetails(
                 block.timestamp,
@@ -359,12 +376,6 @@ contract GenesisNFT is
     /// @return The unlock timestamp for the specified token
     function getUnlockTimestamp(uint256 tokenId) public view returns (uint256) {
         return _mintDetails[tokenId].timestamp + _mintDetails[tokenId].locktime;
-    }
-
-    function _burn(
-        uint256 tokenId
-    ) internal override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
-        ERC721URIStorageUpgradeable._burn(tokenId);
     }
 
     /// @notice Burn Genesis NFTs and unlock LP tokens and LE tokens
