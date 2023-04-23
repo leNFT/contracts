@@ -195,9 +195,13 @@ contract Bribes is
                 (lockLastPoint.slope *
                     (epochTimestamp - lockLastPoint.timestamp));
 
+            console.log("lockWeightAtEpoch", lockWeightAtEpoch);
+
             uint256 gaugeWeightAtEpoch = IGaugeController(
                 _addressProvider.getGaugeController()
             ).getGaugeWeightAt(gauge, epoch);
+
+            console.log("gaugeWeightAtEpoch", gaugeWeightAtEpoch);
 
             // Increment amount to claim
             amountToClaim +=

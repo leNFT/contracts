@@ -404,8 +404,9 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         // Update checkpoints
         _lastGaugeWeigthCheckpoint[gauge].bias =
             _lastGaugeWeigthCheckpoint[gauge].bias -
-            _lastGaugeWeigthCheckpoint[gauge].slope *
-            (block.timestamp - _lastGaugeWeigthCheckpoint[gauge].timestamp) +
+            (_lastGaugeWeigthCheckpoint[gauge].slope *
+                (block.timestamp -
+                    _lastGaugeWeigthCheckpoint[gauge].timestamp)) +
             newGaugeVoteWeight.bias -
             oldGaugeVoteWeight.bias;
         _lastGaugeWeigthCheckpoint[gauge].slope =
@@ -416,8 +417,8 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
 
         _lastWeightCheckpoint.bias =
             _lastWeightCheckpoint.bias -
-            _lastWeightCheckpoint.slope *
-            (block.timestamp - _lastWeightCheckpoint.timestamp) +
+            (_lastWeightCheckpoint.slope *
+                (block.timestamp - _lastWeightCheckpoint.timestamp)) +
             newGaugeVoteWeight.bias -
             oldGaugeVoteWeight.bias;
         _lastWeightCheckpoint.slope =

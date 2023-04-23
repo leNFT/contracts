@@ -111,6 +111,12 @@ let loadEnv = async function () {
 
   console.log("Deployed GenesisNFT");
 
+  // Deploy and initialize the Bribes contract
+  const Bribes = await ethers.getContractFactory("Bribes");
+  bribes = await upgrades.deployProxy(Bribes, [addressesProvider.address]);
+
+  console.log("Deployed Bribes");
+
   // Deploy and initialize Voting Escrow contract
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   votingEscrow = await upgrades.deployProxy(VotingEscrow, [
@@ -259,6 +265,10 @@ let loadEnv = async function () {
     gaugeController.address
   );
   await setGaugeControllerTx.wait();
+
+  // Set bribes address
+  const setBribesTx = await addressesProvider.setBribes(bribes.address);
+  await setBribesTx.wait();
 
   // Set WETH address in addresses provider
   const setWETHTx = await addressesProvider.setWETH(weth.address);
