@@ -140,7 +140,7 @@ contract FeeDistributor is
 
         // Iterate over a max of 50 epochs and/or user epochs
         uint256 amountToClaim;
-        DataTypes.Point memory userHistoryPoint;
+        DataTypes.Point memory lockHistoryPoint;
         uint256 nextClaimableEpoch;
         uint256 nextClaimableEpochTimestamp;
         uint256 nextPointEpoch;
@@ -151,7 +151,7 @@ contract FeeDistributor is
                 break;
             } else {
                 // Get the current user history point
-                userHistoryPoint = votingEscrow.getLockHistoryPoint(
+                lockHistoryPoint = votingEscrow.getLockHistoryPoint(
                     tokenId,
                     _lockHistoryPointer[token][tokenId]
                 );
@@ -170,10 +170,10 @@ contract FeeDistributor is
                     if (votingEscrow.totalWeightAt(nextClaimableEpoch) > 0) {
                         amountToClaim +=
                             (_epochFees[token][nextClaimableEpoch] *
-                                (userHistoryPoint.bias -
-                                    userHistoryPoint.slope *
+                                (lockHistoryPoint.bias -
+                                    lockHistoryPoint.slope *
                                     (nextClaimableEpochTimestamp -
-                                        userHistoryPoint.timestamp))) /
+                                        lockHistoryPoint.timestamp))) /
                             votingEscrow.totalWeightAt(nextClaimableEpoch);
                     }
 
@@ -191,7 +191,7 @@ contract FeeDistributor is
                     );
                     if (
                         nextPointEpoch ==
-                        votingEscrow.epoch(userHistoryPoint.timestamp)
+                        votingEscrow.epoch(lockHistoryPoint.timestamp)
                     ) {
                         // If the next user activity is in the same epoch we increase the pointer
                         _lockHistoryPointer[token][tokenId]++;
@@ -202,10 +202,10 @@ contract FeeDistributor is
                         ) {
                             amountToClaim +=
                                 (_epochFees[token][nextClaimableEpoch] *
-                                    (userHistoryPoint.bias -
-                                        userHistoryPoint.slope *
+                                    (lockHistoryPoint.bias -
+                                        lockHistoryPoint.slope *
                                         (nextClaimableEpochTimestamp -
-                                            userHistoryPoint.timestamp))) /
+                                            lockHistoryPoint.timestamp))) /
                                 votingEscrow.totalWeightAt(nextClaimableEpoch);
                         }
 

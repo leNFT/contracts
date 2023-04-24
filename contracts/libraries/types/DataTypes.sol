@@ -33,6 +33,7 @@ library DataTypes {
 
     struct WorkingBalance {
         uint256 amount;
+        uint256 weight;
         uint256 timestamp;
     }
 

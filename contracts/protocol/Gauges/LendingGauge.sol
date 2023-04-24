@@ -25,8 +25,8 @@ contract LendingGauge is IGauge {
         private _workingBalanceHistory;
     mapping(address => uint256) private _workingBalancePointer;
     mapping(address => uint256) private _userNextClaimableEpoch;
-    uint256 _workingSupply;
-    uint256[] private _workingSupplyHistory;
+    uint256 private _workingWeight;
+    uint256[] private _workingWeightHistory;
     address private _lpToken;
 
     using SafeERC20 for IERC20;
@@ -37,7 +37,7 @@ contract LendingGauge is IGauge {
     constructor(IAddressesProvider addressProvider, address lpToken_) {
         _addressProvider = addressProvider;
         _lpToken = lpToken_;
-        _workingSupplyHistory = [0];
+        _workingWeightHistory = [0];
     }
 
     /// @notice Returns the address of the LendingPool token
@@ -52,30 +52,11 @@ contract LendingGauge is IGauge {
         return IERC20(_lpToken).balanceOf(address(this));
     }
 
-    /// @notice Returns the working supply of the LendingPool token in the contract
-    /// @return The working supply of the LendingPool token in the contract
-    function workingSupply() external view returns (uint256) {
-        return _workingSupply;
-    }
-
     /// @notice Returns the balance of staked LP tokens for a given user
     /// @param user The address of the user to check balance for
     /// @return The balance of the user
     function balanceOf(address user) external view returns (uint256) {
         return _balanceOf[user];
-    }
-
-    /// @notice Returns the working balance of a given user
-    /// @param user The address of the user to check working balance for
-    /// @return The working balance of the user
-    function workingBalanceOf(address user) external view returns (uint256) {
-        if (_workingBalanceHistory[user].length == 0) {
-            return 0;
-        }
-        return
-            _workingBalanceHistory[user][
-                _workingBalanceHistory[user].length - 1
-            ].amount;
     }
 
     /// @notice Claims the gauge rewards for the user and updates the user's next claimable epoch
@@ -94,6 +75,7 @@ contract LendingGauge is IGauge {
         // Get maximum number of user epochs
         uint256 workingBalanceHistoryLength = _workingBalanceHistory[msg.sender]
             .length;
+
         // Check if user has any user actions and therefore something to claim
         if (workingBalanceHistoryLength == 0) {
             return 0;
@@ -107,7 +89,6 @@ contract LendingGauge is IGauge {
                 ) +
                 1;
         }
-
         // Iterate over a max of 50 epochs and/or user epochs
         uint256 amountToClaim;
         uint256 nextClaimableEpoch;
@@ -123,23 +104,24 @@ contract LendingGauge is IGauge {
                     memory workingBalance = _workingBalanceHistory[msg.sender][
                         _workingBalancePointer[msg.sender]
                     ];
+
                 // Check if the user entire balance history has been iterated
                 if (
                     _workingBalancePointer[msg.sender] ==
                     workingBalanceHistoryLength - 1
                 ) {
-                    if (_workingSupplyHistory[nextClaimableEpoch] > 0) {
+                    if (_workingWeightHistory[nextClaimableEpoch] > 0) {
                         amountToClaim +=
                             (gaugeController.getGaugeRewards(
                                 address(this),
                                 nextClaimableEpoch
-                            ) * workingBalance.amount) /
-                            _workingSupplyHistory[nextClaimableEpoch];
+                            ) * workingBalance.weight) /
+                            _workingWeightHistory[nextClaimableEpoch];
                     }
 
                     _userNextClaimableEpoch[msg.sender]++;
-                    // We haven'titerated over the entire user history
                 } else {
+                    // We haven't iterated over the entire user history
                     DataTypes.WorkingBalance
                         memory nextWorkingBalance = _workingBalanceHistory[
                             msg.sender
@@ -152,21 +134,33 @@ contract LendingGauge is IGauge {
                     ) {
                         _workingBalancePointer[msg.sender]++;
                     }
-                    // Check if the next working balance is in the next epoch
+                    // Check if the next working balance is in the next claimable epoch
                     else if (
                         votingEscrow.epoch(nextWorkingBalance.timestamp) ==
                         nextClaimableEpoch
                     ) {
-                        _workingBalancePointer[msg.sender]++;
-                        _userNextClaimableEpoch[msg.sender]++;
-                    } else {
-                        if (_workingSupplyHistory[nextClaimableEpoch] > 0) {
+                        if (
+                            _workingWeightHistory[nextClaimableEpoch] > 0 &&
+                            workingBalance.amount <= nextWorkingBalance.amount
+                        ) {
                             amountToClaim +=
                                 (gaugeController.getGaugeRewards(
                                     address(this),
                                     nextClaimableEpoch
-                                ) * workingBalance.amount) /
-                                _workingSupplyHistory[nextClaimableEpoch];
+                                ) * workingBalance.weight) /
+                                _workingWeightHistory[nextClaimableEpoch];
+                        }
+                        _workingBalancePointer[msg.sender]++;
+                        _userNextClaimableEpoch[msg.sender]++;
+                    } else {
+                        // THe next working balance is not in the next claimable epoch
+                        if (_workingWeightHistory[nextClaimableEpoch] > 0) {
+                            amountToClaim +=
+                                (gaugeController.getGaugeRewards(
+                                    address(this),
+                                    nextClaimableEpoch
+                                ) * workingBalance.weight) /
+                                _workingWeightHistory[nextClaimableEpoch];
                         }
                         _userNextClaimableEpoch[msg.sender]++;
                     }
@@ -191,12 +185,12 @@ contract LendingGauge is IGauge {
             .epoch(block.timestamp);
         for (uint256 i = 0; i < 2 ** 7; i++) {
             //Increase epoch
-            if (_workingSupplyHistory.length >= currentEpoch) {
+            if (_workingWeightHistory.length >= currentEpoch) {
                 break;
             }
 
             // Save epoch total weight
-            _workingSupplyHistory.push(_workingSupply);
+            _workingWeightHistory.push(_workingWeight);
         }
     }
 
@@ -214,15 +208,15 @@ contract LendingGauge is IGauge {
 
         uint256 userVotingBalance = votingEscrow.userWeight(user);
         uint256 totalVotingSupply = votingEscrow.totalWeight();
-        uint256 newAmount;
+        uint256 newWeight;
 
         // Save the total weight history
         writeTotalWeightHistory();
 
         if (totalVotingSupply == 0) {
-            newAmount = _balanceOf[user];
+            newWeight = _balanceOf[user];
         } else {
-            newAmount = Math.min(
+            newWeight = Math.min(
                 _balanceOf[user],
                 (PercentageMath.HALF_PERCENTAGE_FACTOR *
                     _balanceOf[user] +
@@ -240,10 +234,14 @@ contract LendingGauge is IGauge {
             ];
         }
         DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
-            .WorkingBalance({amount: newAmount, timestamp: block.timestamp});
+            .WorkingBalance({
+                amount: _balanceOf[user],
+                weight: newWeight,
+                timestamp: block.timestamp
+            });
 
-        _workingSupply =
-            _workingSupply +
+        _workingWeight =
+            _workingWeight +
             newWorkingBalance.amount -
             oldWorkingBalance.amount;
 
@@ -282,6 +280,8 @@ contract LendingGauge is IGauge {
     /// @notice Deposits LP tokens into the contract and updates the user's balance and working balance.
     /// @param amount The amount of LP tokens to deposit.
     function deposit(uint256 amount) external {
+        require(amount > 0, "Deposit amount must be greater than 0");
+
         // Update balance
         _balanceOf[msg.sender] += amount;
 

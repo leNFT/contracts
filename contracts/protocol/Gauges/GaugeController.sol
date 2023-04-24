@@ -137,6 +137,13 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         uint256 epoch
     ) public returns (uint256) {
         require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(
+            epoch <=
+                IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
+                    block.timestamp
+                ),
+            "Epoch is in the future"
+        );
         // Update gauge weight history
         writeGaugeWeightHistory(gauge);
 
@@ -164,6 +171,13 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @param epoch The epoch for which to retrieve the total weight
     /// @return The total weight of all gauges at the specified epoch
     function getTotalWeightAt(uint256 epoch) public returns (uint256) {
+        require(
+            epoch <=
+                IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
+                    block.timestamp
+                ),
+            "Epoch is in the future"
+        );
         // Update total weight history
         writeTotalWeightHistory();
 

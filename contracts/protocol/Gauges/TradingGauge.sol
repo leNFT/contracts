@@ -31,8 +31,8 @@ contract TradingGauge is IGauge, IERC721Receiver {
         private _workingBalanceHistory;
     mapping(address => uint256) private _workingBalancePointer;
     mapping(address => uint256) private _userNextClaimableEpoch;
-    uint256 private _workingSupply;
-    uint256[] private _workingSupplyHistory;
+    uint256 private _workingWeight;
+    uint256[] private _workingWeightHistory;
     address private _lpToken;
     mapping(uint256 => uint256) private _lpValue;
     mapping(address => uint256) private _userLPValue;
@@ -46,7 +46,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
     constructor(IAddressesProvider addressProvider, address lpToken_) {
         _addressProvider = addressProvider;
         _lpToken = lpToken_;
-        _workingSupplyHistory = [0];
+        _workingWeightHistory = [0];
     }
 
     /// @notice Returns the address of the LP token supported by the gauge
@@ -71,6 +71,7 @@ contract TradingGauge is IGauge, IERC721Receiver {
         // Get maximum number of user epochs
         uint256 workingBalanceHistoryLength = _workingBalanceHistory[msg.sender]
             .length;
+
         // Check if user has any user actions and therefore something to claim
         if (workingBalanceHistoryLength == 0) {
             return 0;
@@ -99,23 +100,24 @@ contract TradingGauge is IGauge, IERC721Receiver {
                     memory workingBalance = _workingBalanceHistory[msg.sender][
                         _workingBalancePointer[msg.sender]
                     ];
+
                 // Check if the user entire balance history has been iterated
                 if (
                     _workingBalancePointer[msg.sender] ==
                     workingBalanceHistoryLength - 1
                 ) {
-                    if (_workingSupplyHistory[nextClaimableEpoch] > 0) {
+                    if (_workingWeightHistory[nextClaimableEpoch] > 0) {
                         amountToClaim +=
                             (gaugeController.getGaugeRewards(
                                 address(this),
                                 nextClaimableEpoch
-                            ) * workingBalance.amount) /
-                            _workingSupplyHistory[nextClaimableEpoch];
+                            ) * workingBalance.weight) /
+                            _workingWeightHistory[nextClaimableEpoch];
                     }
 
                     _userNextClaimableEpoch[msg.sender]++;
-                    // We haven'titerated over the entire user history
                 } else {
+                    // We haven't iterated over the entire user history
                     DataTypes.WorkingBalance
                         memory nextWorkingBalance = _workingBalanceHistory[
                             msg.sender
@@ -128,21 +130,34 @@ contract TradingGauge is IGauge, IERC721Receiver {
                     ) {
                         _workingBalancePointer[msg.sender]++;
                     }
-                    // Check if the next working balance is in the next epoch
+                    // Check if the next working balance is in the next claimable epoch
                     else if (
                         votingEscrow.epoch(nextWorkingBalance.timestamp) ==
                         nextClaimableEpoch
                     ) {
-                        _workingBalancePointer[msg.sender]++;
-                        _userNextClaimableEpoch[msg.sender]++;
-                    } else {
-                        if (_workingSupplyHistory[nextClaimableEpoch] > 0) {
+                        // If the next working balance has no decrease in balance we can claim the rewards
+                        if (
+                            _workingWeightHistory[nextClaimableEpoch] > 0 &&
+                            workingBalance.amount <= nextWorkingBalance.amount
+                        ) {
                             amountToClaim +=
                                 (gaugeController.getGaugeRewards(
                                     address(this),
                                     nextClaimableEpoch
-                                ) * workingBalance.amount) /
-                                _workingSupplyHistory[nextClaimableEpoch];
+                                ) * workingBalance.weight) /
+                                _workingWeightHistory[nextClaimableEpoch];
+                        }
+                        _workingBalancePointer[msg.sender]++;
+                        _userNextClaimableEpoch[msg.sender]++;
+                    } else {
+                        // THe next working balance is not in the next claimable epoch
+                        if (_workingWeightHistory[nextClaimableEpoch] > 0) {
+                            amountToClaim +=
+                                (gaugeController.getGaugeRewards(
+                                    address(this),
+                                    nextClaimableEpoch
+                                ) * workingBalance.weight) /
+                                _workingWeightHistory[nextClaimableEpoch];
                         }
                         _userNextClaimableEpoch[msg.sender]++;
                     }
@@ -166,12 +181,12 @@ contract TradingGauge is IGauge, IERC721Receiver {
             .epoch(block.timestamp);
         for (uint256 i = 0; i < 2 ** 7; i++) {
             //Increase epoch
-            if (_workingSupplyHistory.length >= currentEpoch) {
+            if (_workingWeightHistory.length >= currentEpoch) {
                 break;
             }
 
             // Save epoch total weight
-            _workingSupplyHistory.push(_workingSupply);
+            _workingWeightHistory.push(_workingWeight);
         }
     }
 
@@ -188,14 +203,14 @@ contract TradingGauge is IGauge, IERC721Receiver {
 
         uint256 userVotingBalance = votingEscrow.userWeight(user);
         uint256 totalVotingSupply = votingEscrow.totalWeight();
-        uint256 newAmount;
+        uint256 newWeight;
 
         writeTotalWeightHistory();
 
         if (totalVotingSupply == 0) {
-            newAmount = _userLPValue[user];
+            newWeight = _userLPValue[user];
         } else {
-            newAmount = Math.min(
+            newWeight = Math.min(
                 _userLPValue[user],
                 (PercentageMath.HALF_PERCENTAGE_FACTOR *
                     _userLPValue[user] +
@@ -212,15 +227,18 @@ contract TradingGauge is IGauge, IERC721Receiver {
                 _workingBalanceHistory[user].length - 1
             ];
         }
-
-        // New working balance should only be effective after the next epoch
         DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
-            .WorkingBalance({amount: newAmount, timestamp: block.timestamp});
+            .WorkingBalance({
+                amount: _userLPValue[user],
+                weight: newWeight,
+                timestamp: block.timestamp
+            });
 
-        _workingSupply =
-            _workingSupply +
-            newWorkingBalance.amount -
-            oldWorkingBalance.amount;
+        // Update global working supply and working balance history if there were any changes
+        _workingWeight =
+            _workingWeight +
+            newWorkingBalance.weight -
+            oldWorkingBalance.weight;
 
         _workingBalanceHistory[user].push(newWorkingBalance);
     }
@@ -249,15 +267,18 @@ contract TradingGauge is IGauge, IERC721Receiver {
             "Only Trade LPs can be staked"
         );
 
-        // Update owner
-        _ownerOf[lpId] = msg.sender;
-
         // Add token value
         uint256 depositLpValue = calculateLpValue(
             lp.nftIds.length,
             lp.tokenAmount,
             lp.spotPrice
         );
+        console.log("depositLpValue: %s", depositLpValue);
+
+        // LP value must be greater than 0
+        require(depositLpValue > 0, "LP value must be greater than 0");
+
+        _ownerOf[lpId] = msg.sender;
         _lpValue[lpId] = depositLpValue;
         _userLPValue[msg.sender] += depositLpValue;
         _totalLPValue += depositLpValue;

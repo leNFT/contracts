@@ -164,11 +164,11 @@ let loadEnv = async function () {
   ******************************************************************/
 
   // Deploy liquidity position metadata contract
-  const LiquidityPositionMetadata = await ethers.getContractFactory(
-    "LiquidityPositionMetadata"
+  const LiquidityPairMetadata = await ethers.getContractFactory(
+    "LiquidityPairMetadata"
   );
-  liquidityPositionMetadata = await LiquidityPositionMetadata.deploy();
-  await liquidityPositionMetadata.deployed();
+  const liquidityPairMetadata = await LiquidityPairMetadata.deploy();
+  await liquidityPairMetadata.deployed();
 
   // Deploy the Interest Rate contract
   const InterestRate = await ethers.getContractFactory("InterestRate");
@@ -228,11 +228,11 @@ let loadEnv = async function () {
     debtToken.address
   );
   await setDebtTokenTx.wait();
-  const setLiquidityPositionMetadataTx =
-    await addressesProvider.setLiquidityPositionMetadata(
-      liquidityPositionMetadata.address
+  const setLiquidityPairMetadataTx =
+    await addressesProvider.setLiquidityPairMetadata(
+      liquidityPairMetadata.address
     );
-  await setLiquidityPositionMetadataTx.wait();
+  await setLiquidityPairMetadataTx.wait();
   const setInterestRateTx = await addressesProvider.setInterestRate(
     interestRate.address
   );

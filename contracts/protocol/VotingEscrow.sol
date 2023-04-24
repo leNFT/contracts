@@ -120,6 +120,9 @@ contract VotingEscrow is
         return (_deployTimestamp / EPOCH_PERIOD + _epoch) * EPOCH_PERIOD;
     }
 
+    /// @notice Returns a token's encoded URI
+    /// @param tokenId The token ID for which to retrieve the URI.
+    /// @return The token's encoded URI.
     function tokenURI(
         uint256 tokenId
     ) public view override(ERC721Upgradeable) returns (string memory) {
@@ -371,6 +374,9 @@ contract VotingEscrow is
             (block.timestamp - lastUserPoint.timestamp);
     }
 
+    /// @notice Returns the weight of locked tokens for a given account.
+    /// @param user The address for which to retrieve the locked balance weight.
+    /// @return The weight of locked tokens for the given account.
     function userWeight(address user) external view returns (uint256) {
         uint256 balance = 0;
         uint256 length = balanceOf(user);

@@ -439,6 +439,9 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
         }
     }
 
+    /// @notice Deposits ETH into the bribe contract to be used for bribing.
+    /// @dev Bribe is applied to the next epoch
+    /// @param gauge The address of the gauge to bribe.
     function depositBribe(address gauge) external payable nonReentrant {
         _weth.deposit{value: msg.value}();
         _weth.approve(address(_addressProvider.getBribes()), msg.value);

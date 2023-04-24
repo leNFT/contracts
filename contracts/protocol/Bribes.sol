@@ -15,6 +15,8 @@ import {IBribes} from "../interfaces/IBribes.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
 
+/// @title Bribes contract
+/// @notice Allows users to bribe the veLE token holders to vote for a specific gauge
 contract Bribes is
     Initializable,
     ContextUpgradeable,
@@ -49,6 +51,11 @@ contract Bribes is
         _addressProvider = addressProvider;
     }
 
+    /// @notice Deposits a bribe for a specific gauge
+    /// @param briber The account to deposit the bribe for
+    /// @param token The token to bribe with
+    /// @param gauge The gauge to bribe
+    /// @param amount The amount to bribe with
     function depositBribe(
         address briber,
         address token,
@@ -71,6 +78,12 @@ contract Bribes is
         );
     }
 
+    /// @notice Withdraws a bribe for a specific gauge
+    /// @dev Only works before the bribe's epoch has started
+    /// @param receiver The account to receive the bribe back
+    /// @param token The token to withdraw the bribe from
+    /// @param gauge The gauge to withdraw the bribe from
+    /// @param amount The amount to withdraw
     function withdrawBribe(
         address receiver,
         address token,
@@ -95,6 +108,10 @@ contract Bribes is
         IERC20Upgradeable(token).safeTransfer(receiver, amount);
     }
 
+    /// @notice Get bribes back if no user voted for the gauge
+    /// @dev Only works after the bribe's epoch has started
+    /// @param token The token to salvage the bribe from
+    /// @param gauge The gauge to salvage the bribe from
     function salvageBribes(
         address token,
         address gauge,
@@ -102,6 +119,13 @@ contract Bribes is
     ) external nonReentrant {
         IGaugeController gaugeController = IGaugeController(
             _addressProvider.getGaugeController()
+        );
+        require(
+            epoch <=
+                IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
+                    block.timestamp
+                ),
+            "Epoch is in the future"
         );
         // Funds not claimable by users are epoch in which there was no voting power for gauge
         require(
@@ -120,8 +144,19 @@ contract Bribes is
             msg.sender,
             _userBribes[token][gauge][epoch][msg.sender]
         );
+
+        // Subtract the amount from the bribes
+        _gaugeBribes[token][gauge][epoch] -= _userBribes[token][gauge][epoch][
+            msg.sender
+        ];
+        _userBribes[token][gauge][epoch][msg.sender] = 0;
     }
 
+    /// @notice Get bribes from a user for a specific gauge in a specific epoch
+    /// @param token The token to get the bribes for
+    /// @param gauge The gauge to get the bribes for
+    /// @param epoch The epoch to get the bribes for
+    /// @param user The user to get the bribes for
     function getUserBribes(
         address token,
         address gauge,
@@ -131,6 +166,10 @@ contract Bribes is
         return _userBribes[token][gauge][epoch][user];
     }
 
+    /// @notice Get bribes for a specific gauge in a specific epoch
+    /// @param token The token to get the bribes for
+    /// @param gauge The gauge to get the bribes for
+    /// @param epoch The epoch to get the bribes for
     function getGaugeBribes(
         address token,
         address gauge,
@@ -139,6 +178,11 @@ contract Bribes is
         return _gaugeBribes[token][gauge][epoch];
     }
 
+    /// @notice Claim bribes for a specific gauge
+    /// @dev Max epochs to claim is 50
+    /// @param token The token to claim the bribes for
+    /// @param gauge The gauge to claim the bribes for
+    /// @param tokenId The tokenid of the lock to claim the bribes for
     function claim(
         address token,
         address gauge,

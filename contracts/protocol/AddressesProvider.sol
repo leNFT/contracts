@@ -22,7 +22,7 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _gaugeController;
     address private _tradingPoolFactory;
     address private _bribes;
-    address private _liquidityPositionMetadata;
+    address private _liquidityPairMetadata;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -161,18 +161,18 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
         return _bribes;
     }
 
-    function setLiquidityPositionMetadata(
-        address liquidityPositionMetadata
+    function setLiquidityPairMetadata(
+        address liquidityPairMetadata
     ) external override onlyOwner {
-        _liquidityPositionMetadata = liquidityPositionMetadata;
+        _liquidityPairMetadata = liquidityPairMetadata;
     }
 
-    function getLiquidityPositionMetadata()
+    function getLiquidityPairMetadata()
         external
         view
         override
         returns (address)
     {
-        return _liquidityPositionMetadata;
+        return _liquidityPairMetadata;
     }
 }

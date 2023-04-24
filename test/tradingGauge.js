@@ -41,12 +41,9 @@ describe("Trading Gauge", () => {
       exponentialCurve.address,
       "0",
       "100",
-      { value: "100000000000000" }
+      { value: "100000000000001" }
     );
     await depositTx.wait();
-
-    // Get lock metadata
-    console.log("lpURITx ", await tradingPool.tokenURI(0));
   });
   it("Should create a gauge a stake into it", async function () {
     const Gauge = await ethers.getContractFactory("TradingGauge");
@@ -95,16 +92,13 @@ describe("Trading Gauge", () => {
     );
     console.log(Math.floor(Date.now() / 1000) + 86400 * 100);
 
-    // Get lock metadata
-    console.log("lockURITx ", await votingEscrow.tokenURI(0));
-
     // VOte for gauge
     const voteForGaugeTx = await gaugeController.vote(0, gauge.address, 5000);
     await voteForGaugeTx.wait();
   });
   it("Should claim rewards from the gauge", async function () {
-    // 2 day pass
-    await ethers.provider.send("evm_increaseTime", [56400 * 2]);
+    // 2 hours pass
+    await ethers.provider.send("evm_increaseTime", [3600 * 2]);
     // Mine a new block
     await ethers.provider.send("evm_mine", []);
 
@@ -116,7 +110,7 @@ describe("Trading Gauge", () => {
 
     // Find if the user received the asset
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      "10000000000000000000"
+      "18749999999999999999"
     );
   });
   it("Should unstake from the gauge", async function () {

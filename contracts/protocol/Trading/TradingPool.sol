@@ -19,7 +19,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
-import {ILiquidityPositionMetadata} from "../../interfaces/ILiquidityPositionMetadata.sol";
+import {ILiquidityPairMetadata} from "../../interfaces/ILiquidityPairMetadata.sol";
 import "hardhat/console.sol";
 
 /// @title Trading Pool Contract
@@ -84,9 +84,8 @@ contract TradingPool is
         uint256 tokenId
     ) public view override returns (string memory) {
         return
-            ILiquidityPositionMetadata(
-                _addressProvider.getLiquidityPositionMetadata()
-            ).tokenURI(address(this), tokenId);
+            ILiquidityPairMetadata(_addressProvider.getLiquidityPairMetadata())
+                .tokenURI(address(this), tokenId);
     }
 
     /// @notice Gets the address of the ERC721 traded in the pool.

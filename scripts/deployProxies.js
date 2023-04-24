@@ -205,12 +205,12 @@ async function main() {
   ******************************************************************/
 
   // Deploy liquidity position metadata contract
-  const LiquidityPositionMetadata = await ethers.getContractFactory(
-    "LiquidityPositionMetadata"
+  const LiquidityPairMetadata = await ethers.getContractFactory(
+    "LiquidityPairMetadata"
   );
-  const liquidityPositionMetadata = await LiquidityPositionMetadata.deploy();
-  await liquidityPositionMetadata.deployed();
-  addresses["LiquidityPositionMetadata"] = liquidityPositionMetadata.address;
+  const liquidityPairMetadata = await LiquidityPairMetadata.deploy();
+  await liquidityPairMetadata.deployed();
+  addresses["LiquidityPairMetadata"] = liquidityPairMetadata.address;
 
   // Deploy the Interest Rate contract
   const InterestRate = await ethers.getContractFactory("InterestRate");
@@ -339,11 +339,11 @@ async function main() {
     debtToken.address
   );
   await setDebtTokenTx.wait();
-  const setLiquidityPositionMetadataTx =
-    await addressesProvider.setLiquidityPositionMetadata(
-      liquidityPositionMetadata.address
+  const setLiquidityPairMetadataTx =
+    await addressesProvider.setLiquidityPairMetadata(
+      liquidityPairMetadata.address
     );
-  await setLiquidityPositionMetadataTx.wait();
+  await setLiquidityPairMetadataTx.wait();
   const setInterestRateTx = await addressesProvider.setInterestRate(
     interestRate.address
   );

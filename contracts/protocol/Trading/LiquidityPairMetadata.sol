@@ -10,15 +10,16 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
-import {ILiquidityPositionMetadata} from "../../interfaces/ILiquidityPositionMetadata.sol";
+import {ILiquidityPairMetadata} from "../../interfaces/ILiquidityPairMetadata.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 
-/// @title LiquidityMetadata
+/// @title LiquidityPair Metadata
 /// @author leNFT dev (thanks to out.eth (@outdoteth))
-/// @notice This contract is used to generate NFT metadata liquidity positions.
-contract LiquidityPositionMetadata is ILiquidityPositionMetadata {
-    /// @notice Returns the tokenURI for a pool with it's metadata.
-    /// @param tokenId The private pool's token ID.
+/// @notice This contract is used to generate a liquidity pair's metadata.
+contract LiquidityPairMetadata is ILiquidityPairMetadata {
+    /// @notice Returns the metadata for a liquidity pair
+    /// @param tradingPool The address of the trading pool of the liquidity pair.
+    /// @param tokenId The liquidity pair's token ID.
     function tokenURI(
         address tradingPool,
         uint256 tokenId
@@ -26,13 +27,13 @@ contract LiquidityPositionMetadata is ILiquidityPositionMetadata {
         // forgefmt: disable-next-item
         bytes memory metadata = abi.encodePacked(
             "{",
-            '"name": "Liquidity Position ',
+            '"name": "Liquidity Pair ',
             IERC721Metadata(ITradingPool(tradingPool).getNFT()).symbol(),
             IERC20Metadata(ITradingPool(tradingPool).getToken()).symbol(),
             " #",
             Strings.toString(tokenId),
             '",',
-            '"description": "leNFT trading liquidity position.",',
+            '"description": "leNFT trading liquidity pair.",',
             '"image": ',
             '"data:image/svg+xml;base64,',
             Base64.encode(svg(tradingPool, tokenId)),
@@ -52,8 +53,9 @@ contract LiquidityPositionMetadata is ILiquidityPositionMetadata {
             );
     }
 
-    /// @notice Returns the attributes for a pool encoded as json.
-    /// @param tokenId The private pool's token ID.
+    /// @notice Returns the attributes for a liquidity pair encoded as json.
+    /// @param tradingPool The address of the trading pool of the liquidity pair.
+    /// @param tokenId The liquidity pair's token ID.
     function attributes(
         address tradingPool,
         uint256 tokenId
@@ -92,8 +94,9 @@ contract LiquidityPositionMetadata is ILiquidityPositionMetadata {
         return string(_attributes);
     }
 
-    /// @notice Returns an svg image for a pool.
-    /// @param tokenId The private pool's token ID.
+    /// @notice Returns an svg image for a liquidity pair.
+    /// @param tradingPool The address of the trading pool of the liquidity pair.
+    /// @param tokenId The liquidity pair's token ID.
     function svg(
         address tradingPool,
         uint256 tokenId
