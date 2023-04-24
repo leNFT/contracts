@@ -110,11 +110,12 @@ contract LendingGauge is IGauge {
 
         // Iterate over a max of 50 epochs and/or user epochs
         uint256 amountToClaim;
-        uint256 nextClaimedEpoch;
+        uint256 nextClaimableEpoch;
         for (uint256 i = 0; i < 50; i++) {
-            nextClaimedEpoch = _userNextClaimableEpoch[msg.sender];
+            nextClaimableEpoch = _userNextClaimableEpoch[msg.sender];
+
             // Break if the next claimable epoch is the one we are in
-            if (nextClaimedEpoch >= votingEscrow.epoch(block.timestamp)) {
+            if (nextClaimableEpoch >= votingEscrow.epoch(block.timestamp)) {
                 break;
             } else {
                 // Get the current user working Balance and its epoch
@@ -122,50 +123,52 @@ contract LendingGauge is IGauge {
                     memory workingBalance = _workingBalanceHistory[msg.sender][
                         _workingBalancePointer[msg.sender]
                     ];
-
                 // Check if the user entire balance history has been iterated
                 if (
                     _workingBalancePointer[msg.sender] ==
                     workingBalanceHistoryLength - 1
                 ) {
-                    if (_workingSupplyHistory[nextClaimedEpoch] > 0) {
+                    if (_workingSupplyHistory[nextClaimableEpoch] > 0) {
                         amountToClaim +=
                             (gaugeController.getGaugeRewards(
                                 address(this),
-                                nextClaimedEpoch
+                                nextClaimableEpoch
                             ) * workingBalance.amount) /
-                            _workingSupplyHistory[nextClaimedEpoch];
+                            _workingSupplyHistory[nextClaimableEpoch];
                     }
 
                     _userNextClaimableEpoch[msg.sender]++;
+                    // We haven'titerated over the entire user history
                 } else {
                     DataTypes.WorkingBalance
                         memory nextWorkingBalance = _workingBalanceHistory[
                             msg.sender
                         ][_workingBalancePointer[msg.sender] + 1];
 
+                    // Check if the next working balance is in the same epoch as the current working balance
                     if (
                         votingEscrow.epoch(nextWorkingBalance.timestamp) ==
                         votingEscrow.epoch(workingBalance.timestamp)
                     ) {
                         _workingBalancePointer[msg.sender]++;
+                    }
+                    // Check if the next working balance is in the next epoch
+                    else if (
+                        votingEscrow.epoch(nextWorkingBalance.timestamp) ==
+                        nextClaimableEpoch
+                    ) {
+                        _workingBalancePointer[msg.sender]++;
+                        _userNextClaimableEpoch[msg.sender]++;
                     } else {
-                        if (_workingSupplyHistory[nextClaimedEpoch] > 0) {
+                        if (_workingSupplyHistory[nextClaimableEpoch] > 0) {
                             amountToClaim +=
                                 (gaugeController.getGaugeRewards(
                                     address(this),
-                                    nextClaimedEpoch
+                                    nextClaimableEpoch
                                 ) * workingBalance.amount) /
-                                _workingSupplyHistory[nextClaimedEpoch];
+                                _workingSupplyHistory[nextClaimableEpoch];
                         }
                         _userNextClaimableEpoch[msg.sender]++;
-                        if (
-                            votingEscrow.epoch(nextWorkingBalance.timestamp) +
-                                1 ==
-                            _userNextClaimableEpoch[msg.sender]
-                        ) {
-                            _workingBalancePointer[msg.sender]++;
-                        }
                     }
                 }
             }
@@ -237,10 +240,7 @@ contract LendingGauge is IGauge {
             ];
         }
         DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
-            .WorkingBalance({
-                amount: newAmount,
-                timestamp: block.timestamp + votingEscrow.epochPeriod()
-            });
+            .WorkingBalance({amount: newAmount, timestamp: block.timestamp});
 
         _workingSupply =
             _workingSupply +
