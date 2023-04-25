@@ -4,7 +4,6 @@ pragma solidity 0.8.19;
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {INativeToken} from "../../interfaces/INativeToken.sol";
 import {IGaugeController} from "../../interfaces/IGaugeController.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
@@ -15,12 +14,12 @@ import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IGauge} from "../../interfaces/IGauge.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "hardhat/console.sol";
 
 /// @title Trading Gauge Contract
-/// @notice A contract for managing the distribution of rewards to Ttrading LPs
-contract TradingGauge is IGauge, IERC721Receiver {
+/// @notice A contract for managing the distribution of rewards to Trading LPs
+contract TradingGauge is IGauge, ERC721Holder {
     IAddressesProvider private _addressProvider;
     mapping(uint256 => address) private _ownerOf;
     mapping(address => uint256) private _balanceOf;
@@ -413,17 +412,5 @@ contract TradingGauge is IGauge, IERC721Receiver {
         // Value is higher if the lp is in equilibrium
         return
             nftsAppraisal > validTokenAmount ? validTokenAmount : nftsAppraisal;
-    }
-
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) public pure override returns (bytes4) {
-        return
-            bytes4(
-                keccak256("onERC721Received(address,address,uint256,bytes)")
-            );
     }
 }

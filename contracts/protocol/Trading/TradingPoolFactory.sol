@@ -9,11 +9,12 @@ import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {TradingPool} from "./TradingPool.sol";
 import {ISwapRouter} from "../../interfaces/ISwapRouter.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import {IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
@@ -35,7 +36,7 @@ contract TradingPoolFactory is
     uint256 private _protocolFee;
     uint256 private _tvlSafeguard;
 
-    using ERC165Checker for address;
+    using ERC165CheckerUpgradeable for address;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -100,7 +101,7 @@ contract TradingPoolFactory is
         address token
     ) external nonReentrant {
         require(
-            nft.supportsInterface(type(IERC721).interfaceId),
+            nft.supportsInterface(type(IERC721Upgradeable).interfaceId),
             "Collection address is not ERC721 compliant."
         );
         require(
@@ -114,15 +115,15 @@ contract TradingPoolFactory is
             nft,
             string.concat(
                 "leNFT Trading Pool ",
-                IERC721Metadata(nft).symbol(),
+                IERC721MetadataUpgradeable(nft).symbol(),
                 " - ",
-                IERC20Metadata(token).symbol()
+                IERC20MetadataUpgradeable(token).symbol()
             ),
             string.concat(
                 "leT",
-                IERC721Metadata(nft).symbol(),
+                IERC721MetadataUpgradeable(nft).symbol(),
                 "-",
-                IERC20Metadata(token).symbol()
+                IERC20MetadataUpgradeable(token).symbol()
             )
         );
 

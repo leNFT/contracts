@@ -8,11 +8,10 @@ import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
-import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {LoanLogic} from "../../libraries/logic/LoanLogic.sol";
+import {ERC721HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
@@ -24,7 +23,7 @@ contract LoanCenter is
     Initializable,
     ContextUpgradeable,
     ILoanCenter,
-    IERC721ReceiverUpgradeable,
+    ERC721HolderUpgradeable,
     OwnableUpgradeable
 {
     // NFT address + NFT ID to loan ID mapping
@@ -65,6 +64,7 @@ contract LoanCenter is
         uint256 maxCollaterization
     ) external initializer {
         __Ownable_init();
+        __ERC721Holder_init();
         _addressProvider = addressesProvider;
         _defaultMaxCollaterization = maxCollaterization;
     }
@@ -392,17 +392,5 @@ contract LoanCenter is
             _addressProvider.getLendingMarket(),
             true
         );
-    }
-
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) public pure override returns (bytes4) {
-        return
-            bytes4(
-                keccak256("onERC721Received(address,address,uint256,bytes)")
-            );
     }
 }

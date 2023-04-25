@@ -45,17 +45,17 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     constructor(
         IAddressesProvider addressProvider,
         address owner,
-        IERC20 asset,
+        address asset,
         string memory name,
         string memory symbol,
         ConfigTypes.LendingPoolConfig memory lendingPoolConfig
-    ) ERC20(name, symbol) ERC4626(asset) {
+    ) ERC20(name, symbol) ERC4626(IERC20(asset)) {
         require(
             msg.sender == addressProvider.getLendingMarket(),
             "Lending Pool must be created through market"
         );
         _addressProvider = addressProvider;
-        _asset = asset;
+        _asset = IERC20(asset);
         _lendingPoolConfig = lendingPoolConfig;
         _updateBorrowRate();
         _transferOwnership(owner);

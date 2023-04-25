@@ -13,10 +13,12 @@ import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {LoanLogic} from "../../libraries/logic/LoanLogic.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import {IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
+import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {Trustus} from "../Trustus/Trustus.sol";
@@ -35,7 +37,7 @@ contract LendingMarket is
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    using ERC165Checker for address;
+    using ERC165CheckerUpgradeable for address;
 
     // collection + asset = pool
     mapping(address => mapping(address => address)) private _pools;
@@ -201,7 +203,7 @@ contract LendingMarket is
         address asset
     ) external returns (address) {
         require(
-            collection.supportsInterface(type(IERC721).interfaceId),
+            collection.supportsInterface(type(IERC721Upgradeable).interfaceId),
             "Collection address is not ERC721 compliant."
         );
         require(
@@ -217,16 +219,16 @@ contract LendingMarket is
         ILendingPool newLendingPool = new LendingPool(
             _addressProvider,
             owner(),
-            IERC20(asset),
+            asset,
             string.concat(
                 "leNFT ",
-                IERC20Metadata(asset).symbol(),
+                IERC20MetadataUpgradeable(asset).symbol(),
                 " Lending #",
                 Strings.toString(_poolsCount[asset])
             ),
             string.concat(
                 "leL",
-                IERC20Metadata(asset).symbol(),
+                IERC20MetadataUpgradeable(asset).symbol(),
                 "-",
                 Strings.toString(_poolsCount[asset])
             ),
@@ -234,11 +236,11 @@ contract LendingMarket is
         );
 
         // Approve lending pool use of market balance
-        IERC20(asset).approve(address(newLendingPool), 2 ** 256 - 1);
+        IERC20Upgradeable(asset).approve(address(newLendingPool), 2 ** 256 - 1);
 
         // Approve Market use of loan center NFT's (for returning the collateral)
         if (
-            IERC721(collection).isApprovedForAll(
+            IERC721Upgradeable(collection).isApprovedForAll(
                 _addressProvider.getLoanCenter(),
                 address(this)
             ) == false

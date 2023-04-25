@@ -16,11 +16,12 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Trustus} from "./Trustus/Trustus.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 /// @title WETHGateway Contract
 /// @author leNFT
 /// @notice This contract is the proxy for ETH interactions with the leNFT protocol
-contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
+contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
     IAddressesProvider private _addressProvider;
     IWETH private _weth;
 
@@ -451,19 +452,6 @@ contract WETHGateway is ReentrancyGuard, Context, IERC721Receiver {
             gauge,
             msg.value
         );
-    }
-
-    // So we can receive the collateral from the user when borrowing
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) public pure override returns (bytes4) {
-        return
-            bytes4(
-                keccak256("onERC721Received(address,address,uint256,bytes)")
-            );
     }
 
     // Add receive ETH function
