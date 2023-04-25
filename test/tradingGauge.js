@@ -44,6 +44,10 @@ describe("Trading Gauge", () => {
       { value: "100000000000001" }
     );
     await depositTx.wait();
+
+    // Get the token uri of the position we just deposited into
+    const tokenUri = await tradingPool.tokenURI(0);
+    console.log("Token URI LP:", tokenUri);
   });
   it("Should create a gauge a stake into it", async function () {
     const Gauge = await ethers.getContractFactory("TradingGauge");
@@ -91,6 +95,10 @@ describe("Trading Gauge", () => {
       Math.floor(Date.now() / 1000) + 86400 * 100
     );
     console.log(Math.floor(Date.now() / 1000) + 86400 * 100);
+
+    // GEt the URI for the NFT lock
+    const tokenUri = await votingEscrow.tokenURI(0);
+    console.log("Token URI Lock: ", tokenUri);
 
     // VOte for gauge
     const voteForGaugeTx = await gaugeController.vote(0, gauge.address, 5000);

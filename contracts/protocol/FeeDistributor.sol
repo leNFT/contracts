@@ -10,6 +10,7 @@ import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Cont
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "hardhat/console.sol";
@@ -112,14 +113,22 @@ contract FeeDistributor is
         return _lockNextClaimableEpoch[token][tokenId];
     }
 
-    /// @notice Allows a user to claim their rewards for a specific token
+    /// @notice Allows a user to claim their rewards from a lock for a specific token
     /// @param token Token address
     /// @param tokenId the token id of the lock
     /// @return uint256 Amount of rewards claimed
     function claim(
         address token,
         uint256 tokenId
-    ) external nonReentrant returns (uint256) {
+    ) public nonReentrant returns (uint256) {
+        // The user must own the lock
+        require(
+            IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
+                tokenId
+            ) == _msgSender(),
+            "Only lock owner can claim rewards"
+        );
+
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         );
@@ -222,6 +231,22 @@ contract FeeDistributor is
         }
 
         IERC20Upgradeable(token).safeTransfer(_msgSender(), amountToClaim);
+
+        return amountToClaim;
+    }
+
+    /// @notice Allows a user to claim their rewards from multiple locks for a specific token
+    /// @param token Token address
+    /// @param tokensIds the token ids of the locks
+    /// @return uint256 Amount of rewards claimed
+    function claimBatch(
+        address token,
+        uint256[] calldata tokensIds
+    ) external nonReentrant returns (uint256) {
+        uint256 amountToClaim;
+        for (uint256 i = 0; i < tokensIds.length; i++) {
+            amountToClaim += claim(token, tokensIds[i]);
+        }
 
         return amountToClaim;
     }
