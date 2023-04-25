@@ -209,15 +209,13 @@ contract FeeDistributor is
                                 votingEscrow.totalWeightAt(nextClaimableEpoch);
                         }
 
-                        // Increment next claimable epoch
-                        _lockNextClaimableEpoch[token][tokenId]++;
-                        // If the next user activity is in the next epoch to claim we increase the user history pointer
-                        if (
-                            nextPointEpoch + 1 ==
-                            _lockNextClaimableEpoch[token][tokenId]
-                        ) {
+                        // If the next user activity is in the next claimable epoch we increase the user history pointer
+                        if (nextPointEpoch == nextClaimableEpoch) {
                             _lockHistoryPointer[token][tokenId]++;
                         }
+
+                        // Increment next claimable epoch
+                        _lockNextClaimableEpoch[token][tokenId]++;
                     }
                 }
             }
