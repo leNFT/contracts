@@ -118,7 +118,7 @@ contract GenesisNFT is
     /// @return The URI
     function tokenURI(
         uint256 tokenId
-    ) public pure override(ERC721Upgradeable) returns (string memory) {
+    ) public view override(ERC721Upgradeable) returns (string memory) {
         return
             string(
                 abi.encodePacked(
@@ -146,6 +146,20 @@ contract GenesisNFT is
                                 )
                             ),
                             '",',
+                            '"attributes": [',
+                            string(
+                                abi.encodePacked(
+                                    '{ "trait_type": "locked", "value": "',
+                                    _active[tokenId] ? "yes" : "no",
+                                    '" },',
+                                    '{ "trait_type": "unlock_timestamp", "value": "',
+                                    Strings.toString(
+                                        getUnlockTimestamp(tokenId)
+                                    ),
+                                    '" }'
+                                )
+                            ),
+                            "]",
                             "}"
                         )
                     )
