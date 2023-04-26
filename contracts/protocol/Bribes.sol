@@ -16,7 +16,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import "hardhat/console.sol";
 
 /// @title Bribes contract
-/// @notice Allows users to bribe the veLE token holders to vote for a specific gauge
+/// @notice Allows users to bribe the veLE token holders in order to incentivize them to vote for a specific gauge
 contract Bribes is
     Initializable,
     ContextUpgradeable,

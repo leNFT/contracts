@@ -47,16 +47,13 @@ contract NativeTokenVesting is Ownable {
         uint256 cliff,
         uint256 amount
     ) external onlyOwner {
-        require(
-            _vestingParams[account].amount == 0,
-            "Vesting already exists for this account"
-        );
         _vestingParams[account] = DataTypes.VestingParams(
             block.timestamp,
             period,
             cliff,
             amount
         );
+        delete _withdrawn[account];
 
         emit VestingAdded(account, period, cliff, amount);
     }
