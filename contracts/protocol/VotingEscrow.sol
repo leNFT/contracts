@@ -398,6 +398,8 @@ contract VotingEscrow is
         // Round the locktime to whole epochs
         uint256 roundedUnlockTime = (unlockTime / EPOCH_PERIOD) * EPOCH_PERIOD;
 
+        require(amount > 0, "Amount must be greater than 0");
+
         require(
             roundedUnlockTime >= MINLOCKTIME + block.timestamp,
             "Locktime smaller than minimum locktime"
