@@ -237,10 +237,10 @@ contract GenesisNFT is
 
     /// @notice Mint new Genesis NFTs with locked LE tokens and LP tokens
     /// @param locktime The locktime for the minted tokens
-    /// @param uris The URIs for the minted tokens
+    /// @param amount The amount of tokens to mint
     function mint(
         uint256 locktime,
-        string[] calldata uris
+        uint256 amount
     ) external payable nonReentrant {
         // Make sure locktimes are within limits
         require(locktime >= _minLocktime, "Locktime is lower than threshold");
@@ -255,7 +255,7 @@ contract GenesisNFT is
 
         // Make sure there are enough tokens to mint
         require(
-            _tokenIdCounter.current() + uris.length <= getCap(),
+            _tokenIdCounter.current() + amount <= getCap(),
             "Maximum cap exceeded"
         );
 
@@ -263,15 +263,15 @@ contract GenesisNFT is
         address nativeToken = _addressProvider.getNativeToken();
 
         // Make sure the user sent enough ETH
-        uint256 buyPrice = _price * uris.length;
+        uint256 buyPrice = _price * amount;
         require(msg.value == buyPrice, "Tx value is not equal to price");
 
         // Get the amount of ETH to deposit to the pool
         uint256 ethAmount = (2 * buyPrice) / 3;
-        uint256 leAmount = LP_LE_AMOUNT * uris.length;
+        uint256 leAmount = LP_LE_AMOUNT * amount;
 
         // Mint LE tokens
-        uint256 totalRewards = getNativeTokenReward(uris.length, locktime);
+        uint256 totalRewards = getNativeTokenReward(amount, locktime);
         INativeToken(nativeToken).mintGenesisTokens(leAmount + totalRewards);
 
         // Mint WETH tokens
@@ -354,7 +354,7 @@ contract GenesisNFT is
         require(sent, "Failed to send Ether to dev fund");
 
         uint256 tokenId;
-        for (uint256 i = 0; i < uris.length; i++) {
+        for (uint256 i = 0; i < amount; i++) {
             tokenId = _tokenIdCounter.current();
 
             // Mint genesis NFT
@@ -364,7 +364,7 @@ contract GenesisNFT is
             _mintDetails[tokenId] = DataTypes.MintDetails(
                 block.timestamp,
                 locktime,
-                lpAmount / uris.length
+                lpAmount / amount
             );
 
             //Increase supply
