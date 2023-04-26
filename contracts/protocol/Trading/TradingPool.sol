@@ -191,7 +191,10 @@ contract TradingPool is
             "Trading pool exceeds safeguarded limit"
         );
 
-        // Require that the user is depositing something
+        // Different types of liquidity pairs have different requirements
+        // Trade: Can contain NFTs and/or tokens
+        // Buy: Can only contain tokens
+        // Sell: Can only contain NFTs
         if (lpType == DataTypes.LPType.Trade) {
             require(
                 tokenAmount > 0 || nftIds.length > 0,
