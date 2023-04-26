@@ -479,6 +479,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         );
 
         // Depend on the locked ratio progressively more as we aproach the end of the loading period
+        // This avoids the problem of having no rewards in the beggining since all the tokens minted initally are locked
         uint256 lockedRatio = IVotingEscrow(_addressProvider.getVotingEscrow())
             .getLockedRatioAt(epoch);
         if (epoch < LOADING_PERIOD) {
