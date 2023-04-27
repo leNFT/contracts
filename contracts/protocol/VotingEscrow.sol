@@ -41,21 +41,24 @@ contract VotingEscrow is
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    uint256 public constant LOCK_FACTOR = 4;
     uint256 public constant MINLOCKTIME = 2 weeks;
     uint256 public constant MAXLOCKTIME = 4 * 365 days;
-    uint256 public constant EPOCH_PERIOD = 30 minutes;
+    uint256 public constant EPOCH_PERIOD = 1 hours;
 
     IAddressesProvider private _addressProvider;
     uint256 _deployTimestamp;
     // Locked balance for each lock
     mapping(uint256 => DataTypes.LockedBalance) private _lockedBalance;
+    // Next calimable rebate epoch for each lock
+    mapping(uint256 => uint256) private _nextClaimableEpoch;
     // History of actions for each lock
     mapping(uint256 => DataTypes.Point[]) private _lockHistory;
     // Epoch history of total weight
     uint256[] private _totalWeightHistory;
-    // Epoch history of locked ratio
-    uint256[] private _lockedRatioHistory;
+    // Epoch history of total token supply (used to compute locked ratio)
+    uint256[] private _totalSupplyHistory;
+    // Epoch history of total locked balance
+    uint256[] private _totalLockedHistory;
     // Last checkpoint for the total weight
     DataTypes.Point _lastWeightCheckpoint;
     // Slope Changes per timestamp
@@ -93,7 +96,8 @@ contract VotingEscrow is
         _deployTimestamp = block.timestamp;
         _totalWeightHistory.push(0);
         _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);
-        _lockedRatioHistory.push(0);
+        _totalSupplyHistory.push(0);
+        _totalLockedHistory.push(0);
     }
 
     /// @notice Returns the length of an epoch period in seconds.
@@ -205,21 +209,17 @@ contract VotingEscrow is
             _lastWeightCheckpoint.timestamp = epochTimestampPointer;
             _lastWeightCheckpoint.slope -= _slopeChanges[epochTimestampPointer];
 
-            // Update total locked ratio
-            if (
+            // Update total locked and total supply histories
+            // Will always be accurate since its called eveytime there's a change in total or locked supply
+            _totalLockedHistory.push(
+                IERC20Upgradeable(_addressProvider.getNativeToken()).balanceOf(
+                    address(this)
+                )
+            );
+            _totalSupplyHistory.push(
                 IERC20Upgradeable(_addressProvider.getNativeToken())
-                    .totalSupply() > 0
-            ) {
-                _lockedRatioHistory.push(
-                    (IERC20Upgradeable(_addressProvider.getNativeToken())
-                        .balanceOf(address(this)) *
-                        PercentageMath.PERCENTAGE_FACTOR) /
-                        IERC20Upgradeable(_addressProvider.getNativeToken())
-                            .totalSupply()
-                );
-            } else {
-                _lockedRatioHistory.push(0);
-            }
+                    .totalSupply()
+            );
 
             //Increase epoch timestamp
             epochTimestampPointer += EPOCH_PERIOD;
@@ -325,18 +325,27 @@ contract VotingEscrow is
     function getLockedRatioAt(
         uint256 _epoch
     ) external override returns (uint256) {
-        require(_epoch <= epoch(block.timestamp), "Invalid epoch");
+        require(
+            _epoch <= epoch(block.timestamp),
+            "Invalid epoch: Epoch in the future"
+        );
 
         // Update total weight history
         writeTotalWeightHistory();
-        return _lockedRatioHistory[_epoch];
+
+        return
+            (_totalLockedHistory[_epoch] * PercentageMath.PERCENTAGE_FACTOR) /
+            _totalSupplyHistory[_epoch];
     }
 
     /// @notice Returns the total weight of locked tokens at a given epoch.
     /// @param _epoch The epoch number for which to retrieve the total weight.
     /// @return The total weight of locked tokens at the given epoch.
     function totalWeightAt(uint256 _epoch) external returns (uint256) {
-        require(_epoch <= epoch(block.timestamp), "Invalid epoch");
+        require(
+            _epoch <= epoch(block.timestamp),
+            "Invalid epoch: Epoch in the future"
+        );
 
         // Update total weight history
         writeTotalWeightHistory();
@@ -414,6 +423,9 @@ contract VotingEscrow is
         _safeMint(receiver, tokenId);
         _tokenIdCounter.increment();
 
+        // Setup the next claimable rebate epoch
+        _nextClaimableEpoch[tokenId] = epoch(block.timestamp) + 1;
+
         // Save oldLocked and update the locked balance
         DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
         _lockedBalance[tokenId].init(amount, roundedUnlockTime);
@@ -440,6 +452,9 @@ contract VotingEscrow is
     ) external nonReentrant {
         require(_lockedBalance[tokenId].end > block.timestamp, "Inactive Lock");
         require(ownerOf(tokenId) == _msgSender(), "Not the owner of the lock");
+
+        // Claim any existing rebates
+        claimRebates(tokenId);
 
         // Save oldLocked and update the locked balance
         DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
@@ -483,6 +498,9 @@ contract VotingEscrow is
             "Locktime higher than maximum locktime"
         );
 
+        // Claim any existing rebates
+        claimRebates(tokenId);
+
         // Save oldLocked and update the locked balance
         DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
         _lockedBalance[tokenId].end = roundedUnlocktime;
@@ -512,6 +530,9 @@ contract VotingEscrow is
             "Lock has active gauge votes"
         );
 
+        // Claim any existing rebates
+        claimRebates(tokenId);
+
         // Save oldLocked and update the locked balance
         DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
         delete _lockedBalance[tokenId];
@@ -527,6 +548,59 @@ contract VotingEscrow is
 
         // Burn the veNFT
         _burn(tokenId);
+    }
+
+    function claimRebates(uint256 tokenId) public returns (uint256) {
+        require(ownerOf(tokenId) == _msgSender(), "Not owner of token");
+
+        writeTotalWeightHistory();
+
+        // Claim all the available rebates for the lock
+        uint256 amountToClaim;
+        uint256 epochRebate;
+        uint256 nextClaimableEpoch;
+        uint256 currentEpoch = epoch(block.timestamp);
+
+        // Claim a maximum of 50 epochs at a time
+        for (uint i = 0; i < 50; i++) {
+            nextClaimableEpoch = _nextClaimableEpoch[tokenId];
+            if (nextClaimableEpoch <= currentEpoch) {
+                break;
+            }
+
+            // Get the full amount of rebates to claim for the epoch
+            // Should be an amount such that lockers are not dilluted
+            if (
+                _totalLockedHistory[nextClaimableEpoch] > 0 &&
+                _totalSupplyHistory[nextClaimableEpoch] >
+                _totalLockedHistory[nextClaimableEpoch]
+            ) {
+                epochRebate =
+                    (_totalLockedHistory[nextClaimableEpoch] *
+                        IGaugeController(_addressProvider.getGaugeController())
+                            .getEpochRewards(nextClaimableEpoch)) /
+                    (_totalSupplyHistory[nextClaimableEpoch] -
+                        _totalLockedHistory[nextClaimableEpoch]);
+
+                // Get the rebate share for this specific lock
+                amountToClaim +=
+                    (epochRebate * _lockedBalance[tokenId].amount) /
+                    _totalLockedHistory[nextClaimableEpoch];
+            }
+
+            // Increase next claimable epoch
+            _nextClaimableEpoch[tokenId]++;
+        }
+
+        // Mint the rebates to the user's wallet
+        if (amountToClaim > 0) {
+            INativeToken(_addressProvider.getNativeToken()).mintRebates(
+                _msgSender(),
+                amountToClaim
+            );
+        }
+
+        return amountToClaim;
     }
 
     /// @notice Returns the details for a single lock

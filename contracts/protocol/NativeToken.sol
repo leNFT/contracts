@@ -111,4 +111,12 @@ contract NativeToken is
         );
         _mint(receiver, amount);
     }
+
+    function mintRebates(address receiver, uint256 amount) external override {
+        require(
+            _msgSender() == _addressProvider.getVotingEscrow(),
+            "Rebates can only be minted by the Voting Escrow contract"
+        );
+        _mint(receiver, amount);
+    }
 }

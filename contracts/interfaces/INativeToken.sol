@@ -7,4 +7,6 @@ interface INativeToken {
     function burnGenesisTokens(uint256 amount) external;
 
     function mintGaugeRewards(address receiver, uint256 amount) external;
+
+    function mintRebates(address receiver, uint256 amount) external;
 }

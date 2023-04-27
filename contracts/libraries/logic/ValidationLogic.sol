@@ -93,7 +93,7 @@ library ValidationLogic {
         // Check if the asset is supported
         require(
             lendingPools[params.nftAddress][params.asset] != address(0),
-            "No reserve for asset and collection"
+            "No pool for asset and collection"
         );
 
         ITokenOracle tokenOracle = ITokenOracle(
