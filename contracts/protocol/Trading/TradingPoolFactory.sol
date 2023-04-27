@@ -84,13 +84,26 @@ contract TradingPoolFactory is
 
     /// @notice Returns the address of the trading pool for a certain collection and token
     /// @param nft The NFT collection address
-    /// @param token The token address to trade against
+    /// @param token The token address
     /// @return The address of the trading pool for the given NFT collection and token
     function getTradingPool(
         address nft,
         address token
     ) external view returns (address) {
         return _pools[nft][token];
+    }
+
+    /// @notice Sets the address of the trading pool for a certain collection and token
+    /// @dev Meant to be used by owner if there's a need to update a pool
+    /// @param nft The NFT collection address
+    /// @param token The token address
+    /// @param pool The address of the trading pool for the given NFT collection and token
+    function setTradingPool(
+        address nft,
+        address token,
+        address pool
+    ) external onlyOwner {
+        _pools[nft][token] = pool;
     }
 
     /// @notice Creates a trading pool for a certain collection and token
