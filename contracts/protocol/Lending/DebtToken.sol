@@ -65,17 +65,13 @@ contract DebtToken is
     }
 
     function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId,
-        uint256 batchSize
-    ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
-        ERC721EnumerableUpgradeable._beforeTokenTransfer(
-            from,
-            to,
-            tokenId,
-            batchSize
-        );
+        address,
+        address,
+        uint256,
+        uint256
+    ) internal pure override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
+        // Prevent any token transfers by using require
+        require(false, "NonTransferableERC721: Transfers not allowed");
     }
 
     function supportsInterface(

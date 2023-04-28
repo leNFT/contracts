@@ -112,9 +112,7 @@ contract LoanCenter is
         }
 
         // Increment the loans count
-        _loansCount++;
-
-        return _loansCount - 1;
+        return _loansCount++;
     }
 
     /// @notice Activate a loan by setting its state to Active
