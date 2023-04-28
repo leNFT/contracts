@@ -562,7 +562,7 @@ contract VotingEscrow is
 
         // Claim all the available rebates for the lock
         uint256 amountToClaim;
-        uint256 epochRebate;
+        uint256 maxEpochRebates;
         uint256 nextClaimableEpoch;
         uint256 currentEpoch = epoch(block.timestamp);
         console.log("currentEpoch: %s", currentEpoch);
@@ -571,23 +571,30 @@ contract VotingEscrow is
         for (uint i = 0; i < 50; i++) {
             nextClaimableEpoch = _nextClaimableEpoch[tokenId];
             console.log("nextClaimableEpoch: %s", nextClaimableEpoch);
-            if (nextClaimableEpoch >= currentEpoch) {
+            if (
+                nextClaimableEpoch >= currentEpoch ||
+                _lockedBalance[tokenId].end < epochTimestamp(nextClaimableEpoch)
+            ) {
                 break;
             }
 
             // Get the full amount of rebates to claim for the epoch
-            // Should be an amount such that lockers are not dilluted
+            // Should be an amount such that max-duration lockers are not dilluted
             if (_totalSupplyHistory[nextClaimableEpoch] > 0) {
-                epochRebate =
+                maxEpochRebates =
                     (_totalLockedHistory[nextClaimableEpoch] *
                         IGaugeController(_addressProvider.getGaugeController())
                             .getEpochRewards(nextClaimableEpoch)) /
                     _totalSupplyHistory[nextClaimableEpoch];
 
                 // Get the rebate share for this specific lock
+                // It will depend on the size and duration of the lock
                 amountToClaim +=
-                    (epochRebate * _lockedBalance[tokenId].amount) /
-                    _totalLockedHistory[nextClaimableEpoch];
+                    (maxEpochRebates *
+                        _lockedBalance[tokenId].amount *
+                        (_lockedBalance[tokenId].end -
+                            epochTimestamp(nextClaimableEpoch))) /
+                    (_totalLockedHistory[nextClaimableEpoch] * MAXLOCKTIME);
                 console.log("amountToClaim: %s", amountToClaim);
             }
 
