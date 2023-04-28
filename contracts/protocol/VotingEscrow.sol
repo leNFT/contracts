@@ -43,7 +43,7 @@ contract VotingEscrow is
 {
     uint256 public constant MINLOCKTIME = 2 weeks;
     uint256 public constant MAXLOCKTIME = 4 * 365 days;
-    uint256 public constant EPOCH_PERIOD = 1 hours;
+    uint256 public constant EPOCH_PERIOD = 30 minutes;
 
     IAddressesProvider private _addressProvider;
     uint256 _deployTimestamp;
@@ -333,6 +333,10 @@ contract VotingEscrow is
         // Update total weight history
         writeTotalWeightHistory();
 
+        if (_totalSupplyHistory[_epoch] == 0) {
+            return 0;
+        }
+
         return
             (_totalLockedHistory[_epoch] * PercentageMath.PERCENTAGE_FACTOR) /
             _totalSupplyHistory[_epoch];
@@ -552,6 +556,7 @@ contract VotingEscrow is
 
     function claimRebates(uint256 tokenId) public returns (uint256) {
         require(ownerOf(tokenId) == _msgSender(), "Not owner of token");
+        console.log("claimRebates");
 
         writeTotalWeightHistory();
 
@@ -560,32 +565,30 @@ contract VotingEscrow is
         uint256 epochRebate;
         uint256 nextClaimableEpoch;
         uint256 currentEpoch = epoch(block.timestamp);
+        console.log("currentEpoch: %s", currentEpoch);
 
         // Claim a maximum of 50 epochs at a time
         for (uint i = 0; i < 50; i++) {
             nextClaimableEpoch = _nextClaimableEpoch[tokenId];
-            if (nextClaimableEpoch <= currentEpoch) {
+            console.log("nextClaimableEpoch: %s", nextClaimableEpoch);
+            if (nextClaimableEpoch >= currentEpoch) {
                 break;
             }
 
             // Get the full amount of rebates to claim for the epoch
             // Should be an amount such that lockers are not dilluted
-            if (
-                _totalLockedHistory[nextClaimableEpoch] > 0 &&
-                _totalSupplyHistory[nextClaimableEpoch] >
-                _totalLockedHistory[nextClaimableEpoch]
-            ) {
+            if (_totalSupplyHistory[nextClaimableEpoch] > 0) {
                 epochRebate =
                     (_totalLockedHistory[nextClaimableEpoch] *
                         IGaugeController(_addressProvider.getGaugeController())
                             .getEpochRewards(nextClaimableEpoch)) /
-                    (_totalSupplyHistory[nextClaimableEpoch] -
-                        _totalLockedHistory[nextClaimableEpoch]);
+                    _totalSupplyHistory[nextClaimableEpoch];
 
                 // Get the rebate share for this specific lock
                 amountToClaim +=
                     (epochRebate * _lockedBalance[tokenId].amount) /
                     _totalLockedHistory[nextClaimableEpoch];
+                console.log("amountToClaim: %s", amountToClaim);
             }
 
             // Increase next claimable epoch

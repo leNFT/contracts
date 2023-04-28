@@ -24,6 +24,7 @@ describe("Voting Escrow", () => {
 
     //Lock 10 tokens for 100 days
     await votingEscrow.createLock(
+      owner.address,
       "10000000000000000000",
       Math.floor(Date.now() / 1000) + 86400 * 100
     );
@@ -33,5 +34,15 @@ describe("Voting Escrow", () => {
   it("Should get balance of user depositing", async function () {
     console.log("balanceOf(user)", await votingEscrow.balanceOf(owner.address));
     assert.isOk(await votingEscrow.balanceOf(owner.address));
+  });
+  it("Should claim rebates", async function () {
+    // Let 6 hours pass
+    await network.provider.send("evm_increaseTime", [21600]);
+    await network.provider.send("evm_mine");
+    await votingEscrow.claimRebates(0);
+    console.log("Claimed rebates");
+
+    // Check balance of user
+    console.log("balanceOf(user)", await nativeToken.balanceOf(owner.address));
   });
 });
