@@ -7,7 +7,6 @@ typechain
 #Hardhat files
 cache
 artifacts
-hardhat.config.js
 mocharc.json
 
 # env files
