@@ -580,8 +580,8 @@ contract VotingEscrow is
                 break;
             }
 
-            // Get the full amount of rebates to claim for the epoch as if everyone was locked at max locktime
             if (_totalSupplyHistory[nextClaimableEpoch] > 0) {
+                // Get the full amount of rebates to claim for the epoch as if everyone was locked at max locktime
                 maxEpochRebates =
                     (_totalLockedHistory[nextClaimableEpoch] *
                         IGaugeController(_addressProvider.getGaugeController())

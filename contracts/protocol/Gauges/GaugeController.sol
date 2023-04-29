@@ -478,6 +478,11 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             "Epoch is in the future"
         );
 
+        // If there are no votes in any gauge, return 0
+        if (getTotalWeightAt(epoch) == 0) {
+            return 0;
+        }
+
         return
             (((PercentageMath.PERCENTAGE_FACTOR -
                 (IVotingEscrow(_addressProvider.getVotingEscrow())
@@ -503,6 +508,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             "Epoch is in the future"
         );
 
+        // If there are no votes in any gauge, return 0
         if (getTotalWeightAt(epoch) == 0) {
             return 0;
         }
