@@ -33,8 +33,8 @@ contract DebtToken is
         string memory name,
         string memory symbol
     ) external initializer {
-        __ERC721Enumerable_init();
         __ERC721_init(name, symbol);
+        __ERC721Enumerable_init();
         _addressProvider = addressesProvider;
     }
 

@@ -519,6 +519,7 @@ contract VotingEscrow is
     /// @dev Requires the caller to have no active votes in the gauge controller
     /// @dev Transfers the native token from this contract to the caller
     /// @dev Calls a checkpoint event
+    /// @dev User needs to claim fees before withdrawing or will lose them
     function withdraw(uint256 tokenId) external {
         require(ownerOf(tokenId) == _msgSender(), "Not the owner of the lock");
         require(_lockedBalance[tokenId].amount > 0, "Nothing to withdraw");
@@ -554,6 +555,9 @@ contract VotingEscrow is
         _burn(tokenId);
     }
 
+    /// @notice Claims all available rebates for the given token id
+    /// @dev Has to be called before changing the locked balance of a token id
+    /// @param tokenId The token id of the lock to claim rebates for
     function claimRebates(uint256 tokenId) public returns (uint256) {
         require(ownerOf(tokenId) == _msgSender(), "Not owner of token");
         console.log("claimRebates");
@@ -565,21 +569,18 @@ contract VotingEscrow is
         uint256 maxEpochRebates;
         uint256 nextClaimableEpoch;
         uint256 currentEpoch = epoch(block.timestamp);
-        console.log("currentEpoch: %s", currentEpoch);
 
         // Claim a maximum of 50 epochs at a time
         for (uint i = 0; i < 50; i++) {
             nextClaimableEpoch = _nextClaimableEpoch[tokenId];
-            console.log("nextClaimableEpoch: %s", nextClaimableEpoch);
             if (
                 nextClaimableEpoch >= currentEpoch ||
-                _lockedBalance[tokenId].end < epochTimestamp(nextClaimableEpoch)
+                epochTimestamp(nextClaimableEpoch) > _lockedBalance[tokenId].end
             ) {
                 break;
             }
 
-            // Get the full amount of rebates to claim for the epoch
-            // Should be an amount such that max-duration lockers are not dilluted
+            // Get the full amount of rebates to claim for the epoch as if everyone was locked at max locktime
             if (_totalSupplyHistory[nextClaimableEpoch] > 0) {
                 maxEpochRebates =
                     (_totalLockedHistory[nextClaimableEpoch] *

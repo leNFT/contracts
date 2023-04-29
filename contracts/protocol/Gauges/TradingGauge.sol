@@ -20,6 +20,7 @@ import "hardhat/console.sol";
 /// @title Trading Gauge Contract
 /// @notice A contract for managing the distribution of rewards to Trading LPs
 contract TradingGauge is IGauge, ERC721Holder {
+    uint256 public constant LP_MATURITY_PERIOD = 6; // 6 epochs
     IAddressesProvider private _addressProvider;
     mapping(uint256 => address) private _ownerOf;
     mapping(address => uint256) private _balanceOf;
@@ -101,6 +102,7 @@ contract TradingGauge is IGauge, ERC721Holder {
                     ];
 
                 // Check if the user entire balance history has been iterated
+                // This should never be the case since the checkpoint function is called before this function and it pushes one working balance to the history
                 if (
                     _workingBalancePointer[msg.sender] ==
                     workingBalanceHistoryLength - 1
@@ -110,8 +112,13 @@ contract TradingGauge is IGauge, ERC721Holder {
                             (gaugeController.getGaugeRewards(
                                 address(this),
                                 nextClaimableEpoch
-                            ) * workingBalance.weight) /
-                            _workingWeightHistory[nextClaimableEpoch];
+                            ) *
+                                workingBalance.weight *
+                                _maturityBoost(
+                                    block.timestamp - workingBalance.timestamp
+                                )) /
+                            (_workingWeightHistory[nextClaimableEpoch] *
+                                PercentageMath.PERCENTAGE_FACTOR);
                     }
 
                     _userNextClaimableEpoch[msg.sender]++;
@@ -143,8 +150,14 @@ contract TradingGauge is IGauge, ERC721Holder {
                                 (gaugeController.getGaugeRewards(
                                     address(this),
                                     nextClaimableEpoch
-                                ) * workingBalance.weight) /
-                                _workingWeightHistory[nextClaimableEpoch];
+                                ) *
+                                    _maturityBoost(
+                                        nextWorkingBalance.timestamp -
+                                            workingBalance.timestamp
+                                    ) *
+                                    workingBalance.weight) /
+                                (_workingWeightHistory[nextClaimableEpoch] *
+                                    PercentageMath.PERCENTAGE_FACTOR);
                         }
                         _workingBalancePointer[msg.sender]++;
                         _userNextClaimableEpoch[msg.sender]++;
@@ -155,8 +168,14 @@ contract TradingGauge is IGauge, ERC721Holder {
                                 (gaugeController.getGaugeRewards(
                                     address(this),
                                     nextClaimableEpoch
-                                ) * workingBalance.weight) /
-                                _workingWeightHistory[nextClaimableEpoch];
+                                ) *
+                                    _maturityBoost(
+                                        nextWorkingBalance.timestamp -
+                                            workingBalance.timestamp
+                                    ) *
+                                    workingBalance.weight) /
+                                (_workingWeightHistory[nextClaimableEpoch] *
+                                    PercentageMath.PERCENTAGE_FACTOR);
                         }
                         _userNextClaimableEpoch[msg.sender]++;
                     }
@@ -186,6 +205,19 @@ contract TradingGauge is IGauge, ERC721Holder {
 
             // Save epoch total weight
             _workingWeightHistory.push(_workingWeight);
+        }
+    }
+
+    function _maturityBoost(
+        uint256 timeInterval
+    ) internal view returns (uint256) {
+        uint256 lpMaturity = LP_MATURITY_PERIOD *
+            IVotingEscrow(_addressProvider.getVotingEscrow()).epochPeriod();
+        if (timeInterval > lpMaturity) {
+            return PercentageMath.PERCENTAGE_FACTOR;
+        } else {
+            return
+                (PercentageMath.PERCENTAGE_FACTOR * timeInterval) / lpMaturity;
         }
     }
 

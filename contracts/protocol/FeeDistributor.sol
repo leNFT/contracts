@@ -121,14 +121,6 @@ contract FeeDistributor is
         address token,
         uint256 tokenId
     ) public nonReentrant returns (uint256) {
-        // The user must own the lock
-        require(
-            IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
-                tokenId
-            ) == _msgSender(),
-            "Only lock owner can claim rewards"
-        );
-
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         );
@@ -230,7 +222,12 @@ contract FeeDistributor is
             }
         }
 
-        IERC20Upgradeable(token).safeTransfer(_msgSender(), amountToClaim);
+        IERC20Upgradeable(token).safeTransfer(
+            IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
+                tokenId
+            ),
+            amountToClaim
+        );
 
         return amountToClaim;
     }

@@ -18,6 +18,7 @@ import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 /// @notice Liquidity Gauge contract. Distributes incentives to users who have deposited into the LendingPool.
 /// @dev The gauge tracks the balance and work done by users, which are then used to calculate rewards.
 contract LendingGauge is IGauge {
+    uint256 public constant LP_MATURITY_PERIOD = 6; // 6 epochs
     IAddressesProvider private _addressProvider;
     mapping(address => uint256) private _balanceOf;
     mapping(address => DataTypes.WorkingBalance[])
@@ -105,6 +106,7 @@ contract LendingGauge is IGauge {
                     ];
 
                 // Check if the user entire balance history has been iterated
+                // This should never be the case since the checkpoint function is called before this function and it pushes one working balance to the history
                 if (
                     _workingBalancePointer[msg.sender] ==
                     workingBalanceHistoryLength - 1
@@ -114,8 +116,13 @@ contract LendingGauge is IGauge {
                             (gaugeController.getGaugeRewards(
                                 address(this),
                                 nextClaimableEpoch
-                            ) * workingBalance.weight) /
-                            _workingWeightHistory[nextClaimableEpoch];
+                            ) *
+                                workingBalance.weight *
+                                _maturityBoost(
+                                    block.timestamp - workingBalance.timestamp
+                                )) /
+                            (_workingWeightHistory[nextClaimableEpoch] *
+                                PercentageMath.PERCENTAGE_FACTOR);
                     }
 
                     _userNextClaimableEpoch[msg.sender]++;
@@ -138,6 +145,7 @@ contract LendingGauge is IGauge {
                         votingEscrow.epoch(nextWorkingBalance.timestamp) ==
                         nextClaimableEpoch
                     ) {
+                        // If the next working balance has no decrease in balance we can claim the rewards
                         if (
                             _workingWeightHistory[nextClaimableEpoch] > 0 &&
                             workingBalance.amount <= nextWorkingBalance.amount
@@ -146,8 +154,14 @@ contract LendingGauge is IGauge {
                                 (gaugeController.getGaugeRewards(
                                     address(this),
                                     nextClaimableEpoch
-                                ) * workingBalance.weight) /
-                                _workingWeightHistory[nextClaimableEpoch];
+                                ) *
+                                    _maturityBoost(
+                                        nextWorkingBalance.timestamp -
+                                            workingBalance.timestamp
+                                    ) *
+                                    workingBalance.weight) /
+                                (_workingWeightHistory[nextClaimableEpoch] *
+                                    PercentageMath.PERCENTAGE_FACTOR);
                         }
                         _workingBalancePointer[msg.sender]++;
                         _userNextClaimableEpoch[msg.sender]++;
@@ -158,8 +172,14 @@ contract LendingGauge is IGauge {
                                 (gaugeController.getGaugeRewards(
                                     address(this),
                                     nextClaimableEpoch
-                                ) * workingBalance.weight) /
-                                _workingWeightHistory[nextClaimableEpoch];
+                                ) *
+                                    _maturityBoost(
+                                        nextWorkingBalance.timestamp -
+                                            workingBalance.timestamp
+                                    ) *
+                                    workingBalance.weight) /
+                                (_workingWeightHistory[nextClaimableEpoch] *
+                                    PercentageMath.PERCENTAGE_FACTOR);
                         }
                         _userNextClaimableEpoch[msg.sender]++;
                     }
@@ -190,6 +210,19 @@ contract LendingGauge is IGauge {
 
             // Save epoch total weight
             _workingWeightHistory.push(_workingWeight);
+        }
+    }
+
+    function _maturityBoost(
+        uint256 timeInterval
+    ) internal view returns (uint256) {
+        uint256 lpMaturity = LP_MATURITY_PERIOD *
+            IVotingEscrow(_addressProvider.getVotingEscrow()).epochPeriod();
+        if (timeInterval > lpMaturity) {
+            return PercentageMath.PERCENTAGE_FACTOR;
+        } else {
+            return
+                (PercentageMath.PERCENTAGE_FACTOR * timeInterval) / lpMaturity;
         }
     }
 
