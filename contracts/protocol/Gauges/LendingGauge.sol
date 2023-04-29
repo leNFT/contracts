@@ -295,6 +295,25 @@ contract LendingGauge is IGauge {
                 PercentageMath.PERCENTAGE_FACTOR) / _balanceOf[user];
     }
 
+    /// @notice Returns the current maturity boost for a user
+    /// @param user The address of the user whose maturity boost will be returned.
+    /// @return The current maturity boost for the user.
+    function userMaturityBoost(address user) external view returns (uint256) {
+        uint256 workingBalanceHistoryLength = _workingBalanceHistory[user]
+            .length;
+        if (workingBalanceHistoryLength == 0) {
+            return 0;
+        }
+
+        return
+            _maturityBoost(
+                block.timestamp -
+                    _workingBalanceHistory[user][
+                        workingBalanceHistoryLength - 1
+                    ].timestamp
+            );
+    }
+
     /// @notice Updates the working balance of a user if their locked has expired.
     /// @param tokenId The tokenId of the user's locked balance.
     function kick(uint256 tokenId) external {

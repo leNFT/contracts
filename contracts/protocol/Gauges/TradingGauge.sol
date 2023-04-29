@@ -404,6 +404,25 @@ contract TradingGauge is IGauge, ERC721Holder {
                 PercentageMath.PERCENTAGE_FACTOR) / _userLPValue[user];
     }
 
+    /// @notice Returns the current maturity boost for a user
+    /// @param user The address of the user whose maturity boost will be returned.
+    /// @return The current maturity boost for the user.
+    function userMaturityBoost(address user) external view returns (uint256) {
+        uint256 workingBalanceHistoryLength = _workingBalanceHistory[user]
+            .length;
+        if (workingBalanceHistoryLength == 0) {
+            return 0;
+        }
+
+        return
+            _maturityBoost(
+                block.timestamp -
+                    _workingBalanceHistory[user][
+                        workingBalanceHistoryLength - 1
+                    ].timestamp
+            );
+    }
+
     /// @notice Returns the ID of the liquidity position at the specified index in a user's list of liquidity positions.
     /// @param user The address of the user whose list of liquidity positions will be accessed.
     /// @param index The index of the liquidity position to be returned.

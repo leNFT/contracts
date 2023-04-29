@@ -53,6 +53,7 @@ contract NativeTokenVesting is Ownable {
             cliff,
             amount
         );
+        // Reset the withdrawn amount in case we are updating vesting parameters
         delete _withdrawn[account];
 
         emit VestingAdded(account, period, cliff, amount);
