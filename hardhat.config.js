@@ -35,18 +35,6 @@ module.exports = {
       url: "https://arbitrum-goerli.infura.io/v3/" + process.env.INFURA_API_KEY,
       accounts: [process.env.GOERLI_ACCOUNT_KEY],
     },
-    mainnet: {
-      chainId: 1,
-      url: "https://mainnet.infura.io/v3/" + process.env.INFURA_API_KEY,
-      accounts: {
-        mnemonic: "",
-        path: "m/44'/60'/0'/0",
-        gasMultiplier: 1.2,
-        initialIndex: 0,
-        count: 20,
-        passphrase: "",
-      },
-    },
   },
   solidity: {
     compilers: [
