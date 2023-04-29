@@ -208,6 +208,9 @@ contract TradingGauge is IGauge, ERC721Holder {
         }
     }
 
+    /// @notice Gets the maturity boost for a given time interval since inception
+    /// @param timeInterval The time interval to get the boost for.
+    /// @return The maturity boost.
     function _maturityBoost(
         uint256 timeInterval
     ) internal view returns (uint256) {
