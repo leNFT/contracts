@@ -83,7 +83,10 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         require(_isGauge[gauge], "Gauge is not on the gauge list");
 
         address liquidityPool = IGauge(gauge).lpToken();
-        delete _liquidityPoolToGauge[liquidityPool];
+        if (_liquidityPoolToGauge[liquidityPool] == gauge) {
+            delete _liquidityPoolToGauge[liquidityPool];
+        }
+
         delete _isGauge[gauge];
 
         emit RemoveGauge(gauge, liquidityPool);

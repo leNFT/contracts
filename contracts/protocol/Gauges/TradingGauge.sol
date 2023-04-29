@@ -114,7 +114,7 @@ contract TradingGauge is IGauge, ERC721Holder {
                                 nextClaimableEpoch
                             ) *
                                 workingBalance.weight *
-                                _maturityBoost(
+                                _maturityMultiplier(
                                     block.timestamp - workingBalance.timestamp
                                 )) /
                             (_workingWeightHistory[nextClaimableEpoch] *
@@ -151,7 +151,7 @@ contract TradingGauge is IGauge, ERC721Holder {
                                     address(this),
                                     nextClaimableEpoch
                                 ) *
-                                    _maturityBoost(
+                                    _maturityMultiplier(
                                         nextWorkingBalance.timestamp -
                                             workingBalance.timestamp
                                     ) *
@@ -169,7 +169,7 @@ contract TradingGauge is IGauge, ERC721Holder {
                                     address(this),
                                     nextClaimableEpoch
                                 ) *
-                                    _maturityBoost(
+                                    _maturityMultiplier(
                                         nextWorkingBalance.timestamp -
                                             workingBalance.timestamp
                                     ) *
@@ -211,7 +211,7 @@ contract TradingGauge is IGauge, ERC721Holder {
     /// @notice Gets the maturity boost for a given time interval since inception
     /// @param timeInterval The time interval to get the boost for.
     /// @return The maturity boost.
-    function _maturityBoost(
+    function _maturityMultiplier(
         uint256 timeInterval
     ) internal view returns (uint256) {
         uint256 lpMaturity = LP_MATURITY_PERIOD *
@@ -410,7 +410,9 @@ contract TradingGauge is IGauge, ERC721Holder {
     /// @notice Returns the current maturity boost for a user
     /// @param user The address of the user whose maturity boost will be returned.
     /// @return The current maturity boost for the user.
-    function userMaturityBoost(address user) external view returns (uint256) {
+    function userMaturityMultiplier(
+        address user
+    ) external view returns (uint256) {
         uint256 workingBalanceHistoryLength = _workingBalanceHistory[user]
             .length;
         if (workingBalanceHistoryLength == 0) {
@@ -418,7 +420,7 @@ contract TradingGauge is IGauge, ERC721Holder {
         }
 
         return
-            _maturityBoost(
+            _maturityMultiplier(
                 block.timestamp -
                     _workingBalanceHistory[user][
                         workingBalanceHistoryLength - 1

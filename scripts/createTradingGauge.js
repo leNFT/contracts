@@ -17,18 +17,19 @@ async function main() {
   let chainID = hre.network.config.chainId;
   console.log("chainID: ", chainID);
   var addresses = contractAddresses[chainID];
-  const tradingPool = "0x43a8866b5EA4cB1082E62B2DbB94722937B46128";
+  const tradingPool = "0xe0157b3016A1c410D2D4C0e1124137DcdaD6B80d";
 
-  // Deploy gauge
+  // Deploy new gauge
   const Gauge = await ethers.getContractFactory("TradingGauge");
   const gauge = await Gauge.deploy(addresses.AddressesProvider, tradingPool);
   await gauge.deployed();
   console.log("Gauge address: ", gauge.address);
 
-  // Add gauge to gauge controller
+  // Get gauge controller
   const GaugeController = await ethers.getContractFactory("GaugeController");
   const gaugeController = GaugeController.attach(addresses.GaugeController);
 
+  // Add gauge to gauge controller
   const setAddGaugeTx = await gaugeController.addGauge(gauge.address);
   await setAddGaugeTx.wait();
   console.log("Added Gauge to Gauge Controller.");
