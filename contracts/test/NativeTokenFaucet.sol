@@ -25,10 +25,10 @@ contract NativeTokenFaucet {
             "Not enough LE balance in faucet"
         );
 
-        // Send 50 LE tokens to the account from the faucet's balance
+        // Send 1000 LE tokens to the account from the faucet's balance
         IERC20(_addressProvider.getNativeToken()).transfer(
             account,
-            FAUCET_DRIP * 2
+            FAUCET_DRIP
         );
     }
 }
