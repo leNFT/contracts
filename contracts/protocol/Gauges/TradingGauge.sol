@@ -465,7 +465,7 @@ contract TradingGauge is IGauge, ERC721Holder {
         uint256 spotPrice
     ) public pure returns (uint256) {
         uint256 nftsAppraisal = nftAmount * spotPrice;
-        uint256 validTokenAmount = tokenAmount > spotPrice ? tokenAmount : 0;
+        uint256 validTokenAmount = tokenAmount >= spotPrice ? tokenAmount : 0;
 
         // Value is higher if the lp is in equilibrium
         return

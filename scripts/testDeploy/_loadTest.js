@@ -172,7 +172,7 @@ let loadEnv = async function () {
 
   // Deploy the Interest Rate contract
   const InterestRate = await ethers.getContractFactory("InterestRate");
-  const interestRate = await InterestRate.deploy(7000, 500, 2000, 20000);
+  interestRate = await InterestRate.deploy(7000, 500, 2000, 20000);
   await interestRate.deployed();
 
   // Deploy the NFT Oracle contract

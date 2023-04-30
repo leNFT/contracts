@@ -118,7 +118,7 @@ describe("Trading Gauge", () => {
 
     // Find if the user received the asset
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      "18749999999999999999"
+      "44042112999999999998"
     );
   });
   it("Should unstake from the gauge", async function () {

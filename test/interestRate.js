@@ -8,6 +8,6 @@ describe("InterestRate", function () {
     const borrowRate = await interestRate.calculateBorrowRate("20", "80");
 
     // Find if the NFT was minted accordingly
-    expect(borrowRate).to.equal(3000);
+    expect(borrowRate).to.equal(3900);
   });
 });

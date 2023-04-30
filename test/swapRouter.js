@@ -40,11 +40,13 @@ describe("Swap Router", () => {
     await approveTokenTx.wait();
     const depositTx = await tradingPool.addLiquidity(
       owner.address,
+      0,
       [0],
       "100000000000000",
+      "100000000000000",
       exponentialCurve.address,
-      "0",
-      "100000000000000"
+      "50",
+      "500"
     );
     await depositTx.wait();
 
@@ -87,11 +89,13 @@ describe("Swap Router", () => {
     await approveTokenTx.wait();
     const depositTx = await tradingPool.addLiquidity(
       owner.address,
+      0,
       [0],
       "100000000000000",
+      "100000000000000",
       exponentialCurve.address,
-      "0",
-      "100000000000000"
+      "50",
+      "500"
     );
     await depositTx.wait();
   });

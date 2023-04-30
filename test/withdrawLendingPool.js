@@ -1,8 +1,7 @@
 const { expect } = require("chai");
 const load = require("../scripts/testDeploy/_loadTest.js");
 
-describe("Withdraw", function () {
-  this.timeout(10000);
+describe("Withdraw from Lengin Pool", function () {
   load.loadTest();
   it("Deposit underlying to the lending pool", async function () {
     const createLendingPoolTx = await lendingMarket.createLendingPool(

@@ -50,6 +50,7 @@ describe("Trading Gauge", () => {
 
     //Lock 10 tokens for 100 days
     await votingEscrow.createLock(
+      owner.address,
       "100000000000000000000",
       Math.floor(Date.now() / 1000) + 86400 * 100
     );
@@ -58,7 +59,7 @@ describe("Trading Gauge", () => {
   it("Should vote for the created gauge", async function () {
     console.log("VOTING");
     // Use 50% of the locked tokens to vote for the gauge
-    const voteTx = await gaugeController.vote(gauge.address, "5000");
+    const voteTx = await gaugeController.vote(0, gauge.address, "5000");
     await voteTx.wait();
     console.log("Voted for gauge");
 
@@ -74,30 +75,25 @@ describe("Trading Gauge", () => {
     );
     console.log("Total weight: ", await gaugeController.getTotalWeight());
     console.log(
-      "userVoteWeightForGauge",
-      await gaugeController.userVoteWeightForGauge(owner.address, gauge.address)
+      "lockVoteWeightForGauge",
+      await gaugeController.lockVoteWeightForGauge(0, gauge.address)
     );
-    console.log(
-      "userVoteWeight: ",
-      await gaugeController.userVoteRatio(owner.address)
-    );
+    console.log("userVoteWeight: ", await gaugeController.lockVoteRatio(0));
 
     expect(
-      await gaugeController.userVoteWeightForGauge(owner.address, gauge.address)
+      await gaugeController.lockVoteWeightForGauge(0, gauge.address)
     ).to.not.equal("0");
-    expect(await gaugeController.userVoteRatio(owner.address)).to.not.equal(
-      "0"
-    );
+    expect(await gaugeController.lockVoteRatio(0)).to.not.equal("0");
   });
   it("Should remove some voting power", async function () {
     // Use 50% of the locked tokens to vote for the gauge
-    const voteTx = await gaugeController.vote(gauge.address, "0");
+    const voteTx = await gaugeController.vote(0, gauge.address, "0");
     await voteTx.wait();
     console.log("Removed voting power");
 
     expect(
-      await gaugeController.userVoteWeightForGauge(owner.address, gauge.address)
+      await gaugeController.lockVoteWeightForGauge(0, gauge.address)
     ).to.equal("0");
-    expect(await gaugeController.userVoteRatio(owner.address)).to.equal("0");
+    expect(await gaugeController.lockVoteRatio(0)).to.equal("0");
   });
 });

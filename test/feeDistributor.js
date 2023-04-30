@@ -53,6 +53,7 @@ describe("Fee Distributor ", () => {
   it("Should be able to add to the unlock time", async function () {
     //Lock 10 tokens for 100 days
     await votingEscrow.increaseUnlockTime(
+      0,
       Math.floor(Date.now() / 1000) + 86400 * 200
     );
   });
@@ -63,8 +64,10 @@ describe("Fee Distributor ", () => {
     await ethers.provider.send("evm_mine", []);
 
     // Claim fees
-    const claimFeesTx = await feeDistributor.claim(nativeToken.address);
+    const claimFeesTx = await feeDistributor.claim(nativeToken.address, 0);
     await claimFeesTx.wait();
+
+    console.log("Claimed fees");
 
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
       "10000000000000000000"

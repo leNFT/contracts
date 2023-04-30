@@ -113,6 +113,10 @@ contract TradingPool is
     /// @param nftId The ID of the NFT.
     /// @return The ID of the liquidity pair.
     function nftToLp(uint256 nftId) external view returns (uint256) {
+        require(
+            IERC721(_nft).ownerOf(nftId) == address(this),
+            "Pool does not own NFT"
+        );
         return _nftToLp[nftId].liquidityPair;
     }
 
@@ -362,6 +366,11 @@ contract TradingPool is
         DataTypes.LiquidityPair memory lp;
 
         for (uint i = 0; i < nftIds.length; i++) {
+            // Check if the contract owns the NFT
+            require(
+                IERC721(_nft).ownerOf(nftIds[i]) == address(this),
+                "Pool does not own NFT"
+            );
             lpIndex = _nftToLp[nftIds[i]].liquidityPair;
             lp = _liquidityPairs[lpIndex];
 

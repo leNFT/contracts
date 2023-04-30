@@ -156,7 +156,7 @@ contract GenesisNFT is
                                     Strings.toString(
                                         getUnlockTimestamp(tokenId)
                                     ),
-                                    '" }',
+                                    '" },',
                                     '{ "trait_type": "lp_amount", "value": "',
                                     Strings.toString(
                                         _mintDetails[tokenId].lpAmount
