@@ -193,14 +193,14 @@ contract TradingPool is
 
         // Different types of liquidity pairs have different requirements
         // Trade: Can contain NFTs and/or tokens
-        // TradeRight: Can contain NFTs and/or tokens, delta must be > 0
-        // TradeLeft: Can contain NFTs and/or tokens, delta must be > 0
+        // TradeUp: Can contain NFTs and/or tokens, delta must be > 0
+        // TradeDown: Can contain NFTs and/or tokens, delta must be > 0
         // Buy: Can only contain tokens
         // Sell: Can only contain NFTs
         if (
             lpType == DataTypes.LPType.Trade ||
-            lpType == DataTypes.LPType.TradeRight ||
-            lpType == DataTypes.LPType.TradeLeft
+            lpType == DataTypes.LPType.TradeUp ||
+            lpType == DataTypes.LPType.TradeDown
         ) {
             require(
                 tokenAmount > 0 || nftIds.length > 0,
@@ -219,8 +219,8 @@ contract TradingPool is
         }
 
         if (
-            lpType == DataTypes.LPType.TradeRight ||
-            lpType == DataTypes.LPType.TradeLeft
+            lpType == DataTypes.LPType.TradeUp ||
+            lpType == DataTypes.LPType.TradeDown
         ) {
             require(
                 delta > 0,
@@ -393,7 +393,7 @@ contract TradingPool is
             totalFee += fee;
 
             // Update liquidity pair price
-            if (lp.lpType != DataTypes.LPType.TradeLeft) {
+            if (lp.lpType != DataTypes.LPType.TradeDown) {
                 _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
                     .priceAfterBuy(lp.spotPrice, lp.delta);
             }
@@ -513,7 +513,7 @@ contract TradingPool is
             totalFee += fee;
 
             // Update liquidity pair price
-            if (lp.lpType != DataTypes.LPType.TradeRight) {
+            if (lp.lpType != DataTypes.LPType.TradeUp) {
                 _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
                     .priceAfterSell(lp.spotPrice, lp.delta);
             }

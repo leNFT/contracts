@@ -13,15 +13,15 @@ library DataTypes {
     /**
      * Liquidity Pair Types:
      * 0 - Trade: Can buy and sell and price can increase and decrease
-     * 1 - TradeRight: Can buy and sell and price can only increase
-     * 2 - TradeLeft: Can buy and sell and price can only decrease
+     * 1 - TradeUp: Can buy and sell and price can only increase
+     * 2 - TradeDown: Can buy and sell and price can only decrease
      * 3 - Buy: Can only buy (price will only decrease)
      * 4 - Sell: Can only sell (price will only increase)
      */
     enum LPType {
         Trade,
-        TradeRight,
-        TradeLeft,
+        TradeUp,
+        TradeDown,
         Buy,
         Sell
     }

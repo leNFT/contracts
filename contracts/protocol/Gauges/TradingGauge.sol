@@ -298,8 +298,8 @@ contract TradingGauge is IGauge, ERC721Holder {
         // Only Trade type LPs can be staked
         require(
             lp.lpType == DataTypes.LPType.Trade ||
-                lp.lpType == DataTypes.LPType.TradeLeft ||
-                lp.lpType == DataTypes.LPType.TradeRight,
+                lp.lpType == DataTypes.LPType.TradeDown ||
+                lp.lpType == DataTypes.LPType.TradeUp,
             "Only Trade LPs can be staked"
         );
 
