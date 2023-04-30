@@ -222,7 +222,10 @@ contract TradingPool is
             lpType == DataTypes.LPType.TradeRight ||
             lpType == DataTypes.LPType.TradeLeft
         ) {
-            require(delta > 0, "Delta must be greater than zero");
+            require(
+                delta > 0,
+                "Delta must be greater than zero for directional LPs"
+            );
         }
 
         // Require that the curve conforms to the curve interface
@@ -483,7 +486,7 @@ contract TradingPool is
             // Can't sell to sell LP
             require(
                 lp.lpType != DataTypes.LPType.Sell,
-                "Can't sell to sell LP"
+                "Can't sell to sell type LP"
             );
 
             fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
