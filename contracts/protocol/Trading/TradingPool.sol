@@ -498,6 +498,11 @@ contract TradingPool is
                 PercentageMath.PERCENTAGE_FACTOR;
 
             _liquidityPairs[lpIndex].nftIds.push(nftIds[i]);
+            require(
+                _liquidityPairs[lpIndex].tokenAmount >=
+                    lp.spotPrice - fee + protocolFee,
+                "Not enough tokens in liquidity pair"
+            );
             _liquidityPairs[lpIndex].tokenAmount -=
                 lp.spotPrice -
                 fee +
