@@ -44,4 +44,9 @@ module.exports = {
 };
 ```
 
-scripts/deployProxies.js deploys all the contracts with the correct parameterization.
+Use the following script to deploy all the contracts with the correct parameterization:
+
+```bash
+scripts/deployProxies.js
+
+```
