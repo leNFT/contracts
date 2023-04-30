@@ -12,6 +12,8 @@ library DataTypes {
 
     enum LPType {
         Trade,
+        TradeRight,
+        TradeLeft,
         Buy,
         Sell
     }

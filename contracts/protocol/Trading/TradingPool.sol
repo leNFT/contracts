@@ -193,9 +193,15 @@ contract TradingPool is
 
         // Different types of liquidity pairs have different requirements
         // Trade: Can contain NFTs and/or tokens
+        // TradeRight: Can contain NFTs and/or tokens, delta must be > 0
+        // TradeLeft: Can contain NFTs and/or tokens, delta must be > 0
         // Buy: Can only contain tokens
         // Sell: Can only contain NFTs
-        if (lpType == DataTypes.LPType.Trade) {
+        if (
+            lpType == DataTypes.LPType.Trade ||
+            lpType == DataTypes.LPType.TradeRight ||
+            lpType == DataTypes.LPType.TradeLeft
+        ) {
             require(
                 tokenAmount > 0 || nftIds.length > 0,
                 "Deposit can't be empty"
@@ -210,6 +216,13 @@ contract TradingPool is
                 nftIds.length > 0 && tokenAmount == 0,
                 "Deposit should only contain NFTs"
             );
+        }
+
+        if (
+            lpType == DataTypes.LPType.TradeRight ||
+            lpType == DataTypes.LPType.TradeLeft
+        ) {
+            require(delta > 0, "Delta must be greater than zero");
         }
 
         // Require that the curve conforms to the curve interface
@@ -377,8 +390,10 @@ contract TradingPool is
             totalFee += fee;
 
             // Update liquidity pair price
-            _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
-                .priceAfterBuy(lp.spotPrice, lp.delta);
+            if (lp.lpType != DataTypes.LPType.TradeLeft) {
+                _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
+                    .priceAfterBuy(lp.spotPrice, lp.delta);
+            }
 
             // Delete NFT from tracker
             delete _nftToLp[nftIds[i]];
@@ -479,17 +494,21 @@ contract TradingPool is
                     ).getProtocolFee()) /
                 PercentageMath.PERCENTAGE_FACTOR;
 
-            // Update total price quote and fee sum
-            priceQuote += lp.spotPrice;
-            totalFee += fee;
-
             _liquidityPairs[lpIndex].nftIds.push(nftIds[i]);
             _liquidityPairs[lpIndex].tokenAmount -=
                 lp.spotPrice -
                 fee +
                 protocolFee;
-            _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
-                .priceAfterSell(lp.spotPrice, lp.delta);
+
+            // Update total price quote and fee sum
+            priceQuote += lp.spotPrice;
+            totalFee += fee;
+
+            // Update liquidity pair price
+            if (lp.lpType != DataTypes.LPType.TradeRight) {
+                _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
+                    .priceAfterSell(lp.spotPrice, lp.delta);
+            }
 
             _nftToLp[nftIds[i]] = DataTypes.NftToLp({
                 liquidityPair: lpIndex,
