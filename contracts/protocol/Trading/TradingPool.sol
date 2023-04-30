@@ -486,7 +486,7 @@ contract TradingPool is
             // Can't sell to sell LP
             require(
                 lp.lpType != DataTypes.LPType.Sell,
-                "Can't sell to sell type LP"
+                "Can't sell to sell LP"
             );
 
             fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
