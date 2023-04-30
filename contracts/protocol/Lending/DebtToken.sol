@@ -69,10 +69,12 @@ contract DebtToken is
         address,
         uint256,
         uint256
-    ) internal pure override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
-        // Prevent any token transfers by using require
-        require(false, "NonTransferableERC721: Transfers not allowed");
-    }
+    )
+        internal
+        view
+        override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
+        onlyMarket
+    {}
 
     function supportsInterface(
         bytes4 interfaceId

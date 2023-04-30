@@ -1,8 +1,8 @@
 const { ethers, upgrades } = require("hardhat");
 
 async function main() {
-  const address = "0x28c8fABa0976785808D05a9076edBaec6D535f69";
-  const Contract = await ethers.getContractFactory("VotingEscrow");
+  const address = "0x5eC3482efb4562fCA96Dc3C4BD1108D771fE70cE";
+  const Contract = await ethers.getContractFactory("DebtToken");
   console.log("Upgrading Contract...");
   await upgrades.upgradeProxy(address, Contract);
   console.log("Contract upgraded");
