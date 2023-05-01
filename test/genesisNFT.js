@@ -58,7 +58,7 @@ describe("GenesisNFT", function () {
   });
   it("Should mint a token", async function () {
     // Mint Genesis NFT
-    const mintGenesisNFTTx = await genesisNFT.mint(2592000, 10, {
+    const mintGenesisNFTTx = await genesisNFT.mint(60 * 60 * 24 * 20, 10, {
       value: "3000000000000000000", // 0.3 ETH * 10
     });
     await mintGenesisNFTTx.wait();
@@ -73,7 +73,7 @@ describe("GenesisNFT", function () {
     const lpValue = await genesisNFT.callStatic.getLPValueInLE([1, 2]);
     console.log("LP value: ", lpValue.toString(), "LE");
 
-    await network.provider.send("evm_increaseTime", [2592000]);
+    await network.provider.send("evm_increaseTime", [60 * 60 * 24 * 25]);
     await network.provider.send("evm_mine");
     // Increase time and Burn Genesis NFT
     const burnGenesisNFTTx = await genesisNFT.burn([1, 2]);

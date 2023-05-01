@@ -133,10 +133,10 @@ async function main() {
     addressesProvider.address,
     "leNFT Genesis",
     "LGEN",
-    "4999", // 4999 of total supply
+    "3333", // 3333 of total supply
     "3000000000000000", // 0.003 ETH Price
     "250", // 2.5% LTV Boost for Genesis NFT
-    25000000, // Native Token Mint Factor
+    12500000, // Native Token Mint Factor
     ONE_DAY * 180, // Max locktime (180 days in s)
     ONE_DAY * 14, // Min locktime (14 days in s)
     devAddress,

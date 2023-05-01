@@ -217,6 +217,9 @@ contract GenesisNFT is
         uint256 amount,
         uint256 locktime
     ) public view returns (uint256) {
+        require(locktime >= _minLocktime, "Locktime is lower than threshold");
+        require(locktime <= _maxLocktime, "Locktime is higher than limit");
+
         if (_tokenIdCounter.current() > _cap) {
             return 0;
         }
