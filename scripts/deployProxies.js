@@ -134,7 +134,7 @@ async function main() {
     "leNFT Genesis",
     "LGEN",
     "3333", // 3333 of total supply
-    "3000000000000000", // 0.003 ETH Price
+    "3500000000000000", // 0.0035 ETH Price
     "250", // 2.5% LTV Boost for Genesis NFT
     12500000, // Native Token Mint Factor
     ONE_DAY * 180, // Max locktime (180 days in s)

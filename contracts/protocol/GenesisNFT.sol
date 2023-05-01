@@ -39,7 +39,9 @@ contract GenesisNFT is
     IGenesisNFT,
     ReentrancyGuardUpgradeable
 {
-    uint256 constant LP_LE_AMOUNT = 1000e18;
+    uint256 constant LP_LE_AMOUNT = 1000e18; // 1000 LE
+    uint256 constant LP_ETH_AMOUNT = 20e16; // 0.2 ETH
+
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -97,6 +99,10 @@ contract GenesisNFT is
         uint256 minLocktime,
         address payable devAddress
     ) external initializer {
+        require(
+            price >= LP_ETH_AMOUNT,
+            "Price must be greater or equal to LP ETH AMOUNT"
+        );
         __ERC721_init(name, symbol);
         __ERC721Enumerable_init();
         __Ownable_init();
@@ -275,7 +281,7 @@ contract GenesisNFT is
         require(msg.value == buyPrice, "Tx value is not equal to price");
 
         // Get the amount of ETH to deposit to the pool
-        uint256 ethAmount = (2 * buyPrice) / 3;
+        uint256 ethAmount = LP_ETH_AMOUNT * amount;
         uint256 leAmount = LP_LE_AMOUNT * amount;
 
         // Mint LE tokens

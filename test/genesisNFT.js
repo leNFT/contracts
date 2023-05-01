@@ -57,14 +57,27 @@ describe("GenesisNFT", function () {
     console.log("Set Balancer details");
   });
   it("Should mint a token", async function () {
+    console.log("Minting Genesis NFT...");
+    locktime = 60 * 60 * 24 * 120;
+    console.log(
+      "LE Reward per NFT: ",
+      await genesisNFT.getNativeTokenReward(1, locktime)
+    );
     // Mint Genesis NFT
-    const mintGenesisNFTTx = await genesisNFT.mint(60 * 60 * 24 * 20, 10, {
-      value: "3000000000000000000", // 0.3 ETH * 10
+    const mintGenesisNFTTx = await genesisNFT.mint(locktime, 10, {
+      value: "3500000000000000000", // 0.35 ETH * 10
     });
     await mintGenesisNFTTx.wait();
 
     // Find if the NFT was minted
     expect(await genesisNFT.ownerOf(1)).to.equal(owner.address);
+
+    // Check if dev received the ETH
+    expect(
+      await ethers.provider.getBalance(
+        "0x91A7cEeAf399e9f933FF13F9575A2B74ac9c3EA7"
+      )
+    ).to.equal("1500000000000000000");
 
     // Print the NFT's token URI
     console.log("Token URI: ", await genesisNFT.tokenURI(1));
@@ -73,7 +86,9 @@ describe("GenesisNFT", function () {
     const lpValue = await genesisNFT.callStatic.getLPValueInLE([1, 2]);
     console.log("LP value: ", lpValue.toString(), "LE");
 
-    await network.provider.send("evm_increaseTime", [60 * 60 * 24 * 25]);
+    await network.provider.send("evm_increaseTime", [
+      60 * 60 * 24 * locktime + 1,
+    ]);
     await network.provider.send("evm_mine");
     // Increase time and Burn Genesis NFT
     const burnGenesisNFTTx = await genesisNFT.burn([1, 2]);

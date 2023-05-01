@@ -101,7 +101,7 @@ let loadEnv = async function () {
     "leNFT Genesis",
     "LGEN",
     "3333", // 3333 total supply
-    "300000000000000000", // 0.3 ETH Price
+    "350000000000000000", // 0.35 ETH Price
     "250", // 2.5% LTV Boost for Genesis NFT
     12500000, // Native Token Mint Factor
     ONE_DAY * 180, // Max locktime (180 days in s)
