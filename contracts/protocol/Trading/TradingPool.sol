@@ -385,13 +385,22 @@ contract TradingPool is
                     ).getProtocolFee()) /
                 PercentageMath.PERCENTAGE_FACTOR;
 
-            // Remove nft from liquidity pair and add token swap amount
+            // Remove nft from liquidity pair nft list
             _liquidityPairs[lpIndex].nftIds[
                 _nftToLp[nftIds[i]].index
             ] = _liquidityPairs[lpIndex].nftIds[
                 _liquidityPairs[lpIndex].nftIds.length - 1
             ];
+
+            // Update NFT to lp tracker
+            _nftToLp[
+                _liquidityPairs[lpIndex].nftIds[
+                    _liquidityPairs[lpIndex].nftIds.length - 1
+                ]
+            ].index = _nftToLp[nftIds[i]].index;
+            delete _nftToLp[nftIds[i]];
             _liquidityPairs[lpIndex].nftIds.pop();
+
             _liquidityPairs[lpIndex].tokenAmount += (lp.spotPrice +
                 fee -
                 protocolFee);
@@ -405,9 +414,6 @@ contract TradingPool is
                 _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
                     .priceAfterBuy(lp.spotPrice, lp.delta);
             }
-
-            // Delete NFT from tracker
-            delete _nftToLp[nftIds[i]];
 
             // Send NFT to user
             IERC721(_nft).safeTransferFrom(
@@ -510,7 +516,14 @@ contract TradingPool is
                     ).getProtocolFee()) /
                 PercentageMath.PERCENTAGE_FACTOR;
 
+            // Add nft to liquidity pair nft list
             _liquidityPairs[lpIndex].nftIds.push(nftIds[i]);
+
+            //Update NFT tracker
+            _nftToLp[nftIds[i]] = DataTypes.NftToLp({
+                liquidityPair: lpIndex,
+                index: _liquidityPairs[lpIndex].nftIds.length - 1
+            });
             require(
                 lp.tokenAmount >= lp.spotPrice - fee + protocolFee,
                 "Not enough tokens in liquidity pair"
@@ -528,11 +541,6 @@ contract TradingPool is
                 _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
                     .priceAfterSell(lp.spotPrice, lp.delta);
             }
-
-            _nftToLp[nftIds[i]] = DataTypes.NftToLp({
-                liquidityPair: lpIndex,
-                index: _liquidityPairs[lpIndex].nftIds.length - 1
-            });
         }
 
         // Calculate the final price for the user
