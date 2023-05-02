@@ -250,7 +250,7 @@ contract TradingPool is
         // require that the fee is less than 90%
         require(fee <= MAX_FEE, "Fee must be less than 90%");
 
-        // Send user nfts to the pool
+        // Add user nfts to the pool
         for (uint i = 0; i < nftIds.length; i++) {
             IERC721(_nft).safeTransferFrom(
                 _msgSender(),
@@ -366,7 +366,7 @@ contract TradingPool is
         DataTypes.LiquidityPair memory lp;
 
         for (uint i = 0; i < nftIds.length; i++) {
-            // Check if the contract owns the NFT
+            // Check if the pool contract owns the NFT
             require(
                 IERC721(_nft).ownerOf(nftIds[i]) == address(this),
                 "Pool does not own NFT"
@@ -392,10 +392,9 @@ contract TradingPool is
                 _liquidityPairs[lpIndex].nftIds.length - 1
             ];
             _liquidityPairs[lpIndex].nftIds.pop();
-            _liquidityPairs[lpIndex].tokenAmount +=
-                lp.spotPrice +
+            _liquidityPairs[lpIndex].tokenAmount += (lp.spotPrice +
                 fee -
-                protocolFee;
+                protocolFee);
 
             // Increase total price and fee sum
             priceQuote += lp.spotPrice;
@@ -483,14 +482,19 @@ contract TradingPool is
 
         // Transfer the NFTs to the pool
         for (uint i = 0; i < nftIds.length; i++) {
+            // Check if the LP exists
+            lpIndex = liquidityPairs[i];
+            require(ownerOf(lpIndex) != address(0), "LP does not exist");
+
+            // Get the LP details
+            lp = _liquidityPairs[lpIndex];
+
+            // Send tokens to pool
             IERC721(_nft).safeTransferFrom(
                 onBehalfOf,
                 address(this),
                 nftIds[i]
             );
-
-            lpIndex = liquidityPairs[i];
-            lp = _liquidityPairs[lpIndex];
 
             // Can't sell to sell LP
             require(
@@ -508,14 +512,12 @@ contract TradingPool is
 
             _liquidityPairs[lpIndex].nftIds.push(nftIds[i]);
             require(
-                _liquidityPairs[lpIndex].tokenAmount >=
-                    lp.spotPrice - fee + protocolFee,
+                lp.tokenAmount >= lp.spotPrice - fee + protocolFee,
                 "Not enough tokens in liquidity pair"
             );
-            _liquidityPairs[lpIndex].tokenAmount -=
-                lp.spotPrice -
+            _liquidityPairs[lpIndex].tokenAmount -= (lp.spotPrice -
                 fee +
-                protocolFee;
+                protocolFee);
 
             // Update total price quote and fee sum
             priceQuote += lp.spotPrice;
@@ -533,6 +535,7 @@ contract TradingPool is
             });
         }
 
+        // Calculate the final price for the user
         finalPrice = priceQuote - totalFee;
 
         require(
