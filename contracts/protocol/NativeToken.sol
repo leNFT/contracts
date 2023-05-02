@@ -7,7 +7,6 @@ import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "hardhat/console.sol";
 import {IGaugeController} from "../interfaces/IGaugeController.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";

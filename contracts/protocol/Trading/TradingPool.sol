@@ -386,18 +386,13 @@ contract TradingPool is
                 PercentageMath.PERCENTAGE_FACTOR;
 
             // Remove nft from liquidity pair nft list
-            _liquidityPairs[lpIndex].nftIds[
-                _nftToLp[nftIds[i]].index
-            ] = _liquidityPairs[lpIndex].nftIds[
-                _liquidityPairs[lpIndex].nftIds.length - 1
-            ];
+            _liquidityPairs[lpIndex].nftIds[_nftToLp[nftIds[i]].index] = lp
+                .nftIds[lp.nftIds.length - 1];
 
             // Update NFT to lp tracker
-            _nftToLp[
-                _liquidityPairs[lpIndex].nftIds[
-                    _liquidityPairs[lpIndex].nftIds.length - 1
-                ]
-            ].index = _nftToLp[nftIds[i]].index;
+            _nftToLp[lp.nftIds[lp.nftIds.length - 1]].index = _nftToLp[
+                nftIds[i]
+            ].index;
             delete _nftToLp[nftIds[i]];
             _liquidityPairs[lpIndex].nftIds.pop();
 
