@@ -88,7 +88,9 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
             ",",
             trait("Delta", Strings.toString(lp.delta)),
             ",",
-            trait("Fee", Strings.toString(lp.fee))
+            trait("Fee", Strings.toString(lp.fee)),
+            ",",
+            trait("Type", Strings.toString(uint256(lp.lpType)))
         );
 
         return string(_attributes);
