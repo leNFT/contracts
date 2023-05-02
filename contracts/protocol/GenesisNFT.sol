@@ -144,7 +144,7 @@ contract GenesisNFT is
                                     '<text x="50%" y="30%" text-anchor="middle" font-size="18">',
                                     "leNFT Genesis",
                                     "</text>",
-                                    '<text x="50%" y="50%" text-anchor="middle" font-size="28">',
+                                    '<text x="50%" y="55%" text-anchor="middle" font-size="28">',
                                     "#",
                                     Strings.toString(tokenId),
                                     "</text>",
