@@ -137,16 +137,16 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
             _svg = abi.encodePacked(
                 _svg,
                 '<text x="24px" y="126px" font-size="8">',
+                "Price: ",
+                Strings.toString(lp.spotPrice),
+                "</text>",
+                '<text x="24px" y="144px" font-size="8">',
                 "NFT Balance: ",
                 Strings.toString(lp.nftIds.length),
                 "</text>",
-                '<text x="24px" y="144px" font-size="8">',
+                '<text x="24px" y="162px" font-size="8">',
                 "Token Balance: ",
                 Strings.toString(lp.tokenAmount),
-                "</text>",
-                '<text x="24px" y="162px" font-size="8">',
-                "Fee: ",
-                Strings.toString(lp.fee),
                 "</text>"
             );
         }
@@ -155,10 +155,14 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
             _svg = abi.encodePacked(
                 _svg,
                 '<text x="24px" y="180px" font-size="8">',
+                "Fee: ",
+                Strings.toString(lp.fee),
+                "</text>",
+                '<text x="24px" y="198px" font-size="8">',
                 "Curve: ",
                 Strings.toHexString(lp.curve),
                 "</text>",
-                '<text x="24px" y="198px" font-size="8">',
+                '<text x="24px" y="216px" font-size="8">',
                 "Delta: ",
                 Strings.toString(lp.delta),
                 "</text>",
