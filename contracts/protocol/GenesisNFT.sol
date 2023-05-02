@@ -140,7 +140,7 @@ contract GenesisNFT is
                             '"data:image/svg+xml;base64,',
                             Base64.encode(
                                 abi.encodePacked(
-                                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" style="width:100%;background:#f8f1f1;fill:black;font-family:monospace">',
+                                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" style="width:100%;background:#f8f1f1;fill:#000;font-family:monospace">',
                                     '<text x="50%" y="30%" text-anchor="middle" font-size="18">',
                                     "leNFT Genesis",
                                     "</text>",
