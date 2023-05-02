@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.17;
 
-import "hardhat/console.sol";
-
 /// @title Trustus
 /// @author zefram.eth
 /// @notice Trust-minimized method for accessing offchain data onchain
@@ -77,11 +75,10 @@ abstract contract Trustus {
     /// @dev The deadline, request, and signature are verified.
     /// @param request The identifier for the requested payload
     /// @param packet The packet provided by the offchain data provider
-    function _verifyPacket(bytes32 request, TrustusPacket calldata packet)
-        internal
-        view
-        virtual
-    {
+    function _verifyPacket(
+        bytes32 request,
+        TrustusPacket calldata packet
+    ) internal view virtual {
         // verify deadline
         require(
             block.timestamp < packet.deadline,

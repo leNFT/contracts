@@ -11,3 +11,5 @@ mocharc.json
 
 # env files
 .env*
+
+.solhint.json

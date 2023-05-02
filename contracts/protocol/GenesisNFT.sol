@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
-import {ILendingMarket} from "../interfaces/ILendingMarket.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
@@ -25,7 +24,6 @@ import {IVault} from "@balancer-labs/v2-interfaces/contracts/vault/IVault.sol";
 import {WeightedPoolUserData} from "@balancer-labs/v2-interfaces/contracts/pool-weighted/WeightedPoolUserData.sol";
 import {IBalancerQueries} from "@balancer-labs/v2-interfaces/contracts/standalone-utils/IBalancerQueries.sol";
 import "@balancer-labs/v2-solidity-utils/contracts/helpers/ERC20Helpers.sol";
-import "hardhat/console.sol";
 
 /// @title GenesisNFT
 /// @notice This contract manages the creation and minting of Genesis NFTs

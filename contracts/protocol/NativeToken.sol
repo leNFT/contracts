@@ -9,7 +9,6 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {IGaugeController} from "../interfaces/IGaugeController.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import {DataTypes} from "../libraries/types/DataTypes.sol";
 
 /// @title NativeToken
 /// @notice Provides functionality for minting, burning, and distributing native tokens

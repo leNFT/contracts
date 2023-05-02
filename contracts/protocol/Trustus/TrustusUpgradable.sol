@@ -2,7 +2,6 @@
 pragma solidity ^0.8.17;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "hardhat/console.sol";
 
 /// @title TrustusUpgradable
 /// @author zefram.eth
@@ -78,11 +77,10 @@ abstract contract TrustusUpgradable is Initializable {
     /// @dev The deadline, request, and signature are verified.
     /// @param request The identifier for the requested payload
     /// @param packet The packet provided by the offchain data provider
-    function _verifyPacket(bytes32 request, TrustusPacket calldata packet)
-        internal
-        view
-        virtual
-    {
+    function _verifyPacket(
+        bytes32 request,
+        TrustusPacket calldata packet
+    ) internal view virtual {
         // verify deadline
         require(
             block.timestamp < packet.deadline,

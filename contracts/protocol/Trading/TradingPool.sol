@@ -18,9 +18,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
-import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
 import {ILiquidityPairMetadata} from "../../interfaces/ILiquidityPairMetadata.sol";
-import "hardhat/console.sol";
 
 /// @title Trading Pool Contract
 /// @notice A contract that enables the creation of liquidity pools and the trading of NFTs and ERC20 tokens.

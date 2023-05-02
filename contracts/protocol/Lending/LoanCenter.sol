@@ -5,8 +5,6 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
-import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
-import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {LoanLogic} from "../../libraries/logic/LoanLogic.sol";
 import {ERC721HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
@@ -15,7 +13,6 @@ import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC7
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
-import "hardhat/console.sol";
 
 /// @title LoanCenter contract
 /// @dev A smart contract managing loans with NFTs as collateral

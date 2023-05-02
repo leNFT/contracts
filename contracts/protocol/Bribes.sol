@@ -13,7 +13,6 @@ import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC7
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IBribes} from "../interfaces/IBribes.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "hardhat/console.sol";
 
 /// @title Bribes contract
 /// @notice Allows users to bribe the veLE token holders in order to incentivize them to vote for a specific gauge

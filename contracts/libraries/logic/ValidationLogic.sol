@@ -12,10 +12,6 @@ import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import {Trustus} from "../../protocol/Trustus/Trustus.sol";
-import "hardhat/console.sol";
 
 /// @title ValidationLogic
 /// @notice Contains the logic for the lending validation functions

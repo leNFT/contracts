@@ -4,8 +4,6 @@ pragma solidity 0.8.19;
 import {DataTypes} from "../types/DataTypes.sol";
 import {PercentageMath} from "../math/PercentageMath.sol";
 
-import "hardhat/console.sol";
-
 library LoanLogic {
     function init(
         DataTypes.LoanData storage loandata,

@@ -9,15 +9,11 @@ import {IFeeDistributor} from "../../interfaces/IFeeDistributor.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IDebtToken} from "../../interfaces/IDebtToken.sol";
-import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
-import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import {Trustus} from "../../protocol/Trustus/Trustus.sol";
-import "hardhat/console.sol";
 
 /// @title LiquidationLogic
 /// @notice Contains the logic for the liquidate function

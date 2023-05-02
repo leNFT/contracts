@@ -2,12 +2,10 @@
 pragma solidity 0.8.19;
 
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
-import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {Trustus} from "../Trustus/Trustus.sol";
-import "hardhat/console.sol";
 
 /// @title NFTOracle contract
 /// @dev This contract provides a mechanism for obtaining the ETH value of NFT tokens  using Trustus as the off-chain price oracle.

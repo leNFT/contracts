@@ -3,9 +3,7 @@ pragma solidity 0.8.19;
 
 import {IWETH} from "../interfaces/IWETH.sol";
 import {ILendingMarket} from "../interfaces/ILendingMarket.sol";
-import {ILendingMarket} from "../interfaces/ILendingMarket.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
 import {IBribes} from "../interfaces/IBribes.sol";

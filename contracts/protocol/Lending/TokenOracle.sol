@@ -4,7 +4,6 @@ pragma solidity 0.8.19;
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import "hardhat/console.sol";
 
 /// @title TokenOracle
 /// @notice A contract that provides the ETH price for a given token based on a data feed or previously set price
