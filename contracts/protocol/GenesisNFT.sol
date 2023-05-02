@@ -156,7 +156,7 @@ contract GenesisNFT is
                             string(
                                 abi.encodePacked(
                                     '{ "trait_type": "locked", "value": "',
-                                    _active[tokenId] ? "yes" : "no",
+                                    _active[tokenId] ? "true" : "false",
                                     '" },',
                                     '{ "trait_type": "unlock_timestamp", "value": "',
                                     Strings.toString(
