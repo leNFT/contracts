@@ -40,10 +40,10 @@ contract NativeToken is
         string calldata symbol,
         uint256 cap
     ) external initializer {
+        __ERC20_init(name, symbol);
         __Ownable_init();
         __ReentrancyGuard_init();
         __Context_init();
-        __ERC20_init(name, symbol);
         _addressProvider = addressProvider;
         _cap = cap;
         _deployTimestamp = block.timestamp;

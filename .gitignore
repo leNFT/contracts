@@ -12,4 +12,7 @@ mocharc.json
 # env files
 .env*
 
+# solhint linter files
 .solhint.json
+scripts/createTradingGauge.js
+scripts/createLendingGauge.js
