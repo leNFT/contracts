@@ -560,7 +560,6 @@ contract VotingEscrow is
     /// @param tokenId The token id of the lock to claim rebates for
     function claimRebates(uint256 tokenId) public returns (uint256) {
         require(ownerOf(tokenId) == _msgSender(), "Not owner of token");
-        console.log("claimRebates");
 
         writeTotalWeightHistory();
 
@@ -596,7 +595,6 @@ contract VotingEscrow is
                         (_lockedBalance[tokenId].end -
                             epochTimestamp(nextClaimableEpoch))) /
                     (_totalLockedHistory[nextClaimableEpoch] * MAXLOCKTIME);
-                console.log("amountToClaim: %s", amountToClaim);
             }
 
             // Increase next claimable epoch

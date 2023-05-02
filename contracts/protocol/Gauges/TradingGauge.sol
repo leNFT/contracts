@@ -309,7 +309,6 @@ contract TradingGauge is IGauge, ERC721Holder {
             lp.tokenAmount,
             lp.spotPrice
         );
-        console.log("depositLpValue: %s", depositLpValue);
 
         // LP value must be greater than 0
         require(depositLpValue > 0, "LP value must be greater than 0");

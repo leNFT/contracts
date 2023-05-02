@@ -108,7 +108,7 @@ library LiquidationLogic {
             ILoanCenter(addressesProvider.getLoanCenter())
         ).getLoan(params.loanId);
 
-        // Get the address of this asset's reserve
+        // Get the address of this asset's pool
         address poolAsset = IERC4626(loanData.pool).asset();
         // Repay loan...
         uint256 fundsLeft = loanData.auctionMaxBid;
