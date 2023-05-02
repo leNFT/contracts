@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 interface INativeToken {
     function mintGenesisTokens(uint256 amount) external;

@@ -1,13 +1,12 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 interface ITokenOracle {
     function isTokenSupported(address token) external view returns (bool);
 
-    function getTokenETHPrice(address tokenAddress)
-        external
-        view
-        returns (uint256);
+    function getTokenETHPrice(
+        address tokenAddress
+    ) external view returns (uint256);
 
     function addTokenETHDataFeed(address token, address priceFeed) external;
 
