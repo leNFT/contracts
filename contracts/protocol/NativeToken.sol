@@ -41,6 +41,8 @@ contract NativeToken is
         uint256 cap
     ) external initializer {
         __Ownable_init();
+        __ReentrancyGuard_init();
+        __Context_init();
         __ERC20_init(name, symbol);
         _addressProvider = addressProvider;
         _cap = cap;

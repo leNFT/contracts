@@ -51,6 +51,8 @@ contract TradingPoolFactory is
         uint256 tvlSafeguard
     ) external initializer {
         __Ownable_init();
+        __ReentrancyGuard_init();
+        __Context_init();
         _addressProvider = addressesProvider;
         _protocolFee = protocolFee;
         _tvlSafeguard = tvlSafeguard;

@@ -63,6 +63,8 @@ contract LendingMarket is
         ConfigTypes.LendingPoolConfig calldata defaultLendingPoolConfig
     ) external initializer {
         __Ownable_init();
+        __ReentrancyGuard_init();
+        __Context_init();
         _addressProvider = addressesProvider;
         _tvlSafeguard = tvlSafeguard;
         _defaultLendingPoolConfig = defaultLendingPoolConfig;

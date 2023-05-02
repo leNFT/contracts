@@ -83,7 +83,10 @@ contract VotingEscrow is
     ) external initializer {
         __ERC721_init(name, symbol);
         __ERC721Enumerable_init();
+        __ERC165_init();
+        __Context_init();
         __Ownable_init();
+        __ReentrancyGuard_init();
         _addressProvider = addressProvider;
         _deployTimestamp = block.timestamp;
         _totalWeightHistory.push(0);

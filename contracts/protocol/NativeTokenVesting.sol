@@ -105,4 +105,13 @@ contract NativeTokenVesting is Ownable {
 
         emit VestingWithdrawn(_msgSender(), amount);
     }
+
+    // @notice Let owner withdraw tokens
+    // @param amount The amount of tokens to withdraw
+    function withdrawOwner(uint256 amount) external onlyOwner {
+        IERC20(_addressProvider.getNativeToken()).safeTransfer(
+            _msgSender(),
+            amount
+        );
+    }
 }

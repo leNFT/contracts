@@ -45,6 +45,8 @@ contract FeeDistributor is
         IAddressesProvider addressProvider
     ) external initializer {
         __Ownable_init();
+        __ReentrancyGuard_init();
+        __Ownable_init();
         _addressProvider = addressProvider;
     }
 

@@ -10,10 +10,11 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
@@ -25,6 +26,7 @@ import {ILiquidityPairMetadata} from "../../interfaces/ILiquidityPairMetadata.so
 /// @dev This contract manages liquidity pairs, each consisting of a set of NFTs and an ERC20 token, as well as the trading of these pairs.
 contract TradingPool is
     Context,
+    ERC165,
     ERC721,
     ERC721Enumerable,
     ERC721Holder,
@@ -579,7 +581,14 @@ contract TradingPool is
 
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override(ERC721, ERC721Enumerable, IERC165) returns (bool) {
-        return ERC721Enumerable.supportsInterface(interfaceId);
+    )
+        public
+        view
+        override(ERC165, ERC721, ERC721Enumerable, IERC165)
+        returns (bool)
+    {
+        return
+            ERC721Enumerable.supportsInterface(interfaceId) ||
+            ERC165.supportsInterface(interfaceId);
     }
 }

@@ -47,6 +47,8 @@ contract Bribes is
         IAddressesProvider addressProvider
     ) external initializer {
         __Ownable_init();
+        __ReentrancyGuard_init();
+        __Context_init();
         _addressProvider = addressProvider;
     }
 

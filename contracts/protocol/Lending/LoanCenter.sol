@@ -62,6 +62,7 @@ contract LoanCenter is
     ) external initializer {
         __Ownable_init();
         __ERC721Holder_init();
+        __Context_init();
         _addressProvider = addressesProvider;
         _defaultMaxCollaterization = maxCollaterization;
     }

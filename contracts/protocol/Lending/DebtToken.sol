@@ -35,6 +35,7 @@ contract DebtToken is
     ) external initializer {
         __ERC721_init(name, symbol);
         __ERC721Enumerable_init();
+        __Context_init();
         _addressProvider = addressesProvider;
     }
 

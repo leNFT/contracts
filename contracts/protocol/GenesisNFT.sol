@@ -103,7 +103,10 @@ contract GenesisNFT is
         );
         __ERC721_init(name, symbol);
         __ERC721Enumerable_init();
+        __ERC165_init();
         __Ownable_init();
+        __ReentrancyGuard_init();
+        __Context_init();
         _addressProvider = addressProvider;
         _cap = cap;
         _price = price;
@@ -543,9 +546,9 @@ contract GenesisNFT is
         public
         view
         override(
-            ERC165Upgradeable,
             ERC721EnumerableUpgradeable,
             ERC721Upgradeable,
+            ERC165Upgradeable,
             IERC165Upgradeable
         )
         returns (bool)
