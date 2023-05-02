@@ -56,8 +56,8 @@ contract TradingGauge is IGauge, ERC721Holder {
 
     /// @notice Calculates and returns the amount of rewards a user can claim and updates user's working balance history
     /// @dev Will give a maximum of 50 epochs worth of rewards
-    /// @return The amount of rewards the user can claim
-    function claim() external returns (uint256) {
+    /// @return amountToClaim The amount of rewards the user can claim
+    function claim() external returns (uint256 amountToClaim) {
         _checkpoint(msg.sender);
 
         IVotingEscrow votingEscrow = IVotingEscrow(
@@ -85,7 +85,6 @@ contract TradingGauge is IGauge, ERC721Holder {
                 1;
         }
         // Iterate over a max of 50 epochs and/or user epochs
-        uint256 amountToClaim;
         uint256 nextClaimableEpoch;
         for (uint256 i = 0; i < 50; i++) {
             nextClaimableEpoch = _userNextClaimableEpoch[msg.sender];
@@ -186,8 +185,6 @@ contract TradingGauge is IGauge, ERC721Holder {
             msg.sender,
             amountToClaim
         );
-
-        return amountToClaim;
     }
 
     /// @notice Updates the total weight history for the contract and records the total weight for epochs.

@@ -23,12 +23,12 @@ library BorrowLogic {
     /// @param addressesProvider The address of the addresses provider
     /// @param pools The array of pools
     /// @param params A struct with the parameters of the borrow function
-    /// @return The id of the new loan
+    /// @return loanId The id of the new loan
     function borrow(
         IAddressesProvider addressesProvider,
         mapping(address => mapping(address => address)) storage pools,
         DataTypes.BorrowParams memory params
-    ) external returns (uint256) {
+    ) external returns (uint256 loanId) {
         // Validate the movement
         ValidationLogic.validateBorrow(addressesProvider, pools, params);
 
@@ -67,7 +67,7 @@ library BorrowLogic {
         }
 
         // Create the loan
-        uint256 loanId = loanCenter.createLoan(
+        loanId = loanCenter.createLoan(
             params.onBehalfOf,
             pools[params.nftAddress][params.asset],
             params.amount,
@@ -94,8 +94,6 @@ library BorrowLogic {
                 params.amount,
                 borrowRate
             );
-
-        return loanId;
     }
 
     /// @notice Repays a loan, transfers the principal and interest to the lending pool and returns the collateral to the owner

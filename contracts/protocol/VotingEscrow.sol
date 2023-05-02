@@ -553,13 +553,15 @@ contract VotingEscrow is
     /// @notice Claims all available rebates for the given token id
     /// @dev Has to be called before changing the locked balance of a token id
     /// @param tokenId The token id of the lock to claim rebates for
-    function claimRebates(uint256 tokenId) public returns (uint256) {
+    /// @return amountToClaim The amount of rebates claimed
+    function claimRebates(
+        uint256 tokenId
+    ) public returns (uint256 amountToClaim) {
         require(ownerOf(tokenId) == _msgSender(), "Not owner of token");
 
         writeTotalWeightHistory();
 
         // Claim all the available rebates for the lock
-        uint256 amountToClaim;
         uint256 maxEpochRebates;
         uint256 nextClaimableEpoch;
         uint256 currentEpoch = epoch(block.timestamp);
@@ -603,8 +605,6 @@ contract VotingEscrow is
                 amountToClaim
             );
         }
-
-        return amountToClaim;
     }
 
     /// @notice Returns the details for a single lock

@@ -60,8 +60,8 @@ contract LendingGauge is IGauge {
 
     /// @notice Claims the gauge rewards for the user and updates the user's next claimable epoch
     /// @dev Will give a maximum of 50 epochs worth of rewards
-    /// @return The amount of gauge rewards claimed
-    function claim() external returns (uint256) {
+    /// @return amountToClaim The amount of gauge rewards claimed
+    function claim() external returns (uint256 amountToClaim) {
         _checkpoint(msg.sender);
 
         IVotingEscrow votingEscrow = IVotingEscrow(
@@ -89,7 +89,6 @@ contract LendingGauge is IGauge {
                 1;
         }
         // Iterate over a max of 50 epochs and/or user epochs
-        uint256 amountToClaim;
         uint256 nextClaimableEpoch;
         for (uint256 i = 0; i < 50; i++) {
             nextClaimableEpoch = _userNextClaimableEpoch[msg.sender];
@@ -190,8 +189,6 @@ contract LendingGauge is IGauge {
             msg.sender,
             amountToClaim
         );
-
-        return amountToClaim;
     }
 
     /// @notice Updates the total weight history by recording the current total weight for the current epoch and 128 previous epochs.

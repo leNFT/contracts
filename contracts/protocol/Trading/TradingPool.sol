@@ -347,18 +347,17 @@ contract TradingPool is
     /// @param onBehalfOf The address to deposit the NFTs to
     /// @param nftIds The IDs of the NFTs to buy
     /// @param maximumPrice The maximum price the user is willing to pay for the NFTs
-    /// @return The final price paid for the NFTs
+    /// @return finalPrice The final price paid for the NFTs
     function buy(
         address onBehalfOf,
         uint256[] calldata nftIds,
         uint256 maximumPrice
-    ) external nonReentrant returns (uint256) {
+    ) external nonReentrant returns (uint256 finalPrice) {
         require(!_paused, "Pool is paused");
 
         require(nftIds.length > 0, "Need to buy at least one NFT");
 
         uint256 priceQuote;
-        uint256 finalPrice;
         uint256 lpIndex;
         uint256 fee;
         uint256 totalFee;
@@ -444,8 +443,6 @@ contract TradingPool is
         );
 
         emit Buy(_msgSender(), nftIds, finalPrice);
-
-        return finalPrice;
     }
 
     /// @notice Allows an address to sell one or more NFTs in exchange for a token amount.
@@ -453,13 +450,13 @@ contract TradingPool is
     /// @param nftIds An array of the IDs of the NFTs to sell.
     /// @param liquidityPairs An array of the IDs of the liquidity pairs to use for the sale.
     /// @param minimumPrice The minimum acceptable price in tokens for the sale.
-    /// @return The final price in tokens received from the sale.
+    /// @return finalPrice The final price in tokens received from the sale.
     function sell(
         address onBehalfOf,
         uint256[] calldata nftIds,
         uint256[] calldata liquidityPairs,
         uint256 minimumPrice
-    ) external nonReentrant returns (uint256) {
+    ) external nonReentrant returns (uint256 finalPrice) {
         require(!_paused, "Pool is paused");
 
         require(
@@ -476,7 +473,6 @@ contract TradingPool is
         uint256 priceQuote;
         uint256 fee;
         uint256 totalFee;
-        uint256 finalPrice;
         uint256 protocolFee;
         DataTypes.LiquidityPair memory lp;
         uint256 lpIndex;
@@ -560,8 +556,6 @@ contract TradingPool is
         );
 
         emit Sell(_msgSender(), nftIds, finalPrice);
-
-        return finalPrice;
     }
 
     /// @notice Allows the owner of the contract to pause or unpause the contract.

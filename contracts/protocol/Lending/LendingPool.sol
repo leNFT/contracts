@@ -233,13 +233,16 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     }
 
     /// @notice Returns the current supply rate.
-    /// @return The current supply rate.
-    function getSupplyRate() external view override returns (uint256) {
-        uint256 supplyRate = 0;
+    /// @return supplyRate The current supply rate.
+    function getSupplyRate()
+        external
+        view
+        override
+        returns (uint256 supplyRate)
+    {
         if (totalAssets() > 0) {
             supplyRate = (_cumulativeDebtBorrowRate * _debt) / totalAssets();
         }
-        return supplyRate;
     }
 
     /// @notice Returns the current debt.

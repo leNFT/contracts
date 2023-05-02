@@ -102,13 +102,12 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
     function svg(
         address tradingPool,
         uint256 tokenId
-    ) public view returns (bytes memory) {
+    ) public view returns (bytes memory _svg) {
         DataTypes.LiquidityPair memory lp = ITradingPool(tradingPool).getLP(
             tokenId
         );
 
         // break up svg building into multiple scopes to avoid stack too deep errors
-        bytes memory _svg;
         {
             // forgefmt: disable-next-item
             _svg = abi.encodePacked(
@@ -171,8 +170,6 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
                 "</svg>"
             );
         }
-
-        return _svg;
     }
 
     function trait(

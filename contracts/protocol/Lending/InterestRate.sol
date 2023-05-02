@@ -47,22 +47,18 @@ contract InterestRate is IInterestRate {
     ) external view override returns (uint256) {
         uint256 utilizationRate = _calculateUtilizationRate(assets, debt);
 
-        uint256 borrowRate;
-
         if (utilizationRate < _optimalUtilization) {
-            borrowRate =
+            return
                 _baseBorrowRate +
                 PercentageMath.percentMul(utilizationRate, _lowSlope);
         } else {
-            borrowRate =
+            return
                 getOptimalBorrowRate() +
                 PercentageMath.percentMul(
                     utilizationRate - _optimalUtilization,
                     _highSlope
                 );
         }
-
-        return borrowRate;
     }
 
     /// @notice Gets the optimal borrow rate
@@ -87,20 +83,14 @@ contract InterestRate is IInterestRate {
     /// @notice Internal function to calculate the utilization rate based on the assets and debt
     /// @param assets The total assets
     /// @param debt The total debt
-    /// @return The utilization rate
     function _calculateUtilizationRate(
         uint256 assets,
         uint256 debt
     ) internal pure returns (uint256) {
-        uint256 utilizationRate;
-
         if ((assets + debt) == 0) {
-            utilizationRate = 0;
+            return 0;
         } else {
-            utilizationRate =
-                (PercentageMath.PERCENTAGE_FACTOR * debt) /
-                (assets + debt);
+            return (PercentageMath.PERCENTAGE_FACTOR * debt) / (assets + debt);
         }
-        return utilizationRate;
     }
 }

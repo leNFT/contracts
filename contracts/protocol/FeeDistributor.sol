@@ -116,11 +116,11 @@ contract FeeDistributor is
     /// @notice Allows a user to claim their rewards from a lock for a specific token
     /// @param token Token address
     /// @param tokenId the token id of the lock
-    /// @return uint256 Amount of rewards claimed
+    /// @return amountToClaim Amount of rewards claimed
     function claim(
         address token,
         uint256 tokenId
-    ) public nonReentrant returns (uint256) {
+    ) public nonReentrant returns (uint256 amountToClaim) {
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         );
@@ -140,7 +140,6 @@ contract FeeDistributor is
         }
 
         // Iterate over a max of 50 epochs and/or user epochs
-        uint256 amountToClaim;
         DataTypes.Point memory lockHistoryPoint;
         uint256 nextClaimableEpoch;
         uint256 nextClaimableEpochTimestamp;
@@ -228,8 +227,6 @@ contract FeeDistributor is
             ),
             amountToClaim
         );
-
-        return amountToClaim;
     }
 
     /// @notice Allows a user to claim their rewards from multiple locks for a specific token

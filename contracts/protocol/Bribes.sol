@@ -189,7 +189,7 @@ contract Bribes is
         address token,
         address gauge,
         uint256 tokenId
-    ) external nonReentrant returns (uint256) {
+    ) external nonReentrant returns (uint256 amountToClaim) {
         // Make sure the caller is the owner of the token
         require(
             IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
@@ -225,7 +225,6 @@ contract Bribes is
         }
 
         // Iterate over a max of 50 epochs
-        uint256 amountToClaim = 0;
         for (uint i = 0; i < 50; i++) {
             // Break if we're at the current epoch or higher
             uint256 epoch = _voteNextClaimableEpoch[token][gauge][tokenId];
@@ -256,7 +255,5 @@ contract Bribes is
 
         // Transfer claim to user
         IERC20Upgradeable(token).safeTransfer(_msgSender(), amountToClaim);
-
-        return amountToClaim;
     }
 }
