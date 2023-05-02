@@ -72,7 +72,7 @@ contract Bribes is
 
         // Transfer the bribe tokens to this contract
         IERC20Upgradeable(token).safeTransferFrom(
-            msg.sender,
+            _msgSender(),
             address(this),
             amount
         );
@@ -96,13 +96,13 @@ contract Bribes is
 
         // Make sure there are enough funds to withdraw
         require(
-            _userBribes[token][gauge][nextEpoch][msg.sender] >= amount,
+            _userBribes[token][gauge][nextEpoch][_msgSender()] >= amount,
             "Not enough funds to withdraw"
         );
 
         // Subtract the amount from the bribes
         _gaugeBribes[token][gauge][nextEpoch] -= amount;
-        _userBribes[token][gauge][nextEpoch][msg.sender] -= amount;
+        _userBribes[token][gauge][nextEpoch][_msgSender()] -= amount;
 
         // Transfer the bribe tokens back to the user
         IERC20Upgradeable(token).safeTransfer(receiver, amount);
@@ -135,21 +135,22 @@ contract Bribes is
 
         // THere needs to be funds to salvage
         require(
-            _userBribes[token][gauge][epoch][msg.sender] > 0,
+            _userBribes[token][gauge][epoch][_msgSender()] > 0,
             "No funds to salvage"
         );
 
         // Tranfer bribe back to briber
         IERC20Upgradeable(token).safeTransfer(
-            msg.sender,
-            _userBribes[token][gauge][epoch][msg.sender]
+            _msgSender(),
+            _userBribes[token][gauge][epoch][_msgSender()]
         );
 
-        // Subtract the amount from the bribes
+        // Subtract the amount from the gauge bribes
         _gaugeBribes[token][gauge][epoch] -= _userBribes[token][gauge][epoch][
-            msg.sender
+            _msgSender()
         ];
-        _userBribes[token][gauge][epoch][msg.sender] = 0;
+        // Clear the user bribes
+        delete _userBribes[token][gauge][epoch][_msgSender()];
     }
 
     /// @notice Get bribes from a user for a specific gauge in a specific epoch
@@ -192,7 +193,7 @@ contract Bribes is
         require(
             IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
                 tokenId
-            ) == msg.sender,
+            ) == _msgSender(),
             "Caller is not the owner of the token"
         );
 
@@ -253,7 +254,7 @@ contract Bribes is
         }
 
         // Transfer claim to user
-        IERC20Upgradeable(token).safeTransfer(msg.sender, amountToClaim);
+        IERC20Upgradeable(token).safeTransfer(_msgSender(), amountToClaim);
 
         return amountToClaim;
     }
