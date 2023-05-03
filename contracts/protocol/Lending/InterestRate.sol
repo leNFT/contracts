@@ -15,7 +15,6 @@ import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 /// @dev The calculation of the utilization rate is done by the internal _calculateUtilizationRate function
 contract InterestRate is IInterestRate {
     uint256 internal _optimalUtilization;
-    uint256 internal _optimalBorrowRate;
     uint256 internal _baseBorrowRate;
     uint256 internal _lowSlope;
     uint256 internal _highSlope;
