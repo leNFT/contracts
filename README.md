@@ -58,10 +58,3 @@ Test are done in a forked mainnet enviroment so you'll also need a .env file wit
 INFURA_API_KEY="YOUR_API_KEY"
 
 ```
-
-Use the following script to deploy all the contracts with the correct parameterization:
-
-```bash
-scripts/deployProxies.js
-
-```
