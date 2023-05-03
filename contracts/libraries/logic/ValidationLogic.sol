@@ -159,12 +159,13 @@ library ValidationLogic {
         DataTypes.RepayParams memory params
     ) external view {
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
-        //Require that loan exists
         DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
+        uint256 loanDebt = loanCenter.getLoanDebt(params.loanId);
 
         // Check if borrow amount is bigger than 0
         require(params.amount > 0, "Repay amount must be bigger than 0");
 
+        //Require that loan exists
         require(
             loanData.state != DataTypes.LoanState.None,
             "Loan does not exist"
@@ -172,12 +173,12 @@ library ValidationLogic {
 
         // Check if user is over paying
         require(
-            params.amount <= loanCenter.getLoanDebt(params.loanId),
+            params.amount <= loanDebt,
             "Overpaying in repay. Amount is bigger than debt."
         );
 
         // Can only do partial repayments if the loan is not being auctioned
-        if (params.amount < loanCenter.getLoanDebt(params.loanId)) {
+        if (params.amount < loanDebt) {
             require(
                 loanData.state != DataTypes.LoanState.Auctioned,
                 "Cannot partially repay a loan that is being auctioned"

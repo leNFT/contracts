@@ -32,11 +32,14 @@ library BorrowLogic {
         // Validate the movement
         ValidationLogic.validateBorrow(addressesProvider, pools, params);
 
+        // Get the loan center
+        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
+
         // Transfer the collateral to the loan center
         for (uint256 i = 0; i < params.nftTokenIds.length; i++) {
             IERC721Upgradeable(params.nftAddress).safeTransferFrom(
                 params.caller,
-                addressesProvider.getLoanCenter(),
+                address(loanCenter),
                 params.nftTokenIds[i]
             );
         }
@@ -47,7 +50,6 @@ library BorrowLogic {
         ).getBorrowRate();
 
         // Get max LTV for this collection
-        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
         uint256 maxLTV = loanCenter.getCollectionMaxCollaterization(
             params.nftAddress
         );
@@ -57,13 +59,14 @@ library BorrowLogic {
 
         // If a genesis NFT was used with this loan
         if (params.genesisNFTId != 0) {
-            boost = IGenesisNFT(addressesProvider.getGenesisNFT()).getLTVBoost();
+            IGenesisNFT genesisNFT = IGenesisNFT(
+                addressesProvider.getGenesisNFT()
+            );
+
+            boost = genesisNFT.getLTVBoost();
 
             // Lock genesis NFT to this loan
-            IGenesisNFT(addressesProvider.getGenesisNFT()).setActiveState(
-                params.genesisNFTId,
-                true
-            );
+            genesisNFT.setActiveState(params.genesisNFTId, true);
         }
 
         // Create the loan
@@ -157,7 +160,7 @@ library BorrowLogic {
             // Transfer the collateral back to the owner
             for (uint256 i = 0; i < loanData.nftTokenIds.length; i++) {
                 IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
-                    addressesProvider.getLoanCenter(),
+                    address(loanCenter),
                     loanData.borrower,
                     loanData.nftTokenIds[i]
                 );
