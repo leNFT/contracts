@@ -1,7 +1,5 @@
 # leNFT Protocol
 
-## Run tests
-
 To install the project and run tests do:
 
 ```bash
