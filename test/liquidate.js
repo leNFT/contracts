@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { getPriceSig } = require("./helpers/getPriceSig.js");
-const load = require("../scripts/testDeploy/_loadTest.js");
+const load = require("./helpers/_loadTest.js");
 
 describe("Liquidate", function () {
   load.loadTest();

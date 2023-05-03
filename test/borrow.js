@@ -1,10 +1,9 @@
 const { expect } = require("chai");
 const { getPriceSig } = require("./helpers/getPriceSig.js");
-const load = require("../scripts/testDeploy/_loadTest.js");
+const load = require("./helpers/_loadTest.js");
 
 describe("Borrow", function () {
   load.loadTest();
-  var tokenID;
   it("Create NFT asset 1", async function () {
     // Mint 2 NFT collaterals
     const mintTestNftTx = await testNFT.mint(owner.address);

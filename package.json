@@ -30,6 +30,7 @@
     "@balancer-labs/v2-interfaces": "^0.3.0",
     "@balancer-labs/v2-solidity-utils": "^3.0.2",
     "@chainlink/contracts": "^0.4.2",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
     "@openzeppelin/contracts": "^4.6.0",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
     "bignumber.js": "^9.0.2",

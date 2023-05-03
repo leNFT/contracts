@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const load = require("../scripts/testDeploy/_loadTest.js");
+const load = require("./helpers/_loadTest.js");
 
 describe("Deposit", function () {
   load.loadTest();

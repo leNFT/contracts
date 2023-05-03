@@ -1,6 +1,13 @@
 const { ethers } = require("hardhat");
+const helpers = require("@nomicfoundation/hardhat-network-helpers");
+require("dotenv").config();
 
 let loadEnv = async function () {
+  //Reset the fork
+  await helpers.reset(
+    "https://mainnet.infura.io/v3/" + process.env.INFURA_API_KEY
+  );
+
   const ONE_DAY = 86400;
   console.log("Setting up enviroment...");
 
@@ -118,6 +125,7 @@ let loadEnv = async function () {
   console.log("Deployed Bribes");
 
   // Deploy and initialize Voting Escrow contract
+  console.log("addressesProvider.address", addressesProvider.address);
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   votingEscrow = await upgrades.deployProxy(VotingEscrow, [
     addressesProvider.address,

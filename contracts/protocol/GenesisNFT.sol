@@ -23,7 +23,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {IVault} from "@balancer-labs/v2-interfaces/contracts/vault/IVault.sol";
 import {WeightedPoolUserData} from "@balancer-labs/v2-interfaces/contracts/pool-weighted/WeightedPoolUserData.sol";
 import {IBalancerQueries} from "@balancer-labs/v2-interfaces/contracts/standalone-utils/IBalancerQueries.sol";
-import "@balancer-labs/v2-solidity-utils/contracts/helpers/ERC20Helpers.sol";
+import "../libraries/balancer/ERC20Helpers.sol"; // Custom ERC20 helpers for Balancer tokens (0.8.0)
 
 /// @title GenesisNFT
 /// @notice This contract manages the creation and minting of Genesis NFTs
