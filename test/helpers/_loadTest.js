@@ -12,6 +12,8 @@ let loadEnv = async function () {
   console.log("Setting up enviroment...");
 
   [owner, addr1, addr2] = await ethers.getSigners();
+
+  // Mainnet weth address
   wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
   weth = await ethers.getContractAt(
     "contracts/interfaces/IWETH.sol:IWETH",
@@ -323,4 +325,3 @@ function loadTest() {
 }
 
 exports.loadTest = loadTest;
-exports.loadEnv = loadEnv;
