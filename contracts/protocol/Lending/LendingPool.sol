@@ -27,10 +27,12 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     using SafeERC20 for IERC20;
 
     modifier onlyMarket() {
-        require(
-            _msgSender() == _addressProvider.getLendingMarket(),
-            "Callers must be Market contract"
-        );
+        _requireOnlyMarket();
+        _;
+    }
+
+    modifier poolNotPaused() {
+        _requirePoolNotPaused();
         _;
     }
 
@@ -89,9 +91,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         address receiver,
         uint256 assets,
         uint256 shares
-    ) internal override {
-        require(!_paused, "Pool is paused");
-
+    ) internal override poolNotPaused {
         ValidationLogic.validateDeposit(
             _addressProvider,
             address(this),
@@ -115,9 +115,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         address owner,
         uint256 assets,
         uint256 shares
-    ) internal override {
-        require(!_paused, "Pool is paused");
-
+    ) internal override poolNotPaused {
         ValidationLogic.validateWithdrawal(
             _addressProvider,
             address(this),
@@ -137,9 +135,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         address to,
         uint256 amount,
         uint256 borrowRate
-    ) external override onlyMarket {
-        require(!_paused, "Pool is paused");
-
+    ) external override onlyMarket poolNotPaused {
         // Send the underlying to user
         _asset.safeTransfer(to, amount);
 
@@ -163,9 +159,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         uint256 amount,
         uint256 borrowRate,
         uint256 interest
-    ) external override onlyMarket {
-        require(!_paused, "Pool is paused");
-
+    ) external override onlyMarket poolNotPaused {
         _asset.safeTransferFrom(from, address(this), amount + interest);
         _updateCumulativeDebtBorrowRate(false, amount, borrowRate);
         _debt -= amount;
@@ -183,9 +177,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
         uint256 amount,
         uint256 borrowRate,
         uint256 defaultedDebt
-    ) external override onlyMarket {
-        require(!_paused, "Pool is paused");
-
+    ) external override onlyMarket poolNotPaused {
         _asset.safeTransferFrom(from, address(this), amount);
         _updateCumulativeDebtBorrowRate(false, defaultedDebt, borrowRate);
         _debt -= defaultedDebt;
@@ -281,5 +273,16 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     /// @param paused Whether to pause the pool or not.
     function setPause(bool paused) external onlyOwner {
         _paused = paused;
+    }
+
+    function _requirePoolNotPaused() internal view {
+        require(!_paused, "Pool is paused");
+    }
+
+    function _requireOnlyMarket() internal view {
+        require(
+            _msgSender() == _addressProvider.getLendingMarket(),
+            "Caller must be Market contract"
+        );
     }
 }

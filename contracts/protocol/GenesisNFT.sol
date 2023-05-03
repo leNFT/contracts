@@ -62,10 +62,7 @@ contract GenesisNFT is
     mapping(uint256 => DataTypes.MintDetails) private _mintDetails;
 
     modifier onlyMarket() {
-        require(
-            _msgSender() == _addressProvider.getLendingMarket(),
-            "Caller must be Market contract"
-        );
+        _requireOnlyMarket();
         _;
     }
 
@@ -556,6 +553,13 @@ contract GenesisNFT is
         return
             ERC721EnumerableUpgradeable.supportsInterface(interfaceId) ||
             ERC165Upgradeable.supportsInterface(interfaceId);
+    }
+
+    function _requireOnlyMarket() internal view {
+        require(
+            _msgSender() == _addressProvider.getLendingMarket(),
+            "Caller must be Market contract"
+        );
     }
 
     // Function to receive Ether

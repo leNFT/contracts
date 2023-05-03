@@ -62,10 +62,7 @@ contract VotingEscrow is
     using LockLogic for DataTypes.LockedBalance;
 
     modifier onlyMarket() {
-        require(
-            _msgSender() == _addressProvider.getLendingMarket(),
-            "Caller must be Market contract"
-        );
+        _requireOnlyMarket();
         _;
     }
 
@@ -649,5 +646,12 @@ contract VotingEscrow is
         return
             ERC721EnumerableUpgradeable.supportsInterface(interfaceId) ||
             ERC165Upgradeable.supportsInterface(interfaceId);
+    }
+
+    function _requireOnlyMarket() internal view {
+        require(
+            _msgSender() == _addressProvider.getLendingMarket(),
+            "Caller must be Market contract"
+        );
     }
 }

@@ -19,6 +19,12 @@ contract DebtToken is
 {
     IAddressesProvider private _addressProvider;
 
+    /// @notice Throws an error if the caller is not the market contract
+    modifier onlyMarket() {
+        _requireOnlyMarket();
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -37,15 +43,6 @@ contract DebtToken is
         __ERC721Enumerable_init();
         __Context_init();
         _addressProvider = addressesProvider;
-    }
-
-    /// @notice Throws an error if the caller is not the market contract
-    modifier onlyMarket() {
-        require(
-            _msgSender() == _addressProvider.getLendingMarket(),
-            "Caller must be Market contract"
-        );
-        _;
     }
 
     /// @notice Mints a new debt token to the given address
@@ -86,5 +83,12 @@ contract DebtToken is
         returns (bool)
     {
         return ERC721EnumerableUpgradeable.supportsInterface(interfaceId);
+    }
+
+    function _requireOnlyMarket() internal view {
+        require(
+            _msgSender() == _addressProvider.getLendingMarket(),
+            "Caller must be Market contract"
+        );
     }
 }

@@ -41,10 +41,7 @@ contract LoanCenter is
     using LoanLogic for DataTypes.LoanData;
 
     modifier onlyMarket() {
-        require(
-            _msgSender() == _addressProvider.getLendingMarket(),
-            "Caller must be Market contract"
-        );
+        _requireOnlyMarket();
         _;
     }
 
@@ -387,6 +384,13 @@ contract LoanCenter is
         IERC721Upgradeable(collection).setApprovalForAll(
             _addressProvider.getLendingMarket(),
             true
+        );
+    }
+
+    function _requireOnlyMarket() internal view {
+        require(
+            _msgSender() == _addressProvider.getLendingMarket(),
+            "Caller must be Market contract"
         );
     }
 }

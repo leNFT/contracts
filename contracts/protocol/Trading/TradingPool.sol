@@ -47,10 +47,12 @@ contract TradingPool is
     using SafeERC20 for IERC20;
 
     modifier onlyMarket() {
-        require(
-            _msgSender() == _addressProvider.getLendingMarket(),
-            "Callers must be Market contract"
-        );
+        _requireOnlyMarket();
+        _;
+    }
+
+    modifier poolNotPaused() {
+        _requirePoolNotPaused();
         _;
     }
 
@@ -184,9 +186,7 @@ contract TradingPool is
         address curve,
         uint256 delta,
         uint256 fee
-    ) external nonReentrant {
-        require(!_paused, "Pool is paused");
-
+    ) external nonReentrant poolNotPaused {
         // Check if pool will exceed maximum permitted amount
         require(
             tokenAmount + IERC20(_token).balanceOf(address(this)) <
@@ -301,9 +301,7 @@ contract TradingPool is
 
     /// @notice Removes liquidity, sending back deposited tokens and transferring the NFTs to the user
     /// @param lpId The ID of the LP token to remove
-    function removeLiquidity(uint256 lpId) public nonReentrant {
-        require(!_paused, "Pool is paused");
-
+    function removeLiquidity(uint256 lpId) public nonReentrant poolNotPaused {
         //Require the caller owns LP
         require(_msgSender() == ERC721.ownerOf(lpId), "Must own LP position");
 
@@ -334,9 +332,9 @@ contract TradingPool is
 
     /// @notice Removes liquidity in batches by calling the removeLiquidity function for each LP token ID in the lpIds array
     /// @param lpIds The IDs of the LP tokens to remove liquidity from
-    function removeLiquidityBatch(uint256[] calldata lpIds) external {
-        require(!_paused, "Pool is paused");
-
+    function removeLiquidityBatch(
+        uint256[] calldata lpIds
+    ) external poolNotPaused {
         for (uint i = 0; i < lpIds.length; i++) {
             removeLiquidity(lpIds[i]);
         }
@@ -352,9 +350,7 @@ contract TradingPool is
         address onBehalfOf,
         uint256[] calldata nftIds,
         uint256 maximumPrice
-    ) external nonReentrant returns (uint256 finalPrice) {
-        require(!_paused, "Pool is paused");
-
+    ) external nonReentrant poolNotPaused returns (uint256 finalPrice) {
         require(nftIds.length > 0, "Need to buy at least one NFT");
 
         uint256 priceQuote;
@@ -456,9 +452,7 @@ contract TradingPool is
         uint256[] calldata nftIds,
         uint256[] calldata liquidityPairs,
         uint256 minimumPrice
-    ) external nonReentrant returns (uint256 finalPrice) {
-        require(!_paused, "Pool is paused");
-
+    ) external nonReentrant poolNotPaused returns (uint256 finalPrice) {
         require(
             nftIds.length == liquidityPairs.length,
             "NFTs and Liquidity Pairs must have same length"
@@ -584,5 +578,16 @@ contract TradingPool is
         return
             ERC721Enumerable.supportsInterface(interfaceId) ||
             ERC165.supportsInterface(interfaceId);
+    }
+
+    function _requirePoolNotPaused() internal view {
+        require(!_paused, "Pool is paused");
+    }
+
+    function _requireOnlyMarket() internal view {
+        require(
+            _msgSender() == _addressProvider.getLendingMarket(),
+            "Caller must be Market contract"
+        );
     }
 }
