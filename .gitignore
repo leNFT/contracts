@@ -8,6 +8,7 @@ typechain
 cache
 artifacts
 mocharc.json
+hardhat.config.js
 
 # env files
 .env*
