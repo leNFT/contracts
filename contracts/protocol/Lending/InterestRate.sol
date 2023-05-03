@@ -14,10 +14,10 @@ import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 /// @dev Utilization rate is defined as the ratio of total debt to total assets in the system
 /// @dev The calculation of the utilization rate is done by the internal _calculateUtilizationRate function
 contract InterestRate is IInterestRate {
-    uint256 internal _optimalUtilization;
-    uint256 internal _baseBorrowRate;
-    uint256 internal _lowSlope;
-    uint256 internal _highSlope;
+    uint256 public immutable OPTIMAL_UTILIZATION_RATE;
+    uint256 internal immutable _baseBorrowRate;
+    uint256 internal immutable _lowSlope;
+    uint256 internal immutable _highSlope;
 
     /// @notice Constructor for the interest rate contract
     /// @param optimalUtilization The optimal utilization rate for the market, expressed in ray
@@ -30,7 +30,7 @@ contract InterestRate is IInterestRate {
         uint256 lowSlope,
         uint256 highSlope
     ) {
-        _optimalUtilization = optimalUtilization;
+        OPTIMAL_UTILIZATION_RATE = optimalUtilization;
         _baseBorrowRate = baseBorrowRate;
         _lowSlope = lowSlope;
         _highSlope = highSlope;
@@ -46,7 +46,7 @@ contract InterestRate is IInterestRate {
     ) external view override returns (uint256) {
         uint256 utilizationRate = _calculateUtilizationRate(assets, debt);
 
-        if (utilizationRate < _optimalUtilization) {
+        if (utilizationRate < OPTIMAL_UTILIZATION_RATE) {
             return
                 _baseBorrowRate +
                 PercentageMath.percentMul(utilizationRate, _lowSlope);
@@ -54,7 +54,7 @@ contract InterestRate is IInterestRate {
             return
                 getOptimalBorrowRate() +
                 PercentageMath.percentMul(
-                    utilizationRate - _optimalUtilization,
+                    utilizationRate - OPTIMAL_UTILIZATION_RATE,
                     _highSlope
                 );
         }
@@ -64,7 +64,7 @@ contract InterestRate is IInterestRate {
     /// @return The optimal borrow rate
     function getOptimalBorrowRate() public view returns (uint256) {
         return
-            PercentageMath.percentMul(_optimalUtilization, _lowSlope) +
+            PercentageMath.percentMul(OPTIMAL_UTILIZATION_RATE, _lowSlope) +
             _baseBorrowRate;
     }
 
