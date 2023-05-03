@@ -9,7 +9,7 @@ npm install
 npx hardhat test
 ```
 
-Don't forget to add the necessary compiler config in `hardhat.config.js`:
+Don't forget to create and add the necessary compiler config in `hardhat.config.js`:
 
 ```bash
 require("@nomiclabs/hardhat-waffle");
