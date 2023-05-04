@@ -8,7 +8,7 @@ interface ITokenOracle {
         address tokenAddress
     ) external view returns (uint256);
 
-    function addTokenETHDataFeed(address token, address priceFeed) external;
+    function setTokenETHDataFeed(address token, address priceFeed) external;
 
     function setTokenETHPrice(address tokenAddress, uint256 price) external;
 

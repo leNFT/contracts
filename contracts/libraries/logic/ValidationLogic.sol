@@ -57,7 +57,11 @@ library ValidationLogic {
             .getUnderlyingBalance();
         uint256 updatedUtilizationRate = IInterestRate(
             addressesProvider.getInterestRate()
-        ).calculateUtilizationRate(underlyingBalance - amount, debt);
+        ).calculateUtilizationRate(
+                IERC4626(lendingPool).asset(),
+                underlyingBalance - amount,
+                debt
+            );
 
         require(
             updatedUtilizationRate <= maxUtilizationRate,

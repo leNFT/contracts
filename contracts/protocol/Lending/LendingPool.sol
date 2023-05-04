@@ -194,7 +194,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     function _updateBorrowRate() internal {
         _borrowRate = IInterestRate(
             IAddressesProvider(_addressProvider).getInterestRate()
-        ).calculateBorrowRate(getUnderlyingBalance(), _debt);
+        ).calculateBorrowRate(address(_asset), getUnderlyingBalance(), _debt);
 
         emit UpdatedBorrowRate(_borrowRate);
     }
@@ -248,7 +248,11 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     function getUtilizationRate() external view override returns (uint256) {
         return
             IInterestRate(_addressProvider.getInterestRate())
-                .calculateUtilizationRate(getUnderlyingBalance(), _debt);
+                .calculateUtilizationRate(
+                    address(_asset),
+                    getUnderlyingBalance(),
+                    _debt
+                );
     }
 
     /// @notice Sets the pool configuration.

@@ -18,6 +18,21 @@ async function main() {
   await setwETHPriceTx.wait();
 
   console.log("ETH/WETH price set @ 1");
+
+  console.log("Adding wETH Interest Rate Model");
+  const InterestRate = await ethers.getContractFactory("InterestRate");
+  const interestRate = InterestRate.attach(addresses.InterestRate);
+
+  // Add WETH parameters to interest rate contract
+  const setWETHInterestRateParamsTx = await interestRate.addToken(wethAddress, {
+    optimalUtilizationRate: 7000,
+    baseBorrowRate: 500,
+    lowSlope: 2000,
+    highSlope: 20000,
+  });
+  await setWETHInterestRateParamsTx.wait();
+
+  console.log("wETH Interest Rate Model added");
 }
 
 // We recommend this pattern to be able to use async/await everywhere

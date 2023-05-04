@@ -59,11 +59,11 @@ contract TokenOracle is ITokenOracle, Ownable {
         return _tokenPrices[token];
     }
 
-    /// @notice Add a data feed for a token
+    /// @notice Set a data feed for a token
     /// @param token The address of the token to add a data feed for
     /// @param priceFeed The address of the Chainlink price feed for the token
     /// @dev Data feeds should return the price of the token in relation to ETH (e.g. 1 ETH = 1620.15597772 USDC)
-    function addTokenETHDataFeed(
+    function setTokenETHDataFeed(
         address token,
         address priceFeed
     ) external override onlyOwner {

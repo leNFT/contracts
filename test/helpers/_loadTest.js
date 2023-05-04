@@ -182,7 +182,7 @@ let loadEnv = async function () {
 
   // Deploy the Interest Rate contract
   const InterestRate = await ethers.getContractFactory("InterestRate");
-  interestRate = await InterestRate.deploy(7000, 500, 2000, 20000);
+  interestRate = await InterestRate.deploy();
   await interestRate.deployed();
 
   // Deploy the NFT Oracle contract
@@ -287,12 +287,8 @@ let loadEnv = async function () {
     gaugeController.address
   );
   await setGaugeControllerTx.wait();
-
-  // Set bribes address
   const setBribesTx = await addressesProvider.setBribes(bribes.address);
   await setBribesTx.wait();
-
-  // Set WETH address in addresses provider
   const setWETHTx = await addressesProvider.setWETH(weth.address);
   await setWETHTx.wait();
 
@@ -316,6 +312,15 @@ let loadEnv = async function () {
     "1000000000000000000" //1 testToken/ETH
   );
   await setTestTokenPriceTx.wait();
+
+  // Add WETH parameters to interest rate contract
+  const setWETHInterestRateParamsTx = await interestRate.addToken(wethAddress, {
+    optimalUtilizationRate: 7000,
+    baseBorrowRate: 500,
+    lowSlope: 2000,
+    highSlope: 20000,
+  });
+  await setWETHInterestRateParamsTx.wait();
 
   console.log("loaded");
 };

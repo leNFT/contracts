@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {ILendingMarket} from "../../interfaces/ILendingMarket.sol";
+import {IInterestRate} from "../../interfaces/IInterestRate.sol";
 import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {LiquidationLogic} from "../../libraries/logic/LiquidationLogic.sol";
 import {BorrowLogic} from "../../libraries/logic/BorrowLogic.sol";
@@ -209,7 +210,13 @@ contract LendingMarket is
             ITokenOracle(_addressProvider.getTokenOracle()).isTokenSupported(
                 asset
             ),
-            "Underlying Asset is not supported"
+            "Underlying Asset is not supported by token oracle."
+        );
+        require(
+            IInterestRate(_addressProvider.getInterestRate()).isTokenSupported(
+                asset
+            ),
+            "Underlying Asset is not supported by interest rate contract."
         );
         require(
             _pools[collection][asset] == address(0),
@@ -268,6 +275,7 @@ contract LendingMarket is
     }
 
     /// @notice Sets the lending pool addresses for a given collection, asset, and lending pool
+    /// @dev To be used when migrating an asset's lending pool
     /// @param collection The collection address
     /// @param asset The asset address
     /// @param pool The lending pool address

@@ -2,7 +2,9 @@
 pragma solidity 0.8.19;
 
 import {IInterestRate} from "../../interfaces/IInterestRate.sol";
+import {ConfigTypes} from "../../libraries/types/ConfigTypes.sol";
 import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title InterestRate
 /// @notice A contract for calculating the borrow rate based on the utilization rate
@@ -13,27 +15,53 @@ import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 /// @dev Below the optimal utilization rate, the borrow rate is linearly increased based on the low slope
 /// @dev Utilization rate is defined as the ratio of total debt to total assets in the system
 /// @dev The calculation of the utilization rate is done by the internal _calculateUtilizationRate function
-contract InterestRate is IInterestRate {
-    uint256 public immutable OPTIMAL_UTILIZATION_RATE;
-    uint256 internal immutable _baseBorrowRate;
-    uint256 internal immutable _lowSlope;
-    uint256 internal immutable _highSlope;
+contract InterestRate is IInterestRate, Ownable {
+    mapping(address => bool) private _isSupported;
+    mapping(address => ConfigTypes.InterestRateConfig)
+        private _interestRateConfigs;
 
-    /// @notice Constructor for the interest rate contract
-    /// @param optimalUtilization The optimal utilization rate for the market, expressed in ray
-    /// @param baseBorrowRate The market's base borrow rate, expressed in ray
-    /// @param lowSlope The slope of the interest rate model when utilization rate is below the optimal utilization rate, expressed in ray
-    /// @param highSlope The slope of the interest rate model when utilization rate is above the opt
-    constructor(
-        uint256 optimalUtilization,
-        uint256 baseBorrowRate,
-        uint256 lowSlope,
-        uint256 highSlope
-    ) {
-        OPTIMAL_UTILIZATION_RATE = optimalUtilization;
-        _baseBorrowRate = baseBorrowRate;
-        _lowSlope = lowSlope;
-        _highSlope = highSlope;
+    modifier onlySupported(address token) {
+        _requireOnlySupported(token);
+        _;
+    }
+
+    /// @notice Sets the interest rate parameters for a token
+    /// @param token The address of the token
+    /// @param interestRateConfig The interest rate parameters
+    function addToken(
+        address token,
+        ConfigTypes.InterestRateConfig memory interestRateConfig
+    ) external onlyOwner {
+        _isSupported[token] = true;
+        _interestRateConfigs[token] = interestRateConfig;
+    }
+
+    /// @notice Removes support for a token
+    /// @param token The address of the token
+    function removeToken(address token) external onlyOwner {
+        delete _isSupported[token];
+        delete _interestRateConfigs[token];
+    }
+
+    /// @notice Gets whether a token is supported
+    /// @param token The address of the token
+    /// @return Whether the token is supported
+    function isTokenSupported(address token) external view returns (bool) {
+        return _isSupported[token];
+    }
+
+    /// @notice Gets the interest rate parameters for a token
+    /// @param token The address of the token
+    /// @return The interest rate parameters
+    function getInterestRateConfig(
+        address token
+    )
+        external
+        view
+        onlySupported(token)
+        returns (ConfigTypes.InterestRateConfig memory)
+    {
+        return _interestRateConfigs[token];
     }
 
     /// @notice Calculates the borrow rate based on the utilization rate
@@ -41,31 +69,42 @@ contract InterestRate is IInterestRate {
     /// @param debt The total debt
     /// @return The borrow rate
     function calculateBorrowRate(
+        address token,
         uint256 assets,
         uint256 debt
-    ) external view override returns (uint256) {
+    ) external view override onlySupported(token) returns (uint256) {
         uint256 utilizationRate = _calculateUtilizationRate(assets, debt);
 
-        if (utilizationRate < OPTIMAL_UTILIZATION_RATE) {
+        if (
+            utilizationRate < _interestRateConfigs[token].optimalUtilizationRate
+        ) {
             return
-                _baseBorrowRate +
-                PercentageMath.percentMul(utilizationRate, _lowSlope);
+                _interestRateConfigs[token].baseBorrowRate +
+                PercentageMath.percentMul(
+                    utilizationRate,
+                    _interestRateConfigs[token].lowSlope
+                );
         } else {
             return
-                getOptimalBorrowRate() +
+                getOptimalBorrowRate(token) +
                 PercentageMath.percentMul(
-                    utilizationRate - OPTIMAL_UTILIZATION_RATE,
-                    _highSlope
+                    utilizationRate -
+                        _interestRateConfigs[token].optimalUtilizationRate,
+                    _interestRateConfigs[token].highSlope
                 );
         }
     }
 
     /// @notice Gets the optimal borrow rate
     /// @return The optimal borrow rate
-    function getOptimalBorrowRate() public view returns (uint256) {
+    function getOptimalBorrowRate(
+        address token
+    ) public view onlySupported(token) returns (uint256) {
         return
-            PercentageMath.percentMul(OPTIMAL_UTILIZATION_RATE, _lowSlope) +
-            _baseBorrowRate;
+            PercentageMath.percentMul(
+                _interestRateConfigs[token].optimalUtilizationRate,
+                _interestRateConfigs[token].lowSlope
+            ) + _interestRateConfigs[token].baseBorrowRate;
     }
 
     /// @notice Calculates the utilization rate based on the assets and debt
@@ -73,9 +112,10 @@ contract InterestRate is IInterestRate {
     /// @param debt The total debt
     /// @return The utilization rate
     function calculateUtilizationRate(
+        address token,
         uint256 assets,
         uint256 debt
-    ) external pure override returns (uint256) {
+    ) external view override onlySupported(token) returns (uint256) {
         return _calculateUtilizationRate(assets, debt);
     }
 
@@ -91,5 +131,9 @@ contract InterestRate is IInterestRate {
         } else {
             return (PercentageMath.PERCENTAGE_FACTOR * debt) / (assets + debt);
         }
+    }
+
+    function _requireOnlySupported(address token) internal view {
+        require(_isSupported[token], "InterestRate: token not supported");
     }
 }
