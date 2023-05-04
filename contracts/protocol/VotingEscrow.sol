@@ -619,10 +619,6 @@ contract VotingEscrow is
         uint256 tokenId,
         uint256 batchSize
     ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
-        require(
-            false == false,
-            "Cannot transfer token - currently locked in an active loan"
-        );
         ERC721EnumerableUpgradeable._beforeTokenTransfer(
             from,
             to,
