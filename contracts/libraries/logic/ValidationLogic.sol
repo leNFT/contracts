@@ -156,24 +156,17 @@ library ValidationLogic {
     }
 
     /// @notice Validates a repay of a loan
-    /// @param addressesProvider The address of the addresses provider
     /// @param params The repay params
     function validateRepay(
-        IAddressesProvider addressesProvider,
-        DataTypes.RepayParams memory params
-    ) external view {
-        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
-        DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
-        uint256 loanDebt = loanCenter.getLoanDebt(params.loanId);
-
+        DataTypes.RepayParams memory params,
+        DataTypes.LoanState loanState,
+        uint256 loanDebt
+    ) external pure {
         // Check if borrow amount is bigger than 0
         require(params.amount > 0, "Repay amount must be bigger than 0");
 
         //Require that loan exists
-        require(
-            loanData.state != DataTypes.LoanState.None,
-            "Loan does not exist"
-        );
+        require(loanState != DataTypes.LoanState.None, "Loan does not exist");
 
         // Check if user is over paying
         require(
@@ -184,7 +177,7 @@ library ValidationLogic {
         // Can only do partial repayments if the loan is not being auctioned
         if (params.amount < loanDebt) {
             require(
-                loanData.state != DataTypes.LoanState.Auctioned,
+                loanState != DataTypes.LoanState.Auctioned,
                 "Cannot partially repay a loan that is being auctioned"
             );
         }
@@ -195,23 +188,25 @@ library ValidationLogic {
     /// @param params The liquidation params
     function validateCreateLiquidationAuction(
         IAddressesProvider addressesProvider,
-        DataTypes.CreateAuctionParams memory params
+        DataTypes.CreateAuctionParams memory params,
+        DataTypes.LoanState loanState,
+        address loanPool,
+        address loanNFTAsset,
+        uint256[] calldata loanNFTTokenIds
     ) external view {
         //Require the loan exists
-        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
-        DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
-        require(
-            loanData.state == DataTypes.LoanState.Active,
-            "Loan is not active"
-        );
+        require(loanState == DataTypes.LoanState.Active, "Loan is not active");
 
         // Check if collateral / debt relation allows for liquidation
-        address poolAsset = IERC4626(loanData.pool).asset();
+        address poolAsset = IERC4626(loanPool).asset();
         ITokenOracle tokenOracle = ITokenOracle(
             addressesProvider.getTokenOracle()
         );
         uint256 assetETHPrice = tokenOracle.getTokenETHPrice(poolAsset);
         uint256 pricePrecision = tokenOracle.getPricePrecision();
+
+        // Get loan center
+        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
 
         require(
             (loanCenter.getLoanMaxETHCollateral(
@@ -225,14 +220,14 @@ library ValidationLogic {
         );
 
         // Check if bid is big enough
-        uint256 maxLiquidatorDiscount = ILendingPool(loanData.pool)
+        uint256 maxLiquidatorDiscount = ILendingPool(loanPool)
             .getPoolConfig()
             .maxLiquidatorDiscount;
         uint256 collateralETHPrice = INFTOracle(
             addressesProvider.getNFTOracle()
         ).getTokensETHPrice(
-                loanData.nftAsset,
-                loanData.nftTokenIds,
+                loanNFTAsset,
+                loanNFTTokenIds,
                 params.request,
                 params.packet
             );
@@ -247,51 +242,45 @@ library ValidationLogic {
     }
 
     function validateBidLiquidationAuction(
-        IAddressesProvider addressesProvider,
-        DataTypes.AuctionBidParams memory params
+        DataTypes.AuctionBidParams memory params,
+        DataTypes.LoanState loanState,
+        uint256 loanAuctionStartTimestamp,
+        uint256 loanAuctionMaxBid
     ) external view {
-        //Require the loan exists
-        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
-        DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
-
         // Check if the auction exists
         require(
-            loanData.state == DataTypes.LoanState.Auctioned,
+            loanState == DataTypes.LoanState.Auctioned,
             "No liquidation auction for this loan"
         );
 
         // Check if the auction is still active
         require(
             block.timestamp <
-                loanData.auctionStartTimestamp + LIQUIDATION_AUCTION_PERIOD,
+                loanAuctionStartTimestamp + LIQUIDATION_AUCTION_PERIOD,
             "Auction is no longer active"
         );
 
         // Check if bid is higher than current bid
         require(
-            params.bid > loanData.auctionMaxBid,
+            params.bid > loanAuctionMaxBid,
             "Bid amount is not higher than current bid"
         );
     }
 
     function validateClaimLiquidation(
-        IAddressesProvider addressesProvider,
-        DataTypes.ClaimLiquidationParams memory params
+        DataTypes.LoanState loanState,
+        uint256 loanAuctionStartTimestamp
     ) external view {
-        //Require the loan exists
-        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
-        DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
-
         // Check if the auction exists
         require(
-            loanData.state == DataTypes.LoanState.Auctioned,
+            loanState == DataTypes.LoanState.Auctioned,
             "No liquidation auction for this loan"
         );
 
         // Check if the auction is still active
         require(
             block.timestamp >
-                loanData.auctionStartTimestamp + LIQUIDATION_AUCTION_PERIOD,
+                loanAuctionStartTimestamp + LIQUIDATION_AUCTION_PERIOD,
             "Auction is still active"
         );
     }

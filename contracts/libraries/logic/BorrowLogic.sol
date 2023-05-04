@@ -106,12 +106,14 @@ library BorrowLogic {
         IAddressesProvider addressesProvider,
         DataTypes.RepayParams memory params
     ) external {
-        // Validate the movement
-        ValidationLogic.validateRepay(addressesProvider, params);
-
         // Get the loan
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
         DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
+        uint256 loanDebt = loanCenter.getLoanDebt(params.loanId);
+
+        // Validate the movement
+        ValidationLogic.validateRepay(params, loanData.state, loanDebt);
+
         uint256 interest = loanCenter.getLoanInterest(params.loanId);
 
         // If we are paying the entire loan debt

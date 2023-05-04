@@ -27,17 +27,20 @@ library LiquidationLogic {
         IAddressesProvider addressesProvider,
         DataTypes.CreateAuctionParams memory params
     ) external {
+        // Get loan center
+        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
+        // Get the loan
+        DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
+
         // Verify if liquidation conditions are met
         ValidationLogic.validateCreateLiquidationAuction(
             addressesProvider,
-            params
+            params,
+            loanData.state,
+            loanData.pool,
+            loanData.nftAsset,
+            loanData.nftTokenIds
         );
-
-        // Get loan center
-        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
-
-        // Get the loan
-        DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
 
         // Add auction to the loan
         loanCenter.auctionLoan(params.loanId, params.caller, params.bid);
@@ -54,17 +57,18 @@ library LiquidationLogic {
         IAddressesProvider addressesProvider,
         DataTypes.AuctionBidParams memory params
     ) external {
-        // Verify if bid conditions are met
-        ValidationLogic.validateBidLiquidationAuction(
-            addressesProvider,
-            params
-        );
-
         // Get the loan center
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
-
         // Get the loan
         DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
+
+        // Verify if bid conditions are met
+        ValidationLogic.validateBidLiquidationAuction(
+            params,
+            loanData.state,
+            loanData.auctionStartTimestamp,
+            loanData.auctionMaxBid
+        );
 
         // Get the address of this asset's reserve
         address poolAsset = IERC4626(loanData.pool).asset();
@@ -94,14 +98,16 @@ library LiquidationLogic {
         IAddressesProvider addressesProvider,
         DataTypes.ClaimLiquidationParams memory params
     ) external {
-        // Verify if claim conditions are met
-        ValidationLogic.validateClaimLiquidation(addressesProvider, params);
-
         // Get the loan center
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
-
         // Get the loan
         DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
+
+        // Verify if claim conditions are met
+        ValidationLogic.validateClaimLiquidation(
+            loanData.state,
+            loanData.auctionStartTimestamp
+        );
 
         // Get the address of this asset's pool
         address poolAsset = IERC4626(loanData.pool).asset();
