@@ -1,13 +1,6 @@
 # leNFT Protocol
 
-To install the project and run tests do:
-
-```bash
-npm install
-npx hardhat test
-```
-
-Don't forget to create and add the necessary compiler config in `hardhat.config.js`:
+Create an `hardhat.config.js` configuration file:
 
 ```bash
 require("@nomiclabs/hardhat-waffle");
@@ -55,4 +48,11 @@ Tests are performed in a forked mainnet environment, so you'll also need a .env 
 ```bash
 INFURA_API_KEY="YOUR_API_KEY"
 
+```
+
+Then do:
+
+```bash
+npm install
+npx hardhat test
 ```
