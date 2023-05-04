@@ -36,12 +36,12 @@ contract TradingPool is
 {
     uint public constant MAX_FEE = 9000; // 90%
 
-    IAddressesProvider private _addressProvider;
-    bool internal _paused;
-    address private _token;
-    address private _nft;
-    mapping(uint256 => DataTypes.LiquidityPair) _liquidityPairs;
-    mapping(uint256 => DataTypes.NftToLp) _nftToLp;
+    IAddressesProvider private immutable _addressProvider;
+    bool private _paused;
+    address private immutable _token;
+    address private immutable _nft;
+    mapping(uint256 => DataTypes.LiquidityPair) private _liquidityPairs;
+    mapping(uint256 => DataTypes.NftToLp) private _nftToLp;
     uint256 private _lpCount;
 
     using SafeERC20 for IERC20;

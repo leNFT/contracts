@@ -20,8 +20,8 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 /// @author leNFT
 /// @notice This contract is the proxy for ETH interactions with the leNFT protocol
 contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
-    IAddressesProvider private _addressProvider;
-    IWETH private _weth;
+    IAddressesProvider private immutable _addressProvider;
+    IWETH private immutable _weth;
 
     /// @notice Constructor for the WETHGateway contract
     /// @param addressesProvider The address of the AddressesProvider contract

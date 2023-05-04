@@ -14,7 +14,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 /// @author leNFT
 /// @notice This contract is responsible for swapping between assets in different pools
 contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
-    IAddressesProvider private _addressProvider;
+    IAddressesProvider private immutable _addressProvider;
 
     using SafeERC20 for IERC20;
 

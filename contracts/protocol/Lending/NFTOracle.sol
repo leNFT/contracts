@@ -11,7 +11,7 @@ import {Trustus} from "../Trustus/Trustus.sol";
 /// @dev This contract provides a mechanism for obtaining the ETH value of NFT tokens  using Trustus as the off-chain price oracle.
 /// @dev Trustus provides a mechanism to sign, relay and verify off-chain data.
 contract NFTOracle is INFTOracle, Ownable, Trustus {
-    IAddressesProvider private _addressProvider;
+    IAddressesProvider private immutable _addressProvider;
 
     /// @notice NFTOracle contract constructor
     /// @param addressProvider The address provider contract used to fetch other contract addresses.
