@@ -149,7 +149,7 @@ contract LoanCenter is
         uint256 nftIdsLength = loan.nftTokenIds.length;
         address nftAsset = loan.nftAsset;
         for (uint256 i = 0; i < nftIdsLength; i++) {
-            _nftToLoanId[nftAsset][loan.nftTokenIds[i]] = 0;
+            delete _nftToLoanId[nftAsset][loan.nftTokenIds[i]];
         }
         _activeLoansCount[loan.borrower][nftAsset]--;
     }
