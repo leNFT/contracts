@@ -109,10 +109,19 @@ library ValidationLogic {
                 addressesProvider.getGenesisNFT()
             );
 
-            // Require owner is the borrower
+            // If the caller is not the user we are borrowing on behalf Of, check if the caller is approved
+            if (params.onBehalfOf != params.caller) {
+                require(
+                    genesisNFT.isLoanOperatorApproved(
+                        params.onBehalfOf,
+                        params.caller
+                    ),
+                    "Not approved to borrow on behalf of"
+                );
+            }
             require(
                 genesisNFT.ownerOf(params.genesisNFTId) == params.onBehalfOf,
-                "onBehalfOf is not owner of Genesis NFT"
+                "Borrower doesn't own the Genesis NFT"
             );
             //Require that the NFT is not being used
             require(

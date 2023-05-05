@@ -54,6 +54,8 @@ contract GenesisNFT is
     address payable private _devAddress;
     uint256 private _ltvBoost;
     CountersUpgradeable.Counter private _tokenIdCounter;
+    // Mapping from owner to create loan operator approvals
+    mapping(address => mapping(address => bool)) private _loanOperatorApprovals;
 
     // NFT token id to bool that's true if NFT is being used to increase a loan's LTV
     mapping(uint256 => bool) private _locked;
@@ -115,6 +117,17 @@ contract GenesisNFT is
 
         // Start from token_id 1 in order to reserve '0' for the null token
         _tokenIdCounter.increment();
+    }
+
+    function setLoanOperatorApproval(address operator, bool approved) external {
+        _loanOperatorApprovals[_msgSender()][operator] = approved;
+    }
+
+    function isLoanOperatorApproved(
+        address owner,
+        address operator
+    ) external view returns (bool) {
+        return _loanOperatorApprovals[owner][operator];
     }
 
     /// @notice Returns the URI for a given token ID

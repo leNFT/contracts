@@ -12,4 +12,9 @@ interface IGenesisNFT is IERC721Upgradeable {
     function setLockedState(uint256 tokenId, bool newState) external;
 
     function getLockedState(uint256 tokenId) external view returns (bool);
+
+    function isLoanOperatorApproved(
+        address owner,
+        address operator
+    ) external view returns (bool);
 }
