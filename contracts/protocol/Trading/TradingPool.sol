@@ -306,7 +306,8 @@ contract TradingPool is
         require(_msgSender() == ERC721.ownerOf(lpId), "Must own LP position");
 
         // Send pool nfts to the user
-        for (uint i = 0; i < _liquidityPairs[lpId].nftIds.length; i++) {
+        uint256 nftIdsLength = _liquidityPairs[lpId].nftIds.length;
+        for (uint i = 0; i < nftIdsLength; i++) {
             IERC721(_nft).safeTransferFrom(
                 address(this),
                 _msgSender(),

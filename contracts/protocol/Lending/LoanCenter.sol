@@ -129,11 +129,13 @@ contract LoanCenter is
         DataTypes.LoanData storage loan = _loans[loanId];
         loan.state = DataTypes.LoanState.Repaid;
 
-        for (uint256 i = 0; i < loan.nftTokenIds.length; i++) {
-            _nftToLoanId[loan.nftAsset][loan.nftTokenIds[i]] = 0;
+        uint256 nftIdsLength = loan.nftTokenIds.length;
+        address nftAsset = loan.nftAsset;
+        for (uint256 i = 0; i < nftIdsLength; i++) {
+            delete _nftToLoanId[nftAsset][loan.nftTokenIds[i]];
         }
 
-        _activeLoansCount[loan.borrower][loan.nftAsset]--;
+        _activeLoansCount[loan.borrower][nftAsset]--;
     }
 
     /// @notice Liquidate a loan by setting its state to Defaulted and freeing up the NFT collateral
@@ -144,10 +146,12 @@ contract LoanCenter is
         DataTypes.LoanData storage loan = _loans[loanId];
         loan.state = DataTypes.LoanState.Liquidated;
 
-        for (uint256 i = 0; i < loan.nftTokenIds.length; i++) {
-            _nftToLoanId[loan.nftAsset][loan.nftTokenIds[i]] = 0;
+        uint256 nftIdsLength = loan.nftTokenIds.length;
+        address nftAsset = loan.nftAsset;
+        for (uint256 i = 0; i < nftIdsLength; i++) {
+            _nftToLoanId[nftAsset][loan.nftTokenIds[i]] = 0;
         }
-        _activeLoansCount[loan.borrower][loan.nftAsset]--;
+        _activeLoansCount[loan.borrower][nftAsset]--;
     }
 
     function auctionLoan(
