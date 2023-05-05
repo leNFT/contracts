@@ -38,6 +38,6 @@ describe("Withdraw from Lengin Pool", function () {
     );
     await withdrawTx.wait();
 
-    // Find if the reserve tokens were sent accordingl
+    // Find if the lending pool tokens were sent accordingl
   });
 });

@@ -68,7 +68,7 @@ library ValidationLogic {
 
         require(
             updatedUtilizationRate <= maxUtilizationRate,
-            "Reserve utilization rate too high"
+            "Lending pool utilization rate too high"
         );
     }
 

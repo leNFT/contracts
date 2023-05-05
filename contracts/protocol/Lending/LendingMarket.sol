@@ -71,7 +71,7 @@ contract LendingMarket is
         _defaultLendingPoolConfig = defaultLendingPoolConfig;
     }
 
-    /// @notice Borrow an asset from the reserve while an NFT as collateral
+    /// @notice Borrow an asset from a lenfin pool while an NFT as collateral
     /// @dev NFT approval needs to be given to the LoanCenter contract
     /// @param asset The address of the asset the be borrowed
     /// @param amount Amount of the asset to be borrowed

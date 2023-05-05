@@ -72,7 +72,7 @@ contract LoanCenter is
     /// @notice Create a new loan with the specified parameters and add it to the loans list
     /// @dev Only the market contract can call this function
     /// @param pool The address of the lending pool
-    /// @param amount The amount of the reserve token to be borrowed
+    /// @param amount The amount of the lending pool token to be borrowed
     /// @param maxLTV The maximum loan-to-value ratio
     /// @param boost The boost factor to be applied to the LTV ratio
     /// @param genesisNFTId The ID of the first NFT in the collateral

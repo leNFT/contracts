@@ -73,7 +73,7 @@ library LiquidationLogic {
             loanLiquidationData.auctionMaxBid
         );
 
-        // Get the address of this asset's reserve
+        // Get the address of this asset's lending pool
         address poolAsset = IERC4626(loanData.pool).asset();
 
         // Send the old liquidator their funds back
