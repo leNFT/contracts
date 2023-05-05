@@ -44,15 +44,15 @@ contract GenesisNFT is
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     IAddressesProvider private _addressProvider;
-    uint256 _cap;
-    uint256 _price;
-    uint256 _maxLocktime;
-    uint256 _minLocktime;
-    uint256 _nativeTokenFactor;
-    DataTypes.BalancerDetails _balancerDetails;
-    address _balancerPoolId;
-    address payable _devAddress;
-    uint256 _ltvBoost;
+    uint256 private _cap;
+    uint256 private _price;
+    uint256 private _maxLocktime;
+    uint256 private _minLocktime;
+    uint256 private _nativeTokenFactor;
+    DataTypes.BalancerDetails private _balancerDetails;
+    address private _balancerPoolId;
+    address payable private _devAddress;
+    uint256 private _ltvBoost;
     CountersUpgradeable.Counter private _tokenIdCounter;
 
     // NFT token id to bool that's true if NFT is being used to increase a loan's LTV
