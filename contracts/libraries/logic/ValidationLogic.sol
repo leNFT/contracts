@@ -48,6 +48,9 @@ library ValidationLogic {
         address lendingPool,
         uint256 amount
     ) external view {
+        // Check if withdrawal amount is bigger than 0
+        require(amount > 0, "Withdrawal amount must be bigger than 0");
+
         // Check if the utilization rate doesn't go above maximum
         uint256 maxUtilizationRate = ILendingPool(lendingPool)
             .getPoolConfig()
@@ -67,9 +70,6 @@ library ValidationLogic {
             updatedUtilizationRate <= maxUtilizationRate,
             "Reserve utilization rate too high"
         );
-
-        // Check if withdrawal amount is bigger than 0
-        require(amount > 0, "Withdrawal amount must be bigger than 0");
     }
 
     /// @notice Validates a borrow from a lending pool
