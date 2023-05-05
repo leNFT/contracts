@@ -77,4 +77,16 @@ describe("Borrow", function () {
     expect(await testNFT.ownerOf(tokenID1)).to.equal(loanCenter.address);
     expect(await testNFT.ownerOf(tokenID2)).to.equal(loanCenter.address);
   });
+  it("Repay borrowed amount", async function () {
+    // Get loan debt
+    const loanDebt = await loanCenter.getLoanDebt(0);
+
+    const repayTx = await wethGateway.repay(0, {
+      value: loanDebt,
+    });
+    await repayTx.wait();
+    console.log("loanCenter.address", loanCenter.address);
+    expect(await testNFT.ownerOf(tokenID1)).to.equal(owner.address);
+    expect(await testNFT.ownerOf(tokenID2)).to.equal(owner.address);
+  });
 });
