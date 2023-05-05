@@ -21,16 +21,16 @@ library BorrowLogic {
 
     /// @notice Creates a new loan, transfers the collateral to the loan center and mints the debt token
     /// @param addressesProvider The address of the addresses provider
-    /// @param pools The array of pools
+    /// @param lendingPool The address of the lending pool
     /// @param params A struct with the parameters of the borrow function
     /// @return loanId The id of the new loan
     function borrow(
         IAddressesProvider addressesProvider,
-        mapping(address => mapping(address => address)) storage pools,
+        address lendingPool,
         DataTypes.BorrowParams memory params
     ) external returns (uint256 loanId) {
         // Validate the movement
-        ValidationLogic.validateBorrow(addressesProvider, pools, params);
+        ValidationLogic.validateBorrow(addressesProvider, lendingPool, params);
 
         // Get the loan center
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
@@ -45,9 +45,7 @@ library BorrowLogic {
         }
 
         // Get the borrow rate index
-        uint256 borrowRate = ILendingPool(
-            pools[params.nftAddress][params.asset]
-        ).getBorrowRate();
+        uint256 borrowRate = ILendingPool(lendingPool).getBorrowRate();
 
         // Get max LTV for this collection
         uint256 maxLTV = loanCenter.getCollectionMaxCollaterization(
@@ -71,7 +69,7 @@ library BorrowLogic {
 
         // Create the loan
         loanId = loanCenter.createLoan(
-            pools[params.nftAddress][params.asset],
+            lendingPool,
             params.amount,
             maxLTV,
             boost,
@@ -91,11 +89,11 @@ library BorrowLogic {
         loanCenter.activateLoan(loanId);
 
         // Send the principal to the borrower
-        ILendingPool(pools[params.nftAddress][params.asset]).transferUnderlying(
-                params.caller,
-                params.amount,
-                borrowRate
-            );
+        ILendingPool(lendingPool).transferUnderlying(
+            params.caller,
+            params.amount,
+            borrowRate
+        );
     }
 
     /// @notice Repays a loan, transfers the principal and interest to the lending pool and returns the collateral to the owner

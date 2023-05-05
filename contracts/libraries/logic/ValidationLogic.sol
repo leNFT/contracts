@@ -74,11 +74,11 @@ library ValidationLogic {
 
     /// @notice Validates a borrow from a lending pool
     /// @param addressesProvider The address of the addresses provider
-    /// @param lendingPools The address of the lending pools
+    /// @param lendingPool The address of the lending pool
     /// @param params The borrow params
     function validateBorrow(
         IAddressesProvider addressesProvider,
-        mapping(address => mapping(address => address)) storage lendingPools,
+        address lendingPool,
         DataTypes.BorrowParams memory params
     ) external view {
         // Check if borrow amount is bigger than 0
@@ -91,10 +91,7 @@ library ValidationLogic {
         );
 
         // Check if the asset is supported
-        require(
-            lendingPools[params.nftAddress][params.asset] != address(0),
-            "No pool for asset and collection"
-        );
+        require(lendingPool != address(0), "No pool for asset and collection");
 
         ITokenOracle tokenOracle = ITokenOracle(
             addressesProvider.getTokenOracle()
@@ -157,9 +154,7 @@ library ValidationLogic {
 
         // Check if the pool has enough underlying to borrow
         require(
-            params.amount <=
-                ILendingPool(lendingPools[params.nftAddress][params.asset])
-                    .getUnderlyingBalance(),
+            params.amount <= ILendingPool(lendingPool).getUnderlyingBalance(),
             "Amount exceeds pool balance"
         );
     }

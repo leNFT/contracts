@@ -91,7 +91,7 @@ contract LendingMarket is
     ) external override nonReentrant {
         BorrowLogic.borrow(
             _addressProvider,
-            _pools,
+            _pools[nftAddress][asset],
             DataTypes.BorrowParams({
                 caller: _msgSender(),
                 onBehalfOf: onBehalfOf,
