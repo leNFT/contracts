@@ -61,13 +61,16 @@ library LiquidationLogic {
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
         // Get the loan
         DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
+        // Get the loan liquidation data
+        DataTypes.LoanLiquidationData memory loanLiquidationData = loanCenter
+            .getLoanLiquidationData(params.loanId);
 
         // Verify if bid conditions are met
         ValidationLogic.validateBidLiquidationAuction(
             params,
             loanData.state,
-            loanData.auctionStartTimestamp,
-            loanData.auctionMaxBid
+            loanLiquidationData.auctionStartTimestamp,
+            loanLiquidationData.auctionMaxBid
         );
 
         // Get the address of this asset's reserve
@@ -75,8 +78,8 @@ library LiquidationLogic {
 
         // Send the old liquidator their funds back
         IERC20Upgradeable(poolAsset).safeTransfer(
-            loanData.liquidator,
-            loanData.auctionMaxBid
+            loanLiquidationData.liquidator,
+            loanLiquidationData.auctionMaxBid
         );
 
         // Update the auction bid
@@ -102,17 +105,20 @@ library LiquidationLogic {
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
         // Get the loan
         DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
+        // Get the loan liquidation data
+        DataTypes.LoanLiquidationData memory loanLiquidationData = loanCenter
+            .getLoanLiquidationData(params.loanId);
 
         // Verify if claim conditions are met
         ValidationLogic.validateClaimLiquidation(
             loanData.state,
-            loanData.auctionStartTimestamp
+            loanLiquidationData.auctionStartTimestamp
         );
 
         // Get the address of this asset's pool
         address poolAsset = IERC4626(loanData.pool).asset();
         // Repay loan...
-        uint256 fundsLeft = loanData.auctionMaxBid;
+        uint256 fundsLeft = loanLiquidationData.auctionMaxBid;
         uint256 loanInterest = loanCenter.getLoanInterest(params.loanId);
         uint256 loanDebt = loanData.amount + loanInterest;
         // If we only have funds to pay back part of the loan
@@ -140,7 +146,7 @@ library LiquidationLogic {
         // ... then get the protocol liquidation fee (if there are still funds available) ...
         if (fundsLeft > 0) {
             uint256 protocolFee = PercentageMath.percentMul(
-                loanData.auctionMaxBid,
+                loanLiquidationData.auctionMaxBid,
                 ILendingPool(loanData.pool).getPoolConfig().liquidationFee
             );
             if (protocolFee > fundsLeft) {
@@ -159,7 +165,9 @@ library LiquidationLogic {
         // ... and the rest to the borrower.
         if (fundsLeft > 0) {
             IERC20Upgradeable(poolAsset).safeTransfer(
-                loanData.borrower,
+                IERC721Upgradeable(addressesProvider.getDebtToken()).ownerOf(
+                    params.loanId
+                ),
                 fundsLeft
             );
         }
@@ -171,7 +179,7 @@ library LiquidationLogic {
         for (uint i = 0; i < loanData.nftTokenIds.length; i++) {
             IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
                 address(loanCenter),
-                loanData.liquidator,
+                loanLiquidationData.liquidator,
                 loanData.nftTokenIds[i]
             );
         }

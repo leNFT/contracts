@@ -28,6 +28,11 @@ contract LoanCenter is
 
     // Loan ID to loan info mapping
     mapping(uint256 => DataTypes.LoanData) private _loans;
+
+    // Loan id to liquidation data
+    mapping(uint256 => DataTypes.LoanLiquidationData)
+        private _loansLiquidationData;
+
     uint256 private _loansCount;
     IAddressesProvider private _addressProvider;
 
@@ -66,8 +71,7 @@ contract LoanCenter is
 
     /// @notice Create a new loan with the specified parameters and add it to the loans list
     /// @dev Only the market contract can call this function
-    /// @param borrower The address of the borrower
-    /// @param reserve The address of the reserve token
+    /// @param pool The address of the lending pool
     /// @param amount The amount of the reserve token to be borrowed
     /// @param maxLTV The maximum loan-to-value ratio
     /// @param boost The boost factor to be applied to the LTV ratio
@@ -77,8 +81,7 @@ contract LoanCenter is
     /// @param borrowRate The interest rate for the loan
     /// @return The ID of the newly created loan
     function createLoan(
-        address borrower,
-        address reserve,
+        address pool,
         uint256 amount,
         uint256 maxLTV,
         uint256 boost,
@@ -89,9 +92,7 @@ contract LoanCenter is
     ) public override onlyMarket returns (uint256) {
         // Create the loan and add it to the list
         _loans[_loansCount].init(
-            _loansCount,
-            borrower,
-            reserve,
+            pool,
             amount,
             maxLTV,
             boost,
@@ -118,7 +119,9 @@ contract LoanCenter is
         DataTypes.LoanData storage loan = _loans[loanId];
         loan.state = DataTypes.LoanState.Active;
 
-        _activeLoansCount[loan.borrower][loan.nftAsset]++;
+        _activeLoansCount[
+            IERC721Upgradeable(_addressProvider.getDebtToken()).ownerOf(loanId)
+        ][loan.nftAsset]++;
     }
 
     /// @notice Repay a loan by setting its state to Repaid
@@ -135,7 +138,9 @@ contract LoanCenter is
             delete _nftToLoanId[nftAsset][loan.nftTokenIds[i]];
         }
 
-        _activeLoansCount[loan.borrower][nftAsset]--;
+        _activeLoansCount[
+            IERC721Upgradeable(_addressProvider.getDebtToken()).ownerOf(loanId)
+        ][nftAsset]--;
     }
 
     /// @notice Liquidate a loan by setting its state to Defaulted and freeing up the NFT collateral
@@ -151,7 +156,9 @@ contract LoanCenter is
         for (uint256 i = 0; i < nftIdsLength; i++) {
             delete _nftToLoanId[nftAsset][loan.nftTokenIds[i]];
         }
-        _activeLoansCount[loan.borrower][nftAsset]--;
+        _activeLoansCount[
+            IERC721Upgradeable(_addressProvider.getDebtToken()).ownerOf(loanId)
+        ][nftAsset]--;
     }
 
     function auctionLoan(
@@ -161,10 +168,14 @@ contract LoanCenter is
     ) external override onlyMarket {
         DataTypes.LoanData storage loan = _loans[loanId];
         loan.state = DataTypes.LoanState.Auctioned;
-        loan.auctioner = user;
-        loan.liquidator = user;
-        loan.auctionMaxBid = bid;
-        loan.auctionStartTimestamp = block.timestamp;
+
+        // Create the liquidation data
+        _loansLiquidationData[loanId] = DataTypes.LoanLiquidationData({
+            auctioner: user,
+            liquidator: user,
+            auctionStartTimestamp: uint40(block.timestamp),
+            auctionMaxBid: bid
+        });
     }
 
     function updateLoanAuctionBid(
@@ -172,9 +183,9 @@ contract LoanCenter is
         address user,
         uint256 bid
     ) external override onlyMarket {
-        DataTypes.LoanData storage loan = _loans[loanId];
-        loan.liquidator = user;
-        loan.auctionMaxBid = bid;
+        // Update the liquidation data
+        _loansLiquidationData[loanId].liquidator = user;
+        _loansLiquidationData[loanId].auctionMaxBid = bid;
     }
 
     /// @notice Get the number of loans in the loans list
@@ -208,6 +219,17 @@ contract LoanCenter is
         return _loans[loanId];
     }
 
+    function getLoanLiquidationData(
+        uint256 loanId
+    ) external view override returns (DataTypes.LoanLiquidationData memory) {
+        require(
+            _loans[loanId].state == DataTypes.LoanState.Auctioned,
+            "Loan is not being auctioned."
+        );
+
+        return _loansLiquidationData[loanId];
+    }
+
     /// @notice Get the maximum collateral that can be put up for a loan in ETH
     /// @param loanId The ID of the loan to be queried
     /// @param request The Trustus request hash
@@ -231,11 +253,7 @@ contract LoanCenter is
                 packet
             );
 
-        return
-            PercentageMath.percentMul(
-                tokensPrice,
-                _loans[loanId].maxLTV + _loans[loanId].boost
-            );
+        return PercentageMath.percentMul(tokensPrice, _loans[loanId].maxLTV);
     }
 
     /// @notice Get the loan ID associated with the specified NFT
@@ -339,7 +357,7 @@ contract LoanCenter is
             "Loan does not exist."
         );
 
-        _loans[loanId].debtTimestamp = newDebtTimestamp;
+        _loans[loanId].debtTimestamp = uint40(newDebtTimestamp);
     }
 
     /// @notice Updates the amount of a loan.

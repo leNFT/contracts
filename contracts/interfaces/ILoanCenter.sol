@@ -6,7 +6,6 @@ import {Trustus} from "../protocol/Trustus/Trustus.sol";
 
 interface ILoanCenter {
     function createLoan(
-        address borrower,
         address lendingPool,
         uint256 amount,
         uint256 maxLTV,
@@ -20,6 +19,10 @@ interface ILoanCenter {
     function getLoan(
         uint256 loanId
     ) external view returns (DataTypes.LoanData memory);
+
+    function getLoanLiquidationData(
+        uint256 loanId
+    ) external view returns (DataTypes.LoanLiquidationData memory);
 
     function repayLoan(uint256 loanId) external;
 

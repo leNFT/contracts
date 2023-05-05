@@ -78,40 +78,37 @@ library DataTypes {
     }
 
     struct LoanData {
-        // the id of the loan
-        uint256 loanId;
-        // the current state of the loan
-        LoanState state;
-        // address of borrower
-        address borrower;
         // borrowed amount
         uint256 amount;
-        // maxLTV
-        uint256 maxLTV;
-        // ltv boost gotten from the use of a genesis NFT
-        uint256 boost;
         // The genesis NFT id for the boost (0 if not used)
         uint256 genesisNFTId;
-        // address of nft asset token
-        address nftAsset;
         // the ids of the token
         uint256[] nftTokenIds;
+        // address of nft asset token
+        address nftAsset;
+        // interest rate at which the loan was written
+        uint16 borrowRate;
+        // timestamp for the initial creation of the loan
+        uint40 initTimestamp;
+        // timestamp for debt computation ()
+        uint40 debtTimestamp;
         // address of lending pool associated with loan
         address pool;
-        // interest rate at which the loan was written
-        uint256 borrowRate;
-        // timestamp for the initial creation of the loan
-        uint256 initTimestamp;
-        // timestamp for debt computation ()
-        uint256 debtTimestamp;
+        // maxLTV (collection + ltv boost gotten from the use of a genesis NFT)
+        uint16 maxLTV;
+        // the current state of the loan
+        LoanState state;
+    }
+
+    struct LoanLiquidationData {
         // address of the user who first auctioned the loan
         address auctioner;
         // address of the liquidator withe highest bid
         address liquidator;
+        // timestamp of the liquidation auction start
+        uint40 auctionStartTimestamp;
         // highes liquidation auction bid
         uint256 auctionMaxBid;
-        // timestamp of the liquidation auction start
-        uint256 auctionStartTimestamp;
     }
 
     // Mint details for the Genesis NFT mint

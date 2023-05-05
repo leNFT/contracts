@@ -71,7 +71,6 @@ library BorrowLogic {
 
         // Create the loan
         loanId = loanCenter.createLoan(
-            params.onBehalfOf,
             pools[params.nftAddress][params.asset],
             params.amount,
             maxLTV,
@@ -120,19 +119,23 @@ library BorrowLogic {
         if (params.amount == loanCenter.getLoanDebt(params.loanId)) {
             // If the loan was being liquidated we send the liquidators payment back with a fee
             if (loanData.state == DataTypes.LoanState.Auctioned) {
+                DataTypes.LoanLiquidationData
+                    memory liquidationData = loanCenter.getLoanLiquidationData(
+                        params.loanId
+                    );
                 // Get the payment from the liquidator
                 IERC20Upgradeable(IERC4626(loanData.pool).asset())
                     .safeTransferFrom(
                         address(this),
-                        loanData.liquidator,
-                        loanData.auctionMaxBid
+                        liquidationData.liquidator,
+                        liquidationData.auctionMaxBid
                     );
                 // Get the fee from the user
                 IERC20Upgradeable(IERC4626(loanData.pool).asset())
                     .safeTransferFrom(
                         params.caller,
-                        loanData.auctioner,
-                        (loanData.auctionMaxBid *
+                        liquidationData.auctioner,
+                        (liquidationData.auctionMaxBid *
                             ILendingPool(loanData.pool)
                                 .getPoolConfig()
                                 .auctionerFee) /
@@ -163,7 +166,8 @@ library BorrowLogic {
             for (uint256 i = 0; i < loanData.nftTokenIds.length; i++) {
                 IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
                     address(loanCenter),
-                    loanData.borrower,
+                    IERC721Upgradeable(addressesProvider.getDebtToken())
+                        .ownerOf(params.loanId),
                     loanData.nftTokenIds[i]
                 );
             }
