@@ -116,7 +116,7 @@ library ValidationLogic {
                         params.onBehalfOf,
                         params.caller
                     ),
-                    "Not approved to borrow on behalf of"
+                    "Not approved to use Genesis NFT in loan"
                 );
             }
             require(
