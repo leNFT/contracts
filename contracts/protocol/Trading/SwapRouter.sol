@@ -62,7 +62,7 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
         );
 
         // If the buy price is greater than the sell price, transfer the remaining amount to the swap contract
-        uint256 priceDiff = 0;
+        uint256 priceDiff;
         if (maximumBuyPrice > minimumSellPrice) {
             priceDiff = maximumBuyPrice - minimumSellPrice;
             IERC20(sellPool.getToken()).safeTransferFrom(

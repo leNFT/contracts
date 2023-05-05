@@ -53,8 +53,7 @@ library BorrowLogic {
         );
 
         // Get boost for this user and collection
-        uint256 boost = 0;
-
+        uint256 boost;
         // If a genesis NFT was used with this loan
         if (params.genesisNFTId != 0) {
             IGenesisNFT genesisNFT = IGenesisNFT(

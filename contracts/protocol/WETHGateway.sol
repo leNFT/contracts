@@ -229,7 +229,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         address pool,
         uint256[] calldata lpIds
     ) external nonReentrant {
-        uint256 totalAmount = 0;
+        uint256 totalAmount;
         uint256[][] memory nftIds = new uint256[][](lpIds.length);
 
         require(

@@ -381,14 +381,12 @@ contract VotingEscrow is
 
     /// @notice Returns the weight of locked tokens for a given account.
     /// @param user The address for which to retrieve the locked balance weight.
-    /// @return The weight of locked tokens for the given account.
-    function userWeight(address user) external view returns (uint256) {
-        uint256 balance = 0;
+    /// @return weight The weight of locked tokens for the given account.
+    function userWeight(address user) external view returns (uint256 weight) {
         uint256 length = balanceOf(user);
         for (uint256 i = 0; i < length; i++) {
-            balance += lockWeight(tokenOfOwnerByIndex(user, i));
+            weight += lockWeight(tokenOfOwnerByIndex(user, i));
         }
-        return balance;
     }
 
     /// @dev Locks tokens into the voting escrow contract for a specified amount of time.

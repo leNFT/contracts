@@ -232,16 +232,13 @@ contract FeeDistributor is
     /// @notice Allows a user to claim their rewards from multiple locks for a specific token
     /// @param token Token address
     /// @param tokensIds the token ids of the locks
-    /// @return uint256 Amount of rewards claimed
+    /// @return amountToClaim uint256 Amount of rewards claimed
     function claimBatch(
         address token,
         uint256[] calldata tokensIds
-    ) external nonReentrant returns (uint256) {
-        uint256 amountToClaim;
+    ) external nonReentrant returns (uint256 amountToClaim) {
         for (uint256 i = 0; i < tokensIds.length; i++) {
             amountToClaim += claim(token, tokensIds[i]);
         }
-
-        return amountToClaim;
     }
 }

@@ -415,7 +415,7 @@ contract GenesisNFT is
     /// @notice Burn Genesis NFTs and unlock LP tokens and LE tokens
     /// @param tokenIds The IDs of the Genesis NFTs to burn
     function burn(uint256[] calldata tokenIds) external nonReentrant {
-        uint256 lpAmountSum = 0;
+        uint256 lpAmountSum;
         for (uint256 i = 0; i < tokenIds.length; i++) {
             //Require the caller owns the token
             require(
@@ -487,7 +487,7 @@ contract GenesisNFT is
     function getLPValueInLE(
         uint256[] calldata tokenIds
     ) external returns (uint256) {
-        uint256 lpAmountSum = 0;
+        uint256 lpAmountSum;
         IVault vault = IVault(_balancerDetails.vault);
         for (uint256 i = 0; i < tokenIds.length; i++) {
             // Add the LP amount to the sum
