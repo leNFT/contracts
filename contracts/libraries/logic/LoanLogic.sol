@@ -33,7 +33,9 @@ library LoanLogic {
         uint256 timestamp
     ) internal view returns (uint256) {
         //Interest increases every 30 minutes
-        uint256 incrementalTimestamp = (timestamp / (30 * 60)) * (30 * 60 + 1);
+        uint256 incrementalTimestamp = (((timestamp - 1) / (30 * 60)) + 1) *
+            (30 * 60);
+
         return
             (loandata.amount *
                 loandata.borrowRate *
