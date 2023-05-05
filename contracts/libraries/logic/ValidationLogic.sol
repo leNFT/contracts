@@ -116,7 +116,7 @@ library ValidationLogic {
             );
             //Require that the NFT is not being used
             require(
-                genesisNFT.getActiveState(params.genesisNFTId) == false,
+                genesisNFT.getLockedState(params.genesisNFTId) == false,
                 "Genesis NFT currently being used by another loan"
             );
 

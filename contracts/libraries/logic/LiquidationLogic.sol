@@ -186,7 +186,8 @@ library LiquidationLogic {
 
         // Unlock Genesis NFT for use
         if (loanData.genesisNFTId != 0) {
-            IGenesisNFT(addressesProvider.getGenesisNFT()).setActiveState(
+            // Unlock Genesis NFT
+            IGenesisNFT(addressesProvider.getGenesisNFT()).setLockedState(
                 loanData.genesisNFTId,
                 false
             );

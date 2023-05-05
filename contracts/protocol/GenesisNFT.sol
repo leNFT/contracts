@@ -55,8 +55,8 @@ contract GenesisNFT is
     uint256 _ltvBoost;
     CountersUpgradeable.Counter private _tokenIdCounter;
 
-    // NFT token id to bool that's true if NFT is being used to charge a loan
-    mapping(uint256 => bool) private _active;
+    // NFT token id to bool that's true if NFT is being used to increase a loan's LTV
+    mapping(uint256 => bool) private _locked;
 
     // NFT token id to information about its mint
     mapping(uint256 => DataTypes.MintDetails) private _mintDetails;
@@ -154,7 +154,7 @@ contract GenesisNFT is
                             string(
                                 abi.encodePacked(
                                     '{ "trait_type": "locked", "value": "',
-                                    _active[tokenId] ? "true" : "false",
+                                    _locked[tokenId] ? "true" : "false",
                                     '" },',
                                     '{ "trait_type": "unlock_timestamp", "value": "',
                                     Strings.toString(
@@ -197,20 +197,20 @@ contract GenesisNFT is
     /// @notice Returns the active state of the specified Genesis NFT
     /// @param tokenId ID of the token
     /// @return The active state
-    function getActiveState(
+    function getLockedState(
         uint256 tokenId
     ) external view override returns (bool) {
-        return _active[tokenId];
+        return _locked[tokenId];
     }
 
     /// @notice Sets the active state of the specified Genesis NFT
     /// @param tokenId ID of the token
     /// @param newState The new active state
-    function setActiveState(
+    function setLockedState(
         uint256 tokenId,
         bool newState
     ) external override onlyMarket {
-        _active[tokenId] = newState;
+        _locked[tokenId] = newState;
     }
 
     /// @notice Calculates the native token reward for a given amount and lock time
@@ -526,7 +526,7 @@ contract GenesisNFT is
         uint256 batchSize
     ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
         require(
-            _active[tokenId] == false,
+            _locked[tokenId] == false,
             "Cannot transfer token - currently locked in an active loan"
         );
         ERC721EnumerableUpgradeable._beforeTokenTransfer(

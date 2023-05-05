@@ -9,7 +9,7 @@ interface IGenesisNFT is IERC721Upgradeable {
 
     function getLTVBoost() external view returns (uint256);
 
-    function setActiveState(uint256 tokenId, bool newState) external;
+    function setLockedState(uint256 tokenId, bool newState) external;
 
-    function getActiveState(uint256 tokenId) external view returns (bool);
+    function getLockedState(uint256 tokenId) external view returns (bool);
 }

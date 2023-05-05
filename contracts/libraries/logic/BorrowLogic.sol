@@ -66,7 +66,7 @@ library BorrowLogic {
             boost = genesisNFT.getLTVBoost();
 
             // Lock genesis NFT to this loan
-            genesisNFT.setActiveState(params.genesisNFTId, true);
+            genesisNFT.setLockedState(params.genesisNFTId, true);
         }
 
         // Create the loan
@@ -153,10 +153,9 @@ library BorrowLogic {
 
             loanCenter.repayLoan(params.loanId);
 
-            // Unlock Genesis NFT
             if (loanData.genesisNFTId != 0) {
-                // Lock genesis NFT to this loan
-                IGenesisNFT(addressesProvider.getGenesisNFT()).setActiveState(
+                // Unlock Genesis NFT
+                IGenesisNFT(addressesProvider.getGenesisNFT()).setLockedState(
                     loanData.genesisNFTId,
                     false
                 );
