@@ -17,7 +17,6 @@ import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 /// @notice Liquidity Gauge contract. Distributes incentives to users who have deposited into the LendingPool.
 /// @dev The gauge tracks the balance and work done by users, which are then used to calculate rewards.
 contract LendingGauge is IGauge {
-    uint256 public constant LP_MATURITY_PERIOD = 6; // 6 epochs
     IAddressesProvider private _addressProvider;
     mapping(address => uint256) private _balanceOf;
     mapping(address => DataTypes.WorkingBalance[])
@@ -215,7 +214,9 @@ contract LendingGauge is IGauge {
     function _maturityMultiplier(
         uint256 timeInterval
     ) internal view returns (uint256) {
-        uint256 lpMaturity = LP_MATURITY_PERIOD *
+        uint256 lpMaturity = IGaugeController(
+            _addressProvider.getGaugeController()
+        ).getLPMaturityPeriod() *
             IVotingEscrow(_addressProvider.getVotingEscrow()).epochPeriod();
         if (timeInterval > lpMaturity) {
             return PercentageMath.PERCENTAGE_FACTOR;

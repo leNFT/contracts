@@ -35,4 +35,6 @@ interface IGaugeController {
         uint256 tokenId,
         address gauge
     ) external view returns (DataTypes.Point memory);
+
+    function getLPMaturityPeriod() external view returns (uint256);
 }

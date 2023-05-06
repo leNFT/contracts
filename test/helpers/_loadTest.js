@@ -145,6 +145,7 @@ let loadEnv = async function () {
   gaugeController = await upgrades.deployProxy(GaugeController, [
     addressesProvider.address,
     "280000000000000000000", // Initial epoch rewards
+    6, // LP Maturation Period (in epochs)
   ]);
 
   console.log("Deployed GaugeController");

@@ -4,7 +4,6 @@ const load = require("./helpers/_loadTest.js");
 describe("Deposit", function () {
   load.loadTest();
   var poolAddress;
-  var tradingPool;
   it("Should create a pool and deposit into it", async function () {
     // Create a pool
     const createPoolTx = await tradingPoolFactory.createTradingPool(

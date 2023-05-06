@@ -14,7 +14,7 @@ import {IGauge} from "../../interfaces/IGauge.sol";
 /// @dev Contract that manages gauge vote weights, total vote weight, user vote power in each gauge, and user vote ratios.
 contract GaugeController is OwnableUpgradeable, IGaugeController {
     uint256 public constant INFLATION_PERIOD = 52; // 52 epochs (1 year)
-    uint256 public constant MAX_INFLATION_PERIOD = 8; // Maximum 6 inflation periods (8 years) and then base tail emissions
+    uint256 public constant MAX_INFLATION_PERIOD = 8; // Maximum 6 inflation periods (8 years) and then base emissions
     uint256 public constant LOADING_PERIOD = 24; // 24 epochs (6 months)
 
     IAddressesProvider private _addressProvider;
@@ -42,6 +42,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     mapping(address => bool) private _isGauge;
     mapping(address => address) private _liquidityPoolToGauge;
     uint256 private _initialRewards;
+    uint256 private _lpMaturityPeriod;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -50,14 +51,16 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
 
     /// @notice Initializes the contract by setting up the owner and the addresses provider contract.
     /// @param addressProvider Address provider contract.
-    /// @param initialRewards The initial rewards rate for the token
+    /// @param initialRewards The initial rewards rate for the token (after the loading period)
     function initialize(
         IAddressesProvider addressProvider,
-        uint256 initialRewards
+        uint256 initialRewards,
+        uint256 lpMaturityPeriod
     ) external initializer {
         __Ownable_init();
         _addressProvider = addressProvider;
         _initialRewards = initialRewards;
+        _lpMaturityPeriod = lpMaturityPeriod;
         _totalWeigthHistory.push(0);
         _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);
     }
@@ -516,5 +519,18 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         return
             (getEpochRewards(epoch) * getGaugeWeightAt(gauge, epoch)) /
             getTotalWeightAt(epoch);
+    }
+
+    /// @notice Sets the maturity period for LP tokens
+    /// @param maturityPeriod The new maturity period in epochs
+    function setLPMaturityPeriod(uint256 maturityPeriod) external onlyOwner {
+        require(maturityPeriod > 0, "Maturity period must be greater than 0");
+        _lpMaturityPeriod = maturityPeriod;
+    }
+
+    /// @notice Gets the maturity period for LP tokens
+    /// @return The maturity period in epochs
+    function getLPMaturityPeriod() external view override returns (uint256) {
+        return _lpMaturityPeriod;
     }
 }

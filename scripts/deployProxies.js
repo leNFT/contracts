@@ -164,6 +164,7 @@ async function main() {
   const gaugeController = await upgrades.deployProxy(GaugeController, [
     addressesProvider.address,
     "280000000000000000000000", // Initial epoch rewards (280k LE)
+    6, // LP Maturation Period (in epochs)
   ]);
   addresses["GaugeController"] = gaugeController.address;
 

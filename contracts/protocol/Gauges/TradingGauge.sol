@@ -19,7 +19,6 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 /// @title Trading Gauge Contract
 /// @notice A contract for managing the distribution of rewards to Trading LPs
 contract TradingGauge is IGauge, ERC721Holder {
-    uint256 public constant LP_MATURITY_PERIOD = 6; // 6 epochs
     IAddressesProvider private _addressProvider;
     mapping(uint256 => address) private _ownerOf;
     mapping(address => uint256) private _balanceOf;
@@ -210,7 +209,9 @@ contract TradingGauge is IGauge, ERC721Holder {
     function _maturityMultiplier(
         uint256 timeInterval
     ) internal view returns (uint256) {
-        uint256 lpMaturity = LP_MATURITY_PERIOD *
+        uint256 lpMaturity = IGaugeController(
+            _addressProvider.getGaugeController()
+        ).getLPMaturityPeriod() *
             IVotingEscrow(_addressProvider.getVotingEscrow()).epochPeriod();
         if (timeInterval > lpMaturity) {
             return PercentageMath.PERCENTAGE_FACTOR;
