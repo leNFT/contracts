@@ -227,7 +227,7 @@ contract LoanCenter is
         return _loansLiquidationData[loanId];
     }
 
-    /// @notice Get the maximum debt a loan can take before entering the liquidation zone
+    /// @notice Get the maximum debt a loan can reach before entering the liquidation zone
     /// @param loanId The ID of the loan to be queried
     /// @param tokensPrice The price of the tokens collateralizing the loan
     /// @return The maximum debt quoted in the same asset as the price of the collateral tokens
