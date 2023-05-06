@@ -222,6 +222,8 @@ contract TradingPool is
             );
         }
 
+        // DIrectional LPs must have a positive delta in order for the price to move or else
+        // they degenerate into a Trade LPs with delta = 0
         if (
             lpType == DataTypes.LPType.TradeUp ||
             lpType == DataTypes.LPType.TradeDown
@@ -247,8 +249,13 @@ contract TradingPool is
             "Invalid spot price"
         );
 
-        // require that the fee is less than 90%
-        require(fee <= MAX_FEE, "Fee must be less than 90%");
+        if (lpType == DataTypes.LPType.Buy || lpType == DataTypes.LPType.Sell) {
+            // Validate fee
+            require(fee == 0, "Buy/Sell LPs must have 0 fee");
+        } else {
+            // require that the fee is less than 90%
+            require(fee <= MAX_FEE, "Fee must be less than 90%");
+        }
 
         // Add user nfts to the pool
         for (uint i = 0; i < nftIds.length; i++) {
