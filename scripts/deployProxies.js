@@ -98,7 +98,10 @@ async function main() {
   const LoanCenter = await ethers.getContractFactory("LoanCenter");
   const loanCenter = await upgrades.deployProxy(LoanCenter, [
     addressesProvider.address,
-    "4000", // DefaultMaxCollaterization 40%
+    {
+      maxLTV: "3000", // DefaultMaxCollaterization 30%
+      liquidationThreshold: "6000", // DefaultLiquidationThreshold 60%
+    },
   ]);
   addresses["LoanCenter"] = loanCenter.address;
 
@@ -214,7 +217,7 @@ async function main() {
 
   // Deploy the Interest Rate contract
   const InterestRate = await ethers.getContractFactory("InterestRate");
-  const interestRate = await InterestRate.deploy(7000, 500, 2000, 20000);
+  const interestRate = await InterestRate.deploy();
   await interestRate.deployed();
   addresses["InterestRate"] = interestRate.address;
 

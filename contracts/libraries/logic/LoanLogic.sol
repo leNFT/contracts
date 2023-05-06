@@ -9,8 +9,6 @@ library LoanLogic {
         DataTypes.LoanData storage loandata,
         address pool,
         uint256 amount,
-        uint256 maxLTV,
-        uint256 boost,
         uint256 genesisNFTId,
         address nftAsset,
         uint256[] memory nftTokenIds,
@@ -18,7 +16,6 @@ library LoanLogic {
     ) internal {
         loandata.state = DataTypes.LoanState.Created;
         loandata.amount = amount;
-        loandata.maxLTV = uint16(maxLTV + boost);
         loandata.genesisNFTId = genesisNFTId;
         loandata.nftAsset = nftAsset;
         loandata.nftTokenIds = nftTokenIds;

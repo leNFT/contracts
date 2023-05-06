@@ -8,8 +8,6 @@ interface ILoanCenter {
     function createLoan(
         address lendingPool,
         uint256 amount,
-        uint256 maxLTV,
-        uint256 boost,
         uint256 genesisNFTId,
         address nftAddress,
         uint256[] memory nftTokenIds,
@@ -52,10 +50,9 @@ interface ILoanCenter {
 
     function getLoanLendingPool(uint256 loanId) external view returns (address);
 
-    function getLoanMaxETHCollateral(
+    function getLoanMaxDebt(
         uint256 loanId,
-        bytes32 request,
-        Trustus.TrustusPacket calldata packet
+        uint256 tokensPrice
     ) external view returns (uint256);
 
     function getLoanDebt(uint256 loanId) external view returns (uint256);
@@ -66,7 +63,7 @@ interface ILoanCenter {
         uint256 loanId
     ) external view returns (uint256[] memory);
 
-    function getLoanTokenAddress(
+    function getLoanCollectionAddress(
         uint256 loanId
     ) external view returns (address);
 
@@ -77,14 +74,13 @@ interface ILoanCenter {
 
     function updateLoanAmount(uint256 loanId, uint256 newAmount) external;
 
-    function getCollectionMaxCollaterization(
+    function getCollectionLiquidationThreshold(
         address collection
     ) external view returns (uint256);
 
-    function changeCollectionMaxCollaterization(
-        address collection,
-        uint256 maxCollaterization
-    ) external;
+    function getCollectionMaxLTV(
+        address collection
+    ) external view returns (uint256);
 
     function approveNFTCollection(address collection) external;
 }

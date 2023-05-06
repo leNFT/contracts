@@ -39,9 +39,11 @@ contract LoanCenter is
     // Collection to number of active loans
     mapping(address => mapping(address => uint256)) private _activeLoansCount;
 
-    // Collection to max collaterization
-    mapping(address => uint256) private _collectionsMaxCollaterization;
-    uint256 _defaultMaxCollaterization;
+    // Collection to liquidation threshold
+    mapping(address => DataTypes.CollectionRiskParameters)
+        private _collectionsRiskParameters;
+
+    DataTypes.CollectionRiskParameters _defaultCollectionsRiskParameters;
 
     using LoanLogic for DataTypes.LoanData;
 
@@ -57,24 +59,23 @@ contract LoanCenter is
 
     /// @notice Initializes the contract
     /// @param addressesProvider The address of the AddressesProvider contract
-    /// @param maxCollaterization The default maximum collaterization value to use for new loans
+    /// @param defaultCollectionsRiskParameters The default collection Risk Parameters
     function initialize(
         IAddressesProvider addressesProvider,
-        uint256 maxCollaterization
+        DataTypes.CollectionRiskParameters
+            calldata defaultCollectionsRiskParameters
     ) external initializer {
         __Ownable_init();
         __ERC721Holder_init();
         __Context_init();
         _addressProvider = addressesProvider;
-        _defaultMaxCollaterization = maxCollaterization;
+        _defaultCollectionsRiskParameters = defaultCollectionsRiskParameters;
     }
 
     /// @notice Create a new loan with the specified parameters and add it to the loans list
     /// @dev Only the market contract can call this function
     /// @param pool The address of the lending pool
     /// @param amount The amount of the lending pool token to be borrowed
-    /// @param maxLTV The maximum loan-to-value ratio
-    /// @param boost The boost factor to be applied to the LTV ratio
     /// @param genesisNFTId The ID of the first NFT in the collateral
     /// @param nftAddress The address of the NFT contract
     /// @param nftTokenIds An array of NFT token IDs that will be used as collateral
@@ -83,8 +84,6 @@ contract LoanCenter is
     function createLoan(
         address pool,
         uint256 amount,
-        uint256 maxLTV,
-        uint256 boost,
         uint256 genesisNFTId,
         address nftAddress,
         uint256[] calldata nftTokenIds,
@@ -94,8 +93,6 @@ contract LoanCenter is
         _loans[_loansCount].init(
             pool,
             amount,
-            maxLTV,
-            boost,
             genesisNFTId,
             nftAddress,
             nftTokenIds,
@@ -230,30 +227,24 @@ contract LoanCenter is
         return _loansLiquidationData[loanId];
     }
 
-    /// @notice Get the maximum collateral that can be put up for a loan in ETH
+    /// @notice Get the maximum debt a loan can take before entering the liquidation zone
     /// @param loanId The ID of the loan to be queried
-    /// @param request The Trustus request hash
-    /// @param packet The Trustus packet
-    /// @return The maximum collateral in ETH
-    function getLoanMaxETHCollateral(
+    /// @param tokensPrice The price of the tokens collateralizing the loan
+    /// @return The maximum debt quoted in the same asset as the price of the collateral tokens
+    function getLoanMaxDebt(
         uint256 loanId,
-        bytes32 request,
-        Trustus.TrustusPacket calldata packet
+        uint256 tokensPrice
     ) external view override returns (uint256) {
         require(
             _loans[loanId].state != DataTypes.LoanState.None,
             "Loan does not exist."
         );
 
-        uint256 tokensPrice = INFTOracle(_addressProvider.getNFTOracle())
-            .getTokensETHPrice(
-                _loans[loanId].nftAsset,
-                _loans[loanId].nftTokenIds,
-                request,
-                packet
+        return
+            PercentageMath.percentMul(
+                tokensPrice,
+                getCollectionLiquidationThreshold(_loans[loanId].nftAsset)
             );
-
-        return PercentageMath.percentMul(tokensPrice, _loans[loanId].maxLTV);
     }
 
     /// @notice Get the loan ID associated with the specified NFT
@@ -277,7 +268,7 @@ contract LoanCenter is
 
     /// @notice Get the debt owed on a loan
     /// @param loanId The ID of the loan
-    /// @return The total amount of debt owed on the loan
+    /// @return The total amount of debt owed on the loan quoted in the same asset of the loan's lending pool
     function getLoanDebt(
         uint256 loanId
     ) public view override returns (uint256) {
@@ -320,7 +311,7 @@ contract LoanCenter is
     /// @notice Get the NFT contract address associated with a loan
     /// @param loanId The ID of the loan
     /// @return The address of the NFT contract associated with the loan
-    function getLoanTokenAddress(
+    function getLoanCollectionAddress(
         uint256 loanId
     ) external view override returns (address) {
         require(
@@ -375,27 +366,44 @@ contract LoanCenter is
         _loans[loanId].amount = newAmount;
     }
 
-    /// @notice Gets the max collaterization price for a collection.
+    /// @notice Gets the Liquidation Threshold for a collection.
     /// @param collection The address of the collection to get the max collaterization price for.
-    /// @return The max collaterization price for the collection (10000 = 100%).
-    function getCollectionMaxCollaterization(
+    /// @return The Liquidation Threshold for the collection (10000 = 100%).
+    function getCollectionLiquidationThreshold(
         address collection
-    ) external view override returns (uint256) {
-        if (_collectionsMaxCollaterization[collection] == 0) {
-            return _defaultMaxCollaterization;
+    ) public view override returns (uint256) {
+        if (_collectionsRiskParameters[collection].maxLTV == 0) {
+            return _defaultCollectionsRiskParameters.liquidationThreshold;
         }
-        return _collectionsMaxCollaterization[collection];
+        return _collectionsRiskParameters[collection].liquidationThreshold;
     }
 
-    /// @notice Changes the max collaterization price for a collection.
+    /// @notice Gets the Max LTV for a collection.
+    /// @param collection The address of the collection to get the max collaterization price for.
+    /// @return The Max LTV for the collection (10000 = 100%).
+    function getCollectionMaxLTV(
+        address collection
+    ) external view override returns (uint256) {
+        if (_collectionsRiskParameters[collection].maxLTV == 0) {
+            return _defaultCollectionsRiskParameters.maxLTV;
+        }
+        return _collectionsRiskParameters[collection].maxLTV;
+    }
+
+    /// @notice Changes the Risk Parameters for a collection.
     /// @param collection The address of the collection to change the max collaterization price for.
-    /// @param maxCollaterization The new max collaterization price to set (10000 = 100%).
-    function changeCollectionMaxCollaterization(
+    /// @param liquidationThreshold The new liquidation Threshold to set (10000 = 100%).
+    function setCollectionRiskParameters(
         address collection,
-        uint256 maxCollaterization
-    ) external override onlyOwner {
+        uint256 maxLTV,
+        uint256 liquidationThreshold
+    ) external onlyOwner {
         //Set the max collaterization
-        _collectionsMaxCollaterization[collection] = maxCollaterization;
+        _collectionsRiskParameters[collection] = DataTypes
+            .CollectionRiskParameters({
+                maxLTV: uint16(maxLTV),
+                liquidationThreshold: uint16(liquidationThreshold)
+            });
     }
 
     /// @notice Approves a lending market to use all NFTs from a collection.

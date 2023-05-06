@@ -47,21 +47,11 @@ library BorrowLogic {
         // Get the borrow rate index
         uint256 borrowRate = ILendingPool(lendingPool).getBorrowRate();
 
-        // Get max LTV for this collection
-        uint256 maxLTV = loanCenter.getCollectionMaxCollaterization(
-            params.nftAddress
-        );
-
-        // Get boost for this user and collection
-        uint256 boost;
         // If a genesis NFT was used with this loan
         if (params.genesisNFTId != 0) {
             IGenesisNFT genesisNFT = IGenesisNFT(
                 addressesProvider.getGenesisNFT()
             );
-
-            boost = genesisNFT.getLTVBoost();
-
             // Lock genesis NFT to this loan
             genesisNFT.setLockedState(params.genesisNFTId, true);
         }
@@ -70,8 +60,6 @@ library BorrowLogic {
         loanId = loanCenter.createLoan(
             lendingPool,
             params.amount,
-            maxLTV,
-            boost,
             params.genesisNFTId,
             params.nftAddress,
             params.nftTokenIds,

@@ -77,7 +77,10 @@ let loadEnv = async function () {
   const LoanCenter = await ethers.getContractFactory("LoanCenter");
   loanCenter = await upgrades.deployProxy(LoanCenter, [
     addressesProvider.address,
-    "4000", // DefaultMaxCollaterization 40%
+    {
+      maxLTV: "3000", // DefaultMaxCollaterization 30%
+      liquidationThreshold: "6000", // DefaultLiquidationThreshold 60%
+    },
   ]);
 
   console.log("Deployed LoanCenter");

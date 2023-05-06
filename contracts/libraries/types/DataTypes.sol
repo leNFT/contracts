@@ -10,6 +10,11 @@ library DataTypes {
         uint256 amount;
     }
 
+    struct CollectionRiskParameters {
+        uint16 maxLTV;
+        uint16 liquidationThreshold;
+    }
+
     /**
      * Liquidity Pair Types:
      * 0 - Trade: Can buy and sell and price can increase and decrease
@@ -94,8 +99,6 @@ library DataTypes {
         uint40 debtTimestamp;
         // address of lending pool associated with loan
         address pool;
-        // maxLTV (collection + ltv boost gotten from the use of a genesis NFT)
-        uint16 maxLTV;
         // the current state of the loan
         LoanState state;
     }

@@ -52,12 +52,12 @@ contract GenesisNFT is
     DataTypes.BalancerDetails private _balancerDetails;
     address private _balancerPoolId;
     address payable private _devAddress;
-    uint256 private _ltvBoost;
+    uint256 private _maxLTVBoost;
     CountersUpgradeable.Counter private _tokenIdCounter;
     // Mapping from owner to create loan operator approvals
     mapping(address => mapping(address => bool)) private _loanOperatorApprovals;
 
-    // NFT token id to bool that's true if NFT is being used to increase a loan's LTV
+    // NFT token id to bool that's true if NFT is being used to increase a loan's max LTV
     mapping(uint256 => bool) private _locked;
 
     // NFT token id to information about its mint
@@ -79,7 +79,7 @@ contract GenesisNFT is
     /// @param symbol Symbol of the NFT
     /// @param cap Maximum number of tokens that can be minted
     /// @param price Price of each NFT in wei
-    /// @param ltvBoost LTV boost factor
+    /// @param maxLTVBoost max LTV boost factor
     /// @param nativeTokenFactor Factor for calculating native token reward
     /// @param maxLocktime Maximum lock time for staking in seconds
     /// @param minLocktime Minimum lock time for staking in seconds
@@ -90,7 +90,7 @@ contract GenesisNFT is
         string calldata symbol,
         uint256 cap,
         uint256 price,
-        uint256 ltvBoost,
+        uint256 maxLTVBoost,
         uint256 nativeTokenFactor,
         uint256 maxLocktime,
         uint256 minLocktime,
@@ -109,7 +109,7 @@ contract GenesisNFT is
         _addressProvider = addressProvider;
         _cap = cap;
         _price = price;
-        _ltvBoost = ltvBoost;
+        _maxLTVBoost = maxLTVBoost;
         _nativeTokenFactor = nativeTokenFactor;
         _maxLocktime = maxLocktime;
         _minLocktime = minLocktime;
@@ -195,16 +195,16 @@ contract GenesisNFT is
         return _cap;
     }
 
-    /// @notice Returns the LTV boost factor
-    /// @return The LTV boost factor
-    function getLTVBoost() external view override returns (uint256) {
-        return _ltvBoost;
+    /// @notice Returns the max LTV boost factor
+    /// @return The max LTV boost factor
+    function getMaxLTVBoost() external view override returns (uint256) {
+        return _maxLTVBoost;
     }
 
-    /// @notice Sets the LTV boost factor
-    /// @param newLTVBoost The new LTV boost factor
-    function setLTVBoost(uint256 newLTVBoost) external onlyOwner {
-        _ltvBoost = newLTVBoost;
+    /// @notice Sets the Max LTV boost factor
+    /// @param newMaxLTVBoost The new Max LTV boost factor
+    function setMaxLTVBoost(uint256 newMaxLTVBoost) external onlyOwner {
+        _maxLTVBoost = newMaxLTVBoost;
     }
 
     /// @notice Returns the active state of the specified Genesis NFT

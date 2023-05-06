@@ -100,7 +100,7 @@ library ValidationLogic {
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         // Get boost from genesis NFTs
-        uint256 boost;
+        uint256 maxLTVboost;
         if (params.genesisNFTId != 0) {
             IGenesisNFT genesisNFT = IGenesisNFT(
                 addressesProvider.getGenesisNFT()
@@ -126,7 +126,7 @@ library ValidationLogic {
                 "Genesis NFT currently being used by another loan"
             );
 
-            boost = genesisNFT.getLTVBoost();
+            maxLTVboost = genesisNFT.getMaxLTVBoost();
         }
 
         // Get assets ETH price
@@ -145,8 +145,7 @@ library ValidationLogic {
                 (PercentageMath.percentMul(
                     collateralETHPrice,
                     ILoanCenter(addressesProvider.getLoanCenter())
-                        .getCollectionMaxCollaterization(params.nftAddress) +
-                        boost
+                        .getCollectionMaxLTV(params.nftAddress) + maxLTVboost
                 ) * pricePrecision) /
                     assetETHPrice,
             "Amount exceeds allowed by collateral"
@@ -208,16 +207,21 @@ library ValidationLogic {
         );
         uint256 assetETHPrice = tokenOracle.getTokenETHPrice(poolAsset);
         uint256 pricePrecision = tokenOracle.getPricePrecision();
+        uint256 collateralETHPrice = INFTOracle(
+            addressesProvider.getNFTOracle()
+        ).getTokensETHPrice(
+                loanNFTAsset,
+                loanNFTTokenIds,
+                params.request,
+                params.packet
+            );
 
         // Get loan center
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
 
         require(
-            (loanCenter.getLoanMaxETHCollateral(
-                params.loanId,
-                params.request,
-                params.packet
-            ) * pricePrecision) /
+            (loanCenter.getLoanMaxDebt(params.loanId, collateralETHPrice) *
+                pricePrecision) /
                 assetETHPrice <
                 loanCenter.getLoanDebt(params.loanId),
             "Collateral / Debt loan relation does not allow for liquidation."
@@ -227,14 +231,7 @@ library ValidationLogic {
         uint256 maxLiquidatorDiscount = ILendingPool(loanPool)
             .getPoolConfig()
             .maxLiquidatorDiscount;
-        uint256 collateralETHPrice = INFTOracle(
-            addressesProvider.getNFTOracle()
-        ).getTokensETHPrice(
-                loanNFTAsset,
-                loanNFTTokenIds,
-                params.request,
-                params.packet
-            );
+
         require(
             params.bid >=
                 (collateralETHPrice *
@@ -245,6 +242,11 @@ library ValidationLogic {
         );
     }
 
+    /// @notice Validates a bid on a liquidation auction
+    /// @param params The bid params
+    /// @param loanState  The state of the loan
+    /// @param loanAuctionStartTimestamp The timestamp when the auction started
+    /// @param loanAuctionMaxBid The current max bid of the auction
     function validateBidLiquidationAuction(
         DataTypes.AuctionBidParams memory params,
         DataTypes.LoanState loanState,
@@ -271,6 +273,9 @@ library ValidationLogic {
         );
     }
 
+    /// @notice Validates a claim of a liquidation auction
+    /// @param loanState  The state of the loan
+    /// @param loanAuctionStartTimestamp The timestamp when the auction started
     function validateClaimLiquidation(
         DataTypes.LoanState loanState,
         uint256 loanAuctionStartTimestamp
