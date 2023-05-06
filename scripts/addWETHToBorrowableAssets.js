@@ -24,12 +24,15 @@ async function main() {
   const interestRate = InterestRate.attach(addresses.InterestRate);
 
   // Add WETH parameters to interest rate contract
-  const setWETHInterestRateParamsTx = await interestRate.addToken(wethAddress, {
-    optimalUtilizationRate: 7000,
-    baseBorrowRate: 500,
-    lowSlope: 2000,
-    highSlope: 20000,
-  });
+  const setWETHInterestRateParamsTx = await interestRate.addToken(
+    addresses["ETH"].address,
+    {
+      optimalUtilizationRate: 7000,
+      baseBorrowRate: 500,
+      lowSlope: 2000,
+      highSlope: 20000,
+    }
+  );
   await setWETHInterestRateParamsTx.wait();
 
   console.log("wETH Interest Rate Model added");
