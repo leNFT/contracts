@@ -203,9 +203,9 @@ contract GenesisNFT is
         {
             _svg = abi.encodePacked(
                 _svg,
-                '<circle cx="50%" cy="60%" r="40" fill="none" stroke="#000" stroke-width="2" filter="url(#a)"/>',
+                '<circle cx="50%" cy="60%" r="50" fill="none" stroke="#000" stroke-width="2" filter="url(#a)"/>',
                 '<text x="50%" text-anchor="middle" font-size="28">',
-                '<tspan dy="180">#',
+                '<tspan dy="180">',
                 Strings.toString(tokenId),
                 "</tspan>",
                 '<animate attributeName="y" values="-100;70;65;70" keyTimes="0;0.8;0.9;1" dur="1s" fill="freeze"/>',
@@ -213,7 +213,7 @@ contract GenesisNFT is
                 '<text font-size="12" letter-spacing="4" rotate="180 180 180 180 180 180 180">',
                 '<textPath href="#b" startOffset="0%">',
                 "SISENEG",
-                '<animate attributeName="startOffset" from="100%" to="0%" dur="10s" repeatCount="indefinite"/>',
+                '<animate attributeName="startOffset" from="100%" to="0%" dur="15s" repeatCount="indefinite"/>',
                 "</textPath>",
                 "</text>"
             );
@@ -223,7 +223,7 @@ contract GenesisNFT is
             _svg = abi.encodePacked(
                 _svg,
                 "<defs>",
-                '<path id="b" d="M150 240a50 50 0 1 0 100 0 50 50 0 1 0-100 0"/>',
+                '<path id="b" d="M140 240a60 60 0 1 0 120 0 60 60 0 1 0-120 0"/>',
                 "</defs>",
                 "</svg>"
             );
