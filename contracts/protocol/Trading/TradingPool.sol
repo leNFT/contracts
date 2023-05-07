@@ -271,11 +271,13 @@ contract TradingPool is
         }
 
         // Send user token to the pool
-        IERC20(_token).safeTransferFrom(
-            _msgSender(),
-            address(this),
-            tokenAmount
-        );
+        if (tokenAmount > 0) {
+            IERC20(_token).safeTransferFrom(
+                _msgSender(),
+                address(this),
+                tokenAmount
+            );
+        }
 
         // Save the user deposit info
         _liquidityPairs[_lpCount] = DataTypes.LiquidityPair({

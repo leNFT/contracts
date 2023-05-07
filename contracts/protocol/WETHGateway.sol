@@ -160,18 +160,22 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         );
 
         // Transfer the NFTs to the WETH Gateway and approve them for use
-        for (uint i = 0; i < nftIds.length; i++) {
-            IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
-                _msgSender(),
-                address(this),
-                nftIds[i]
-            );
+        if (nftIds.length > 0) {
+            for (uint i = 0; i < nftIds.length; i++) {
+                IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
+                    _msgSender(),
+                    address(this),
+                    nftIds[i]
+                );
+            }
+            IERC721(ITradingPool(pool).getNFT()).setApprovalForAll(pool, true);
         }
-        IERC721(ITradingPool(pool).getNFT()).setApprovalForAll(pool, true);
 
         // Deposit and approve WETH
-        _weth.deposit{value: msg.value}();
-        _weth.approve(pool, msg.value);
+        if (msg.value > 0) {
+            _weth.deposit{value: msg.value}();
+            _weth.approve(pool, msg.value);
+        }
 
         ITradingPool(pool).addLiquidity(
             msg.sender,
