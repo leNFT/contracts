@@ -92,7 +92,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         emit RemoveGauge(gauge, liquidityPool);
     }
 
-    /// @notice Check if a gauge exists
+    /// @notice Check if a gauge exists (meaning is registered with the gauge controller)
     /// @param gauge The address of the gauge to check
     /// @return A boolean indicating whether the gauge exists
     function isGauge(address gauge) external view override returns (bool) {
