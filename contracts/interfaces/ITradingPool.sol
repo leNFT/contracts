@@ -8,7 +8,7 @@ interface ITradingPool is IERC721 {
     event AddLiquidity(
         address indexed user,
         uint256 indexed id,
-        DataTypes.LPType lpType,
+        DataTypes.LPType indexed lpType,
         uint256[] nftIds,
         uint256 tokenAmount,
         uint256 spotPrice,
