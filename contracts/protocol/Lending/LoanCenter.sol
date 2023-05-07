@@ -52,6 +52,11 @@ contract LoanCenter is
         _;
     }
 
+    modifier loanExists(uint256 loanId) {
+        _requireLoanExists(loanId);
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -207,23 +212,25 @@ contract LoanCenter is
     /// @return The loan data
     function getLoan(
         uint256 loanId
-    ) external view override returns (DataTypes.LoanData memory) {
-        require(
-            _loans[loanId].state != DataTypes.LoanState.None,
-            "Loan does not exist."
-        );
-
+    )
+        external
+        view
+        override
+        loanExists(loanId)
+        returns (DataTypes.LoanData memory)
+    {
         return _loans[loanId];
     }
 
     function getLoanLiquidationData(
         uint256 loanId
-    ) external view override returns (DataTypes.LoanLiquidationData memory) {
-        require(
-            _loans[loanId].state == DataTypes.LoanState.Auctioned,
-            "Loan is not being auctioned."
-        );
-
+    )
+        external
+        view
+        override
+        loanExists(loanId)
+        returns (DataTypes.LoanLiquidationData memory)
+    {
         return _loansLiquidationData[loanId];
     }
 
@@ -234,12 +241,7 @@ contract LoanCenter is
     function getLoanMaxDebt(
         uint256 loanId,
         uint256 tokensPrice
-    ) external view override returns (uint256) {
-        require(
-            _loans[loanId].state != DataTypes.LoanState.None,
-            "Loan does not exist."
-        );
-
+    ) external view override loanExists(loanId) returns (uint256) {
         return
             PercentageMath.percentMul(
                 tokensPrice,
@@ -271,12 +273,7 @@ contract LoanCenter is
     /// @return The total amount of debt owed on the loan quoted in the same asset of the loan's lending pool
     function getLoanDebt(
         uint256 loanId
-    ) public view override returns (uint256) {
-        require(
-            _loans[loanId].state != DataTypes.LoanState.None,
-            "Loan does not exist."
-        );
-
+    ) public view override loanExists(loanId) returns (uint256) {
         return _getLoanDebt(loanId);
     }
 
@@ -285,12 +282,7 @@ contract LoanCenter is
     /// @return The amount of interest owed on the loan
     function getLoanInterest(
         uint256 loanId
-    ) external view override returns (uint256) {
-        require(
-            _loans[loanId].state != DataTypes.LoanState.None,
-            "Loan does not exist."
-        );
-
+    ) external view override loanExists(loanId) returns (uint256) {
         return _loans[loanId].getInterest(block.timestamp);
     }
 
@@ -299,12 +291,7 @@ contract LoanCenter is
     /// @return An array of the NFT token IDs associated with the loan
     function getLoanTokenIds(
         uint256 loanId
-    ) external view override returns (uint256[] memory) {
-        require(
-            _loans[loanId].state != DataTypes.LoanState.None,
-            "Loan does not exist."
-        );
-
+    ) external view override loanExists(loanId) returns (uint256[] memory) {
         return _loans[loanId].nftTokenIds;
     }
 
@@ -313,12 +300,7 @@ contract LoanCenter is
     /// @return The address of the NFT contract associated with the loan
     function getLoanCollectionAddress(
         uint256 loanId
-    ) external view override returns (address) {
-        require(
-            _loans[loanId].state != DataTypes.LoanState.None,
-            "Loan does not exist."
-        );
-
+    ) external view override loanExists(loanId) returns (address) {
         return _loans[loanId].nftAsset;
     }
 
@@ -327,13 +309,14 @@ contract LoanCenter is
     /// @return The address of the lending pool associated with the loan
     function getLoanLendingPool(
         uint256 loanId
-    ) external view override returns (address) {
-        require(
-            _loans[loanId].state != DataTypes.LoanState.None,
-            "Loan does not exist."
-        );
-
+    ) external view override loanExists(loanId) returns (address) {
         return _loans[loanId].pool;
+    }
+
+    function getLoanState(
+        uint256 loanId
+    ) external view returns (DataTypes.LoanState) {
+        return _loans[loanId].state;
     }
 
     /// @notice Updates the debt timestamp of a loan.
@@ -343,11 +326,6 @@ contract LoanCenter is
         uint256 loanId,
         uint256 newDebtTimestamp
     ) external override onlyMarket {
-        require(
-            _loans[loanId].state != DataTypes.LoanState.None,
-            "Loan does not exist."
-        );
-
         _loans[loanId].debtTimestamp = uint40(newDebtTimestamp);
     }
 
@@ -358,11 +336,6 @@ contract LoanCenter is
         uint256 loanId,
         uint256 newAmount
     ) external override onlyMarket {
-        require(
-            _loans[loanId].state != DataTypes.LoanState.None,
-            "Loan does not exist."
-        );
-
         _loans[loanId].amount = newAmount;
     }
 
@@ -421,6 +394,13 @@ contract LoanCenter is
         require(
             _msgSender() == _addressProvider.getLendingMarket(),
             "Caller must be Market contract"
+        );
+    }
+
+    function _requireLoanExists(uint256 loanId) internal view {
+        require(
+            _loans[loanId].state != DataTypes.LoanState.None,
+            "Loan does not exist."
         );
     }
 }

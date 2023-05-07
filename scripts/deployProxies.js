@@ -99,8 +99,8 @@ async function main() {
   const loanCenter = await upgrades.deployProxy(LoanCenter, [
     addressesProvider.address,
     {
-      maxLTV: "3000", // DefaultMaxCollaterization 30%
-      liquidationThreshold: "6000", // DefaultLiquidationThreshold 60%
+      maxLTV: "3000", // Default Max LTV for loans - 30%
+      liquidationThreshold: "6000", // Default Liquidation Threshold for loanss - 60%
     },
   ]);
   addresses["LoanCenter"] = loanCenter.address;
