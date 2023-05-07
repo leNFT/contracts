@@ -446,7 +446,7 @@ contract TradingPool is
             _token
         );
 
-        emit Buy(_msgSender(), nftIds, finalPrice);
+        emit Buy(onBehalfOf, nftIds, finalPrice);
     }
 
     /// @notice Allows an address to sell one or more NFTs in exchange for a token amount.
@@ -557,7 +557,7 @@ contract TradingPool is
             _token
         );
 
-        emit Sell(_msgSender(), nftIds, finalPrice);
+        emit Sell(onBehalfOf, nftIds, finalPrice);
     }
 
     /// @notice Allows the owner of the contract to pause or unpause the contract.
