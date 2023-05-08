@@ -35,7 +35,7 @@ contract TokenOracle is ITokenOracle, Ownable {
     /// @param token The address of the token to get the price for
     /// @return The ETH price of the token
     /// @dev If a data feed is available, the price is returned from the data feed
-    /// @dev If there's no data feed, the previously set price is returned
+    /// @dev If there's no data feed we return the previously set price on the mapping _tokenPrices[] set by the function setTokenETHPrice()
     function getTokenETHPrice(
         address token
     ) external view override returns (uint256) {
