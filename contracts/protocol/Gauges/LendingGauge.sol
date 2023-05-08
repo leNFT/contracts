@@ -214,15 +214,16 @@ contract LendingGauge is IGauge {
     function _maturityMultiplier(
         uint256 timeInterval
     ) internal view returns (uint256) {
-        uint256 lpMaturity = IGaugeController(
+        uint256 lpMaturityTime = IGaugeController(
             _addressProvider.getGaugeController()
         ).getLPMaturityPeriod() *
             IVotingEscrow(_addressProvider.getVotingEscrow()).epochPeriod();
-        if (timeInterval > lpMaturity) {
+        if (timeInterval > lpMaturityTime) {
             return PercentageMath.PERCENTAGE_FACTOR;
         } else {
             return
-                (PercentageMath.PERCENTAGE_FACTOR * timeInterval) / lpMaturity;
+                (PercentageMath.PERCENTAGE_FACTOR * timeInterval) /
+                lpMaturityTime;
         }
     }
 

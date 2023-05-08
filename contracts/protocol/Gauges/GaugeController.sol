@@ -524,7 +524,10 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @notice Sets the maturity period for LP tokens
     /// @param maturityPeriod The new maturity period in epochs
     function setLPMaturityPeriod(uint256 maturityPeriod) external onlyOwner {
-        require(maturityPeriod > 0, "Maturity period must be greater than 0");
+        require(
+            maturityPeriod > 0,
+            "Maturity period must be greater than 0 epochs"
+        );
         _lpMaturityPeriod = maturityPeriod;
     }
 
