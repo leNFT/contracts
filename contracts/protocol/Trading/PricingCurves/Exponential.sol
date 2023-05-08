@@ -30,8 +30,8 @@ contract ExponentialPriceCurve is IPricingCurve, ERC165 {
         uint256 delta
     ) external pure override returns (uint256) {
         return
-            ((PercentageMath.PERCENTAGE_FACTOR - delta) * price) /
-            PercentageMath.PERCENTAGE_FACTOR;
+            (PercentageMath.PERCENTAGE_FACTOR * price) /
+            (PercentageMath.PERCENTAGE_FACTOR + delta);
     }
 
     /// @notice Validates delta factor
