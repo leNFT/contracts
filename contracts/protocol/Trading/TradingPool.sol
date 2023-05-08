@@ -46,11 +46,6 @@ contract TradingPool is
 
     using SafeERC20 for IERC20;
 
-    modifier onlyMarket() {
-        _requireOnlyMarket();
-        _;
-    }
-
     modifier poolNotPaused() {
         _requirePoolNotPaused();
         _;
@@ -594,12 +589,5 @@ contract TradingPool is
 
     function _requirePoolNotPaused() internal view {
         require(!_paused, "Pool is paused");
-    }
-
-    function _requireOnlyMarket() internal view {
-        require(
-            _msgSender() == _addressProvider.getLendingMarket(),
-            "Caller must be Market contract"
-        );
     }
 }
