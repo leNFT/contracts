@@ -387,7 +387,7 @@ contract TradingPool is
                 (fee *
                     ITradingPoolFactory(
                         _addressProvider.getTradingPoolFactory()
-                    ).getProtocolFee()) /
+                    ).getProtocolFeePercentage()) /
                 PercentageMath.PERCENTAGE_FACTOR;
 
             // Remove nft from liquidity pair nft list
@@ -442,7 +442,8 @@ contract TradingPool is
             _addressProvider.getFeeDistributor(),
             (totalFee *
                 ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                    .getProtocolFee()) / PercentageMath.PERCENTAGE_FACTOR
+                    .getProtocolFeePercentage()) /
+                PercentageMath.PERCENTAGE_FACTOR
         );
         IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
             _token
@@ -508,7 +509,7 @@ contract TradingPool is
                 (fee *
                     ITradingPoolFactory(
                         _addressProvider.getTradingPoolFactory()
-                    ).getProtocolFee()) /
+                    ).getProtocolFeePercentage()) /
                 PercentageMath.PERCENTAGE_FACTOR;
 
             // Add nft to liquidity pair nft list
@@ -553,7 +554,8 @@ contract TradingPool is
             _addressProvider.getFeeDistributor(),
             (totalFee *
                 ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                    .getProtocolFee()) / PercentageMath.PERCENTAGE_FACTOR
+                    .getProtocolFeePercentage()) /
+                PercentageMath.PERCENTAGE_FACTOR
         );
         IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
             _token

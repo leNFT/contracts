@@ -194,7 +194,7 @@ async function main() {
   );
   const tradingPoolFactory = await upgrades.deployProxy(TradingPoolFactory, [
     addressesProvider.address,
-    "1000", // Default protocol fee (10%)
+    "1000", // Default protocol fee percentage (10%)
     "25000000000000000000", // TVL Safeguard for pools
   ]);
   addresses["TradingPoolFactory"] = tradingPoolFactory.address;

@@ -31,7 +31,7 @@ contract TradingPoolFactory is
     // collection + asset = pool
     mapping(address => mapping(address => address)) private _pools;
 
-    uint256 private _protocolFee;
+    uint256 private _protocolFeePercentage;
     uint256 private _tvlSafeguard;
 
     using ERC165CheckerUpgradeable for address;
@@ -43,31 +43,33 @@ contract TradingPoolFactory is
 
     /// @notice Initialize the contract
     /// @param addressesProvider Address of the AddressesProvider contract
-    /// @param protocolFee Protocol fee percentage charged on trades
+    /// @param protocolFeePercentage Protocol fee percentage charged on lp trade fees
     /// @param tvlSafeguard default TVL safeguard for pools
     function initialize(
         IAddressesProvider addressesProvider,
-        uint256 protocolFee,
+        uint256 protocolFeePercentage,
         uint256 tvlSafeguard
     ) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
         __Context_init();
         _addressProvider = addressesProvider;
-        _protocolFee = protocolFee;
+        _protocolFeePercentage = protocolFeePercentage;
         _tvlSafeguard = tvlSafeguard;
     }
 
     /// @notice Set the protocol fee percentage
-    /// @param newProtocolFee New protocol fee percentage
-    function setProtocolFee(uint256 newProtocolFee) external onlyOwner {
-        _protocolFee = newProtocolFee;
+    /// @param newProtocolFeePercentage New protocol fee percentage
+    function setProtocolFeePercentage(
+        uint256 newProtocolFeePercentage
+    ) external onlyOwner {
+        _protocolFeePercentage = newProtocolFeePercentage;
     }
 
     /// @notice Get the current protocol fee percentage
     /// @return Current protocol fee percentage
-    function getProtocolFee() external view returns (uint256) {
-        return _protocolFee;
+    function getProtocolFeePercentage() external view returns (uint256) {
+        return _protocolFeePercentage;
     }
 
     /// @notice Get the current TVL safeguard

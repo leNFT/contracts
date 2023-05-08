@@ -8,7 +8,7 @@ interface ITradingPoolFactory {
         address indexed token
     );
 
-    function getProtocolFee() external view returns (uint256);
+    function getProtocolFeePercentage() external view returns (uint256);
 
     function getTVLSafeguard() external view returns (uint256);
 }
