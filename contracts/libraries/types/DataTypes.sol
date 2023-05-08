@@ -85,8 +85,6 @@ library DataTypes {
     struct LoanData {
         // borrowed amount
         uint256 amount;
-        // The genesis NFT id for the boost (0 if not used)
-        uint256 genesisNFTId;
         // the ids of the token
         uint256[] nftTokenIds;
         // address of nft asset token
@@ -99,6 +97,8 @@ library DataTypes {
         uint40 debtTimestamp;
         // address of lending pool associated with loan
         address pool;
+        // The genesis NFT id for the boost (0 if not used). Uint16 is used since genesis cap < 65536
+        uint16 genesisNFTId;
         // the current state of the loan
         LoanState state;
     }

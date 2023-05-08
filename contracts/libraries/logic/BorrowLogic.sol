@@ -132,7 +132,7 @@ library BorrowLogic {
             ILendingPool(loanData.pool).receiveUnderlying(
                 params.caller,
                 loanData.amount,
-                loanData.borrowRate,
+                uint256(loanData.borrowRate),
                 interest
             );
 
@@ -141,7 +141,7 @@ library BorrowLogic {
             if (loanData.genesisNFTId != 0) {
                 // Unlock Genesis NFT
                 IGenesisNFT(addressesProvider.getGenesisNFT()).setLockedState(
-                    loanData.genesisNFTId,
+                    uint256(loanData.genesisNFTId),
                     false
                 );
             }
@@ -166,18 +166,18 @@ library BorrowLogic {
                 ILendingPool(loanData.pool).receiveUnderlying(
                     params.caller,
                     0,
-                    loanData.borrowRate,
+                    uint256(loanData.borrowRate),
                     params.amount
                 );
 
                 // Calculate how much time the user has paid off with sent amount
                 loanCenter.updateLoanDebtTimestamp(
                     params.loanId,
-                    loanData.debtTimestamp +
+                    uint256(loanData.debtTimestamp) +
                         ((365 days *
                             params.amount *
                             PercentageMath.PERCENTAGE_FACTOR) /
-                            (loanData.amount * loanData.borrowRate))
+                            (loanData.amount * uint256(loanData.borrowRate)))
                 );
             }
             // User is sending the full interest and closing part of the loan
@@ -185,7 +185,7 @@ library BorrowLogic {
                 ILendingPool(loanData.pool).receiveUnderlying(
                     params.caller,
                     params.amount - interest,
-                    loanData.borrowRate,
+                    uint256(loanData.borrowRate),
                     interest
                 );
                 loanCenter.updateLoanDebtTimestamp(

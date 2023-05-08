@@ -16,7 +16,7 @@ library LoanLogic {
     ) internal {
         loandata.state = DataTypes.LoanState.Created;
         loandata.amount = amount;
-        loandata.genesisNFTId = genesisNFTId;
+        loandata.genesisNFTId = uint16(genesisNFTId);
         loandata.nftAsset = nftAsset;
         loandata.nftTokenIds = nftTokenIds;
         loandata.borrowRate = uint16(borrowRate);
@@ -26,7 +26,7 @@ library LoanLogic {
     }
 
     function getInterest(
-        DataTypes.LoanData storage loandata,
+        DataTypes.LoanData storage loanData,
         uint256 timestamp
     ) internal view returns (uint256) {
         //Interest increases every 30 minutes
@@ -34,9 +34,9 @@ library LoanLogic {
             (30 * 60);
 
         return
-            (loandata.amount *
-                loandata.borrowRate *
-                (incrementalTimestamp - loandata.debtTimestamp)) /
+            (loanData.amount *
+                uint256(loanData.borrowRate) *
+                (incrementalTimestamp - uint256(loanData.debtTimestamp))) /
             (PercentageMath.PERCENTAGE_FACTOR * 365 days);
     }
 }

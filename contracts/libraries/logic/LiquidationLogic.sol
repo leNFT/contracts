@@ -126,7 +126,7 @@ library LiquidationLogic {
             ILendingPool(loanData.pool).receiveUnderlyingDefaulted(
                 address(this),
                 fundsLeft,
-                loanData.borrowRate,
+                uint256(loanData.borrowRate),
                 loanData.amount
             );
 
@@ -136,7 +136,7 @@ library LiquidationLogic {
             ILendingPool(loanData.pool).receiveUnderlying(
                 address(this),
                 loanData.amount,
-                loanData.borrowRate,
+                uint256(loanData.borrowRate),
                 loanInterest
             );
 
@@ -188,7 +188,7 @@ library LiquidationLogic {
         if (loanData.genesisNFTId != 0) {
             // Unlock Genesis NFT
             IGenesisNFT(addressesProvider.getGenesisNFT()).setLockedState(
-                loanData.genesisNFTId,
+                uint256(loanData.genesisNFTId),
                 false
             );
         }
