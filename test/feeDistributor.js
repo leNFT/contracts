@@ -59,7 +59,7 @@ describe("Fee Distributor ", () => {
   });
   it("Should be able to claim the tokens after the epoch is over", async function () {
     // Add 2 hours to the time
-    await ethers.provider.send("evm_increaseTime", [2 * 3600]);
+    await ethers.provider.send("evm_increaseTime", [12 * 3600]);
     // Mine a new block
     await ethers.provider.send("evm_mine", []);
 

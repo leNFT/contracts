@@ -100,7 +100,7 @@ library ValidationLogic {
         uint256 pricePrecision = tokenOracle.getPricePrecision();
 
         // Get boost from genesis NFTs
-        uint256 maxLTVboost;
+        uint256 maxLTVBoost;
         if (params.genesisNFTId != 0) {
             IGenesisNFT genesisNFT = IGenesisNFT(
                 addressesProvider.getGenesisNFT()
@@ -126,7 +126,7 @@ library ValidationLogic {
                 "Genesis NFT currently being used by another loan"
             );
 
-            maxLTVboost = genesisNFT.getMaxLTVBoost();
+            maxLTVBoost = genesisNFT.getMaxLTVBoost();
         }
 
         // Get assets ETH price
@@ -145,7 +145,7 @@ library ValidationLogic {
                 (PercentageMath.percentMul(
                     collateralETHPrice,
                     ILoanCenter(addressesProvider.getLoanCenter())
-                        .getCollectionMaxLTV(params.nftAddress) + maxLTVboost
+                        .getCollectionMaxLTV(params.nftAddress) + maxLTVBoost
                 ) * pricePrecision) /
                     assetETHPrice,
             "Amount exceeds allowed by collateral"
