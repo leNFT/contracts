@@ -11,4 +11,6 @@ interface ITradingPoolFactory {
     function getProtocolFeePercentage() external view returns (uint256);
 
     function getTVLSafeguard() external view returns (uint256);
+
+    function isValidPool(address pool) external view returns (bool);
 }

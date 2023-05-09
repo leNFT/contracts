@@ -31,6 +31,9 @@ contract TradingPoolFactory is
     // collection + asset = pool
     mapping(address => mapping(address => address)) private _pools;
 
+    // mapping of valid pools
+    mapping(address => bool) private _validPools;
+
     uint256 private _protocolFeePercentage;
     uint256 private _tvlSafeguard;
 
@@ -108,6 +111,13 @@ contract TradingPoolFactory is
         _pools[nft][token] = pool;
     }
 
+    /// @notice Returns whether a pool is valid or not
+    /// @param pool The address of the pool to check
+    /// @return Whether the pool is valid or not
+    function isValidPool(address pool) external view returns (bool) {
+        return _validPools[pool];
+    }
+
     /// @notice Creates a trading pool for a certain collection and token
     /// @param nft The NFT collection address
     /// @param token The token address to trade against
@@ -143,6 +153,7 @@ contract TradingPoolFactory is
         );
 
         _pools[nft][token] = address(newTradingPool);
+        _validPools[address(newTradingPool)] = true;
 
         // Approve trading pool in swap router
         ISwapRouter(_addressProvider.getSwapRouter()).approveTradingPool(

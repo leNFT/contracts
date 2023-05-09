@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
+import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
 import {ISwapRouter} from "../../interfaces/ISwapRouter.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -47,6 +48,17 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
         require(
             address(buyPool) != address(sellPool),
             "Pools can't be the same."
+        );
+        // Pools need to be registered in the factory
+        require(
+            ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
+                .isValidPool(address(buyPool)),
+            "Buy pool not registered."
+        );
+        require(
+            ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
+                .isValidPool(address(sellPool)),
+            "Sell pool not registered."
         );
         // Pools need to have the same underlying token
         require(
