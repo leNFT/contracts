@@ -8,7 +8,6 @@ import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {IFeeDistributor} from "../../interfaces/IFeeDistributor.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
-import {IDebtToken} from "../../interfaces/IDebtToken.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
@@ -165,9 +164,7 @@ library LiquidationLogic {
         // ... and the rest to the borrower.
         if (fundsLeft > 0) {
             IERC20Upgradeable(poolAsset).safeTransfer(
-                IERC721Upgradeable(addressesProvider.getDebtToken()).ownerOf(
-                    params.loanId
-                ),
+                loanData.owner,
                 fundsLeft
             );
         }
@@ -192,8 +189,5 @@ library LiquidationLogic {
                 false
             );
         }
-
-        // Burn the token representing the debt
-        IDebtToken(addressesProvider.getDebtToken()).burn(params.loanId);
     }
 }

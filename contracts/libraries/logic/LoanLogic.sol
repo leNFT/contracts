@@ -6,7 +6,8 @@ import {PercentageMath} from "../math/PercentageMath.sol";
 
 library LoanLogic {
     function init(
-        DataTypes.LoanData storage loandata,
+        DataTypes.LoanData storage loanData,
+        address owner,
         address pool,
         uint256 amount,
         uint256 genesisNFTId,
@@ -14,15 +15,16 @@ library LoanLogic {
         uint256[] memory nftTokenIds,
         uint256 borrowRate
     ) internal {
-        loandata.state = DataTypes.LoanState.Created;
-        loandata.amount = amount;
-        loandata.genesisNFTId = uint16(genesisNFTId);
-        loandata.nftAsset = nftAsset;
-        loandata.nftTokenIds = nftTokenIds;
-        loandata.borrowRate = uint16(borrowRate);
-        loandata.pool = pool;
-        loandata.initTimestamp = uint40(block.timestamp);
-        loandata.debtTimestamp = uint40(block.timestamp);
+        loanData.owner = owner;
+        loanData.state = DataTypes.LoanState.Created;
+        loanData.amount = amount;
+        loanData.genesisNFTId = uint16(genesisNFTId);
+        loanData.nftAsset = nftAsset;
+        loanData.nftTokenIds = nftTokenIds;
+        loanData.borrowRate = uint16(borrowRate);
+        loanData.pool = pool;
+        loanData.initTimestamp = uint40(block.timestamp);
+        loanData.debtTimestamp = uint40(block.timestamp);
     }
 
     function getInterest(

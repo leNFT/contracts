@@ -129,14 +129,6 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
         return _tokenOracle;
     }
 
-    function setDebtToken(address debtToken) external override onlyOwner {
-        _debtToken = debtToken;
-    }
-
-    function getDebtToken() external view override returns (address) {
-        return _debtToken;
-    }
-
     function setGenesisNFT(address genesisNFT) external override onlyOwner {
         _genesisNFT = genesisNFT;
     }

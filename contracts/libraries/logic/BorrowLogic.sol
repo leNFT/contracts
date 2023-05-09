@@ -7,7 +7,6 @@ import {ValidationLogic} from "./ValidationLogic.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
-import {IDebtToken} from "../../interfaces/IDebtToken.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
@@ -58,18 +57,13 @@ library BorrowLogic {
 
         // Create the loan
         loanId = loanCenter.createLoan(
+            params.onBehalfOf,
             lendingPool,
             params.amount,
             params.genesisNFTId,
             params.nftAddress,
             params.nftTokenIds,
             borrowRate
-        );
-
-        // Mint the token representing the debt
-        IDebtToken(addressesProvider.getDebtToken()).mint(
-            params.onBehalfOf,
-            loanId
         );
 
         //Activate Loan
@@ -150,14 +144,10 @@ library BorrowLogic {
             for (uint256 i = 0; i < loanData.nftTokenIds.length; i++) {
                 IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
                     address(loanCenter),
-                    IERC721Upgradeable(addressesProvider.getDebtToken())
-                        .ownerOf(params.loanId),
+                    loanData.owner,
                     loanData.nftTokenIds[i]
                 );
             }
-
-            // Burn the token representing the debt
-            IDebtToken(addressesProvider.getDebtToken()).burn(params.loanId);
         }
         // User is sending less than the total debt
         else {

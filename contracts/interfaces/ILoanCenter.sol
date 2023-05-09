@@ -6,6 +6,7 @@ import {Trustus} from "../protocol/Trustus/Trustus.sol";
 
 interface ILoanCenter {
     function createLoan(
+        address owner,
         address lendingPool,
         uint256 amount,
         uint256 genesisNFTId,
@@ -37,11 +38,6 @@ interface ILoanCenter {
     function activateLoan(uint256 loanId) external;
 
     function getLoansCount() external view returns (uint256);
-
-    function getActiveLoansCount(
-        address user,
-        address collection
-    ) external view returns (uint256);
 
     function getNFTLoanId(
         address nftAddress,

@@ -65,7 +65,7 @@ library DataTypes {
 
     /**
      * State change flow:
-     * None -> Created -> Active -> Repaid -> Auction -> Defaulted
+     * None -> Created -> Active -> Repaid -> Auction -> Liquidated
      * 0 - None (Default Value): We need a default that is not 'Created' - this is the zero value
      * 1 - Created: The loan data is stored; but not initiated yet.
      * 2 - Active: The loan has been initialized; funds have been delivered to the borrower and the collateral is held.
@@ -83,6 +83,8 @@ library DataTypes {
     }
 
     struct LoanData {
+        // Owner of the loan
+        address owner;
         // borrowed amount
         uint256 amount;
         // the ids of the token
