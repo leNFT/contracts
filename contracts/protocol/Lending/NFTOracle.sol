@@ -53,18 +53,18 @@ contract NFTOracle is INFTOracle, Ownable, Trustus {
         // Make sure the request is for the right token
         require(
             collection == priceParams.collection,
-            "Request collection and collection don't coincide"
+            "NFTO:GTEP:COLLECTION_MISMATCH"
         );
 
         // Make sure the tokens ids coincide
         require(
             tokenIds.length == priceParams.tokenIds.length,
-            "Request tokenIds and function parameters tokenIds have different length"
+            "NFTO:GTEP:TOKENS_LENGTH_MISMATCH"
         );
         for (uint i = 0; i < tokenIds.length; i++) {
             require(
                 tokenIds[i] == priceParams.tokenIds[i],
-                "Request tokenIds and function parameters tokenIds don't coincide"
+                "NFTO:GTEP:TOKEN_ID_MISMATCH"
             );
         }
 

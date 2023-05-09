@@ -334,7 +334,7 @@ contract LendingGauge is IGauge {
     /// @notice Deposits LP tokens into the contract and updates the user's balance and working balance.
     /// @param amount The amount of LP tokens to deposit.
     function deposit(uint256 amount) external {
-        require(amount > 0, "Deposit amount must be greater than 0");
+        require(amount > 0, "LG:D:AMOUNT_ZERO");
 
         // Update balance
         _balanceOf[msg.sender] += amount;
@@ -349,7 +349,7 @@ contract LendingGauge is IGauge {
     function withdraw(uint256 amount) external {
         require(
             amount <= _balanceOf[msg.sender],
-            "Withdraw amount higher than balance"
+            "LG:W:AMOUNT_EXCEEDS_BALANCE"
         );
 
         // Update balance

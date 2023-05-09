@@ -127,11 +127,11 @@ contract TradingPoolFactory is
     ) external nonReentrant {
         require(
             nft.supportsInterface(type(IERC721Upgradeable).interfaceId),
-            "Collection address is not ERC721 compliant."
+            "TPF:CTP:NFT_NOT_ERC721"
         );
         require(
             _pools[nft][token] == address(0),
-            "Trading Pool for pair already exists"
+            "TPF:CTP:POOL_ALREADY_EXISTS"
         );
         ITradingPool newTradingPool = new TradingPool(
             _addressProvider,

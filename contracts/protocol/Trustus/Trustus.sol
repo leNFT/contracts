@@ -80,13 +80,10 @@ abstract contract Trustus {
         TrustusPacket calldata packet
     ) internal view virtual {
         // verify deadline
-        require(
-            block.timestamp < packet.deadline,
-            "Packet timestamp is invalid"
-        );
+        require(block.timestamp < packet.deadline, "T:V:DEADLINE_EXCEEDED");
 
         // verify request
-        require(request == packet.request, "Request number doesn't match");
+        require(request == packet.request, "T:V:INVALID_REQUEST");
 
         // verify signature
         address recoveredAddress = ecrecover(
@@ -113,7 +110,7 @@ abstract contract Trustus {
 
         require(
             recoveredAddress != address(0) && isTrusted[recoveredAddress],
-            "Recovered address is invalid"
+            "T:V:INVALID_SIGNATURE"
         );
     }
 

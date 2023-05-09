@@ -80,7 +80,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @dev Only the contract owner can call this method.
     /// @param gauge The address of the gauge to be removed
     function removeGauge(address gauge) external onlyOwner {
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "GC:RG:INVALID_GAUGE");
 
         address liquidityPool = IGauge(gauge).lpToken();
         if (_liquidityPoolToGauge[liquidityPool] == gauge) {
@@ -110,7 +110,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @param gauge The address of the gauge to check
     /// @return The current weight of the gauge
     function getGaugeWeight(address gauge) external view returns (uint256) {
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "GC:GGW:INVALID_GAUGE");
 
         DataTypes.Point
             memory lastGaugeWeightCheckpoint = _lastGaugeWeigthCheckpoint[
@@ -139,13 +139,13 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         address gauge,
         uint256 epoch
     ) public returns (uint256) {
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "GC:GGWA:INVALID_GAUGE");
         require(
             epoch <=
                 IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
                     block.timestamp
                 ),
-            "Epoch is in the future"
+            "GC:GGWA:INVALID_EPOCH"
         );
         // Update gauge weight history
         writeGaugeWeightHistory(gauge);
@@ -179,7 +179,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
                 IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
                     block.timestamp
                 ),
-            "Epoch is in the future"
+            "GC:GTWA:INVALID_EPOCH"
         );
         // Update total weight history
         writeTotalWeightHistory();
@@ -204,7 +204,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         uint256 tokenId,
         address gauge
     ) external view returns (uint256) {
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "GC:LVRFG:INVALID_GAUGE");
 
         return _lockGaugeVoteRatio[tokenId][gauge];
     }
@@ -213,7 +213,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         uint256 tokenId,
         address gauge
     ) external view returns (DataTypes.Point memory) {
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "GC:LVPFG:INVALID_GAUGE");
 
         return _lockGaugeVotePoint[tokenId][gauge];
     }
@@ -226,7 +226,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         uint256 tokenId,
         address gauge
     ) external view returns (uint256) {
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "GC:LVWFG:INVALID_GAUGE");
 
         if (
             _lockGaugeVotePoint[tokenId][gauge].slope *
@@ -281,7 +281,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @notice Update the weight history of a gauge
     /// @param gauge The address of the gauge to update
     function writeGaugeWeightHistory(address gauge) public {
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "GC:WGW:INVALID_GAUGE");
 
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
@@ -337,7 +337,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         require(
             IERC721Upgradeable(votingEscrowAddress).ownerOf(tokenId) ==
                 msg.sender,
-            "Must be the owner of the lock to use it to vote"
+            "GC:V:NOT_LOCK_OWNER"
         );
 
         // Get user locked balance
@@ -350,20 +350,18 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
                 _lockVoteRatio[tokenId] -
                 _lockGaugeVoteRatio[tokenId][gauge] <=
                 PercentageMath.PERCENTAGE_FACTOR, // 100%
-            "Total vote ratio must be smaller than 100%"
+            "GC:V:INVALID_RATIO"
         );
 
+        // Lock must not be expired unless the ratio is 0 (we are removing the vote)
         require(
             lockedBalance.end > block.timestamp || ratio == 0,
-            "Must have an active lock in order to vote unless it's erasing a vote"
+            "GC:V:LOCK_EXPIRED"
         );
 
-        require(
-            lockedBalance.amount > 0,
-            "Must have locked balance bigger than 0 to vote"
-        );
+        require(lockedBalance.amount > 0, "GC:V:LOCKED_BALANCE_ZERO");
 
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "GC:V:INVALID_GAUGE");
 
         // Write weight history to make sure its up to date until this epoch
         writeTotalWeightHistory();
@@ -478,7 +476,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
                 IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
                     block.timestamp
                 ),
-            "Epoch is in the future"
+            "GC:GER:INVALID_EPOCH"
         );
 
         // If there are no votes in any gauge, return 0
@@ -502,13 +500,13 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         address gauge,
         uint256 epoch
     ) external returns (uint256 rewards) {
-        require(_isGauge[gauge], "Gauge is not on the gauge list");
+        require(_isGauge[gauge], "GC:GGR:INVALID_GAUGE");
         require(
             epoch <=
                 IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
                     block.timestamp
                 ),
-            "Epoch is in the future"
+            "GC:GGR:INVALID_EPOCH"
         );
 
         // If there are no votes in any gauge, return 0
@@ -524,10 +522,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @notice Sets the maturity period for LP tokens
     /// @param maturityPeriod The new maturity period in epochs
     function setLPMaturityPeriod(uint256 maturityPeriod) external onlyOwner {
-        require(
-            maturityPeriod > 0,
-            "Maturity period must be greater than 0 epochs"
-        );
+        require(maturityPeriod > 0, "GC:SLPMP:INVALID_MATURITY_PERIOD");
         _lpMaturityPeriod = maturityPeriod;
     }
 

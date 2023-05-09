@@ -53,7 +53,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     ) ERC20(name, symbol) ERC4626(IERC20(asset)) {
         require(
             msg.sender == addressProvider.getLendingMarket(),
-            "Lending Pool must be created through market"
+            "LP:C:ONLY_MARKET"
         );
         _addressProvider = addressProvider;
         _asset = IERC20(asset);
@@ -280,13 +280,13 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     }
 
     function _requirePoolNotPaused() internal view {
-        require(!_paused, "Pool is paused");
+        require(!_paused, "LP:POOL_PAUSED");
     }
 
     function _requireOnlyMarket() internal view {
         require(
             _msgSender() == _addressProvider.getLendingMarket(),
-            "Caller must be Market contract"
+            "LP:NOT_MARKET"
         );
     }
 }

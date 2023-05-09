@@ -45,25 +45,22 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
         uint256 minimumSellPrice
     ) external nonReentrant returns (uint256) {
         // Pools need to be different
-        require(
-            address(buyPool) != address(sellPool),
-            "Pools can't be the same."
-        );
+        require(address(buyPool) != address(sellPool), "SR:S:SAME_POOL");
         // Pools need to be registered in the factory
         require(
             ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
                 .isValidPool(address(buyPool)),
-            "Buy pool not registered."
+            "SR:S:INVALID_BUY_POOL"
         );
         require(
             ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
                 .isValidPool(address(sellPool)),
-            "Sell pool not registered."
+            "SR:S:INVALID_SELL_POOL"
         );
         // Pools need to have the same underlying token
         require(
             buyPool.getToken() == sellPool.getToken(),
-            "Underlying token mismatch."
+            "SR:S:DIFFERENT_TOKENS"
         );
 
         uint256 sellPrice = sellPool.sell(
@@ -105,7 +102,7 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
     function approveTradingPool(address token, address tradingPool) external {
         require(
             msg.sender == _addressProvider.getTradingPoolFactory(),
-            "Only trading pool factory can approve trading pool."
+            "SR:ATP:NOT_FACTORY"
         );
         IERC20(token).safeApprove(tradingPool, type(uint256).max);
     }

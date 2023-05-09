@@ -28,14 +28,14 @@ library ValidationLogic {
         uint256 amount
     ) external view {
         // Check if deposit amount is bigger than 0
-        require(amount > 0, "Deposit amount must be bigger than 0");
+        require(amount > 0, "VL:VD:AMOUNT_0");
 
         // Check if pool will exceed maximum permitted amount
         require(
             amount + IERC4626(lendingPool).totalAssets() <
                 ILendingMarket(addressesProvider.getLendingMarket())
                     .getTVLSafeguard(),
-            "Lending Pool exceeds safeguarded limit"
+            "VL:VD:SAFEGUARD_EXCEEDED"
         );
     }
 
@@ -49,7 +49,7 @@ library ValidationLogic {
         uint256 amount
     ) external view {
         // Check if withdrawal amount is bigger than 0
-        require(amount > 0, "Withdrawal amount must be bigger than 0");
+        require(amount > 0, "VL:VW:AMOUNT_0");
 
         // Check if the utilization rate doesn't go above maximum
         uint256 maxUtilizationRate = ILendingPool(lendingPool)
@@ -68,7 +68,7 @@ library ValidationLogic {
 
         require(
             updatedUtilizationRate <= maxUtilizationRate,
-            "Lending pool utilization rate too high"
+            "VL:VW:MAX_UTILIZATION_RATE"
         );
     }
 
@@ -82,16 +82,13 @@ library ValidationLogic {
         DataTypes.BorrowParams memory params
     ) external view {
         // Check if borrow amount is bigger than 0
-        require(params.amount > 0, "Borrow amount must be bigger than 0");
+        require(params.amount > 0, "VL:VB:AMOUNT_0");
 
         // Check if theres at least one asset
-        require(
-            params.nftTokenIds.length > 0,
-            "No assets provided as collateral"
-        );
+        require(params.nftTokenIds.length > 0, "VL:VB:NO_NFTS");
 
         // Check if the asset is supported
-        require(lendingPool != address(0), "No pool for asset and collection");
+        require(lendingPool != address(0), "VL:VB:INVALID_LENDING_POOL");
 
         ITokenOracle tokenOracle = ITokenOracle(
             addressesProvider.getTokenOracle()
@@ -113,17 +110,17 @@ library ValidationLogic {
                         params.onBehalfOf,
                         params.caller
                     ),
-                    "Not approved to use Genesis NFT in loan"
+                    "VL:VB:GENESIS_NOT_AUTHORIZED"
                 );
             }
             require(
                 genesisNFT.ownerOf(params.genesisNFTId) == params.onBehalfOf,
-                "Borrower doesn't own the Genesis NFT"
+                "VL:VB:GENESIS_NOT_OWNED"
             );
             //Require that the NFT is not being used
             require(
                 genesisNFT.getLockedState(params.genesisNFTId) == false,
-                "Genesis NFT currently being used by another loan"
+                "VL:VB:GENESIS_LOCKED"
             );
 
             maxLTVBoost = genesisNFT.getMaxLTVBoost();
@@ -148,13 +145,13 @@ library ValidationLogic {
                         .getCollectionMaxLTV(params.nftAddress) + maxLTVBoost
                 ) * pricePrecision) /
                     assetETHPrice,
-            "Amount exceeds allowed by collateral"
+            "VL:VB:MAX_LTV_EXCEEDED"
         );
 
         // Check if the pool has enough underlying to borrow
         require(
             params.amount <= ILendingPool(lendingPool).getUnderlyingBalance(),
-            "Amount exceeds pool balance"
+            "VL:VB:INSUFFICIENT_UNDERLYING"
         );
     }
 
@@ -166,22 +163,19 @@ library ValidationLogic {
         uint256 loanDebt
     ) external pure {
         // Check if borrow amount is bigger than 0
-        require(params.amount > 0, "Repay amount must be bigger than 0");
+        require(params.amount > 0, "VL:VR:AMOUNT_0");
 
         //Require that loan exists
-        require(loanState != DataTypes.LoanState.None, "Loan does not exist");
+        require(loanState != DataTypes.LoanState.None, "VL:VR:LOAN_NOT_FOUND");
 
         // Check if user is over paying
-        require(
-            params.amount <= loanDebt,
-            "Overpaying in repay. Amount is bigger than debt."
-        );
+        require(params.amount <= loanDebt, "VL:VR:AMOUNT_EXCEEDS_DEBT");
 
         // Can only do partial repayments if the loan is not being auctioned
         if (params.amount < loanDebt) {
             require(
                 loanState != DataTypes.LoanState.Auctioned,
-                "Cannot partially repay a loan that is being auctioned"
+                "VL:VR:PARTIAL_REPAY_AUCTIONED"
             );
         }
     }
@@ -198,7 +192,10 @@ library ValidationLogic {
         uint256[] calldata loanNFTTokenIds
     ) external view {
         //Require the loan exists
-        require(loanState == DataTypes.LoanState.Active, "Loan is not active");
+        require(
+            loanState == DataTypes.LoanState.Active,
+            "VL:VCLA:LOAN_NOT_FOUND"
+        );
 
         // Check if collateral / debt relation allows for liquidation
         address poolAsset = IERC4626(loanPool).asset();
@@ -224,7 +221,7 @@ library ValidationLogic {
                 pricePrecision) /
                 assetETHPrice <
                 loanCenter.getLoanDebt(params.loanId),
-            "Collateral / Debt loan relation does not allow for liquidation."
+            "VL:VCLA:MAX_DEBT_NOT_EXCEEDED"
         );
 
         // Check if bid is big enough
@@ -238,7 +235,7 @@ library ValidationLogic {
                     (PercentageMath.PERCENTAGE_FACTOR -
                         maxLiquidatorDiscount)) /
                     PercentageMath.PERCENTAGE_FACTOR,
-            "Bid amount is not big enough"
+            "VL:VCLA:BID_TOO_LOW"
         );
     }
 
@@ -256,21 +253,18 @@ library ValidationLogic {
         // Check if the auction exists
         require(
             loanState == DataTypes.LoanState.Auctioned,
-            "No liquidation auction for this loan"
+            "VL:VBLA:AUCTION_NOT_FOUND"
         );
 
         // Check if the auction is still active
         require(
             block.timestamp <
                 loanAuctionStartTimestamp + LIQUIDATION_AUCTION_PERIOD,
-            "Auction is no longer active"
+            "VL:VBLA:AUCTION_NOT_ACTIVE"
         );
 
         // Check if bid is higher than current bid
-        require(
-            params.bid > loanAuctionMaxBid,
-            "Bid amount is not higher than current bid"
-        );
+        require(params.bid > loanAuctionMaxBid, "VL:VBLA:BID_TOO_LOW");
     }
 
     /// @notice Validates a claim of a liquidation auction
@@ -283,14 +277,14 @@ library ValidationLogic {
         // Check if the auction exists
         require(
             loanState == DataTypes.LoanState.Auctioned,
-            "No liquidation auction for this loan"
+            "VL:VCLA:AUCTION_NOT_FOUND"
         );
 
         // Check if the auction is still active
         require(
             block.timestamp >
                 loanAuctionStartTimestamp + LIQUIDATION_AUCTION_PERIOD,
-            "Auction is still active"
+            "VL:VCLA:AUCTION_NOT_FINISHED"
         );
     }
 }

@@ -68,7 +68,7 @@ contract NativeToken is
     function _mint(address account, uint256 amount) internal override {
         require(
             ERC20Upgradeable.totalSupply() + amount <= getCap(),
-            "NativeToken: cap exceeded"
+            "NT:M:CAP_EXCEEDED"
         );
         ERC20Upgradeable._mint(account, amount);
     }
@@ -79,7 +79,7 @@ contract NativeToken is
     function mintGenesisTokens(uint256 amount) external {
         require(
             _msgSender() == _addressProvider.getGenesisNFT(),
-            "Genesis tokens can only be minted by the Genesis NFT contract"
+            "NT:MGT:NOT_GENESIS"
         );
         _mint(_addressProvider.getGenesisNFT(), amount);
     }
@@ -90,7 +90,7 @@ contract NativeToken is
     function burnGenesisTokens(uint256 amount) external {
         require(
             _msgSender() == _addressProvider.getGenesisNFT(),
-            "Genesis tokens can only be burned by the Genesis NFT contract"
+            "NT:BGT:NOT_GENESIS"
         );
         _burn(_addressProvider.getGenesisNFT(), amount);
     }
@@ -107,7 +107,7 @@ contract NativeToken is
             IGaugeController(_addressProvider.getGaugeController()).isGauge(
                 _msgSender()
             ),
-            "Gauge rewards can only be minted by an approved gauge"
+            "NT:MGR:NOT_GAUGE"
         );
         _mint(receiver, amount);
     }
@@ -115,7 +115,7 @@ contract NativeToken is
     function mintRebates(address receiver, uint256 amount) external override {
         require(
             _msgSender() == _addressProvider.getVotingEscrow(),
-            "Rebates can only be minted by the Voting Escrow contract"
+            "NT:MR:NOT_VOTING_ESCROW"
         );
         _mint(receiver, amount);
     }

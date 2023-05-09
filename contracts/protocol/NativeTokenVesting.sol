@@ -95,7 +95,7 @@ contract NativeTokenVesting is Ownable {
     function withdraw(uint256 amount) external {
         require(
             getAvailableToWithdraw(_msgSender()) >= amount,
-            "Amount bigger than allowed by vesting"
+            "NTV:W:AMOUNT_TOO_HIGH"
         );
         _withdrawn[_msgSender()] += amount;
         IERC20(_addressProvider.getNativeToken()).safeTransfer(

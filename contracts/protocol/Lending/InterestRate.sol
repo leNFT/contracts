@@ -134,6 +134,6 @@ contract InterestRate is IInterestRate, Ownable {
     }
 
     function _requireOnlySupported(address token) internal view {
-        require(_isSupported[token], "InterestRate: token not supported");
+        require(_isSupported[token], "IR:TOKEN_NOT_SUPPORTED");
     }
 }

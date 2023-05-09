@@ -436,14 +436,14 @@ contract LoanCenter is
     function _requireOnlyMarket() internal view {
         require(
             _msgSender() == _addressProvider.getLendingMarket(),
-            "Caller must be Market contract"
+            "LC:NOT_MARKET"
         );
     }
 
     function _requireLoanExists(uint256 loanId) internal view {
         require(
             _loans[loanId].state != DataTypes.LoanState.None,
-            "Loan does not exist."
+            "LC:UNEXISTENT_LOAN"
         );
     }
 }

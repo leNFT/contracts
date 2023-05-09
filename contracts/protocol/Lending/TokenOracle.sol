@@ -40,7 +40,7 @@ contract TokenOracle is ITokenOracle, Ownable {
         address token
     ) external view override returns (uint256) {
         // Make sure the token price is available in the contract
-        require(_isTokenSupported(token), "Token not supported by Oracle.");
+        require(_isTokenSupported(token), "TO:GTEP:TOKEN_NOT_SUPPORTED");
 
         // If a data feed is available return price from it
         if (_priceFeeds[token] != address(0)) {

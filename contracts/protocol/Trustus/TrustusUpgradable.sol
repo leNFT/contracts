@@ -82,13 +82,10 @@ abstract contract TrustusUpgradable is Initializable {
         TrustusPacket calldata packet
     ) internal view virtual {
         // verify deadline
-        require(
-            block.timestamp < packet.deadline,
-            "Packet timestamp is invalid"
-        );
+        require(block.timestamp < packet.deadline, "T:VP:DEADLINE_EXCEEDED");
 
         // verify request
-        require(request == packet.request, "Request number doesn't match");
+        require(request == packet.request, "T:VP:INVALID_REQUEST");
 
         // verify signature
         address recoveredAddress = ecrecover(
@@ -115,7 +112,7 @@ abstract contract TrustusUpgradable is Initializable {
 
         require(
             recoveredAddress != address(0) && isTrusted[recoveredAddress],
-            "Recovered address is invalid"
+            "T:VP:INVALID_SIGNATURE"
         );
     }
 

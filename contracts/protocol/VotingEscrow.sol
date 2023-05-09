@@ -102,10 +102,7 @@ contract VotingEscrow is
     /// @param timestamp The timestamp for which to retrieve the epoch number.
     /// @return The epoch number.
     function epoch(uint256 timestamp) public view returns (uint256) {
-        require(
-            timestamp > _deployTimestamp,
-            "Timestamp prior to contract deployment"
-        );
+        require(timestamp > _deployTimestamp, "VE:E:INVALID_TIMESTAMP");
         return (timestamp / EPOCH_PERIOD) - (_deployTimestamp / EPOCH_PERIOD);
     }
 
@@ -231,11 +228,11 @@ contract VotingEscrow is
 
         require(
             roundedUnlockTime >= MINLOCKTIME + block.timestamp,
-            "Locktime smaller than minimum locktime"
+            "VE:SL:LOCKTIME_TOO_LOW"
         );
         require(
             roundedUnlockTime <= MAXLOCKTIME + block.timestamp,
-            "Locktime higher than maximum locktime"
+            "VE:SL:LOCKTIME_TOO_HIGH"
         );
 
         return (amount * (roundedUnlockTime - block.timestamp)) / MAXLOCKTIME;
@@ -317,10 +314,7 @@ contract VotingEscrow is
     function getLockedRatioAt(
         uint256 _epoch
     ) external override returns (uint256) {
-        require(
-            _epoch <= epoch(block.timestamp),
-            "Invalid epoch: Epoch in the future"
-        );
+        require(_epoch <= epoch(block.timestamp), "VE:GLRA:INVALID_EPOCH");
 
         // Update total weight history
         writeTotalWeightHistory();
@@ -338,10 +332,7 @@ contract VotingEscrow is
     /// @param _epoch The epoch number for which to retrieve the total weight.
     /// @return The total weight of locked tokens at the given epoch.
     function totalWeightAt(uint256 _epoch) external returns (uint256) {
-        require(
-            _epoch <= epoch(block.timestamp),
-            "Invalid epoch: Epoch in the future"
-        );
+        require(_epoch <= epoch(block.timestamp), "VE:TWA:INVALID_EPOCH");
 
         // Update total weight history
         writeTotalWeightHistory();
@@ -401,15 +392,15 @@ contract VotingEscrow is
         // Round the locktime to whole epochs
         uint256 roundedUnlockTime = (unlockTime / EPOCH_PERIOD) * EPOCH_PERIOD;
 
-        require(amount > 0, "Amount must be greater than 0");
+        require(amount > 0, "VE:CL:AMOUNT_ZERO");
 
         require(
             roundedUnlockTime >= MINLOCKTIME + block.timestamp,
-            "Locktime smaller than minimum locktime"
+            "VE:CL:LOCKTIME_TOO_LOW"
         );
         require(
             roundedUnlockTime <= MAXLOCKTIME + block.timestamp,
-            "Locktime higher than maximum locktime"
+            "VE:CL:LOCKTIME_TOO_HIGH"
         );
 
         // Mint a veNFT to represent the lock and increase the token id counter
@@ -444,8 +435,11 @@ contract VotingEscrow is
         uint256 tokenId,
         uint256 amount
     ) external nonReentrant {
-        require(_lockedBalance[tokenId].end > block.timestamp, "Inactive Lock");
-        require(ownerOf(tokenId) == _msgSender(), "Not the owner of the lock");
+        require(
+            _lockedBalance[tokenId].end > block.timestamp,
+            "VE:IA:LOCK_EXPIRED"
+        );
+        require(ownerOf(tokenId) == _msgSender(), "VE:IA:NOT_OWNER");
 
         // Claim any existing rebates
         claimRebates(tokenId);
@@ -475,8 +469,11 @@ contract VotingEscrow is
         uint256 tokenId,
         uint256 newUnlockTime
     ) external nonReentrant {
-        require(ownerOf(tokenId) == _msgSender(), "Not the owner of the lock");
-        require(_lockedBalance[tokenId].end > block.timestamp, "Inactive Lock");
+        require(ownerOf(tokenId) == _msgSender(), "VE:IUT:NOT_OWNER");
+        require(
+            _lockedBalance[tokenId].end > block.timestamp,
+            "VE:IUT:LOCK_EXPIRED"
+        );
 
         // Round the locktime to whole epochs
         uint256 roundedUnlocktime = (newUnlockTime / EPOCH_PERIOD) *
@@ -484,12 +481,12 @@ contract VotingEscrow is
 
         require(
             roundedUnlocktime > _lockedBalance[tokenId].end,
-            "Lock time can only increase"
+            "VE:IUT:TIME_NOT_INCREASED"
         );
 
         require(
             roundedUnlocktime <= MAXLOCKTIME + block.timestamp,
-            "Locktime higher than maximum locktime"
+            "VE:IUT:LOCKTIME_TOO_HIGH"
         );
 
         // Claim any existing rebates
@@ -511,18 +508,18 @@ contract VotingEscrow is
     /// @dev Calls a checkpoint event
     /// @dev User needs to claim fees before withdrawing or will lose them
     function withdraw(uint256 tokenId) external {
-        require(ownerOf(tokenId) == _msgSender(), "Not the owner of the lock");
-        require(_lockedBalance[tokenId].amount > 0, "Nothing to withdraw");
+        require(ownerOf(tokenId) == _msgSender(), "VE:W:NOT_OWNER");
+        require(_lockedBalance[tokenId].amount > 0, "VE:W:ZERO_BALANCE");
         require(
             block.timestamp > _lockedBalance[tokenId].end,
-            "Locktime is not over"
+            "VE:W:LOCK_NOT_EXPIRED"
         );
 
         // Make sure the tokenId has no active votes
         require(
             IGaugeController(_addressProvider.getGaugeController())
                 .lockVoteRatio(tokenId) == 0,
-            "Lock has active gauge votes"
+            "VE:W:HAS_ACTIVE_VOTES"
         );
 
         // Claim any existing rebates
@@ -552,7 +549,7 @@ contract VotingEscrow is
     function claimRebates(
         uint256 tokenId
     ) public returns (uint256 amountToClaim) {
-        require(ownerOf(tokenId) == _msgSender(), "Not owner of token");
+        require(ownerOf(tokenId) == _msgSender(), "VE:CR:NOT_OWNER");
 
         writeTotalWeightHistory();
 
@@ -645,7 +642,7 @@ contract VotingEscrow is
     function _requireOnlyMarket() internal view {
         require(
             _msgSender() == _addressProvider.getLendingMarket(),
-            "Caller must be Market contract"
+            "VE:NOT_MARKET"
         );
     }
 }

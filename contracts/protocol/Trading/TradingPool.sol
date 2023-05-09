@@ -69,7 +69,7 @@ contract TradingPool is
     ) ERC721(name, symbol) {
         require(
             _msgSender() == addressProvider.getTradingPoolFactory(),
-            "Trading Pool must be created through Factory"
+            "TP:C:MUST_BE_FACTORY"
         );
         _addressProvider = addressProvider;
         _token = token;
@@ -112,7 +112,7 @@ contract TradingPool is
     function nftToLp(uint256 nftId) external view returns (uint256) {
         require(
             IERC721(_nft).ownerOf(nftId) == address(this),
-            "Pool does not own NFT"
+            "TP:NTL:NOT_OWNED"
         );
         return _nftToLp[nftId].liquidityPair;
     }
@@ -123,7 +123,7 @@ contract TradingPool is
     /// @param fee The new fee.
     function setLpFee(uint256 lpId, uint256 fee) external {
         //Require the caller owns LP
-        require(_msgSender() == ERC721.ownerOf(lpId), "Must own LP position");
+        require(_msgSender() == ERC721.ownerOf(lpId), "TP:SLF:NOT_OWNER");
 
         _liquidityPairs[lpId].fee = fee;
 
@@ -136,7 +136,7 @@ contract TradingPool is
     /// @param spotPrice The new spot price.
     function setLpSpotPrice(uint256 lpId, uint256 spotPrice) external {
         //Require the caller owns LP
-        require(_msgSender() == ERC721.ownerOf(lpId), "Must own LP position");
+        require(_msgSender() == ERC721.ownerOf(lpId), "TP:SLSP:NOT_OWNERS");
 
         _liquidityPairs[lpId].spotPrice = spotPrice;
 
@@ -154,7 +154,7 @@ contract TradingPool is
         uint256 delta
     ) external {
         //Require the caller owns LP
-        require(_msgSender() == ERC721.ownerOf(lpId), "Must own LP position");
+        require(_msgSender() == ERC721.ownerOf(lpId), "TP:SLPC:NOT_OWNER");
 
         _liquidityPairs[lpId].curve = curve;
         _liquidityPairs[lpId].delta = delta;
@@ -187,7 +187,7 @@ contract TradingPool is
             tokenAmount + IERC20(_token).balanceOf(address(this)) <
                 ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
                     .getTVLSafeguard(),
-            "Trading pool exceeds safeguarded limit"
+            "TP:AL:SAFEGUARD_EXCEEDED"
         );
 
         // Different types of liquidity pairs have different requirements
@@ -203,18 +203,12 @@ contract TradingPool is
         ) {
             require(
                 tokenAmount > 0 || nftIds.length > 0,
-                "Deposit can't be empty"
+                "TP:AL:DEPOSIT_REQUIRED"
             );
         } else if (lpType == DataTypes.LPType.Buy) {
-            require(
-                tokenAmount > 0 && nftIds.length == 0,
-                "Deposit should only contain tokens"
-            );
+            require(tokenAmount > 0 && nftIds.length == 0, "TP:AL:TOKENS_ONLY");
         } else if (lpType == DataTypes.LPType.Sell) {
-            require(
-                nftIds.length > 0 && tokenAmount == 0,
-                "Deposit should only contain NFTs"
-            );
+            require(nftIds.length > 0 && tokenAmount == 0, "TP:AL:NFTS_ONLY");
         }
 
         // DIrectional LPs must have a positive delta in order for the price to move or else
@@ -223,33 +217,33 @@ contract TradingPool is
             lpType == DataTypes.LPType.TradeUp ||
             lpType == DataTypes.LPType.TradeDown
         ) {
-            require(
-                delta > 0,
-                "Delta must be greater than zero for directional LPs"
-            );
+            require(delta > 0, "TP:AL:DELTA_0");
         }
 
         // Require that the curve conforms to the curve interface
         require(
             IERC165(curve).supportsInterface(type(IPricingCurve).interfaceId),
-            "Curve must be a valid curve contract"
+            "TP:AL:INVALID_CURVE"
         );
 
         // Validate delta
-        require(IPricingCurve(curve).validateDelta(delta), "Invalid delta");
+        require(
+            IPricingCurve(curve).validateDelta(delta),
+            "TP:AL:INVALID_DELTA"
+        );
 
         // Validate spot price
         require(
             IPricingCurve(curve).validateSpotPrice(spotPrice),
-            "Invalid spot price"
+            "TP:AL:INVALID_SPOT_PRICE"
         );
 
         if (lpType == DataTypes.LPType.Buy || lpType == DataTypes.LPType.Sell) {
             // Validate fee
-            require(fee == 0, "Buy/Sell LPs must have 0 fee");
+            require(fee == 0, "TP:AL:INVALID_LIMIT_FEE");
         } else {
             // require that the fee is less than 90%
-            require(fee <= MAX_FEE, "Fee must be less than 90%");
+            require(fee <= MAX_FEE, "TP:AL:INVALID_FEE");
         }
 
         // Add user nfts to the pool
@@ -307,7 +301,7 @@ contract TradingPool is
     /// @param lpId The ID of the LP token to remove
     function removeLiquidity(uint256 lpId) public nonReentrant poolNotPaused {
         //Require the caller owns LP
-        require(_msgSender() == ERC721.ownerOf(lpId), "Must own LP position");
+        require(_msgSender() == ERC721.ownerOf(lpId), "TP:RL:NOT_OWNER");
 
         // Send pool nfts to the user
         uint256 nftIdsLength = _liquidityPairs[lpId].nftIds.length;
@@ -356,7 +350,7 @@ contract TradingPool is
         uint256[] calldata nftIds,
         uint256 maximumPrice
     ) external nonReentrant poolNotPaused returns (uint256 finalPrice) {
-        require(nftIds.length > 0, "Need to buy at least one NFT");
+        require(nftIds.length > 0, "TP:B:NFTS_0");
 
         uint256 priceQuote;
         uint256 lpIndex;
@@ -369,13 +363,13 @@ contract TradingPool is
             // Check if the pool contract owns the NFT
             require(
                 IERC721(_nft).ownerOf(nftIds[i]) == address(this),
-                "Pool does not own NFT"
+                "TP:B:NOT_OWNER"
             );
             lpIndex = _nftToLp[nftIds[i]].liquidityPair;
             lp = _liquidityPairs[lpIndex];
 
             // Can't buy from buy LP
-            require(lp.lpType != DataTypes.LPType.Buy, "Can't buy from buy LP");
+            require(lp.lpType != DataTypes.LPType.Buy, "TP:B:IS_BUY_LP");
 
             fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
             protocolFee =
@@ -420,10 +414,7 @@ contract TradingPool is
 
         finalPrice = priceQuote + totalFee;
 
-        require(
-            finalPrice <= maximumPrice,
-            "Price higher than maximum price set by caller"
-        );
+        require(finalPrice <= maximumPrice, "TP:B:MAX_PRICE_EXCEEDED");
 
         // Get tokens from user
         IERC20(_token).safeTransferFrom(
@@ -459,15 +450,14 @@ contract TradingPool is
         uint256[] calldata liquidityPairs,
         uint256 minimumPrice
     ) external nonReentrant poolNotPaused returns (uint256 finalPrice) {
-        require(
-            nftIds.length == liquidityPairs.length,
-            "NFTs and Liquidity Pairs must have same length"
-        );
-        require(nftIds.length > 0, "Need to sell at least one NFT");
+        require(nftIds.length == liquidityPairs.length, "TP:S:NFT_LP_MISMATCH");
+        require(nftIds.length > 0, "TP:S:NFTS_0");
+
+        // Only the swap router can call this function on behalf of another address
         if (onBehalfOf != _msgSender()) {
             require(
                 _msgSender() == _addressProvider.getSwapRouter(),
-                "Only SwapRouter can sell on behalf of another address"
+                "TP:S:NOT_SWAP_ROUTER"
             );
         }
         uint256 priceQuote;
@@ -481,7 +471,7 @@ contract TradingPool is
         for (uint i = 0; i < nftIds.length; i++) {
             // Check if the LP exists
             lpIndex = liquidityPairs[i];
-            require(ownerOf(lpIndex) != address(0), "LP does not exist");
+            require(ownerOf(lpIndex) != address(0), "TP:S:LP_NOT_EXIST");
 
             // Get the LP details
             lp = _liquidityPairs[lpIndex];
@@ -494,10 +484,7 @@ contract TradingPool is
             );
 
             // Can't sell to sell LP
-            require(
-                lp.lpType != DataTypes.LPType.Sell,
-                "Can't sell to sell LP"
-            );
+            require(lp.lpType != DataTypes.LPType.Sell, "TP:S:IS_SELL_LP");
 
             fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
             protocolFee =
@@ -517,7 +504,7 @@ contract TradingPool is
             });
             require(
                 lp.tokenAmount >= lp.spotPrice - fee + protocolFee,
-                "Not enough tokens in liquidity pair"
+                "TP:S:INSUFFICIENT_TOKENS_IN_LP"
             );
             _liquidityPairs[lpIndex].tokenAmount -= (lp.spotPrice -
                 fee +
@@ -537,10 +524,7 @@ contract TradingPool is
         // Calculate the final price for the user
         finalPrice = priceQuote - totalFee;
 
-        require(
-            finalPrice >= minimumPrice,
-            "Price lower than minimum price set by caller"
-        );
+        require(finalPrice >= minimumPrice, "TP:S:MINIMUM_PRICE_NOT_REACHED");
 
         IERC20(_token).safeTransfer(_msgSender(), finalPrice);
 
@@ -588,6 +572,6 @@ contract TradingPool is
     }
 
     function _requirePoolNotPaused() internal view {
-        require(!_paused, "Pool is paused");
+        require(!_paused, "TP:POOL_PAUSED");
     }
 }

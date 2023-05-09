@@ -89,10 +89,10 @@ contract FeeDistributor is
         // Funds not claimable by users are epoch in which there was no locked supply
         require(
             votingEscrow.totalWeightAt(epoch) == 0,
-            "Funds are claimable by users"
+            "FD:SV:FUNDS_CLAIMABLE"
         );
         // THere needs to be funds to salvage
-        require(_epochFees[token][epoch] > 0, "No funds to salvage");
+        require(_epochFees[token][epoch] > 0, "FD:SV:NO_FUNDS");
 
         // Tranfer rewards to current epoch
         _epochFees[token][epoch] += _epochFees[token][

@@ -96,10 +96,7 @@ contract GenesisNFT is
         uint256 minLocktime,
         address payable devAddress
     ) external initializer {
-        require(
-            price >= LP_ETH_AMOUNT,
-            "Price must be greater or equal to LP ETH AMOUNT"
-        );
+        require(price >= LP_ETH_AMOUNT, "G:I:PRICE_TOO_LOW");
         __ERC721_init(name, symbol);
         __ERC721Enumerable_init();
         __ERC165_init();
@@ -136,7 +133,7 @@ contract GenesisNFT is
     function tokenURI(
         uint256 tokenId
     ) public view override(ERC721Upgradeable) returns (string memory) {
-        require(_exists(tokenId), "Token URI query for not existing token");
+        require(_exists(tokenId), "G:TU:INVALID_TOKEN_ID");
         return
             string(
                 abi.encodePacked(
@@ -179,7 +176,7 @@ contract GenesisNFT is
     }
 
     function svg(uint256 tokenId) public view returns (bytes memory _svg) {
-        require(_exists(tokenId), "SVG query for nonexistent token");
+        require(_exists(tokenId), "G:S:INVALID_TOKEN_ID");
         {
             _svg = abi.encodePacked(
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" style="width:100%;background:#f8f1f1;fill:#000;font-family:monospace">',
@@ -275,8 +272,8 @@ contract GenesisNFT is
         uint256 amount,
         uint256 locktime
     ) public view returns (uint256) {
-        require(locktime >= _minLocktime, "Locktime is lower than threshold");
-        require(locktime <= _maxLocktime, "Locktime is higher than limit");
+        require(locktime >= _minLocktime, "G:GNTR:LOCKTIME_TOO_LOW");
+        require(locktime <= _maxLocktime, "G:GNTR:LOCKTIME_TOO_HIGH");
 
         if (_tokenIdCounter.current() > _cap) {
             return 0;
@@ -309,20 +306,20 @@ contract GenesisNFT is
         uint256 amount
     ) external payable nonReentrant {
         // Make sure locktimes are within limits
-        require(locktime >= _minLocktime, "Locktime is lower than threshold");
-        require(locktime <= _maxLocktime, "Locktime is higher than limit");
+        require(locktime >= _minLocktime, "G:M:LOCKTIME_TOO_LOW");
+        require(locktime <= _maxLocktime, "G:M:LOCKTIME_TOO_HIGH");
 
         // Make sure the genesis incentived pool is set
         require(
             _balancerDetails.poolId != bytes32(0) &&
                 _balancerDetails.pool != address(0),
-            "Balancer Details not set."
+            "G:M:BALANCER_NOT_SET"
         );
 
         // Make sure there are enough tokens to mint
         require(
             _tokenIdCounter.current() + amount <= getCap(),
-            "Maximum cap exceeded"
+            "G:M:CAP_EXCEEDED"
         );
 
         // Get the native token address to save on gas
@@ -330,7 +327,7 @@ contract GenesisNFT is
 
         // Make sure the user sent enough ETH
         uint256 buyPrice = _price * amount;
-        require(msg.value == buyPrice, "Tx value is not equal to price");
+        require(msg.value == buyPrice, "G:M:INSUFFICIENT_ETH");
 
         // Get the amount of ETH to deposit to the pool
         uint256 ethAmount = LP_ETH_AMOUNT * amount;
@@ -417,7 +414,7 @@ contract GenesisNFT is
 
         // Send the rest of the ETH to the dev address
         (bool sent, ) = _devAddress.call{value: buyPrice - ethAmount}("");
-        require(sent, "Failed to send Ether to dev fund");
+        require(sent, "G:M:ETH_TRANSFER_FAIL");
 
         uint256 tokenId;
         for (uint256 i = 0; i < amount; i++) {
@@ -461,12 +458,12 @@ contract GenesisNFT is
             //Require the caller owns the token
             require(
                 _msgSender() == ERC721Upgradeable.ownerOf(tokenIds[i]),
-                "Must own token"
+                "G:B:NOT_OWNER"
             );
             // Token can only be burned after locktime is over
             require(
                 block.timestamp >= getUnlockTimestamp(tokenIds[i]),
-                "Token is still locked"
+                "G:B:NOT_UNLOCKED"
             );
 
             // Add the LP amount to the sum
@@ -579,10 +576,7 @@ contract GenesisNFT is
         uint256 tokenId,
         uint256 batchSize
     ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
-        require(
-            _locked[tokenId] == false,
-            "Cannot transfer token - currently locked in an active loan"
-        );
+        require(_locked[tokenId] == false, "G:BTT:TOKEN_LOCKED");
         ERC721EnumerableUpgradeable._beforeTokenTransfer(
             from,
             to,
@@ -612,7 +606,7 @@ contract GenesisNFT is
     function _requireOnlyMarket() internal view {
         require(
             _msgSender() == _addressProvider.getLendingMarket(),
-            "Caller must be Market contract"
+            "G:NOT_MARKET"
         );
     }
 

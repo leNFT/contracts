@@ -98,7 +98,7 @@ contract Bribes is
         // Make sure there are enough funds to withdraw
         require(
             _userBribes[token][gauge][nextEpoch][_msgSender()] >= amount,
-            "Not enough funds to withdraw"
+            "B:WB:NOT_ENOUGH_FUNDS"
         );
 
         // Subtract the amount from the bribes
@@ -126,18 +126,18 @@ contract Bribes is
                 IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
                     block.timestamp
                 ),
-            "Epoch is in the future"
+            "B:SB:EPOCH_NOT_STARTED"
         );
         // Funds not claimable by users are epoch in which there was no voting power for gauge
         require(
             gaugeController.getGaugeWeightAt(gauge, epoch) == 0,
-            "Bribes are claimable by users"
+            "B:SB:FUNDS_CLAIMABLE"
         );
 
         // THere needs to be funds to salvage
         require(
             _userBribes[token][gauge][epoch][_msgSender()] > 0,
-            "No funds to salvage"
+            "B:SB:NO_FUNDS"
         );
 
         // Tranfer bribe back to briber
@@ -195,7 +195,7 @@ contract Bribes is
             IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
                 tokenId
             ) == _msgSender(),
-            "Caller is not the owner of the token"
+            "B:C:NOT_OWNER"
         );
 
         // Get lock vote point and its epoch

@@ -37,7 +37,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
     ) external payable nonReentrant {
         require(
             IERC4626(lendingPool).asset() == address(_weth),
-            "Pool underlying is not WETH"
+            "ETHG:DLP:UNDERLYING_NOT_WETH"
         );
 
         // Deposit and approve WETH
@@ -55,14 +55,14 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
     ) external nonReentrant {
         require(
             IERC4626(lendingPool).asset() == address(_weth),
-            "Pool underlying is not WETH"
+            "ETHG:WLP:UNDERLYING_NOT_WETH"
         );
 
         IERC4626(lendingPool).withdraw(amount, address(this), _msgSender());
         _weth.withdraw(amount);
 
         (bool sent, ) = _msgSender().call{value: amount}("");
-        require(sent, "Failed to send Ether");
+        require(sent, "ETHG:WLP:ETH_TRANSFER_FAILED");
     }
 
     /// @notice Borrow ETH from a WETH lending pool while an NFT as collateral
@@ -113,7 +113,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         _weth.withdraw(amount);
 
         (bool sent, ) = _msgSender().call{value: amount}("");
-        require(sent, "Failed to send Ether");
+        require(sent, "ETHG:B:ETH_TRANSFER_FAILED");
     }
 
     /// @notice Repay an an active loan with ETH
@@ -127,7 +127,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
 
         require(
             IERC4626(pool).asset() == address(_weth),
-            "Loan pool underlying is not WETH"
+            "ETHG:R:UNDERLYING_NOT_WETH"
         );
 
         // Deposit and approve WETH
@@ -156,7 +156,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
     ) external payable nonReentrant {
         require(
             ITradingPool(pool).getToken() == address(_weth),
-            "Pool underlying is not WETH"
+            "ETHG:DTP:UNDERLYING_NOT_WETH"
         );
 
         // Transfer the NFTs to the WETH Gateway and approve them for use
@@ -198,7 +198,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
     ) external nonReentrant {
         require(
             ITradingPool(pool).getToken() == address(_weth),
-            "Pool underlying is not WETH"
+            "ETHG:WTP:UNDERLYING_NOT_WETH"
         );
 
         // Send LP NFT to this contract
@@ -223,7 +223,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         _weth.withdraw(lp.tokenAmount);
 
         (bool sent, ) = _msgSender().call{value: lp.tokenAmount}("");
-        require(sent, "Failed to send Ether");
+        require(sent, "ETHG:WTP:ETH_TRANSFER_FAILED");
     }
 
     /// @notice Withdraws liquidity from a trading pool for a batch of liquidity pairs.
@@ -238,7 +238,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
 
         require(
             ITradingPool(pool).getToken() == address(_weth),
-            "Pool underlying is not WETH"
+            "ETHG:WBTP:UNDERLYING_NOT_WETH"
         );
 
         // Send LP NFTs to this contract
@@ -279,7 +279,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         _weth.withdraw(totalAmount);
 
         (bool sent, ) = _msgSender().call{value: totalAmount}("");
-        require(sent, "Failed to send Ether");
+        require(sent, "ETHG:WBTP:ETH_TRANSFER_FAILED");
     }
 
     /// @notice Buys NFT from a trading pool by depositing WETH and specifying the NFT ids and maximum price to pay.
@@ -293,13 +293,10 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
     ) external payable nonReentrant {
         require(
             ITradingPool(pool).getToken() == address(_weth),
-            "Pool underlying is not WETH"
+            "ETHG:B:UNDERLYING_NOT_WETH"
         );
 
-        require(
-            msg.value == maximumPrice,
-            "Sent value is not equal to maximum price"
-        );
+        require(msg.value == maximumPrice, "ETHG:B:VALUE_NOT_MAXIMUM_PRICE");
 
         // Deposit and approve WETH
         _weth.deposit{value: msg.value}();
@@ -318,7 +315,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
             (bool sent, ) = _msgSender().call{value: msg.value - finalPrice}(
                 ""
             );
-            require(sent, "Failed to send Ether");
+            require(sent, "ETHG:B:ETH_TRANSFER_FAILED");
         }
     }
 
@@ -335,7 +332,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
     ) external nonReentrant {
         require(
             ITradingPool(pool).getToken() == address(_weth),
-            "Pool underlying is not WETH"
+            "ETHG:S:UNDERLYING_NOT_WETH"
         );
 
         // Send NFTs to this contract and approve them for pool use
@@ -360,7 +357,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         _weth.withdraw(finalPrice);
 
         (bool sent, ) = _msgSender().call{value: finalPrice}("");
-        require(sent, "Failed to send Ether");
+        require(sent, "ETHG:S:ETH_TRANSFER_FAILED");
     }
 
     /// @notice Swaps NFTs between two trading pools, with one pool acting as the buyer and the other as the seller.
@@ -384,18 +381,18 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
 
         require(
             buyPool.getToken() == address(_weth),
-            "Buy pool underlying is not WETH"
+            "ETHG:S:BUY_UNDERLYING_NOT_WETH"
         );
         require(
             sellPool.getToken() == address(_weth),
-            "Sell pool underlying is not WETH"
+            "ETHG:S:SELL_UNDERLYING_NOT_WETH"
         );
 
         // Make sure the msg.value covers the swap
         if (maximumBuyPrice > minimumSellPrice) {
             require(
                 msg.value == maximumBuyPrice - minimumSellPrice,
-                "Not enough ETH sent to cover swap change"
+                "ETHG:S:VALUE_NOT_PRICE_DIFFERENCE"
             );
 
             // Deposit and approve WETH
@@ -438,7 +435,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
             _weth.withdraw(returnedAmount);
 
             (bool sent, ) = _msgSender().call{value: returnedAmount}("");
-            require(sent, "Failed to send Ether");
+            require(sent, "ETHG:S:ETH_TRANSFER_FAILED");
         }
     }
 
@@ -459,16 +456,13 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
     // Add receive ETH function
     // Intended to receive ETH from WETH contract
     receive() external payable {
-        require(
-            msg.sender == address(_weth),
-            "Received ETH from unknown source not allowed"
-        );
+        require(msg.sender == address(_weth), "ETHG:RECEIVE:INVALID_SENDER");
     }
 
     /**
      * @dev Revert fallback calls
      */
     fallback() external payable {
-        revert("Fallback not allowed");
+        revert("ETHG:FALLBACK:INVALID_CALL");
     }
 }

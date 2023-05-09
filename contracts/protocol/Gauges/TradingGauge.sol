@@ -298,7 +298,7 @@ contract TradingGauge is IGauge, ERC721Holder {
             lp.lpType == DataTypes.LPType.Trade ||
                 lp.lpType == DataTypes.LPType.TradeDown ||
                 lp.lpType == DataTypes.LPType.TradeUp,
-            "Only Trade LPs can be staked"
+            "TG:D:INVALID_LP_TYPE"
         );
 
         // Add token value
@@ -309,7 +309,7 @@ contract TradingGauge is IGauge, ERC721Holder {
         );
 
         // LP value must be greater than 0
-        require(depositLpValue > 0, "LP value must be greater than 0");
+        require(depositLpValue > 0, "TG:D:LP_VALUE_ZERO");
 
         _ownerOf[lpId] = msg.sender;
         _lpValue[lpId] = depositLpValue;
@@ -332,10 +332,7 @@ contract TradingGauge is IGauge, ERC721Holder {
     /// @notice Allows the owner of a liquidity position to withdraw it and receive their tokens back.
     /// @param lpId The ID of the liquidity position to be withdrawn.
     function withdraw(uint256 lpId) public {
-        require(
-            _ownerOf[lpId] == msg.sender,
-            "Not the owner of liquidity position"
-        );
+        require(_ownerOf[lpId] == msg.sender, "TG:W:NOT_OWNER_OF_LP_TOKEN");
 
         // remove token value
         _userLPValue[msg.sender] -= _lpValue[lpId];

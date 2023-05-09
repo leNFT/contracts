@@ -204,23 +204,23 @@ contract LendingMarket is
     ) external returns (address) {
         require(
             collection.supportsInterface(type(IERC721Upgradeable).interfaceId),
-            "Collection address is not ERC721 compliant."
+            "LM:CLP:COLLECTION_NOT_NFT"
         );
         require(
             ITokenOracle(_addressProvider.getTokenOracle()).isTokenSupported(
                 asset
             ),
-            "Underlying Asset is not supported by token oracle."
+            "LM:CLP:ASSET_NOT_SUPPORTED_TO"
         );
         require(
             IInterestRate(_addressProvider.getInterestRate()).isTokenSupported(
                 asset
             ),
-            "Underlying Asset is not supported by interest rate contract."
+            "LM:CLP:ASSET_NOT_SUPPORTED_IR"
         );
         require(
             _pools[collection][asset] == address(0),
-            "Lending Pool already exists"
+            "LM:CLP:LENDING_POOL_EXISTS"
         );
         ILendingPool newLendingPool = new LendingPool(
             _addressProvider,
