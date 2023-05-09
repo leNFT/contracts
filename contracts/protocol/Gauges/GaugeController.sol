@@ -14,7 +14,7 @@ import {IGauge} from "../../interfaces/IGauge.sol";
 /// @dev Contract that manages gauge vote weights, total vote weight, user vote power in each gauge, and user vote ratios.
 contract GaugeController is OwnableUpgradeable, IGaugeController {
     uint256 public constant INFLATION_PERIOD = 52; // 52 epochs (1 year)
-    uint256 public constant MAX_INFLATION_PERIOD = 8; // Maximum 6 inflation periods (8 years) and then base emissions
+    uint256 public constant MAX_INFLATION_PERIODS = 8; // Maximum 8 inflation periods (8 years) and then base emissions
     uint256 public constant LOADING_PERIOD = 24; // 24 epochs (6 months)
 
     IAddressesProvider private _addressProvider;
@@ -460,8 +460,8 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         // If we are in the loading period, return smaller rewards
         if (epoch < LOADING_PERIOD) {
             return (_initialRewards * epoch) / LOADING_PERIOD;
-        } else if (inflationEpoch > MAX_INFLATION_PERIOD) {
-            inflationEpoch = MAX_INFLATION_PERIOD;
+        } else if (inflationEpoch > MAX_INFLATION_PERIODS) {
+            inflationEpoch = MAX_INFLATION_PERIODS;
         }
 
         return
