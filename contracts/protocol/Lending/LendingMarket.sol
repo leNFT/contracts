@@ -196,8 +196,8 @@ contract LendingMarket is
     }
 
     /// @notice Create a new lending vault for a certain collection
-    /// @param collection The collection using this lending vault
-    /// @param asset The address of the asset the lending vault controls
+    /// @param collection The collection using this lending pool
+    /// @param asset The address of the asset the lending pool controls
     function createLendingPool(
         address collection,
         address asset
