@@ -37,7 +37,7 @@ contract GenesisNFT is
     IGenesisNFT,
     ReentrancyGuardUpgradeable
 {
-    uint256 constant LP_LE_AMOUNT = 1000e18; // 1000 LE
+    uint256 constant LP_LE_AMOUNT = 8000e18; // 8000 LE
     uint256 constant LP_ETH_AMOUNT = 20e16; // 0.2 ETH
 
     using CountersUpgradeable for CountersUpgradeable.Counter;
