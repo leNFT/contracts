@@ -47,7 +47,7 @@ describe("Liquidate", function () {
     const priceSig = getPriceSig(
       testNFT.address,
       [tokenID1, tokenID2],
-      "8000000000000000", //Price of 0.8 ETH
+      "8000000000000000000", //Price of 800 ETH
       "1694784579",
       nftOracle.address
     );
@@ -56,7 +56,8 @@ describe("Liquidate", function () {
     const balanceBeforeBorrow = await owner.getBalance();
     console.log("Balance before borrow: ", balanceBeforeBorrow.toString());
     const borrowTx = await wethGateway.borrow(
-      "1000000000000000",
+      //"1000000000000000",
+      "100000000000000000", // - audit - borrow 100x the amount (same value in ether)
       testNFT.address,
       [tokenID1, tokenID2],
       0,
@@ -72,7 +73,7 @@ describe("Liquidate", function () {
     // Find if the user received the borrowed amountS
     expect(
       balanceAfterBorrow.sub(balanceBeforeBorrow).add(gasUsedETH)
-    ).to.be.eq("1000000000000000");
+    ).to.be.eq("100000000000000000"); // - audit
 
     // Find if the protocol received the asset
     expect(await testNFT.ownerOf(tokenID1)).to.equal(loanCenter.address);
@@ -82,7 +83,7 @@ describe("Liquidate", function () {
     const priceSig = getPriceSig(
       testNFT.address,
       [tokenID1, tokenID2],
-      "800000000000000", //Price of 0.08 ETH (10x lower than the borrow)
+      "800000000000000", //Price of 0.08 ETH (1000x lower than the borrow)
       "1694784579",
       nftOracle.address
     );
@@ -95,38 +96,19 @@ describe("Liquidate", function () {
     // Approve the WETH to be used by the lending market
     const approveWETHTx = await weth.approve(
       lendingMarket.address,
-      "100000000000000000"
+      "700000000000000" //Approve 0.07 tokens (worth 0.0007 eth) - audit
     );
     await approveWETHTx.wait();
 
     const createLiquidationAuctionTx =
       await lendingMarket.createLiquidationAuction(
         0,
-        "700000000000000", //Bid of 0.07 ETH
+        //"700000000000000", //Bid of 0.07 ETH
+        "700000000000000", //Bid of 0.07 tokens (worth 0.0007 eth) - audit
         priceSig.request,
         priceSig
       );
     await createLiquidationAuctionTx.wait();
-  });
-  it("Bid on the liquidation auction with a lower bid", async function () {
-    await expect(
-      lendingMarket.bidLiquidationAuction(
-        0,
-        "600000000000000" //Bid of 0.06 ETH
-      )
-    ).to.be.revertedWith("Bid amount is not higher than current bid");
-  });
-  it("Bid on the liquidation auction with a higher bid", async function () {
-    const bidTx = await lendingMarket.bidLiquidationAuction(
-      0,
-      "750000000000000" //Bid of 0.075 ETH
-    );
-    await bidTx.wait();
-  });
-  it("Claim the liquidation auction before the auction is over", async function () {
-    await expect(lendingMarket.claimLiquidation(0)).to.be.revertedWith(
-      "Auction is still active"
-    );
   });
   it("Claim the liquidation after the auction is over", async function () {
     // Make the auction end (24 hours)

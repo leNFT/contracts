@@ -233,7 +233,7 @@ library ValidationLogic {
             .maxLiquidatorDiscount;
 
         require(
-            params.bid >=
+            (assetETHPrice * params.bid) / pricePrecision >=
                 (collateralETHPrice *
                     (PercentageMath.PERCENTAGE_FACTOR -
                         maxLiquidatorDiscount)) /
