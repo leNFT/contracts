@@ -24,7 +24,7 @@ contract TradingPoolHelpers {
         require(nftIds.length > 0, "TP:B:NFTS_0");
 
         bool found;
-        uint256 priceQuote;
+        uint256 spotPriceQuote;
         uint256 lpIndex;
         uint256 lpDataIndex;
         uint256 fee;
@@ -104,7 +104,7 @@ contract TradingPoolHelpers {
                 protocolFee);
 
             // Increase total price and fee sum
-            priceQuote += lp.spotPrice;
+            spotPriceQuote += lp.spotPrice;
             totalFee += fee;
 
             // Update liquidity pair price
@@ -116,12 +116,13 @@ contract TradingPoolHelpers {
                     liquidityPairsData[lpDataIndex].curve
                 ).priceAfterBuy(
                         liquidityPairsData[lpDataIndex].spotPrice,
-                        liquidityPairsData[lpDataIndex].delta
+                        liquidityPairsData[lpDataIndex].delta,
+                        liquidityPairsData[lpDataIndex].fee
                     );
             }
         }
 
-        return priceQuote + totalFee;
+        return spotPriceQuote + totalFee;
     }
 
     function simulateSell(
@@ -136,7 +137,7 @@ contract TradingPoolHelpers {
         require(nftIds.length > 0, "TPH:SS:NFTS_0");
 
         // Only the swap router can call this function on behalf of another address
-        uint256 priceQuote;
+        uint256 spotPriceQuote;
         uint256 fee;
         uint256 totalFee;
         uint256 protocolFee;
@@ -223,7 +224,7 @@ contract TradingPoolHelpers {
                 protocolFee);
 
             // Update total price quote and fee sum
-            priceQuote += lp.spotPrice;
+            spotPriceQuote += lp.spotPrice;
             totalFee += fee;
 
             // Update liquidity pair price
@@ -235,13 +236,14 @@ contract TradingPoolHelpers {
                     liquidityPairsData[lpDataIndex].curve
                 ).priceAfterSell(
                         liquidityPairsData[lpDataIndex].spotPrice,
-                        liquidityPairsData[lpDataIndex].delta
+                        liquidityPairsData[lpDataIndex].delta,
+                        liquidityPairsData[lpDataIndex].fee
                     );
             }
         }
 
         // Calculate the final price for the user
-        return priceQuote - totalFee;
+        return spotPriceQuote - totalFee;
     }
 
     function getSellLiquidityPairs(
@@ -331,7 +333,8 @@ contract TradingPoolHelpers {
             lp = sellLiquidityPairsData[x];
             nextSpotPrice = IPricingCurve(lp.curve).priceAfterSell(
                 lp.spotPrice,
-                lp.delta
+                lp.delta,
+                lp.fee
             );
             fee =
                 (nextSpotPrice * sellLiquidityPairsData[x].fee) /

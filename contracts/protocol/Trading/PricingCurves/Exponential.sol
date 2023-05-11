@@ -14,7 +14,8 @@ contract ExponentialPriceCurve is IPricingCurve, ERC165 {
     /// @return The updated price after buying
     function priceAfterBuy(
         uint256 price,
-        uint256 delta
+        uint256 delta,
+        uint256
     ) external pure override returns (uint256) {
         return
             ((PercentageMath.PERCENTAGE_FACTOR + delta) * price) /
@@ -27,29 +28,34 @@ contract ExponentialPriceCurve is IPricingCurve, ERC165 {
     /// @return The updated price after selling
     function priceAfterSell(
         uint256 price,
-        uint256 delta
+        uint256 delta,
+        uint256
     ) external pure override returns (uint256) {
         return
             (PercentageMath.PERCENTAGE_FACTOR * price) /
             (PercentageMath.PERCENTAGE_FACTOR + delta);
     }
 
-    /// @notice Validates delta factor
-    /// @param delta The delta factor to validate
-    /// @return A boolean indicating if the delta factor is valid or not
-    function validateDelta(
-        uint256 delta
-    ) external pure override returns (bool) {
-        if (delta < PercentageMath.PERCENTAGE_FACTOR) {
-            return true;
+    function validateLpParameters(
+        uint256 spotPrice,
+        uint256 delta,
+        uint256 fee
+    ) external pure override {
+        require(spotPrice > 0, "EPC:VLPP:INVALID_PRICE");
+        require(
+            delta < PercentageMath.PERCENTAGE_FACTOR,
+            "EPC:VLPP:INVALID_DELTA"
+        );
+        if (fee > 0 && delta > 0) {
+            // If this doesn't happen then a user would be able to profitably buy and sell from the same LP and drain its funds
+            require(
+                PercentageMath.PERCENTAGE_FACTOR *
+                    (PercentageMath.PERCENTAGE_FACTOR + fee) >
+                    (PercentageMath.PERCENTAGE_FACTOR + delta) *
+                        (PercentageMath.PERCENTAGE_FACTOR - fee),
+                "EPC:VLPP:INVALID_FEE_DELTA_RATIO"
+            );
         }
-        return false;
-    }
-
-    /// @notice Validates the spot price
-    /// @return A boolean indicating if the spot price is valid or not
-    function validateSpotPrice(uint256) external pure override returns (bool) {
-        return true;
     }
 
     function supportsInterface(

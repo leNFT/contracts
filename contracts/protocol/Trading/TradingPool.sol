@@ -121,51 +121,6 @@ contract TradingPool is
         return _nftToLp[nftId].liquidityPair;
     }
 
-    /// @notice Sets the fee for the specified liquidity pair.
-    /// @dev The caller must own the liquidity pair.
-    /// @param lpId The ID of the liquidity pair.
-    /// @param fee The new fee.
-    function setLpFee(uint256 lpId, uint256 fee) external {
-        //Require the caller owns LP
-        require(_msgSender() == ERC721.ownerOf(lpId), "TP:SLF:NOT_OWNER");
-
-        _liquidityPairs[lpId].fee = fee;
-
-        emit SetLpFee(msg.sender, lpId, fee);
-    }
-
-    /// @notice Sets the spot price for the specified liquidity pair.
-    /// @dev The caller must own the liquidity pair.
-    /// @param lpId The ID of the liquidity pair.
-    /// @param spotPrice The new spot price.
-    function setLpSpotPrice(uint256 lpId, uint256 spotPrice) external {
-        //Require the caller owns LP
-        require(_msgSender() == ERC721.ownerOf(lpId), "TP:SLSP:NOT_OWNERS");
-
-        _liquidityPairs[lpId].spotPrice = spotPrice;
-
-        emit SetLpSpotPrice(msg.sender, lpId, spotPrice);
-    }
-
-    /// @notice The caller must own the liquidity pair.
-    /// @dev Sets the pricing curve for the specified liquidity pair.
-    /// @param lpId The ID of the liquidity pair.
-    /// @param curve The new pricing curve.
-    /// @param delta The new delta.
-    function setLpPricingCurve(
-        uint256 lpId,
-        address curve,
-        uint256 delta
-    ) external {
-        //Require the caller owns LP
-        require(_msgSender() == ERC721.ownerOf(lpId), "TP:SLPC:NOT_OWNER");
-
-        _liquidityPairs[lpId].curve = curve;
-        _liquidityPairs[lpId].delta = delta;
-
-        emit SetLpPricingCurve(msg.sender, lpId, curve, delta);
-    }
-
     /// @notice Adds liquidity to the trading pool.
     /// @dev At least one of nftIds or tokenAmount must be greater than zero.
     /// @dev The caller must approve the Trading Pool contract to transfer the NFTs and ERC20 tokens.
@@ -186,11 +141,14 @@ contract TradingPool is
         uint256 delta,
         uint256 fee
     ) external nonReentrant poolNotPaused {
+        ITradingPoolFactory tradingPoolFactory = ITradingPoolFactory(
+            _addressProvider.getTradingPoolFactory()
+        );
+
         // Check if pool will exceed maximum permitted amount
         require(
             tokenAmount + IERC20(_token).balanceOf(address(this)) <
-                ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                    .getTVLSafeguard(),
+                tradingPoolFactory.getTVLSafeguard(),
             "TP:AL:SAFEGUARD_EXCEEDED"
         );
 
@@ -224,32 +182,19 @@ contract TradingPool is
             require(delta > 0, "TP:AL:DELTA_0");
         }
 
-        // Require that the curve conforms to the curve interface
-        require(
-            ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                .isPriceCurve(curve),
-            "TP:AL:INVALID_CURVE"
-        );
-
-        // Validate delta
-        require(
-            IPricingCurve(curve).validateDelta(delta),
-            "TP:AL:INVALID_DELTA"
-        );
-
-        // Validate spot price
-        require(
-            IPricingCurve(curve).validateSpotPrice(spotPrice),
-            "TP:AL:INVALID_SPOT_PRICE"
-        );
-
         if (lpType == DataTypes.LPType.Buy || lpType == DataTypes.LPType.Sell) {
             // Validate fee
             require(fee == 0, "TP:AL:INVALID_LIMIT_FEE");
         } else {
-            // require that the fee is less than 90%
-            require(fee <= MAX_FEE, "TP:AL:INVALID_FEE");
+            // require that the fee is higher than 0 and less than the maximum fee
+            require(fee > 0 && fee <= MAX_FEE, "TP:AL:INVALID_FEE");
         }
+
+        // Require that the curve conforms to the curve interface
+        require(tradingPoolFactory.isPriceCurve(curve), "TP:AL:INVALID_CURVE");
+
+        // Validate lp params for chosen curve
+        IPricingCurve(curve).validateLpParameters(spotPrice, delta, fee);
 
         // Add user nfts to the pool
         for (uint i = 0; i < nftIds.length; i++) {
@@ -357,7 +302,7 @@ contract TradingPool is
     ) external nonReentrant poolNotPaused returns (uint256 finalPrice) {
         require(nftIds.length > 0, "TP:B:NFTS_0");
 
-        uint256 priceQuote;
+        uint256 spotPriceQuote;
         uint256 lpIndex;
         uint256 fee;
         uint256 totalFee;
@@ -399,13 +344,13 @@ contract TradingPool is
                 protocolFee);
 
             // Increase total price and fee sum
-            priceQuote += lp.spotPrice;
+            spotPriceQuote += lp.spotPrice;
             totalFee += fee;
 
             // Update liquidity pair price
             if (lp.lpType != DataTypes.LPType.TradeDown) {
                 _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
-                    .priceAfterBuy(lp.spotPrice, lp.delta);
+                    .priceAfterBuy(lp.spotPrice, lp.delta, lp.fee);
             }
 
             // Send NFT to user
@@ -416,7 +361,7 @@ contract TradingPool is
             );
         }
 
-        finalPrice = priceQuote + totalFee;
+        finalPrice = spotPriceQuote + totalFee;
 
         require(finalPrice <= maximumPrice, "TP:B:MAX_PRICE_EXCEEDED");
 
@@ -462,7 +407,7 @@ contract TradingPool is
                 "TP:S:NOT_SWAP_ROUTER"
             );
         }
-        uint256 priceQuote;
+        uint256 spotPriceQuote;
         uint256 fee;
         uint256 totalFee;
         uint256 protocolFee;
@@ -514,18 +459,18 @@ contract TradingPool is
                 protocolFee);
 
             // Update total price quote and fee sum
-            priceQuote += lp.spotPrice;
+            spotPriceQuote += lp.spotPrice;
             totalFee += fee;
 
             // Update liquidity pair price
             if (lp.lpType != DataTypes.LPType.TradeUp) {
                 _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
-                    .priceAfterSell(lp.spotPrice, lp.delta);
+                    .priceAfterSell(lp.spotPrice, lp.delta, lp.fee);
             }
         }
 
         // Calculate the final price for the user
-        finalPrice = priceQuote - totalFee;
+        finalPrice = spotPriceQuote - totalFee;
 
         require(finalPrice >= minimumPrice, "TP:S:MINIMUM_PRICE_NOT_REACHED");
 

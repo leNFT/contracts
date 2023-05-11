@@ -4,15 +4,19 @@ pragma solidity 0.8.19;
 interface IPricingCurve {
     function priceAfterBuy(
         uint256 price,
-        uint256 delta
+        uint256 delta,
+        uint256 fee
     ) external pure returns (uint256);
 
     function priceAfterSell(
         uint256 price,
-        uint256 delta
+        uint256 delta,
+        uint256 fee
     ) external pure returns (uint256);
 
-    function validateDelta(uint256 price) external view returns (bool);
-
-    function validateSpotPrice(uint256 price) external view returns (bool);
+    function validateLpParameters(
+        uint256 spotPrice,
+        uint256 delta,
+        uint256 fee
+    ) external pure;
 }
