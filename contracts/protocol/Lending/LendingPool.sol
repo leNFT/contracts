@@ -118,7 +118,10 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     ) internal override poolNotPaused {
         ValidationLogic.validateWithdrawal(
             _addressProvider,
-            address(this),
+            _lendingPoolConfig.maxUtilizationRate,
+            _debt,
+            _asset.balanceOf(address(this)),
+            address(_asset),
             assets
         );
 

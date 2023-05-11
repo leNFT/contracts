@@ -41,31 +41,27 @@ library ValidationLogic {
 
     /// @notice Validates a withdraw from a lending pool
     /// @param addressesProvider The address of the addresses provider
-    /// @param lendingPool The address of the lending pool
+    /// @param maxUtilizationRate The maximum utilization rate of the pool
+    /// @param debt The total debt of the pool
+    /// @param underlyingBalance The underlying balance of the pool
+    /// @param asset The address of the asset to withdraw
     /// @param amount The amount of tokens to withdraw
     function validateWithdrawal(
         IAddressesProvider addressesProvider,
-        address lendingPool,
+        uint256 maxUtilizationRate,
+        uint256 debt,
+        uint256 underlyingBalance,
+        address asset,
         uint256 amount
     ) external view {
         // Check if withdrawal amount is bigger than 0
         require(amount > 0, "VL:VW:AMOUNT_0");
 
-        // Check if the utilization rate doesn't go above maximum
-        uint256 maxUtilizationRate = ILendingPool(lendingPool)
-            .getPoolConfig()
-            .maxUtilizationRate;
-        uint256 debt = ILendingPool(lendingPool).getDebt();
-        uint256 underlyingBalance = ILendingPool(lendingPool)
-            .getUnderlyingBalance();
         uint256 updatedUtilizationRate = IInterestRate(
             addressesProvider.getInterestRate()
-        ).calculateUtilizationRate(
-                IERC4626(lendingPool).asset(),
-                underlyingBalance - amount,
-                debt
-            );
+        ).calculateUtilizationRate(asset, underlyingBalance - amount, debt);
 
+        // Check if the utilization rate doesn't go above maximum
         require(
             updatedUtilizationRate <= maxUtilizationRate,
             "VL:VW:MAX_UTILIZATION_RATE"
