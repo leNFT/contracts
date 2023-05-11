@@ -226,7 +226,8 @@ contract TradingPool is
 
         // Require that the curve conforms to the curve interface
         require(
-            IERC165(curve).supportsInterface(type(IPricingCurve).interfaceId),
+            ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
+                .isPriceCurve(curve),
             "TP:AL:INVALID_CURVE"
         );
 

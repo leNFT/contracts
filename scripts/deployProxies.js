@@ -398,6 +398,18 @@ async function main() {
   const setWETHTx = await addressesProvider.setWETH(addresses["ETH"].address);
   await setWETHTx.wait();
 
+  // Set price curves
+  const setExponentialCurveTx = await tradingPoolFactory.setPriceCurve(
+    exponentialCurve.address,
+    true
+  );
+  await setExponentialCurveTx.wait();
+  const setLinearCurveTx = await tradingPoolFactory.setPriceCurve(
+    linearCurve.address,
+    true
+  );
+  await setLinearCurveTx.wait();
+
   // If we are not on mainnet mint LE and fund the faucet
   if (chainID != 1) {
     const mintTx = await nativeToken.mint(

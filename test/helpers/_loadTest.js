@@ -326,6 +326,18 @@ let loadEnv = async function () {
   });
   await setWETHInterestRateParamsTx.wait();
 
+  // Set price curves
+  const setExponentialCurveTx = await tradingPoolFactory.setPriceCurve(
+    exponentialCurve.address,
+    true
+  );
+  await setExponentialCurveTx.wait();
+  const setLinearCurveTx = await tradingPoolFactory.setPriceCurve(
+    linearCurve.address,
+    true
+  );
+  await setLinearCurveTx.wait();
+
   console.log("loaded");
 };
 

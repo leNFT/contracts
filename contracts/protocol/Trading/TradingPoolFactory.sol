@@ -32,7 +32,10 @@ contract TradingPoolFactory is
     mapping(address => mapping(address => address)) private _pools;
 
     // mapping of valid pools
-    mapping(address => bool) private _validPools;
+    mapping(address => bool) private _isPool;
+
+    // mapping of valid price curves
+    mapping(address => bool) private _isPriceCurve;
 
     uint256 private _protocolFeePercentage;
     uint256 private _tvlSafeguard;
@@ -59,6 +62,16 @@ contract TradingPoolFactory is
         _addressProvider = addressesProvider;
         _protocolFeePercentage = protocolFeePercentage;
         _tvlSafeguard = tvlSafeguard;
+    }
+
+    function isPriceCurve(
+        address priceCurve
+    ) external view override returns (bool) {
+        return _isPriceCurve[priceCurve];
+    }
+
+    function setPriceCurve(address priceCurve, bool valid) external onlyOwner {
+        _isPriceCurve[priceCurve] = valid;
     }
 
     /// @notice Set the protocol fee percentage
@@ -114,8 +127,8 @@ contract TradingPoolFactory is
     /// @notice Returns whether a pool is valid or not
     /// @param pool The address of the pool to check
     /// @return Whether the pool is valid or not
-    function isValidPool(address pool) external view returns (bool) {
-        return _validPools[pool];
+    function isPool(address pool) external view returns (bool) {
+        return _isPool[pool];
     }
 
     /// @notice Creates a trading pool for a certain collection and token
@@ -153,7 +166,7 @@ contract TradingPoolFactory is
         );
 
         _pools[nft][token] = address(newTradingPool);
-        _validPools[address(newTradingPool)] = true;
+        _isPool[address(newTradingPool)] = true;
 
         // Approve trading pool in swap router
         ISwapRouter(_addressProvider.getSwapRouter()).approveTradingPool(

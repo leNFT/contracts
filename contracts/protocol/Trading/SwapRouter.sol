@@ -49,12 +49,12 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
         // Pools need to be registered in the factory
         require(
             ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                .isValidPool(address(buyPool)),
+                .isPool(address(buyPool)),
             "SR:S:INVALID_BUY_POOL"
         );
         require(
             ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                .isValidPool(address(sellPool)),
+                .isPool(address(sellPool)),
             "SR:S:INVALID_SELL_POOL"
         );
         // Pools need to have the same underlying token
