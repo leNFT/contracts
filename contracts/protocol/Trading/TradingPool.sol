@@ -34,7 +34,7 @@ contract TradingPool is
     Ownable,
     ReentrancyGuard
 {
-    uint public constant MAX_FEE = 9000; // 90%
+    uint public constant MAX_FEE = 8000; // 80%
 
     IAddressesProvider private immutable _addressProvider;
     bool private _paused;
@@ -106,10 +106,14 @@ contract TradingPool is
         return _liquidityPairs[lpId];
     }
 
+    function getLpCount() external view returns (uint256) {
+        return _lpCount;
+    }
+
     /// @notice Gets the ID of the liquidity pair associated with the specified NFT.
     /// @param nftId The ID of the NFT.
     /// @return The ID of the liquidity pair.
-    function nftToLp(uint256 nftId) external view returns (uint256) {
+    function nftToLp(uint256 nftId) external view override returns (uint256) {
         require(
             IERC721(_nft).ownerOf(nftId) == address(this),
             "TP:NTL:NOT_OWNED"
@@ -471,7 +475,7 @@ contract TradingPool is
         for (uint i = 0; i < nftIds.length; i++) {
             // Check if the LP exists
             lpIndex = liquidityPairs[i];
-            require(ownerOf(lpIndex) != address(0), "TP:S:LP_NOT_EXIST");
+            require(_exists(lpIndex), "TP:S:LP_NOT_FOUND");
 
             // Get the LP details
             lp = _liquidityPairs[lpIndex];

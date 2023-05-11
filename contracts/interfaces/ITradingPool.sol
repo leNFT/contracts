@@ -69,6 +69,10 @@ interface ITradingPool is IERC721 {
         uint256 lpId
     ) external view returns (DataTypes.LiquidityPair memory);
 
+    function getLpCount() external view returns (uint256);
+
+    function nftToLp(uint256 nftId) external view returns (uint256);
+
     function getToken() external view returns (address);
 
     function getNFT() external view returns (address);
