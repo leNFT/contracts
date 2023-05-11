@@ -12,8 +12,8 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import {ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -28,10 +28,8 @@ import "../libraries/balancer/ERC20Helpers.sol"; // Custom (pragma ^0.8.0) ERC20
 /// @title GenesisNFT
 /// @notice This contract manages the creation and minting of Genesis NFTs
 contract GenesisNFT is
-    Initializable,
     ContextUpgradeable,
     ERC165Upgradeable,
-    ERC721Upgradeable,
     ERC721EnumerableUpgradeable,
     OwnableUpgradeable,
     IGenesisNFT,
@@ -460,10 +458,7 @@ contract GenesisNFT is
         uint256 lpAmountSum;
         for (uint256 i = 0; i < tokenIds.length; i++) {
             //Require the caller owns the token
-            require(
-                _msgSender() == ERC721Upgradeable.ownerOf(tokenIds[i]),
-                "G:B:NOT_OWNER"
-            );
+            require(_msgSender() == ownerOf(tokenIds[i]), "G:B:NOT_OWNER");
             // Token can only be burned after locktime is over
             require(
                 block.timestamp >= getUnlockTimestamp(tokenIds[i]),
@@ -581,7 +576,7 @@ contract GenesisNFT is
         address to,
         uint256 tokenId,
         uint256 batchSize
-    ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
+    ) internal override(ERC721EnumerableUpgradeable) {
         require(_locked[tokenId] == false, "G:BTT:TOKEN_LOCKED");
         ERC721EnumerableUpgradeable._beforeTokenTransfer(
             from,
@@ -598,7 +593,6 @@ contract GenesisNFT is
         view
         override(
             ERC721EnumerableUpgradeable,
-            ERC721Upgradeable,
             ERC165Upgradeable,
             IERC165Upgradeable
         )

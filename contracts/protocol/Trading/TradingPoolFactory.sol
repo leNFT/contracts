@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
@@ -20,7 +19,6 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 /// @author leNFT
 /// @notice This contract is responsible for creating new trading pools
 contract TradingPoolFactory is
-    Initializable,
     ITradingPoolFactory,
     ContextUpgradeable,
     OwnableUpgradeable,

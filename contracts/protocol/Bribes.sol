@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.19;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {IGaugeController} from "../interfaces/IGaugeController.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -17,7 +16,6 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 /// @title Bribes contract
 /// @notice Allows users to bribe the veLE token holders in order to incentivize them to vote for a specific gauge
 contract Bribes is
-    Initializable,
     ContextUpgradeable,
     OwnableUpgradeable,
     IBribes,

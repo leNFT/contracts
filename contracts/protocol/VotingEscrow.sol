@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.19;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
@@ -24,11 +23,9 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 /// @title VotingEscrow
 /// @notice Provides functionality for locking LE tokens for a specified period of time and is the center of the epoch logic
 contract VotingEscrow is
-    Initializable,
     ContextUpgradeable,
     IVotingEscrow,
     ERC165Upgradeable,
-    ERC721Upgradeable,
     ERC721EnumerableUpgradeable,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
@@ -613,7 +610,7 @@ contract VotingEscrow is
         address to,
         uint256 tokenId,
         uint256 batchSize
-    ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
+    ) internal override(ERC721EnumerableUpgradeable) {
         ERC721EnumerableUpgradeable._beforeTokenTransfer(
             from,
             to,
@@ -627,11 +624,7 @@ contract VotingEscrow is
     )
         public
         view
-        override(
-            ERC721EnumerableUpgradeable,
-            ERC721Upgradeable,
-            ERC165Upgradeable
-        )
+        override(ERC721EnumerableUpgradeable, ERC165Upgradeable)
         returns (bool)
     {
         return

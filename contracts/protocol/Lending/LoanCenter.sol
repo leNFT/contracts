@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.19;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
-import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {LoanLogic} from "../../libraries/logic/LoanLogic.sol";
@@ -17,7 +15,6 @@ import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 /// @title LoanCenter contract
 /// @dev A smart contract managing loans with NFTs as collateral
 contract LoanCenter is
-    Initializable,
     ContextUpgradeable,
     ILoanCenter,
     ERC721HolderUpgradeable,

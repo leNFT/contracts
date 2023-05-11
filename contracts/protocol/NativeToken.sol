@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.19;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";
@@ -13,7 +12,6 @@ import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Cont
 /// @title NativeToken
 /// @notice Provides functionality for minting, burning, and distributing native tokens
 contract NativeToken is
-    Initializable,
     ContextUpgradeable,
     INativeToken,
     ERC20Upgradeable,

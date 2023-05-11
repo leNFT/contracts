@@ -9,7 +9,6 @@ import {BorrowLogic} from "../../libraries/logic/BorrowLogic.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {ConfigTypes} from "../../libraries/types/ConfigTypes.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
@@ -29,7 +28,6 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 /// @notice This contract is the entrypoint for the leNFT lending protocol
 /// @dev Call these contrcact functions to interact with the protocol
 contract LendingMarket is
-    Initializable,
     ContextUpgradeable,
     ILendingMarket,
     OwnableUpgradeable,

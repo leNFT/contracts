@@ -27,7 +27,6 @@ import {ILiquidityPairMetadata} from "../../interfaces/ILiquidityPairMetadata.so
 contract TradingPool is
     Context,
     ERC165,
-    ERC721,
     ERC721Enumerable,
     ERC721Holder,
     ITradingPool,
@@ -500,18 +499,13 @@ contract TradingPool is
         address to,
         uint256 tokenId,
         uint256 batchSize
-    ) internal override(ERC721, ERC721Enumerable) {
+    ) internal override(ERC721Enumerable) {
         ERC721Enumerable._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
     function supportsInterface(
         bytes4 interfaceId
-    )
-        public
-        view
-        override(ERC165, ERC721, ERC721Enumerable, IERC165)
-        returns (bool)
-    {
+    ) public view override(ERC165, ERC721Enumerable, IERC165) returns (bool) {
         return
             ERC721Enumerable.supportsInterface(interfaceId) ||
             ERC165.supportsInterface(interfaceId);

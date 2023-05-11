@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.19;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {IFeeDistributor} from "../interfaces/IFeeDistributor.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -16,7 +15,6 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 /// @title FeeDistributor
 /// @notice This contract distributes fees from the protocol to LE stakers, using the VotingEscrow interface to check the user's staked amount
 contract FeeDistributor is
-    Initializable,
     ContextUpgradeable,
     OwnableUpgradeable,
     IFeeDistributor,

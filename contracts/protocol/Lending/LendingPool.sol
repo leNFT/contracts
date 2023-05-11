@@ -15,7 +15,7 @@ import {ValidationLogic} from "../../libraries/logic/ValidationLogic.sol";
 
 /// @title LendingPool contract
 /// @dev The LendingPool contract uses the ERC4626 contract to track the shares in a liquidity pool held by users
-contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
+contract LendingPool is Context, ILendingPool, ERC4626, Ownable {
     IAddressesProvider private immutable _addressProvider;
     IERC20 private immutable _asset;
     uint256 private _debt;
@@ -64,7 +64,7 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
 
     /// @notice Get the number of decimals for the underlying asset
     /// @return the number of decimals
-    function decimals() public view override(ERC20, ERC4626) returns (uint8) {
+    function decimals() public view override(ERC4626) returns (uint8) {
         return ERC4626.decimals();
     }
 
