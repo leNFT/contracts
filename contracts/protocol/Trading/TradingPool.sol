@@ -363,7 +363,9 @@ contract TradingPool is
         uint256 totalFee;
         uint256 protocolFee;
         DataTypes.LiquidityPair memory lp;
-
+        uint256 protocolFeePercentage = ITradingPoolFactory(
+            _addressProvider.getTradingPoolFactory()
+        ).getProtocolFeePercentage();
         for (uint i = 0; i < nftIds.length; i++) {
             // Check if the pool contract owns the NFT
             require(
@@ -378,10 +380,7 @@ contract TradingPool is
 
             fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
             protocolFee =
-                (fee *
-                    ITradingPoolFactory(
-                        _addressProvider.getTradingPoolFactory()
-                    ).getProtocolFeePercentage()) /
+                (fee * protocolFeePercentage) /
                 PercentageMath.PERCENTAGE_FACTOR;
 
             // Remove nft from liquidity pair nft list
@@ -431,9 +430,7 @@ contract TradingPool is
         // Send protocol fee to protocol fee distributor
         IERC20(_token).safeTransfer(
             _addressProvider.getFeeDistributor(),
-            (totalFee *
-                ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                    .getProtocolFeePercentage()) /
+            (totalFee * protocolFeePercentage) /
                 PercentageMath.PERCENTAGE_FACTOR
         );
         IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
@@ -471,6 +468,9 @@ contract TradingPool is
         uint256 protocolFee;
         DataTypes.LiquidityPair memory lp;
         uint256 lpIndex;
+        uint256 protocolFeePercentage = ITradingPoolFactory(
+            _addressProvider.getTradingPoolFactory()
+        ).getProtocolFeePercentage();
 
         // Transfer the NFTs to the pool
         for (uint i = 0; i < nftIds.length; i++) {
@@ -493,10 +493,7 @@ contract TradingPool is
 
             fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
             protocolFee =
-                (fee *
-                    ITradingPoolFactory(
-                        _addressProvider.getTradingPoolFactory()
-                    ).getProtocolFeePercentage()) /
+                (fee * protocolFeePercentage) /
                 PercentageMath.PERCENTAGE_FACTOR;
             require(
                 lp.tokenAmount >= lp.spotPrice - fee + protocolFee,
@@ -537,9 +534,7 @@ contract TradingPool is
         // Send protocol fee to protocol fee distributor
         IERC20(_token).safeTransfer(
             _addressProvider.getFeeDistributor(),
-            (totalFee *
-                ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                    .getProtocolFeePercentage()) /
+            (totalFee * protocolFeePercentage) /
                 PercentageMath.PERCENTAGE_FACTOR
         );
         IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
