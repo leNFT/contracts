@@ -107,17 +107,6 @@ async function main() {
 
   console.log("Deployed LoanCenter");
 
-  // Deploy and initialize the debt token
-  const DebtToken = await ethers.getContractFactory("DebtToken");
-  const debtToken = await upgrades.deployProxy(DebtToken, [
-    addressesProvider.address,
-    "LDEBT TOKEN",
-    "LDEBT",
-  ]);
-  addresses["DebtToken"] = debtToken.address;
-
-  console.log("Deployed DebtToken");
-
   // Deploy and initialize the native token (different for mainnet and sepolia)
   const NativeToken = await ethers.getContractFactory("NativeToken");
   const nativeToken = await upgrades.deployProxy(NativeToken, [
@@ -339,10 +328,6 @@ async function main() {
     tradingPoolFactory.address
   );
   await setTradingPoolFactoryTx.wait();
-  const setDebtTokenTx = await addressesProvider.setDebtToken(
-    debtToken.address
-  );
-  await setDebtTokenTx.wait();
   const setLiquidityPairMetadataTx =
     await addressesProvider.setLiquidityPairMetadata(
       liquidityPairMetadata.address

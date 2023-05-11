@@ -85,16 +85,6 @@ let loadEnv = async function () {
 
   console.log("Deployed LoanCenter");
 
-  // Deploy and initialize the debt token
-  const DebtToken = await ethers.getContractFactory("DebtToken");
-  const debtToken = await upgrades.deployProxy(DebtToken, [
-    addressesProvider.address,
-    "LDEBT TOKEN",
-    "LDEBT",
-  ]);
-
-  console.log("Deployed DebtToken");
-
   // Deploy and initialize the native token
   const NativeToken = await ethers.getContractFactory("NativeToken");
   nativeToken = await upgrades.deployProxy(NativeToken, [
@@ -238,10 +228,7 @@ let loadEnv = async function () {
     lendingMarket.address
   );
   await setLendingMarketTx.wait();
-  const setDebtTokenTx = await addressesProvider.setDebtToken(
-    debtToken.address
-  );
-  await setDebtTokenTx.wait();
+
   const setLiquidityPairMetadataTx =
     await addressesProvider.setLiquidityPairMetadata(
       liquidityPairMetadata.address
