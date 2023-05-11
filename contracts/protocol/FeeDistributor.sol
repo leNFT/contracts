@@ -78,8 +78,7 @@ contract FeeDistributor is
         _accountedFees[token] = balance;
     }
 
-    /// @notice Allows the owner to retrieve any leftover rewards unclaimable by users
-    /// @dev This function is only meant to be used in case of no users locking in an epoch
+    /// @notice Allows anyone to retrieve any leftover rewards unclaimable by users and add them to the current epoch
     /// @param token Token address
     /// @param epoch Epoch to retrieve funds from
     function salvageRewards(address token, uint256 epoch) external {
@@ -95,9 +94,9 @@ contract FeeDistributor is
         require(_epochFees[token][epoch] > 0, "FD:SV:NO_FUNDS");
 
         // Tranfer rewards to current epoch
-        _epochFees[token][epoch] += _epochFees[token][
-            votingEscrow.epoch(block.timestamp)
-        ];
+        _epochFees[token][votingEscrow.epoch(block.timestamp)] += _epochFees[
+            token
+        ][epoch];
 
         delete _epochFees[token][epoch];
     }
