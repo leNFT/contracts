@@ -17,22 +17,29 @@ import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 /// @notice Contains the logic for the lending validation functions
 library ValidationLogic {
     uint256 constant LIQUIDATION_AUCTION_PERIOD = 3600 * 24;
+    uint256 constant MININUM_DEPOSIT_EMPTY_VAULT = 1e10;
 
     /// @notice Validates a deposit into a lending pool
     /// @param addressesProvider The address of the addresses provider
-    /// @param lendingPool The address of the lending pool
+    /// @param totalAssets The total assets of the pool
+    /// @param totalShares The total shares of the pool
     /// @param amount The amount of tokens to deposit
     function validateDeposit(
         IAddressesProvider addressesProvider,
-        address lendingPool,
+        uint256 totalAssets,
+        uint256 totalShares,
         uint256 amount
     ) external view {
-        // Check if deposit amount is bigger than 0
-        require(amount > 0, "VL:VD:AMOUNT_0");
+        // Check deposit amount. Minimum deposit is 1e10 if the vault is empty to avoid inflation attacks
+        if (totalShares == 0) {
+            require(amount >= MININUM_DEPOSIT_EMPTY_VAULT, "VL:VD:MIN_DEPOSIT");
+        } else {
+            require(amount > 0, "VL:VD:AMOUNT_0");
+        }
 
         // Check if pool will exceed maximum permitted amount
         require(
-            amount + IERC4626(lendingPool).totalAssets() <
+            amount + totalAssets <
                 ILendingMarket(addressesProvider.getLendingMarket())
                     .getTVLSafeguard(),
             "VL:VD:SAFEGUARD_EXCEEDED"

@@ -94,7 +94,8 @@ contract LendingPool is Context, ILendingPool, ERC20, ERC4626, Ownable {
     ) internal override poolNotPaused {
         ValidationLogic.validateDeposit(
             _addressProvider,
-            address(this),
+            totalAssets(),
+            totalSupply(),
             assets
         );
 
