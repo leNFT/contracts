@@ -498,6 +498,10 @@ contract TradingPool is
                         _addressProvider.getTradingPoolFactory()
                     ).getProtocolFeePercentage()) /
                 PercentageMath.PERCENTAGE_FACTOR;
+            require(
+                lp.tokenAmount >= lp.spotPrice - fee + protocolFee,
+                "TP:S:INSUFFICIENT_TOKENS_IN_LP"
+            );
 
             // Add nft to liquidity pair nft list
             _liquidityPairs[lpIndex].nftIds.push(nftIds[i]);
@@ -507,10 +511,7 @@ contract TradingPool is
                 liquidityPair: lpIndex,
                 index: _liquidityPairs[lpIndex].nftIds.length - 1
             });
-            require(
-                lp.tokenAmount >= lp.spotPrice - fee + protocolFee,
-                "TP:S:INSUFFICIENT_TOKENS_IN_LP"
-            );
+
             _liquidityPairs[lpIndex].tokenAmount -= (lp.spotPrice -
                 fee +
                 protocolFee);
