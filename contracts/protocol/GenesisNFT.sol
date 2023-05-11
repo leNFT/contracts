@@ -305,6 +305,8 @@ contract GenesisNFT is
         uint256 locktime,
         uint256 amount
     ) external payable nonReentrant {
+        // Make sure amount is bigger than 0
+        require(amount > 0, "G:M:AMOUNT_0");
         // Make sure locktimes are within limits
         require(locktime >= _minLocktime, "G:M:LOCKTIME_TOO_LOW");
         require(locktime <= _maxLocktime, "G:M:LOCKTIME_TOO_HIGH");
@@ -453,6 +455,8 @@ contract GenesisNFT is
     /// @notice Burn Genesis NFTs and unlock LP tokens and LE tokens
     /// @param tokenIds The IDs of the Genesis NFTs to burn
     function burn(uint256[] calldata tokenIds) external nonReentrant {
+        // Make sure we are burning at least one token
+        require(tokenIds.length > 0, "G:B:0_TOKENS");
         uint256 lpAmountSum;
         for (uint256 i = 0; i < tokenIds.length; i++) {
             //Require the caller owns the token
@@ -516,7 +520,9 @@ contract GenesisNFT is
         } else {
             burnTokens = withdrawAmount;
         }
-        INativeToken(nativeToken).burnGenesisTokens(burnTokens);
+        if (burnTokens > 0) {
+            INativeToken(nativeToken).burnGenesisTokens(burnTokens);
+        }
     }
 
     /// @notice Get the current value of the LP tokens locked in the contract

@@ -66,11 +66,20 @@ contract NativeToken is
     /// @param account The account to receive the tokens
     /// @param amount The amount of tokens to mint
     function _mint(address account, uint256 amount) internal override {
+        require(amount > 0, "NT:M:AMOUNT_0");
         require(
             ERC20Upgradeable.totalSupply() + amount <= getCap(),
             "NT:M:CAP_EXCEEDED"
         );
         ERC20Upgradeable._mint(account, amount);
+    }
+
+    /// @notice Internal function to burn tokens from the specified account
+    /// @param account The account to burn tokens from
+    /// @param amount The amount of tokens to burn
+    function _burn(address account, uint256 amount) internal override {
+        require(amount > 0, "NT:B:AMOUNT_0");
+        ERC20Upgradeable._burn(account, amount);
     }
 
     /// @notice Mints genesis tokens and assigns them to the Genesis NFT contract
