@@ -5776,6 +5776,210 @@
           }
         }
       }
+    },
+    "b114c79b87727ce7000dd5ee2cf83bbac862f58860befe329834eb7320ba7db0": {
+      "address": "0x2849fD97cf19bB3C1CB52e1460501b0a97b34132",
+      "txHash": "0x2a997215622825609fa5683abdc2c158823ecc9f8ed38c41bc357f4a4549d54b",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "_lendingMarket",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:10"
+          },
+          {
+            "label": "_debtToken",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:11"
+          },
+          {
+            "label": "_feeDistributor",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:12"
+          },
+          {
+            "label": "_swapRouter",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:13"
+          },
+          {
+            "label": "_loanCenter",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:14"
+          },
+          {
+            "label": "_nftOracle",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:15"
+          },
+          {
+            "label": "_tokenOracle",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:16"
+          },
+          {
+            "label": "_interestRate",
+            "offset": 0,
+            "slot": "108",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:17"
+          },
+          {
+            "label": "_votingEscrow",
+            "offset": 0,
+            "slot": "109",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:18"
+          },
+          {
+            "label": "_nativeToken",
+            "offset": 0,
+            "slot": "110",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:19"
+          },
+          {
+            "label": "_weth",
+            "offset": 0,
+            "slot": "111",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:20"
+          },
+          {
+            "label": "_genesisNFT",
+            "offset": 0,
+            "slot": "112",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:21"
+          },
+          {
+            "label": "_gaugeController",
+            "offset": 0,
+            "slot": "113",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:22"
+          },
+          {
+            "label": "_tradingPoolFactory",
+            "offset": 0,
+            "slot": "114",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:23"
+          },
+          {
+            "label": "_bribes",
+            "offset": 0,
+            "slot": "115",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:24"
+          },
+          {
+            "label": "_liquidityPairMetadata",
+            "offset": 0,
+            "slot": "116",
+            "type": "t_address",
+            "contract": "AddressesProvider",
+            "src": "contracts/protocol/AddressesProvider.sol:25"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
     }
   }
 }

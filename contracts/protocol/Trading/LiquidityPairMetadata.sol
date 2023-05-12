@@ -25,24 +25,35 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
         uint256 tokenId
     ) public view override returns (string memory) {
         // forgefmt: disable-next-item
-        bytes memory metadata = abi.encodePacked(
-            "{",
-            '"name": "Liquidity Pair ',
-            IERC721Metadata(ITradingPool(tradingPool).getNFT()).symbol(),
-            IERC20Metadata(ITradingPool(tradingPool).getToken()).symbol(),
-            " #",
-            Strings.toString(tokenId),
-            '",',
-            '"description": "leNFT trading liquidity pair.",',
-            '"image": ',
-            '"data:image/svg+xml;base64,',
-            Base64.encode(svg(tradingPool, tokenId)),
-            '",',
-            '"attributes": [',
-            attributes(tradingPool, tokenId),
-            "]",
-            "}"
-        );
+        bytes memory metadata;
+
+        {
+            // scope to avoid stack too deep errors
+            metadata = abi.encodePacked(
+                "{",
+                '"name": "Liquidity Pair ',
+                IERC721Metadata(ITradingPool(tradingPool).getNFT()).symbol(),
+                IERC20Metadata(ITradingPool(tradingPool).getToken()).symbol(),
+                " #",
+                Strings.toString(tokenId),
+                '",'
+            );
+        }
+
+        {
+            metadata = abi.encodePacked(
+                metadata,
+                '"description": "leNFT trading liquidity pair.",',
+                '"image": ',
+                '"data:image/svg+xml;base64,',
+                Base64.encode(svg(tradingPool, tokenId)),
+                '",',
+                '"attributes": [',
+                attributes(tradingPool, tokenId),
+                "]",
+                "}"
+            );
+        }
 
         return
             string(
@@ -65,33 +76,44 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
         );
 
         // forgefmt: disable-next-item
-        bytes memory _attributes = abi.encodePacked(
-            trait("Pool address", Strings.toHexString(tradingPool)),
-            ",",
-            trait(
-                "Token",
-                Strings.toHexString(ITradingPool(tradingPool).getToken())
-            ),
-            ",",
-            trait(
-                "NFT",
-                Strings.toHexString(ITradingPool(tradingPool).getNFT())
-            ),
-            ",",
-            trait("Price", Strings.toString(lp.spotPrice)),
-            ",",
-            trait("Token balance", Strings.toString(lp.tokenAmount)),
-            ",",
-            trait("NFT balance", Strings.toString(lp.nftIds.length)),
-            ",",
-            trait("Curve", Strings.toHexString(lp.curve)),
-            ",",
-            trait("Delta", Strings.toString(lp.delta)),
-            ",",
-            trait("Fee", Strings.toString(lp.fee)),
-            ",",
-            trait("Type", Strings.toString(uint256(lp.lpType)))
-        );
+        bytes memory _attributes;
+
+        {
+            // scope to avoid stack too deep errors
+            _attributes = abi.encodePacked(
+                trait("Pool address", Strings.toHexString(tradingPool)),
+                ",",
+                trait(
+                    "Token",
+                    Strings.toHexString(ITradingPool(tradingPool).getToken())
+                ),
+                ",",
+                trait(
+                    "NFT",
+                    Strings.toHexString(ITradingPool(tradingPool).getNFT())
+                ),
+                ",",
+                trait("Price", Strings.toString(lp.spotPrice)),
+                ",",
+                trait("Token balance", Strings.toString(lp.tokenAmount)),
+                ","
+            );
+        }
+
+        {
+            _attributes = abi.encodePacked(
+                _attributes,
+                trait("NFT balance", Strings.toString(lp.nftIds.length)),
+                ",",
+                trait("Curve", Strings.toHexString(lp.curve)),
+                ",",
+                trait("Delta", Strings.toString(lp.delta)),
+                ",",
+                trait("Fee", Strings.toString(lp.fee)),
+                ",",
+                trait("Type", Strings.toString(uint256(lp.lpType)))
+            );
+        }
 
         return string(_attributes);
     }
@@ -119,7 +141,13 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
                 " #",
                 Strings.toString(tokenId),
                 "</text>",
-                '<text x="24px" y="72px" font-size="8">',
+                '<text x="24px" y="72px" font-size="8">'
+            );
+        }
+
+        {
+            // forgefmt: disable-next-item
+            _svg = abi.encodePacked(
                 "Trading pool: ",
                 Strings.toHexString(address(tradingPool)),
                 "</text>",

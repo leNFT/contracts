@@ -20,13 +20,7 @@ async function main() {
   console.log("chainID: ", chainID.toString());
   var addresses = contractAddresses[chainID.toString()];
   const ONE_DAY = 86400;
-
-  var devAddress;
-  if (chainID == 1) {
-    devAddress = process.env.MAINNET_DEV_ADDRESS;
-  } else {
-    devAddress = process.env.TESTNET_DEV_ADDRESS;
-  }
+  [owner] = await ethers.getSigners();
 
   /****************************************************************
   DEPLOY LIBRARIES
@@ -131,7 +125,7 @@ async function main() {
     12500000, // Native Token Mint Factor
     ONE_DAY * 180, // Max locktime (180 days in s)
     ONE_DAY * 14, // Min locktime (14 days in s)
-    devAddress,
+    owner, // Genesis NFT funds receiver is the deployer
   ]);
   addresses["GenesisNFT"] = genesisNFT.address;
 

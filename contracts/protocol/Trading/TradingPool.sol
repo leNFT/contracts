@@ -301,7 +301,6 @@ contract TradingPool is
     ) external nonReentrant poolNotPaused returns (uint256 finalPrice) {
         require(nftIds.length > 0, "TP:B:NFTS_0");
 
-        uint256 spotPriceQuote;
         uint256 lpIndex;
         uint256 fee;
         uint256 totalFee;
@@ -343,7 +342,7 @@ contract TradingPool is
                 protocolFee);
 
             // Increase total price and fee sum
-            spotPriceQuote += lp.spotPrice;
+            finalPrice += (lp.spotPrice + fee);
             totalFee += fee;
 
             // Update liquidity pair price
@@ -359,8 +358,6 @@ contract TradingPool is
                 nftIds[i]
             );
         }
-
-        finalPrice = spotPriceQuote + totalFee;
 
         require(finalPrice <= maximumPrice, "TP:B:MAX_PRICE_EXCEEDED");
 
@@ -406,15 +403,12 @@ contract TradingPool is
                 "TP:S:NOT_SWAP_ROUTER"
             );
         }
-        uint256 spotPriceQuote;
+
         uint256 fee;
         uint256 totalFee;
         uint256 protocolFee;
         DataTypes.LiquidityPair memory lp;
         uint256 lpIndex;
-        uint256 protocolFeePercentage = ITradingPoolFactory(
-            _addressProvider.getTradingPoolFactory()
-        ).getProtocolFeePercentage();
 
         // Transfer the NFTs to the pool
         for (uint i = 0; i < nftIds.length; i++) {
@@ -437,7 +431,10 @@ contract TradingPool is
 
             fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
             protocolFee =
-                (fee * protocolFeePercentage) /
+                (fee *
+                    ITradingPoolFactory(
+                        _addressProvider.getTradingPoolFactory()
+                    ).getProtocolFeePercentage()) /
                 PercentageMath.PERCENTAGE_FACTOR;
             require(
                 lp.tokenAmount >= lp.spotPrice - fee + protocolFee,
@@ -458,7 +455,7 @@ contract TradingPool is
                 protocolFee);
 
             // Update total price quote and fee sum
-            spotPriceQuote += lp.spotPrice;
+            finalPrice += (lp.spotPrice - fee);
             totalFee += fee;
 
             // Update liquidity pair price
@@ -468,9 +465,6 @@ contract TradingPool is
             }
         }
 
-        // Calculate the final price for the user
-        finalPrice = spotPriceQuote - totalFee;
-
         require(finalPrice >= minimumPrice, "TP:S:MINIMUM_PRICE_NOT_REACHED");
 
         IERC20(_token).safeTransfer(_msgSender(), finalPrice);
@@ -478,7 +472,9 @@ contract TradingPool is
         // Send protocol fee to protocol fee distributor
         IERC20(_token).safeTransfer(
             _addressProvider.getFeeDistributor(),
-            (totalFee * protocolFeePercentage) /
+            (totalFee *
+                ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
+                    .getProtocolFeePercentage()) /
                 PercentageMath.PERCENTAGE_FACTOR
         );
         IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(

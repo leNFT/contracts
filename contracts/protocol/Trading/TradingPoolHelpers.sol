@@ -20,11 +20,9 @@ contract TradingPoolHelpers {
     function simulateBuy(
         address tradingPool,
         uint256[] calldata nftIds
-    ) external view returns (uint256) {
+    ) external view returns (uint256 finalPrice) {
         require(nftIds.length > 0, "TP:B:NFTS_0");
 
-        bool found;
-        uint256 spotPriceQuote;
         uint256 lpIndex;
         uint256 lpDataIndex;
         uint256 fee;
@@ -56,16 +54,17 @@ contract TradingPoolHelpers {
             lp = ITradingPool(tradingPool).getLP(lpIndex);
 
             // Add liquidity pair to array if not already there
-            found = false;
             for (uint j = 0; j < lpCount; j++) {
                 if (lpIds[j] == lpIndex) {
-                    found = true;
                     break;
                 }
-            }
-            if (!found) {
-                lpIds[lpCount] = lpIndex;
-                lpCount++;
+
+                // If it reaches the end of the array, it means it didn't find the liquidity pair
+                if (j == lpCount - 1) {
+                    lpIds[lpCount] = lpIndex;
+                    liquidityPairsData[lpCount] = lp;
+                    lpCount++;
+                }
             }
 
             // Can't buy from buy LP
@@ -104,7 +103,7 @@ contract TradingPoolHelpers {
                 protocolFee);
 
             // Increase total price and fee sum
-            spotPriceQuote += lp.spotPrice;
+            finalPrice += (liquidityPairsData[lpDataIndex].spotPrice + fee);
             totalFee += fee;
 
             // Update liquidity pair price
@@ -121,15 +120,13 @@ contract TradingPoolHelpers {
                     );
             }
         }
-
-        return spotPriceQuote + totalFee;
     }
 
     function simulateSell(
         address tradingPool,
         uint256[] calldata nftIds,
         uint256[] calldata liquidityPairs
-    ) external view returns (uint256) {
+    ) external view returns (uint256 finalPrice) {
         require(
             nftIds.length == liquidityPairs.length,
             "TPH:SS:NFT_LP_MISMATCH"
@@ -137,15 +134,10 @@ contract TradingPoolHelpers {
         require(nftIds.length > 0, "TPH:SS:NFTS_0");
 
         // Only the swap router can call this function on behalf of another address
-        uint256 spotPriceQuote;
-        uint256 fee;
-        uint256 totalFee;
-        uint256 protocolFee;
-        DataTypes.LiquidityPair memory lp;
         uint256 lpIndex;
         uint256 lpCount;
         uint256 lpDataIndex;
-        bool found;
+        DataTypes.LiquidityPair memory lp;
 
         // Create an array of liquidity pairs to keep track of the prices & token amounts
         DataTypes.LiquidityPair[]
@@ -173,77 +165,81 @@ contract TradingPoolHelpers {
             require(lp.lpType != DataTypes.LPType.Sell, "TP:S:IS_SELL_LP");
 
             // Add liquidity pair to array if not already there
-            found = false;
+
             for (uint j = 0; j < lpCount; j++) {
                 if (lpIds[j] == lpIndex) {
-                    found = true;
                     break;
                 }
-            }
-            if (!found) {
-                lpIds[lpCount] = lpIndex;
-                lpCount++;
+
+                // If it reaches the end of the array, it means it didn't find the liquidity pair
+                if (j == lpCount - 1) {
+                    lpIds[lpCount] = lpIndex;
+                    liquidityPairsData[lpCount] = lp;
+                    lpCount++;
+                }
             }
         }
 
-        // Simulate selling the NFTs
-        for (uint i = 0; i < nftIds.length; i++) {
-            // Check if the LP exists
-            lpIndex = liquidityPairs[i];
+        // scope to avoid stack too deep errors
+        {
+            // Simulate selling the NFTs
+            uint256 fee;
+            uint256 totalFee;
+            uint256 protocolFee;
+            for (uint i = 0; i < nftIds.length; i++) {
+                // Check if the LP exists
+                lpIndex = liquidityPairs[i];
 
-            // Find the liquidity pair in the array
-            for (uint j = 0; j < lpCount; j++) {
-                if (lpIds[j] == lpIndex) {
-                    lpDataIndex = j;
-                    break;
+                // Find the liquidity pair in the array
+                for (uint j = 0; j < lpCount; j++) {
+                    if (lpIds[j] == lpIndex) {
+                        lpDataIndex = j;
+                        break;
+                    }
+                }
+
+                fee =
+                    (liquidityPairsData[lpDataIndex].spotPrice *
+                        liquidityPairsData[lpDataIndex].fee) /
+                    PercentageMath.PERCENTAGE_FACTOR;
+                protocolFee =
+                    (fee *
+                        ITradingPoolFactory(
+                            _addressesProvider.getTradingPoolFactory()
+                        ).getProtocolFeePercentage()) /
+                    PercentageMath.PERCENTAGE_FACTOR;
+
+                require(
+                    liquidityPairsData[lpDataIndex].tokenAmount >=
+                        liquidityPairsData[lpDataIndex].spotPrice -
+                            fee +
+                            protocolFee,
+                    "TP:S:INSUFFICIENT_TOKENS_IN_LP"
+                );
+                liquidityPairsData[lpDataIndex]
+                    .tokenAmount -= (liquidityPairsData[lpIndex].spotPrice -
+                    fee +
+                    protocolFee);
+
+                // Update total price quote and fee sum
+                finalPrice += (liquidityPairsData[lpDataIndex].spotPrice - fee);
+                totalFee += fee;
+
+                // Update liquidity pair price
+                if (
+                    liquidityPairsData[lpDataIndex].lpType !=
+                    DataTypes.LPType.TradeUp
+                ) {
+                    liquidityPairsData[lpDataIndex].spotPrice = IPricingCurve(
+                        liquidityPairsData[lpDataIndex].curve
+                    ).priceAfterSell(
+                            liquidityPairsData[lpDataIndex].spotPrice,
+                            liquidityPairsData[lpDataIndex].delta,
+                            liquidityPairsData[lpDataIndex].fee
+                        );
                 }
             }
-
-            fee =
-                (liquidityPairsData[lpDataIndex].spotPrice *
-                    liquidityPairsData[lpDataIndex].fee) /
-                PercentageMath.PERCENTAGE_FACTOR;
-            protocolFee =
-                (fee *
-                    ITradingPoolFactory(
-                        _addressesProvider.getTradingPoolFactory()
-                    ).getProtocolFeePercentage()) /
-                PercentageMath.PERCENTAGE_FACTOR;
-
-            require(
-                liquidityPairsData[lpDataIndex].tokenAmount >=
-                    liquidityPairsData[lpDataIndex].spotPrice -
-                        fee +
-                        protocolFee,
-                "TP:S:INSUFFICIENT_TOKENS_IN_LP"
-            );
-            liquidityPairsData[lpDataIndex].tokenAmount -= (liquidityPairsData[
-                lpIndex
-            ].spotPrice -
-                fee +
-                protocolFee);
-
-            // Update total price quote and fee sum
-            spotPriceQuote += lp.spotPrice;
-            totalFee += fee;
-
-            // Update liquidity pair price
-            if (
-                liquidityPairsData[lpDataIndex].lpType !=
-                DataTypes.LPType.TradeUp
-            ) {
-                liquidityPairsData[lpDataIndex].spotPrice = IPricingCurve(
-                    liquidityPairsData[lpDataIndex].curve
-                ).priceAfterSell(
-                        liquidityPairsData[lpDataIndex].spotPrice,
-                        liquidityPairsData[lpDataIndex].delta,
-                        liquidityPairsData[lpDataIndex].fee
-                    );
-            }
         }
-
-        // Calculate the final price for the user
-        return spotPriceQuote - totalFee;
     }
 
     function getSellLiquidityPairs(

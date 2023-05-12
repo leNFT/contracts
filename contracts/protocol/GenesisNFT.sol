@@ -326,8 +326,7 @@ contract GenesisNFT is
         address nativeToken = _addressProvider.getNativeToken();
 
         // Make sure the user sent enough ETH
-        uint256 buyPrice = _price * amount;
-        require(msg.value == buyPrice, "G:M:INSUFFICIENT_ETH");
+        require(msg.value == _price * amount, "G:M:INSUFFICIENT_ETH");
 
         // Get the amount of ETH to deposit to the pool
         uint256 ethAmount = LP_ETH_AMOUNT * amount;
@@ -413,27 +412,26 @@ contract GenesisNFT is
         );
 
         // Send the rest of the ETH to the dev address
-        (bool sent, ) = _devAddress.call{value: buyPrice - ethAmount}("");
+        (bool sent, ) = _devAddress.call{value: _price * amount - ethAmount}(
+            ""
+        );
         require(sent, "G:M:ETH_TRANSFER_FAIL");
 
-        uint256 tokenId;
         for (uint256 i = 0; i < amount; i++) {
-            tokenId = _tokenIdCounter.current();
-
             // Mint genesis NFT
-            _safeMint(_msgSender(), tokenId);
+            _safeMint(_msgSender(), _tokenIdCounter.current());
 
             // Add mint details
-            _mintDetails[tokenId] = DataTypes.MintDetails(
+            _mintDetails[_tokenIdCounter.current()] = DataTypes.MintDetails(
                 block.timestamp,
                 locktime,
                 lpAmount / amount
             );
 
+            emit Mint(_msgSender(), _tokenIdCounter.current());
+
             //Increase supply
             _tokenIdCounter.increment();
-
-            emit Mint(_msgSender(), tokenId);
         }
     }
 

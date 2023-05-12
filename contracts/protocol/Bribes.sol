@@ -194,10 +194,11 @@ contract Bribes is
             "B:C:NOT_OWNER"
         );
 
-        // Get lock vote point and its epoch
         IGaugeController gaugeController = IGaugeController(
             _addressProvider.getGaugeController()
         );
+
+        // Get lock vote point and its epoch
         DataTypes.Point memory lockLastPoint = gaugeController
             .lockVotePointForGauge(tokenId, gauge);
 
@@ -224,30 +225,25 @@ contract Bribes is
         }
 
         // Iterate over a max of 50 epochs
+        uint256 lockWeightAtEpoch;
+        uint256 epoch;
         for (uint i = 0; i < 50; i++) {
             // Break if we're at the current epoch or higher
-            uint256 epoch = _voteNextClaimableEpoch[token][gauge][tokenId];
+            epoch = _voteNextClaimableEpoch[token][gauge][tokenId];
             if (epoch > currentEpoch) {
                 break;
             }
 
-            uint256 epochTimestamp = IVotingEscrow(votingEscrow).epochTimestamp(
-                epoch
-            );
-
-            uint256 lockWeightAtEpoch = lockLastPoint.bias -
+            lockWeightAtEpoch =
+                lockLastPoint.bias -
                 (lockLastPoint.slope *
-                    (epochTimestamp - lockLastPoint.timestamp));
-
-            uint256 gaugeWeightAtEpoch = gaugeController.getGaugeWeightAt(
-                gauge,
-                epoch
-            );
+                    (IVotingEscrow(votingEscrow).epochTimestamp(epoch) -
+                        lockLastPoint.timestamp));
 
             // Increment amount to claim
             amountToClaim +=
                 (_gaugeBribes[token][gauge][epoch] * lockWeightAtEpoch) /
-                gaugeWeightAtEpoch;
+                gaugeController.getGaugeWeightAt(gauge, epoch);
 
             // Increment epoch
             _voteNextClaimableEpoch[token][gauge][tokenId]++;
