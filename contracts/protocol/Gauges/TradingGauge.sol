@@ -15,10 +15,11 @@ import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IGauge} from "../../interfaces/IGauge.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @title Trading Gauge Contract
 /// @notice A contract for managing the distribution of rewards to Trading LPs
-contract TradingGauge is IGauge, ERC721Holder {
+contract TradingGauge is IGauge, ERC721Holder, ReentrancyGuard {
     IAddressesProvider private _addressProvider;
     mapping(uint256 => address) private _ownerOf;
     mapping(address => uint256) private _balanceOf;
@@ -290,7 +291,7 @@ contract TradingGauge is IGauge, ERC721Holder {
 
     /// @notice Deposits LP tokens to the contract, updates balances and working balances for the user.
     /// @param lpId The ID of the LP token being deposited.
-    function deposit(uint256 lpId) external {
+    function deposit(uint256 lpId) external nonReentrant {
         DataTypes.LiquidityPair memory lp = ITradingPool(_lpToken).getLP(lpId);
 
         // Only Trade type LPs can be staked
@@ -331,7 +332,7 @@ contract TradingGauge is IGauge, ERC721Holder {
 
     /// @notice Allows the owner of a liquidity position to withdraw it and receive their tokens back.
     /// @param lpId The ID of the liquidity position to be withdrawn.
-    function withdraw(uint256 lpId) public {
+    function withdraw(uint256 lpId) public nonReentrant {
         require(_ownerOf[lpId] == msg.sender, "TG:W:NOT_OWNER_OF_LP_TOKEN");
 
         // remove token value
