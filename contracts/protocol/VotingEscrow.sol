@@ -58,11 +58,6 @@ contract VotingEscrow is
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using LockLogic for DataTypes.LockedBalance;
 
-    modifier onlyMarket() {
-        _requireOnlyMarket();
-        _;
-    }
-
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -630,12 +625,5 @@ contract VotingEscrow is
         return
             ERC721EnumerableUpgradeable.supportsInterface(interfaceId) ||
             ERC165Upgradeable.supportsInterface(interfaceId);
-    }
-
-    function _requireOnlyMarket() internal view {
-        require(
-            _msgSender() == _addressProvider.getLendingMarket(),
-            "VE:NOT_MARKET"
-        );
     }
 }
