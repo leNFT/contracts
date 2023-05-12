@@ -103,7 +103,7 @@ contract FeeDistributor is
     /// @param token Token address to claim for
     /// @param tokenId the token id of the lock
     /// @return uint256 Next claimable epoch
-    function lockNextClaimableEpoch(
+    function getLockNextClaimableEpoch(
         address token,
         uint256 tokenId
     ) external view returns (uint256) {
