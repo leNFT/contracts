@@ -1,5 +1,5 @@
 const { expect, assert } = require("chai");
-const load = require("./helpers/_loadTest.js");
+const load = require("../helpers/_loadTest.js");
 
 describe("Fee Distributor ", () => {
   load.loadTest();
@@ -32,8 +32,7 @@ describe("Fee Distributor ", () => {
   });
 
   it("Should deposit into the fee distributor contract", async function () {
-    // Add 1 weeks to the time
-    await ethers.provider.send("evm_increaseTime", [3 * 3600]);
+    await ethers.provider.send("evm_increaseTime", [6 * 3600]);
     // Mine a new block
     await ethers.provider.send("evm_mine", []);
 
@@ -58,8 +57,7 @@ describe("Fee Distributor ", () => {
     );
   });
   it("Should be able to claim the tokens after the epoch is over", async function () {
-    // Add 2 hours to the time
-    await ethers.provider.send("evm_increaseTime", [12 * 3600]);
+    await ethers.provider.send("evm_increaseTime", [24 * 3600]);
     // Mine a new block
     await ethers.provider.send("evm_mine", []);
 

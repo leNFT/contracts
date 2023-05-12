@@ -1,5 +1,5 @@
 const { expect, assert } = require("chai");
-const load = require("./helpers/_loadTest.js");
+const load = require("../helpers/_loadTest.js");
 
 describe("Voting Escrow", () => {
   load.loadTest();

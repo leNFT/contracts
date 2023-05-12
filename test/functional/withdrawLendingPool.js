@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const load = require("./helpers/_loadTest.js");
+const load = require("../helpers/_loadTest.js");
 
 describe("Withdraw from Lengin Pool", function () {
   load.loadTest();
