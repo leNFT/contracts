@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {DataTypes} from "../types/DataTypes.sol";
-import {PercentageMath} from "../math/PercentageMath.sol";
+import {PercentageMath} from "../utils/PercentageMath.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";

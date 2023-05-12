@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
+import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";

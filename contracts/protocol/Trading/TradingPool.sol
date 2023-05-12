@@ -18,7 +18,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
-import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
+import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {ILiquidityPairMetadata} from "../../interfaces/ILiquidityPairMetadata.sol";
 
 /// @title Trading Pool Contract

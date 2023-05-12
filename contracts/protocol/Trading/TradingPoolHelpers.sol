@@ -5,7 +5,7 @@ import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 import {IPricingCurve} from "../../interfaces/IPricingCurve.sol";
-import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
+import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
 

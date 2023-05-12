@@ -10,7 +10,7 @@ import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
+import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IGauge} from "../../interfaces/IGauge.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";

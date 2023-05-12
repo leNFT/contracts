@@ -17,7 +17,7 @@ import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/intro
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
-import {PercentageMath} from "../libraries/math/PercentageMath.sol";
+import {PercentageMath} from "../libraries/utils/PercentageMath.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /// @title VotingEscrow

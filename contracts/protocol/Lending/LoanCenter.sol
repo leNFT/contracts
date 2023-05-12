@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
-import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
+import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {LoanLogic} from "../../libraries/logic/LoanLogic.sol";
 import {ERC721HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
@@ -11,6 +11,7 @@ import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC7
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
+import {SafeCast} from "../../libraries/utils/SafeCast.sol";
 
 /// @title LoanCenter contract
 /// @dev A smart contract managing loans with NFTs as collateral
@@ -198,7 +199,7 @@ contract LoanCenter is
         _loansLiquidationData[loanId] = DataTypes.LoanLiquidationData({
             auctioner: user,
             liquidator: user,
-            auctionStartTimestamp: uint40(block.timestamp),
+            auctionStartTimestamp: SafeCast.toUint40(block.timestamp),
             auctionMaxBid: bid
         });
     }
@@ -414,8 +415,8 @@ contract LoanCenter is
         //Set the max collaterization
         _collectionsRiskParameters[collection] = DataTypes
             .CollectionRiskParameters({
-                maxLTV: uint16(maxLTV),
-                liquidationThreshold: uint16(liquidationThreshold)
+                maxLTV: SafeCast.toUint16(maxLTV),
+                liquidationThreshold: SafeCast.toUint16(liquidationThreshold)
             });
     }
 

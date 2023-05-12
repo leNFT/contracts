@@ -2,7 +2,8 @@
 pragma solidity 0.8.19;
 
 import {DataTypes} from "../types/DataTypes.sol";
-import {PercentageMath} from "../math/PercentageMath.sol";
+import {PercentageMath} from "../utils/PercentageMath.sol";
+import {SafeCast} from "../utils/SafeCast.sol";
 
 library LoanLogic {
     function init(
@@ -18,13 +19,13 @@ library LoanLogic {
         loanData.owner = owner;
         loanData.state = DataTypes.LoanState.Created;
         loanData.amount = amount;
-        loanData.genesisNFTId = uint16(genesisNFTId);
+        loanData.genesisNFTId = SafeCast.toUint16(genesisNFTId);
         loanData.nftAsset = nftAsset;
         loanData.nftTokenIds = nftTokenIds;
-        loanData.borrowRate = uint16(borrowRate);
+        loanData.borrowRate = SafeCast.toUint16(borrowRate);
         loanData.pool = pool;
-        loanData.initTimestamp = uint40(block.timestamp);
-        loanData.debtTimestamp = uint40(block.timestamp);
+        loanData.initTimestamp = SafeCast.toUint40(block.timestamp);
+        loanData.debtTimestamp = SafeCast.toUint40(block.timestamp);
     }
 
     function getInterest(

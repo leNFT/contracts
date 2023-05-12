@@ -11,7 +11,7 @@ import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
 import {IGauge} from "../../interfaces/IGauge.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
+import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 
 /// @title LendingGauge contract
 /// @notice Liquidity Gauge contract. Distributes incentives to users who have deposited into the LendingPool.

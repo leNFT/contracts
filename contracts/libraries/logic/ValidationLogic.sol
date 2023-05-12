@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {DataTypes} from "../types/DataTypes.sol";
-import {PercentageMath} from "../math/PercentageMath.sol";
+import {PercentageMath} from "../utils/PercentageMath.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {IInterestRate} from "../../interfaces/IInterestRate.sol";

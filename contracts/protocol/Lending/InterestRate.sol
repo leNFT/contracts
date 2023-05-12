@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {IInterestRate} from "../../interfaces/IInterestRate.sol";
 import {ConfigTypes} from "../../libraries/types/ConfigTypes.sol";
-import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
+import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title InterestRate

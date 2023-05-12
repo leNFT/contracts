@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {IPricingCurve} from "../../../interfaces/IPricingCurve.sol";
-import {PercentageMath} from "../../../libraries/math/PercentageMath.sol";
+import {PercentageMath} from "../../../libraries/utils/PercentageMath.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /// @title Exponential Price Curve Contract
