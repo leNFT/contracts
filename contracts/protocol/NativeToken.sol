@@ -19,7 +19,6 @@ contract NativeToken is
     ReentrancyGuardUpgradeable
 {
     IAddressesProvider private _addressProvider;
-    uint256 private _deployTimestamp;
     uint256 private _cap;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -44,7 +43,6 @@ contract NativeToken is
         __Context_init();
         _addressProvider = addressProvider;
         _cap = cap;
-        _deployTimestamp = block.timestamp;
     }
 
     /// @notice Gets the maximum supply of the token
@@ -88,7 +86,7 @@ contract NativeToken is
             _msgSender() == _addressProvider.getGenesisNFT(),
             "NT:MGT:NOT_GENESIS"
         );
-        _mint(_addressProvider.getGenesisNFT(), amount);
+        _mint(_msgSender(), amount);
     }
 
     /// @notice Burns the specified amount of tokens for the Genesis contract.
@@ -99,7 +97,7 @@ contract NativeToken is
             _msgSender() == _addressProvider.getGenesisNFT(),
             "NT:BGT:NOT_GENESIS"
         );
-        _burn(_addressProvider.getGenesisNFT(), amount);
+        _burn(_msgSender(), amount);
     }
 
     /// @notice Mints the specified amount of gauge rewards to the specified receiver.
