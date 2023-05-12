@@ -169,7 +169,11 @@ library ValidationLogic {
         require(params.amount > 0, "VL:VR:AMOUNT_0");
 
         //Require that loan exists
-        require(loanState != DataTypes.LoanState.None, "VL:VR:LOAN_NOT_FOUND");
+        require(
+            loanState == DataTypes.LoanState.Active ||
+                loanState == DataTypes.LoanState.Auctioned,
+            "VL:VR:LOAN_NOT_FOUND"
+        );
 
         // Check if user is over paying
         require(params.amount <= loanDebt, "VL:VR:AMOUNT_EXCEEDS_DEBT");
