@@ -116,9 +116,6 @@ contract Bribes is
         address gauge,
         uint256 epoch
     ) external nonReentrant {
-        IGaugeController gaugeController = IGaugeController(
-            _addressProvider.getGaugeController()
-        );
         require(
             epoch <=
                 IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
@@ -126,28 +123,30 @@ contract Bribes is
                 ),
             "B:SB:EPOCH_NOT_STARTED"
         );
+
+        IGaugeController gaugeController = IGaugeController(
+            _addressProvider.getGaugeController()
+        );
+
         // Funds not claimable by users are epoch in which there was no voting power for gauge
         require(
             gaugeController.getGaugeWeightAt(gauge, epoch) == 0,
             "B:SB:FUNDS_CLAIMABLE"
         );
 
-        // THere needs to be funds to salvage
-        require(
-            _userBribes[token][gauge][epoch][_msgSender()] > 0,
-            "B:SB:NO_FUNDS"
-        );
-
-        // Tranfer bribe back to briber
-        IERC20Upgradeable(token).safeTransfer(
-            _msgSender(),
-            _userBribes[token][gauge][epoch][_msgSender()]
-        );
-
-        // Subtract the amount from the gauge bribes
-        _gaugeBribes[token][gauge][epoch] -= _userBribes[token][gauge][epoch][
+        uint256 epochUserBribes = _userBribes[token][gauge][epoch][
             _msgSender()
         ];
+
+        // THere needs to be funds to salvage
+        require(epochUserBribes > 0, "B:SB:NO_FUNDS");
+
+        // Tranfer bribe back to briber
+        IERC20Upgradeable(token).safeTransfer(_msgSender(), epochUserBribes);
+
+        // Subtract the amount from the gauge bribes
+        _gaugeBribes[token][gauge][epoch] -= epochUserBribes;
+
         // Clear the user bribes
         delete _userBribes[token][gauge][epoch][_msgSender()];
     }
@@ -188,18 +187,19 @@ contract Bribes is
         address gauge,
         uint256 tokenId
     ) external nonReentrant returns (uint256 amountToClaim) {
+        address votingEscrow = _addressProvider.getVotingEscrow();
         // Make sure the caller is the owner of the token
         require(
-            IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
-                tokenId
-            ) == _msgSender(),
+            IERC721Upgradeable(votingEscrow).ownerOf(tokenId) == _msgSender(),
             "B:C:NOT_OWNER"
         );
 
         // Get lock vote point and its epoch
-        DataTypes.Point memory lockLastPoint = IGaugeController(
+        IGaugeController gaugeController = IGaugeController(
             _addressProvider.getGaugeController()
-        ).lockVotePointForGauge(tokenId, gauge);
+        );
+        DataTypes.Point memory lockLastPoint = gaugeController
+            .lockVotePointForGauge(tokenId, gauge);
 
         // Make sure the token has voting power for the gauge
         if (lockLastPoint.bias == 0) {
@@ -207,11 +207,12 @@ contract Bribes is
         }
 
         // Find epoch we're in
-        uint256 currentEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
-            .epoch(block.timestamp);
-        uint256 lockLastPointEpoch = IVotingEscrow(
-            _addressProvider.getVotingEscrow()
-        ).epoch(lockLastPoint.timestamp);
+        uint256 currentEpoch = IVotingEscrow(votingEscrow).epoch(
+            block.timestamp
+        );
+        uint256 lockLastPointEpoch = IVotingEscrow(votingEscrow).epoch(
+            lockLastPoint.timestamp
+        );
 
         // Bring the next claimable epoch up to date if needed
         if (
@@ -230,17 +231,18 @@ contract Bribes is
                 break;
             }
 
-            uint256 epochTimestamp = IVotingEscrow(
-                _addressProvider.getVotingEscrow()
-            ).epochTimestamp(epoch);
+            uint256 epochTimestamp = IVotingEscrow(votingEscrow).epochTimestamp(
+                epoch
+            );
 
             uint256 lockWeightAtEpoch = lockLastPoint.bias -
                 (lockLastPoint.slope *
                     (epochTimestamp - lockLastPoint.timestamp));
 
-            uint256 gaugeWeightAtEpoch = IGaugeController(
-                _addressProvider.getGaugeController()
-            ).getGaugeWeightAt(gauge, epoch);
+            uint256 gaugeWeightAtEpoch = gaugeController.getGaugeWeightAt(
+                gauge,
+                epoch
+            );
 
             // Increment amount to claim
             amountToClaim +=
