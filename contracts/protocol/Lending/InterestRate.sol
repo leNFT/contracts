@@ -13,7 +13,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 /// @dev The optimal utilization rate is the target utilization rate where the borrow rate is equal to the base rate plus the low slope
 /// @dev Above the optimal utilization rate, the borrow rate is linearly increased based on the high slope
 /// @dev Below the optimal utilization rate, the borrow rate is linearly increased based on the low slope
-/// @dev Utilization rate is defined as the ratio of total debt to total assets in the system
+/// @dev Utilization rate is defined as the ratio of total debt to total liquidity in the system
 /// @dev The calculation of the utilization rate is done by the internal _calculateUtilizationRate function
 contract InterestRate is IInterestRate, Ownable {
     mapping(address => bool) private _isSupported;

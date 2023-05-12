@@ -78,7 +78,7 @@ contract LoanCenter is
     /// @dev Only the market contract can call this function
     /// @param pool The address of the lending pool
     /// @param amount The amount of the lending pool token to be borrowed
-    /// @param genesisNFTId The ID of the first NFT in the collateral
+    /// @param genesisNFTId The ID of the genesis NFT
     /// @param nftAddress The address of the NFT contract
     /// @param nftTokenIds An array of NFT token IDs that will be used as collateral
     /// @param borrowRate The interest rate for the loan

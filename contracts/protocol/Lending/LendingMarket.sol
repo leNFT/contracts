@@ -26,7 +26,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 /// @title LendingMarket Contract
 /// @author leNFT
 /// @notice This contract is the entrypoint for the leNFT lending protocol
-/// @dev Call these contrcact functions to interact with the protocol
+/// @dev Call these contract functions to interact with the lending part of the protocol
 contract LendingMarket is
     ContextUpgradeable,
     ILendingMarket,
@@ -69,12 +69,14 @@ contract LendingMarket is
         _defaultLendingPoolConfig = defaultLendingPoolConfig;
     }
 
-    /// @notice Borrow an asset from a lenfin pool while an NFT as collateral
+    /// @notice Borrow an asset from a lending pool using an NFT as collateral
     /// @dev NFT approval needs to be given to the LoanCenter contract
-    /// @param asset The address of the asset the be borrowed
+    /// @param onBehalfOf The address of the user who will receive the borrowed tokens
+    /// @param asset The address of the asset to be borrowed
     /// @param amount Amount of the asset to be borrowed
     /// @param nftAddress Address of the NFT collateral
     /// @param nftTokenIds Token id of the NFT collateral
+    /// @param genesisNFTId Token id of the genesis NFT to be used for LTV boost
     /// @param request ID of the collateral price request sent by the trusted server
     /// @param packet Signed collateral price request sent by the trusted server
     function borrow(
@@ -108,6 +110,7 @@ contract LendingMarket is
 
     /// @notice Repay an an active loan
     /// @param loanId The ID of the loan to be paid
+    /// @param amount Amount to be repaid
     function repay(
         uint256 loanId,
         uint256 amount
@@ -127,6 +130,7 @@ contract LendingMarket is
     /// @notice Liquidate an active loan
     /// @dev Needs to approve WETH transfers from Market address
     /// @param loanId The ID of the loan to be paid
+    /// @param bid The amount to bid on the collateral
     /// @param request ID of the collateral price request sent by the trusted server
     /// @param packet Signed collateral price request sent by the trusted server
     function createLiquidationAuction(
@@ -263,8 +267,9 @@ contract LendingMarket is
     }
 
     /// @notice Get the Lending Pool address responsible to a certain asset
-    /// @param asset The asset the Lending Pool is responsible for
-    /// @return The address of the Lending Pool responsible for the asset
+    /// @param collection The collection supported by the Lending Pool
+    /// @param asset The asset supported by the Lending Pool
+    /// @return The address of the Lending Pool
     function getLendingPool(
         address collection,
         address asset

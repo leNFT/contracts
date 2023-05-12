@@ -51,13 +51,13 @@ contract TradingPool is
     }
 
     /// @notice Trading Pool constructor.
+    /// @dev The constructor should only be called by the Trading Pool Factory contract.
     /// @param addressProvider The address provider contract.
     /// @param owner The owner of the Trading Pool contract.
     /// @param token The ERC20 token used in the trading pool.
     /// @param nft The address of the ERC721 contract.
     /// @param name The name of the ERC721 token.
     /// @param symbol The symbol of the ERC721 token.
-    /// @notice The constructor should only be called by the Trading Pool
     constructor(
         IAddressesProvider addressProvider,
         address owner,
@@ -288,8 +288,7 @@ contract TradingPool is
         }
     }
 
-    /// @notice Buys NFTs and deposits them into the pool in exchange for pool tokens
-    /// @dev Buys NFTs and deposits them into the pool in exchange for pool tokens
+    /// @notice Buys NFTs in exchange for pool tokens
     /// @param onBehalfOf The address to deposit the NFTs to
     /// @param nftIds The IDs of the NFTs to buy
     /// @param maximumPrice The maximum price the user is willing to pay for the NFTs
@@ -419,7 +418,7 @@ contract TradingPool is
             // Get the LP details
             lp = _liquidityPairs[lpIndex];
 
-            // Send tokens to pool
+            // Send NFT to the pool
             IERC721(_nft).safeTransferFrom(
                 onBehalfOf,
                 address(this),

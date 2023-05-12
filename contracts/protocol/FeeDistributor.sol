@@ -66,7 +66,7 @@ contract FeeDistributor is
         uint256 epoch = IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
             block.timestamp
         );
-        // Find the current balance if the token in question
+        // Find the current balance of the token in question
         uint256 balance = IERC20Upgradeable(token).balanceOf(address(this));
 
         // Add unaccounted fees to current epoch
@@ -83,15 +83,15 @@ contract FeeDistributor is
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         );
-        // Funds not claimable by users are epoch in which there was no locked supply
+        // Funds are only salvageable if the vote weight of the epoch in question is 0
         require(
             votingEscrow.totalWeightAt(epoch) == 0,
             "FD:SV:FUNDS_CLAIMABLE"
         );
-        // THere needs to be funds to salvage
+        // There needs to be funds to salvage
         require(_epochFees[token][epoch] > 0, "FD:SV:NO_FUNDS");
 
-        // Tranfer rewards to current epoch
+        // Transfer rewards to current epoch
         _epochFees[token][votingEscrow.epoch(block.timestamp)] += _epochFees[
             token
         ][epoch];

@@ -101,7 +101,7 @@ library BorrowLogic {
                     memory liquidationData = loanCenter.getLoanLiquidationData(
                         params.loanId
                     );
-                // Get the payment from the liquidator
+                // Return the bid to the liquidator
                 IERC20Upgradeable(IERC4626(loanData.pool).asset())
                     .safeTransferFrom(
                         address(this),

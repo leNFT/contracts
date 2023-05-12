@@ -83,7 +83,7 @@ library DataTypes {
     }
 
     struct LoanData {
-        // Owner of the loan
+        // owner of the loan
         address owner;
         // borrowed amount
         uint256 amount;
@@ -95,11 +95,11 @@ library DataTypes {
         uint16 borrowRate;
         // timestamp for the initial creation of the loan
         uint40 initTimestamp;
-        // timestamp for debt computation ()
+        // timestamp for debt computation
         uint40 debtTimestamp;
         // address of lending pool associated with loan
         address pool;
-        // The genesis NFT id for the boost (0 if not used). Uint16 is used since genesis cap < 65536
+        // The genesis NFT id for the boost (0 if not used). uint16 is used since genesis cap < 65536
         uint16 genesisNFTId;
         // the current state of the loan
         LoanState state;

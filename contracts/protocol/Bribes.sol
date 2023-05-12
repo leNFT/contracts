@@ -108,9 +108,11 @@ contract Bribes is
     }
 
     /// @notice Get bribes back if no user voted for the gauge
-    /// @dev Only works after the bribe's epoch has started
+    /// @dev Only works after the next epoch has started
+    /// @dev Anyone can do this for any user
     /// @param token The token to salvage the bribe from
     /// @param gauge The gauge to salvage the bribe from
+    /// @param epoch The epoch to salvage the bribe from
     function salvageBribes(
         address token,
         address gauge,
