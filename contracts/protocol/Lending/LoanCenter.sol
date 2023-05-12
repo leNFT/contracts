@@ -391,7 +391,7 @@ contract LoanCenter is
         return _collectionsRiskParameters[collection].liquidationThreshold;
     }
 
-    /// @notice Gets the Max LTV for a collection.
+    /// @notice Gets the Max LTV for a collection, this is the maximum amount of debt that can be taken out against a collection in a borrow operation.
     /// @param collection The address of the collection to get the max collaterization price for.
     /// @return The Max LTV for the collection (10000 = 100%).
     function getCollectionMaxLTV(
