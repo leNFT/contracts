@@ -609,4 +609,9 @@ contract GenesisNFT is
             "G:NOT_MARKET"
         );
     }
+
+    // Function to receive Ether
+    receive() external payable {
+        revert("G:RECEIVE_NOT_ALLOWED");
+    }
 }
