@@ -87,15 +87,14 @@ library BorrowLogic {
         // Get the loan
         ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
         DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
-        uint256 loanDebt = loanCenter.getLoanDebt(params.loanId);
+        uint256 interest = loanCenter.getLoanInterest(params.loanId);
+        uint256 loanDebt = interest + loanData.amount;
 
         // Validate the movement
         ValidationLogic.validateRepay(params, loanData.state, loanDebt);
 
-        uint256 interest = loanCenter.getLoanInterest(params.loanId);
-
         // If we are paying the entire loan debt
-        if (params.amount == loanCenter.getLoanDebt(params.loanId)) {
+        if (params.amount == loanDebt) {
             // If the loan was being liquidated we send the liquidators payment back with a fee
             if (loanData.state == DataTypes.LoanState.Auctioned) {
                 DataTypes.LoanLiquidationData
