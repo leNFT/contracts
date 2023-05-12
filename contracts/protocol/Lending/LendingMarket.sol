@@ -171,7 +171,7 @@ contract LendingMarket is
 
     /// @notice Claim the collateral of a liquidated loan
     /// @param loanId The ID of the loan to be claimmed
-    function claimLiquidation(uint256 loanId) external override {
+    function claimLiquidation(uint256 loanId) external override nonReentrant {
         LiquidationLogic.claimLiquidation(
             _addressProvider,
             DataTypes.ClaimLiquidationParams({loanId: loanId})
