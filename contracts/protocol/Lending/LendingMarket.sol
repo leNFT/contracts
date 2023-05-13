@@ -282,7 +282,7 @@ contract LendingMarket is
     /// @param collection The collection address
     /// @param asset The asset address
     /// @param pool The lending pool address
-    function setCollectionLendingPool(
+    function setLendingPool(
         address collection,
         address asset,
         address pool
