@@ -1,24 +1,46 @@
 const { ethers } = require("hardhat");
 const helpers = require("@nomicfoundation/hardhat-network-helpers");
 require("dotenv").config();
+const { priceSigner } = require("./getPriceSig.js");
 
-let loadEnv = async function () {
-  //Reset the fork
-  await helpers.reset(
-    "https://mainnet.infura.io/v3/" + process.env.INFURA_API_KEY
-  );
+let loadEnv = async function (isMainnetFork) {
+  //Reset the fork if it's genesis
+  console.log("isMainnetFork", isMainnetFork);
+  if (isMainnetFork) {
+    console.log("Resetting the mainnet fork...");
+    await helpers.reset(
+      "https://mainnet.infura.io/v3/" + process.env.INFURA_API_KEY
+    );
+  } else {
+    console.log("Resetting the local fork...");
+    await helpers.reset();
+    console.log("Resetted the local fork");
+  }
 
   const ONE_DAY = 86400;
   console.log("Setting up enviroment...");
 
-  [owner, addr1, addr2] = await ethers.getSigners();
+  [owner] = await ethers.getSigners();
 
   // Mainnet weth address
-  wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
-  weth = await ethers.getContractAt(
-    "contracts/interfaces/IWETH.sol:IWETH",
-    wethAddress
-  );
+  if (isMainnetFork) {
+    // Get the WETH from the mainnet fork
+    console.log("Getting WETH from the mainnet fork...");
+    wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+    weth = await ethers.getContractAt(
+      "contracts/interfaces/IWETH.sol:IWETH",
+      wethAddress
+    );
+    console.log("Got WETH from the mainnet fork:", wethAddress);
+  } else {
+    // Deploy a WETH contract
+    console.log("Deploying WETH...");
+    const WETH = await ethers.getContractFactory("WETH");
+    weth = await WETH.deploy();
+    await weth.deployed();
+    wethAddress = weth.address;
+    console.log("Deployed WETH:", wethAddress);
+  }
 
   //Deploy libraries
   ValidationLogicLib = await ethers.getContractFactory("ValidationLogic");
@@ -181,7 +203,7 @@ let loadEnv = async function () {
 
   // Deploy the NFT Oracle contract
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
-  nftOracle = await NFTOracle.deploy(addressesProvider.address);
+  nftOracle = await NFTOracle.deploy();
   await nftOracle.deployed();
 
   // Deploy TokenOracle contract
@@ -285,7 +307,7 @@ let loadEnv = async function () {
 
   // Set trusted price source
   const setTrustedPriceSourceTx = await nftOracle.setTrustedPriceSigner(
-    "0xfEa2AF8BB65c34ee64A005057b4C749310321Fa0",
+    priceSigner,
     true
   );
   await setTrustedPriceSourceTx.wait();
@@ -328,8 +350,13 @@ let loadEnv = async function () {
   console.log("loaded");
 };
 
-function loadTest() {
-  before(loadEnv);
+function loadTest(isMainnetFork) {
+  before(() => loadEnv(isMainnetFork));
+}
+
+function loadTestAlways(isMainnetFork) {
+  beforeEach(() => loadEnv(isMainnetFork));
 }
 
 exports.loadTest = loadTest;
+exports.loadTestAlways = loadTestAlways;

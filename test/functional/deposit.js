@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const load = require("../helpers/_loadTest.js");
 
 describe("Deposit", function () {
-  load.loadTest();
+  load.loadTest(false);
   var poolAddress;
   it("Should create a pool and deposit into it", async function () {
     // Create a pool

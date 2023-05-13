@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const load = require("../helpers/_loadTest.js");
 
 describe("Bribes", () => {
-  load.loadTest();
+  load.loadTest(false);
   var poolAddress;
   var tradingPool;
   var gauge;

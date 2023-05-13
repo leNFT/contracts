@@ -207,7 +207,7 @@ async function main() {
 
   // Deploy the NFT Oracle contract
   const NFTOracle = await ethers.getContractFactory("NFTOracle");
-  const nftOracle = await NFTOracle.deploy(addressesProvider.address);
+  const nftOracle = await NFTOracle.deploy();
   await nftOracle.deployed();
   addresses["NFTOracle"] = nftOracle.address;
 

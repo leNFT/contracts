@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const load = require("../helpers/_loadTest.js");
 
 describe("Withdraw from Lengin Pool", function () {
-  load.loadTest();
+  load.loadTest(false);
   it("Deposit underlying to the lending pool", async function () {
     const createLendingPoolTx = await lendingMarket.createLendingPool(
       testNFT.address,

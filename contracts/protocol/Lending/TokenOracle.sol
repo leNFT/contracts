@@ -11,7 +11,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 /// @dev The contract uses Chainlink's AggregatorV3Interface to get token prices from data feeds
 /// @dev The contract also defines a constant PRICE_PRECISION which is used to convert prices to the appropriate precision
 contract TokenOracle is ITokenOracle, Ownable {
-    uint256 internal constant PRICE_PRECISION = 10 ** 18;
+    uint256 internal constant PRICE_PRECISION = 1e18;
     mapping(address => uint256) private _tokenPrices;
     mapping(address => address) private _priceFeeds;
 

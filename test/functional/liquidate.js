@@ -3,7 +3,7 @@ const { getPriceSig } = require("../helpers/getPriceSig.js");
 const load = require("../helpers/_loadTest.js");
 
 describe("Liquidate", function () {
-  load.loadTest();
+  load.loadTest(false);
   var tokenID;
   it("Create NFT asset 1", async function () {
     // Mint 2 NFT collaterals

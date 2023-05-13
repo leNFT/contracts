@@ -2,16 +2,19 @@ const abi = require("web3-eth-abi");
 const { utils } = require("ethers");
 const { getMessage } = require("eip-712");
 
+const priceSigner = "0xfEa2AF8BB65c34ee64A005057b4C749310321Fa0";
+
 function getPriceSig(
   collection,
   tokenIds,
   amount,
-  deadline,
+  timestamp,
   verifyingContract
 ) {
   const requestID =
     "0x0000000000000000000000000000000000000000000000000000000000000000";
-  console.log("deadline", deadline);
+  const expireInSec = 5 * 60;
+
   const payload = abi.encodeParameter(
     {
       AssetsPrice: {
@@ -51,7 +54,7 @@ function getPriceSig(
     },
     message: {
       request: requestID,
-      deadline: deadline, //"1694732504",
+      deadline: timestamp + expireInSec,
       payload: payload,
     },
   };
@@ -71,11 +74,11 @@ function getPriceSig(
     r: r,
     s: s,
     request: requestID,
-    deadline: deadline, //"1694732504",
+    deadline: timestamp + expireInSec,
     payload: payload,
   };
 
   return sigPacket;
 }
 
-module.exports = { getPriceSig };
+module.exports = { getPriceSig, priceSigner };

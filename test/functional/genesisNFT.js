@@ -1,10 +1,12 @@
 const { expect } = require("chai");
 const load = require("../helpers/_loadTest.js");
 const weightedPoolFactoryABI = require("../../scripts/balancer/weightedPoolFactoryABI.json");
+const helpers = require("@nomicfoundation/hardhat-network-helpers");
 
 // Should be used in a forked mainnet/sepolia env so to use the balancer pool
 describe("GenesisNFT", function () {
-  load.loadTest();
+  // Go to a mainnet fork because we need to use the balancer pool
+  load.loadTest(true);
   it("Set the balancer details", async function () {
     const vaultAddress = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
     const queryAddress = "0xE39B5e3B6D74016b2F6A9673D7d7493B6DF549d5";

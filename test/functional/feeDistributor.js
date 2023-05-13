@@ -2,7 +2,7 @@ const { expect, assert } = require("chai");
 const load = require("../helpers/_loadTest.js");
 
 describe("Fee Distributor ", () => {
-  load.loadTest();
+  load.loadTest(false);
   it("Should lock tokens", async function () {
     // Mint 10 native tokens to the callers address
     const mintNativeTokenTx = await nativeToken.mint(

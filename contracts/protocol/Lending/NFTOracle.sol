@@ -4,21 +4,12 @@ pragma solidity 0.8.19;
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {Trustus} from "../Trustus/Trustus.sol";
 
 /// @title NFTOracle contract
 /// @dev This contract provides a mechanism for obtaining the ETH value of NFT tokens  using Trustus as the off-chain price oracle.
 /// @dev Trustus provides a mechanism to sign, relay and verify off-chain data.
 contract NFTOracle is INFTOracle, Ownable, Trustus {
-    IAddressesProvider private immutable _addressProvider;
-
-    /// @notice NFTOracle contract constructor
-    /// @param addressProvider The address provider contract used to fetch other contract addresses.
-    constructor(IAddressesProvider addressProvider) {
-        _addressProvider = addressProvider;
-    }
-
     /// @notice Returns the ETH value of a collection of NFT tokens.
     /// @param collection The address of the collection contract
     /// @param tokenIds The IDs of the tokens whose value will be returned

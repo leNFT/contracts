@@ -70,7 +70,7 @@ library DataTypes {
      * 1 - Created: The loan data is stored; but not initiated yet.
      * 2 - Active: The loan has been initialized; funds have been delivered to the borrower and the collateral is held.
      * 3 - Repaid: The loan has been repaid; and the collateral has been returned to the borrower. This can be a terminal state.
-     * 4 - Actioned: The loan's collateral has been auctioned off and its in the process of being liquidated.
+     * 4 - Auctioned: The loan's collateral has been auctioned off and its in the process of being liquidated.
      * 5 - Liquidated: The loan's collateral was claimed by the liquidator. This is a terminal state.
      */
     enum LoanState {

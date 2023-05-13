@@ -3,7 +3,7 @@ const { getPriceSig } = require("../helpers/getPriceSig.js");
 const load = require("../helpers/_loadTest.js");
 
 describe("Borrow", function () {
-  load.loadTest();
+  load.loadTest(false);
   it("Create NFT asset 1", async function () {
     // Mint 2 NFT collaterals
     const mintTestNftTx = await testNFT.mint(owner.address);

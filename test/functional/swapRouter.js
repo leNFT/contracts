@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const load = require("../helpers/_loadTest.js");
 
 describe("Swap Router", () => {
-  load.loadTest();
+  load.loadTest(false);
   var sellPoolAddress;
   var buyPoolAddress;
 

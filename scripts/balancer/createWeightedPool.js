@@ -60,7 +60,7 @@ async function main() {
   };
   console.log("Balancer details: ", balancerDetails);
 
-  // Set trusted price source
+  // Set balancer details
   const setBalancerDetailsTx = await genesisNFT.setBalancerDetails(
     balancerDetails
   );
