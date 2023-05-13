@@ -38,7 +38,9 @@ contract InterestRate is IInterestRate, Ownable {
 
     /// @notice Removes support for a token
     /// @param token The address of the token
-    function removeToken(address token) external onlyOwner {
+    function removeToken(
+        address token
+    ) external onlySupported(token) onlyOwner {
         delete _isSupported[token];
         delete _interestRateConfigs[token];
     }
