@@ -8,7 +8,6 @@ import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 /// @notice This contract is responsible for storing and providing all the protocol contract addresses
 contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _lendingMarket;
-    address private _debtToken;
     address private _feeDistributor;
     address private _swapRouter;
     address private _loanCenter;

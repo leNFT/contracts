@@ -125,7 +125,7 @@ async function main() {
     12500000, // Native Token Mint Factor
     ONE_DAY * 180, // Max locktime (180 days in s)
     ONE_DAY * 14, // Min locktime (14 days in s)
-    owner, // Genesis NFT funds receiver is the deployer
+    owner.address, // Genesis NFT funds receiver is the deployer
   ]);
   addresses["GenesisNFT"] = genesisNFT.address;
 

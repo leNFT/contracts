@@ -9,7 +9,8 @@ let loadEnv = async function (isMainnetFork) {
   if (isMainnetFork) {
     console.log("Resetting the mainnet fork...");
     await helpers.reset(
-      "https://mainnet.infura.io/v3/" + process.env.INFURA_API_KEY
+      "https://mainnet.infura.io/v3/" + process.env.INFURA_API_KEY,
+      17253963 // Block number 13/05/2023
     );
   } else {
     console.log("Resetting the local fork...");
@@ -72,6 +73,8 @@ let loadEnv = async function (isMainnetFork) {
   );
   addressesProvider = await upgrades.deployProxy(AddressesProvider);
 
+  console.log("Deployed AddressesProvider");
+
   // Deploy and initialize market proxy
   const LendingMarket = await ethers.getContractFactory("LendingMarket", {
     libraries: {
@@ -94,6 +97,8 @@ let loadEnv = async function (isMainnetFork) {
     ],
     { unsafeAllow: ["external-library-linking"], timeout: 0 }
   );
+
+  console.log("Deployed LendingMarket");
 
   // Deploy and initialize loan center provider proxy
   const LoanCenter = await ethers.getContractFactory("LoanCenter");
