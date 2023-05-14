@@ -17,13 +17,24 @@ import {DataTypes} from "../../libraries/types/DataTypes.sol";
 /// @author leNFT dev (thanks to out.eth (@outdoteth))
 /// @notice This contract is used to generate a liquidity pair's metadata.
 contract LiquidityPairMetadata is ILiquidityPairMetadata {
+    modifier lpExists(address tradingPool, uint256 tokenId) {
+        _requireLpExists(tradingPool, tokenId);
+        _;
+    }
+
     /// @notice Returns the metadata for a liquidity pair
     /// @param tradingPool The address of the trading pool of the liquidity pair.
     /// @param tokenId The liquidity pair's token ID.
     function tokenURI(
         address tradingPool,
         uint256 tokenId
-    ) public view override returns (string memory) {
+    )
+        public
+        view
+        override
+        lpExists(tradingPool, tokenId)
+        returns (string memory)
+    {
         // forgefmt: disable-next-item
         bytes memory metadata;
 
@@ -70,7 +81,7 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
     function attributes(
         address tradingPool,
         uint256 tokenId
-    ) public view returns (string memory) {
+    ) public view lpExists(tradingPool, tokenId) returns (string memory) {
         DataTypes.LiquidityPair memory lp = ITradingPool(tradingPool).getLP(
             tokenId
         );
@@ -124,7 +135,7 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
     function svg(
         address tradingPool,
         uint256 tokenId
-    ) public view returns (bytes memory _svg) {
+    ) public view lpExists(tradingPool, tokenId) returns (bytes memory _svg) {
         DataTypes.LiquidityPair memory lp = ITradingPool(tradingPool).getLP(
             tokenId
         );
@@ -217,5 +228,15 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
                     '" }'
                 )
             );
+    }
+
+    function _requireLpExists(
+        address tradingPool,
+        uint256 tokenId
+    ) internal view {
+        require(
+            IERC721(tradingPool).ownerOf(tokenId) != address(0),
+            "LPM:LP_NOT_FOUND"
+        );
     }
 }

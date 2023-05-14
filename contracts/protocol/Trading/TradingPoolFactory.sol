@@ -8,6 +8,7 @@ import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {TradingPool} from "./TradingPool.sol";
 import {ISwapRouter} from "../../interfaces/ISwapRouter.sol";
+import {IPricingCurve} from "../../interfaces/IPricingCurve.sol";
 import {IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -30,7 +31,7 @@ contract TradingPoolFactory is
     mapping(address => mapping(address => address)) private _pools;
 
     // mapping of valid pools
-    mapping(address => bool) private _isPool;
+    mapping(address => bool) private _isTradingPool;
 
     // mapping of valid price curves
     mapping(address => bool) private _isPriceCurve;
@@ -69,6 +70,11 @@ contract TradingPoolFactory is
     }
 
     function setPriceCurve(address priceCurve, bool valid) external onlyOwner {
+        // Make sure the price curve is valid
+        require(
+            priceCurve.supportsInterface(type(IPricingCurve).interfaceId),
+            "TPF:SPC:NOT_PC"
+        );
         _isPriceCurve[priceCurve] = valid;
     }
 
@@ -111,6 +117,7 @@ contract TradingPoolFactory is
 
     /// @notice Sets the address of the trading pool for a certain collection and token
     /// @dev Meant to be used by owner if there's a need to update a pool
+    /// @dev Owner needs to make sure the pool is valid
     /// @param nft The NFT collection address
     /// @param token The token address
     /// @param pool The address of the trading pool for the given NFT collection and token
@@ -125,8 +132,8 @@ contract TradingPoolFactory is
     /// @notice Returns whether a pool is valid or not
     /// @param pool The address of the pool to check
     /// @return Whether the pool is valid or not
-    function isPool(address pool) external view returns (bool) {
-        return _isPool[pool];
+    function isTradingPool(address pool) external view returns (bool) {
+        return _isTradingPool[pool];
     }
 
     /// @notice Creates a trading pool for a certain collection and token
@@ -137,13 +144,14 @@ contract TradingPoolFactory is
         address token
     ) external nonReentrant {
         require(
-            nft.supportsInterface(type(IERC721Upgradeable).interfaceId),
-            "TPF:CTP:NFT_NOT_ERC721"
-        );
-        require(
             _pools[nft][token] == address(0),
             "TPF:CTP:POOL_ALREADY_EXISTS"
         );
+        require(
+            nft.supportsInterface(type(IERC721MetadataUpgradeable).interfaceId),
+            "TPF:CTP:NFT_NOT_ERC721"
+        );
+
         ITradingPool newTradingPool = new TradingPool(
             _addressProvider,
             owner(),
@@ -164,7 +172,7 @@ contract TradingPoolFactory is
         );
 
         _pools[nft][token] = address(newTradingPool);
-        _isPool[address(newTradingPool)] = true;
+        _isTradingPool[address(newTradingPool)] = true;
 
         // Approve trading pool in swap router
         ISwapRouter(_addressProvider.getSwapRouter()).approveTradingPool(

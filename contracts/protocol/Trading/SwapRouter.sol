@@ -34,7 +34,7 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
     /// @param sellNftIds The IDs of the NFTs that the user will sell
     /// @param sellLps The amounts of liquidity provider tokens to be sold
     /// @param minimumSellPrice The minimum price that the user is willing to accept for the NFTs
-    /// @return The amount of tokens returned to the user
+    /// @return change The amount of tokens returned to the user
     function swap(
         ITradingPool buyPool,
         ITradingPool sellPool,
@@ -43,18 +43,18 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
         uint256[] calldata sellNftIds,
         uint256[] calldata sellLps,
         uint256 minimumSellPrice
-    ) external nonReentrant returns (uint256) {
+    ) external nonReentrant returns (uint256 change) {
         // Pools need to be different
         require(address(buyPool) != address(sellPool), "SR:S:SAME_POOL");
         // Pools need to be registered in the factory
         require(
             ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                .isPool(address(buyPool)),
+                .isTradingPool(address(buyPool)),
             "SR:S:INVALID_BUY_POOL"
         );
         require(
             ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                .isPool(address(sellPool)),
+                .isTradingPool(address(sellPool)),
             "SR:S:INVALID_SELL_POOL"
         );
         // Pools need to have the same underlying token
@@ -90,10 +90,8 @@ contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
                 msg.sender,
                 sellPrice + priceDiff - buyPrice
             );
-            return sellPrice + priceDiff - buyPrice;
+            change = sellPrice + priceDiff - buyPrice;
         }
-
-        return 0;
     }
 
     /// @notice Approves a trading pool to spend an unlimited amount of tokens on behalf of this contract

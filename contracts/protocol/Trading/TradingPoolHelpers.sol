@@ -8,6 +8,7 @@ import {IPricingCurve} from "../../interfaces/IPricingCurve.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
+import "hardhat/console.sol";
 
 contract TradingPoolHelpers {
     // Address provider state variable
@@ -23,14 +24,6 @@ contract TradingPoolHelpers {
     ) external view returns (uint256 finalPrice) {
         require(nftIds.length > 0, "TP:B:NFTS_0");
 
-        uint256 lpIndex;
-        uint256 lpDataIndex;
-        uint256 fee;
-        uint256 totalFee;
-        uint256 protocolFee;
-        DataTypes.LiquidityPair memory lp;
-        uint256 lpCount;
-
         // Create an array of liquidity pairs to keep track of the prices & token amounts
         DataTypes.LiquidityPair[]
             memory liquidityPairsData = new DataTypes.LiquidityPair[](
@@ -38,6 +31,12 @@ contract TradingPoolHelpers {
             );
         // Create an array of liquidity pair IDs to keep track of the liquidity pairs
         uint256[] memory lpIds = new uint256[](nftIds.length);
+
+        uint256 lpIndex;
+        uint256 lpDataIndex;
+        uint256 lpCount;
+        DataTypes.LiquidityPair memory lp;
+        bool lpFound;
 
         for (uint i = 0; i < nftIds.length; i++) {
             // Check for repeated NFTs (needed when simulation but would fail in buy)
@@ -47,7 +46,9 @@ contract TradingPoolHelpers {
 
             // Check if the pool contract owns the NFT
             require(
-                IERC721(tradingPool).ownerOf(nftIds[i]) == address(this),
+                IERC721(ITradingPool(tradingPool).getNFT()).ownerOf(
+                    nftIds[i]
+                ) == tradingPool,
                 "TP:B:NOT_OWNER"
             );
             lpIndex = ITradingPool(tradingPool).nftToLp(nftIds[i]);
@@ -56,15 +57,17 @@ contract TradingPoolHelpers {
             // Add liquidity pair to array if not already there
             for (uint j = 0; j < lpCount; j++) {
                 if (lpIds[j] == lpIndex) {
+                    lpFound = true;
                     break;
                 }
+            }
 
-                // If it reaches the end of the array, it means it didn't find the liquidity pair
-                if (j == lpCount - 1) {
-                    lpIds[lpCount] = lpIndex;
-                    liquidityPairsData[lpCount] = lp;
-                    lpCount++;
-                }
+            // If it reaches the end of the array, it means it didn't find the liquidity pair
+            if (!lpFound) {
+                lpIds[lpCount] = lpIndex;
+                liquidityPairsData[lpCount] = lp;
+                lpCount++;
+                delete lpFound;
             }
 
             // Can't buy from buy LP
@@ -74,50 +77,55 @@ contract TradingPoolHelpers {
             );
         }
 
-        // Simulate buying the NFTs
-        for (uint i = 0; i < nftIds.length; i++) {
-            lpIndex = ITradingPool(tradingPool).nftToLp(nftIds[i]);
-            // Find the liquidity pair in the array
-            for (uint j = 0; j < lpCount; j++) {
-                if (lpIds[j] == lpIndex) {
-                    lpDataIndex = j;
-                    break;
+        // scope vars to Avoid stack too deep errors
+        {
+            // Simulate buying the NFTs
+            uint256 fee;
+            uint256 totalFee;
+            uint256 protocolFee;
+            for (uint i = 0; i < nftIds.length; i++) {
+                lpIndex = ITradingPool(tradingPool).nftToLp(nftIds[i]);
+                // Find the liquidity pair in the array
+                for (uint j = 0; j < lpCount; j++) {
+                    if (lpIds[j] == lpIndex) {
+                        lpDataIndex = j;
+                        break;
+                    }
                 }
-            }
 
-            fee =
-                (liquidityPairsData[lpDataIndex].spotPrice *
-                    liquidityPairsData[lpDataIndex].fee) /
-                PercentageMath.PERCENTAGE_FACTOR;
-            protocolFee =
-                (fee *
-                    ITradingPoolFactory(
-                        _addressesProvider.getTradingPoolFactory()
-                    ).getProtocolFeePercentage()) /
-                PercentageMath.PERCENTAGE_FACTOR;
+                fee =
+                    (liquidityPairsData[lpDataIndex].spotPrice *
+                        liquidityPairsData[lpDataIndex].fee) /
+                    PercentageMath.PERCENTAGE_FACTOR;
+                protocolFee =
+                    (fee *
+                        ITradingPoolFactory(
+                            _addressesProvider.getTradingPoolFactory()
+                        ).getProtocolFeePercentage()) /
+                    PercentageMath.PERCENTAGE_FACTOR;
 
-            liquidityPairsData[lpDataIndex].tokenAmount += (liquidityPairsData[
-                lpDataIndex
-            ].spotPrice +
-                fee -
-                protocolFee);
+                liquidityPairsData[lpDataIndex]
+                    .tokenAmount += (liquidityPairsData[lpDataIndex].spotPrice +
+                    fee -
+                    protocolFee);
 
-            // Increase total price and fee sum
-            finalPrice += (liquidityPairsData[lpDataIndex].spotPrice + fee);
-            totalFee += fee;
+                // Increase total price and fee sum
+                finalPrice += (liquidityPairsData[lpDataIndex].spotPrice + fee);
+                totalFee += fee;
 
-            // Update liquidity pair price
-            if (
-                liquidityPairsData[lpDataIndex].lpType !=
-                DataTypes.LPType.TradeDown
-            ) {
-                liquidityPairsData[lpDataIndex].spotPrice = IPricingCurve(
-                    liquidityPairsData[lpDataIndex].curve
-                ).priceAfterBuy(
-                        liquidityPairsData[lpDataIndex].spotPrice,
-                        liquidityPairsData[lpDataIndex].delta,
-                        liquidityPairsData[lpDataIndex].fee
-                    );
+                // Update liquidity pair price
+                if (
+                    liquidityPairsData[lpDataIndex].lpType !=
+                    DataTypes.LPType.TradeDown
+                ) {
+                    liquidityPairsData[lpDataIndex].spotPrice = IPricingCurve(
+                        liquidityPairsData[lpDataIndex].curve
+                    ).priceAfterBuy(
+                            liquidityPairsData[lpDataIndex].spotPrice,
+                            liquidityPairsData[lpDataIndex].delta,
+                            liquidityPairsData[lpDataIndex].fee
+                        );
+                }
             }
         }
     }
@@ -133,10 +141,10 @@ contract TradingPoolHelpers {
         );
         require(nftIds.length > 0, "TPH:SS:NFTS_0");
 
-        // Only the swap router can call this function on behalf of another address
         uint256 lpIndex;
         uint256 lpCount;
         uint256 lpDataIndex;
+        bool lpFound;
         DataTypes.LiquidityPair memory lp;
 
         // Create an array of liquidity pairs to keep track of the prices & token amounts
@@ -165,18 +173,19 @@ contract TradingPoolHelpers {
             require(lp.lpType != DataTypes.LPType.Sell, "TP:S:IS_SELL_LP");
 
             // Add liquidity pair to array if not already there
-
             for (uint j = 0; j < lpCount; j++) {
                 if (lpIds[j] == lpIndex) {
+                    lpFound = true;
                     break;
                 }
+            }
 
-                // If it reaches the end of the array, it means it didn't find the liquidity pair
-                if (j == lpCount - 1) {
-                    lpIds[lpCount] = lpIndex;
-                    liquidityPairsData[lpCount] = lp;
-                    lpCount++;
-                }
+            // If it reaches the end of the array, it means it didn't find the liquidity pair
+            if (!lpFound) {
+                lpIds[lpCount] = lpIndex;
+                liquidityPairsData[lpCount] = lp;
+                lpCount++;
+                delete lpFound;
             }
         }
 

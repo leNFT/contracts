@@ -20,6 +20,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {ILiquidityPairMetadata} from "../../interfaces/ILiquidityPairMetadata.sol";
+import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 
 /// @title Trading Pool Contract
 /// @notice A contract that enables the creation of liquidity pools and the trading of NFTs and ERC20 tokens.
@@ -47,6 +48,11 @@ contract TradingPool is
 
     modifier poolNotPaused() {
         _requirePoolNotPaused();
+        _;
+    }
+
+    modifier lpExists(uint256 lpId) {
+        _requireLpExists(lpId);
         _;
     }
 
@@ -78,7 +84,7 @@ contract TradingPool is
 
     function tokenURI(
         uint256 tokenId
-    ) public view override returns (string memory) {
+    ) public view override lpExists(tokenId) returns (string memory) {
         return
             ILiquidityPairMetadata(_addressProvider.getLiquidityPairMetadata())
                 .tokenURI(address(this), tokenId);
@@ -86,13 +92,13 @@ contract TradingPool is
 
     /// @notice Gets the address of the ERC721 traded in the pool.
     /// @return The address of the ERC721 token.
-    function getNFT() external view returns (address) {
+    function getNFT() external view override returns (address) {
         return _nft;
     }
 
     /// @notice Gets the address of the ERC20 token traded in the pool.
     /// @return The address of the ERC20 token.
-    function getToken() external view returns (address) {
+    function getToken() external view override returns (address) {
         return _token;
     }
 
@@ -101,11 +107,17 @@ contract TradingPool is
     /// @return The liquidity pair.
     function getLP(
         uint256 lpId
-    ) external view returns (DataTypes.LiquidityPair memory) {
+    )
+        external
+        view
+        override
+        lpExists(lpId)
+        returns (DataTypes.LiquidityPair memory)
+    {
         return _liquidityPairs[lpId];
     }
 
-    function getLpCount() external view returns (uint256) {
+    function getLpCount() external view override returns (uint256) {
         return _lpCount;
     }
 
@@ -139,7 +151,7 @@ contract TradingPool is
         address curve,
         uint256 delta,
         uint256 fee
-    ) external nonReentrant poolNotPaused {
+    ) external override nonReentrant poolNotPaused {
         ITradingPoolFactory tradingPoolFactory = ITradingPoolFactory(
             _addressProvider.getTradingPoolFactory()
         );
@@ -248,7 +260,9 @@ contract TradingPool is
 
     /// @notice Removes liquidity, sending back deposited tokens and transferring the NFTs to the user
     /// @param lpId The ID of the LP token to remove
-    function removeLiquidity(uint256 lpId) public nonReentrant poolNotPaused {
+    function removeLiquidity(
+        uint256 lpId
+    ) public override nonReentrant poolNotPaused {
         //Require the caller owns LP
         require(_msgSender() == ERC721.ownerOf(lpId), "TP:RL:NOT_OWNER");
 
@@ -282,7 +296,7 @@ contract TradingPool is
     /// @param lpIds The IDs of the LP tokens to remove liquidity from
     function removeLiquidityBatch(
         uint256[] calldata lpIds
-    ) external poolNotPaused {
+    ) external override poolNotPaused {
         for (uint i = 0; i < lpIds.length; i++) {
             removeLiquidity(lpIds[i]);
         }
@@ -297,7 +311,13 @@ contract TradingPool is
         address onBehalfOf,
         uint256[] calldata nftIds,
         uint256 maximumPrice
-    ) external nonReentrant poolNotPaused returns (uint256 finalPrice) {
+    )
+        external
+        override
+        nonReentrant
+        poolNotPaused
+        returns (uint256 finalPrice)
+    {
         require(nftIds.length > 0, "TP:B:NFTS_0");
 
         uint256 lpIndex;
@@ -391,7 +411,13 @@ contract TradingPool is
         uint256[] calldata nftIds,
         uint256[] calldata liquidityPairs,
         uint256 minimumPrice
-    ) external nonReentrant poolNotPaused returns (uint256 finalPrice) {
+    )
+        external
+        override
+        nonReentrant
+        poolNotPaused
+        returns (uint256 finalPrice)
+    {
         require(nftIds.length == liquidityPairs.length, "TP:S:NFT_LP_MISMATCH");
         require(nftIds.length > 0, "TP:S:NFTS_0");
 
@@ -500,7 +526,7 @@ contract TradingPool is
 
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override(ERC165, ERC721Enumerable, IERC165) returns (bool) {
+    ) public view override(ERC165, ERC721Enumerable) returns (bool) {
         return
             ERC721Enumerable.supportsInterface(interfaceId) ||
             ERC165.supportsInterface(interfaceId);
@@ -508,5 +534,9 @@ contract TradingPool is
 
     function _requirePoolNotPaused() internal view {
         require(!_paused, "TP:POOL_PAUSED");
+    }
+
+    function _requireLpExists(uint256 lpIndex) internal view {
+        require(_exists(lpIndex), "TP:LP_NOT_FOUND");
     }
 }

@@ -199,6 +199,16 @@ async function main() {
   await liquidityPairMetadata.deployed();
   addresses["LiquidityPairMetadata"] = liquidityPairMetadata.address;
 
+  // Deploy the trading pool helper contract
+  const TradingPoolHelpers = await ethers.getContractFactory(
+    "TradingPoolHelpers"
+  );
+  const tradingPoolHelpers = await TradingPoolHelpers.deploy(
+    addressesProvider.address
+  );
+  await tradingPoolHelpers.deployed();
+  addresses["TradingPoolHelpers"] = tradingPoolHelpers.address;
+
   // Deploy the Interest Rate contract
   const InterestRate = await ethers.getContractFactory("InterestRate");
   const interestRate = await InterestRate.deploy();
@@ -327,6 +337,10 @@ async function main() {
       liquidityPairMetadata.address
     );
   await setLiquidityPairMetadataTx.wait();
+  const setTradingPoolHelpersTx = await addressesProvider.setTradingPoolHelpers(
+    tradingPoolHelpers.address
+  );
+  await setTradingPoolHelpersTx.wait();
   const setInterestRateTx = await addressesProvider.setInterestRate(
     interestRate.address
   );

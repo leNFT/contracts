@@ -12,7 +12,7 @@ interface ITradingPoolFactory {
 
     function getTVLSafeguard() external view returns (uint256);
 
-    function isPool(address pool) external view returns (bool);
+    function isTradingPool(address pool) external view returns (bool);
 
     function isPriceCurve(address priceCurve) external view returns (bool);
 }

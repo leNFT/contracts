@@ -201,6 +201,15 @@ let loadEnv = async function (isMainnetFork) {
   liquidityPairMetadata = await LiquidityPairMetadata.deploy();
   await liquidityPairMetadata.deployed();
 
+  // Deploy the trading pool helper contract
+  const TradingPoolHelpers = await ethers.getContractFactory(
+    "TradingPoolHelpers"
+  );
+  tradingPoolHelpers = await TradingPoolHelpers.deploy(
+    addressesProvider.address
+  );
+  await tradingPoolHelpers.deployed();
+
   // Deploy the Interest Rate contract
   const InterestRate = await ethers.getContractFactory("InterestRate");
   interestRate = await InterestRate.deploy();
@@ -218,7 +227,7 @@ let loadEnv = async function (isMainnetFork) {
 
   // Deploy  Swap Router
   const SwapRouter = await ethers.getContractFactory("SwapRouter");
-  const swapRouter = await SwapRouter.deploy(addressesProvider.address);
+  swapRouter = await SwapRouter.deploy(addressesProvider.address);
 
   console.log("Deployed SwapRouter");
 
@@ -301,6 +310,10 @@ let loadEnv = async function (isMainnetFork) {
     tradingPoolFactory.address
   );
   await setTradingPoolFactoryTx.wait();
+  const setTradingPoolHelpersTx = await addressesProvider.setTradingPoolHelpers(
+    tradingPoolHelpers.address
+  );
+  await setTradingPoolHelpersTx.wait();
   const setGaugeControllerTx = await addressesProvider.setGaugeController(
     gaugeController.address
   );

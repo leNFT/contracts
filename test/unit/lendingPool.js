@@ -7,7 +7,7 @@ const { getPriceSig } = require("../helpers/getPriceSig.js");
 describe("LendingPool", function () {
   load.loadTestAlways(false);
 
-  it("Create a new lending pool", async function () {
+  it("Should fail to directly create a new lending pool", async function () {
     const LendingPool = await ethers.getContractFactory("LendingPool", {
       libraries: {
         ValidationLogic: validationLogicLib.address,

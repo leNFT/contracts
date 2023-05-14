@@ -20,6 +20,7 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _genesisNFT;
     address private _gaugeController;
     address private _tradingPoolFactory;
+    address private _tradingPoolHelpers;
     address private _bribes;
     address private _liquidityPairMetadata;
 
@@ -50,6 +51,16 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
 
     function getTradingPoolFactory() external view override returns (address) {
         return _tradingPoolFactory;
+    }
+
+    function setTradingPoolHelpers(
+        address tradingPoolHelpers
+    ) external onlyOwner {
+        _tradingPoolHelpers = tradingPoolHelpers;
+    }
+
+    function getTradingPoolHelpers() external view returns (address) {
+        return _tradingPoolHelpers;
     }
 
     function setSwapRouter(address swapRouter) external override onlyOwner {
