@@ -83,7 +83,7 @@ contract LendingGauge is IGauge, ERC165 {
         // Set the next claimable epoch if it's the first time the user claims
         if (_userNextClaimableEpoch[msg.sender] == 0) {
             _userNextClaimableEpoch[msg.sender] =
-                votingEscrow.epoch(
+                votingEscrow.getEpoch(
                     _workingBalanceHistory[msg.sender][0].timestamp
                 ) +
                 1;
@@ -94,7 +94,7 @@ contract LendingGauge is IGauge, ERC165 {
             nextClaimableEpoch = _userNextClaimableEpoch[msg.sender];
 
             // Break if the next claimable epoch is the one we are in
-            if (nextClaimableEpoch >= votingEscrow.epoch(block.timestamp)) {
+            if (nextClaimableEpoch >= votingEscrow.getEpoch(block.timestamp)) {
                 break;
             } else {
                 // Get the current user working Balance and its epoch
@@ -133,14 +133,14 @@ contract LendingGauge is IGauge, ERC165 {
 
                     // Check if the next working balance is in the same epoch as the current working balance
                     if (
-                        votingEscrow.epoch(nextWorkingBalance.timestamp) ==
-                        votingEscrow.epoch(workingBalance.timestamp)
+                        votingEscrow.getEpoch(nextWorkingBalance.timestamp) ==
+                        votingEscrow.getEpoch(workingBalance.timestamp)
                     ) {
                         _workingBalancePointer[msg.sender]++;
                     }
                     // Check if the next working balance is in the next claimable epoch
                     else if (
-                        votingEscrow.epoch(nextWorkingBalance.timestamp) ==
+                        votingEscrow.getEpoch(nextWorkingBalance.timestamp) ==
                         nextClaimableEpoch
                     ) {
                         // If the next working balance has no decrease in balance we can claim the rewards
@@ -197,7 +197,7 @@ contract LendingGauge is IGauge, ERC165 {
         // Update last saved weight checkpoint and record weight for epochs
         // Will break if is not used for 128 epochs
         uint256 currentEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
-            .epoch(block.timestamp);
+            .getEpoch(block.timestamp);
         for (uint256 i = 0; i < 2 ** 7; i++) {
             //Increase epoch
             if (_workingWeightHistory.length >= currentEpoch) {
@@ -218,7 +218,7 @@ contract LendingGauge is IGauge, ERC165 {
         uint256 lpMaturityTime = IGaugeController(
             _addressProvider.getGaugeController()
         ).getLPMaturityPeriod() *
-            IVotingEscrow(_addressProvider.getVotingEscrow()).epochPeriod();
+            IVotingEscrow(_addressProvider.getVotingEscrow()).getEpochPeriod();
         if (timeInterval > lpMaturityTime) {
             return PercentageMath.PERCENTAGE_FACTOR;
         } else {
@@ -240,8 +240,8 @@ contract LendingGauge is IGauge, ERC165 {
         // Make sure the voting escrow's total supply is up to date
         IVotingEscrow(votingEscrow).writeTotalWeightHistory();
 
-        uint256 userVotingBalance = votingEscrow.userWeight(user);
-        uint256 totalVotingSupply = votingEscrow.totalWeight();
+        uint256 userVotingBalance = votingEscrow.getUserWeight(user);
+        uint256 totalVotingSupply = votingEscrow.getTotalWeight();
         uint256 newWeight;
 
         // Save the total weight history
@@ -324,7 +324,7 @@ contract LendingGauge is IGauge, ERC165 {
         address votingEscrowAddress = _addressProvider.getVotingEscrow();
         // Get user locked balance end time
         uint256 lockEnd = IVotingEscrow(votingEscrowAddress)
-            .locked(tokenId)
+            .getLock(tokenId)
             .end;
 
         if (lockEnd < block.timestamp) {

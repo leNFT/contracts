@@ -17,7 +17,7 @@ interface IGaugeController {
 
     function isGauge(address gauge) external view returns (bool);
 
-    function lockVoteRatio(uint256 tokenId) external view returns (uint256);
+    function getLockVoteRatio(uint256 tokenId) external view returns (uint256);
 
     function getGaugeWeightAt(
         address gauge,
@@ -31,7 +31,7 @@ interface IGaugeController {
 
     function getEpochRewards(uint256 epoch) external returns (uint256 rewards);
 
-    function lockVotePointForGauge(
+    function getLockVotePointForGauge(
         uint256 tokenId,
         address gauge
     ) external view returns (DataTypes.Point memory);

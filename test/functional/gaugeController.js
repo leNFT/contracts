@@ -76,14 +76,14 @@ describe("Trading Gauge", () => {
     console.log("Total weight: ", await gaugeController.getTotalWeight());
     console.log(
       "lockVoteWeightForGauge",
-      await gaugeController.lockVoteWeightForGauge(0, gauge.address)
+      await gaugeController.getLockVoteWeightForGauge(0, gauge.address)
     );
-    console.log("userVoteWeight: ", await gaugeController.lockVoteRatio(0));
+    console.log("userVoteWeight: ", await gaugeController.getLockVoteRatio(0));
 
     expect(
-      await gaugeController.lockVoteWeightForGauge(0, gauge.address)
+      await gaugeController.getLockVoteWeightForGauge(0, gauge.address)
     ).to.not.equal("0");
-    expect(await gaugeController.lockVoteRatio(0)).to.not.equal("0");
+    expect(await gaugeController.getLockVoteRatio(0)).to.not.equal("0");
   });
   it("Should remove some voting power", async function () {
     // Use 50% of the locked tokens to vote for the gauge
@@ -92,8 +92,8 @@ describe("Trading Gauge", () => {
     console.log("Removed voting power");
 
     expect(
-      await gaugeController.lockVoteWeightForGauge(0, gauge.address)
+      await gaugeController.getLockVoteWeightForGauge(0, gauge.address)
     ).to.equal("0");
-    expect(await gaugeController.lockVoteRatio(0)).to.equal("0");
+    expect(await gaugeController.getLockVoteRatio(0)).to.equal("0");
   });
 });

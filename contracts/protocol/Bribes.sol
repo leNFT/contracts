@@ -63,7 +63,7 @@ contract Bribes is
     ) external override nonReentrant {
         // Find what's the next epoch
         uint256 nextEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
-            .epoch(block.timestamp) + 1;
+            .getEpoch(block.timestamp) + 1;
 
         // Add the amount to the bribes
         _gaugeBribes[token][gauge][nextEpoch] += amount;
@@ -91,7 +91,7 @@ contract Bribes is
     ) external override nonReentrant {
         // Find what's the next epoch
         uint256 nextEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
-            .epoch(block.timestamp) + 1;
+            .getEpoch(block.timestamp) + 1;
 
         // Make sure there are enough funds to withdraw
         require(
@@ -120,7 +120,7 @@ contract Bribes is
     ) external nonReentrant {
         require(
             epoch <=
-                IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
+                IVotingEscrow(_addressProvider.getVotingEscrow()).getEpoch(
                     block.timestamp
                 ),
             "B:SB:EPOCH_NOT_STARTED"
@@ -202,7 +202,7 @@ contract Bribes is
 
         // Get lock vote point and its epoch
         DataTypes.Point memory lockLastPoint = gaugeController
-            .lockVotePointForGauge(tokenId, gauge);
+            .getLockVotePointForGauge(tokenId, gauge);
 
         // Make sure the token has voting power for the gauge
         if (lockLastPoint.bias == 0) {
@@ -210,10 +210,10 @@ contract Bribes is
         }
 
         // Find epoch we're in
-        uint256 currentEpoch = IVotingEscrow(votingEscrow).epoch(
+        uint256 currentEpoch = IVotingEscrow(votingEscrow).getEpoch(
             block.timestamp
         );
-        uint256 lockLastPointEpoch = IVotingEscrow(votingEscrow).epoch(
+        uint256 lockLastPointEpoch = IVotingEscrow(votingEscrow).getEpoch(
             lockLastPoint.timestamp
         );
 
@@ -239,7 +239,7 @@ contract Bribes is
             lockWeightAtEpoch =
                 lockLastPoint.bias -
                 (lockLastPoint.slope *
-                    (IVotingEscrow(votingEscrow).epochTimestamp(epoch) -
+                    (IVotingEscrow(votingEscrow).getEpochTimestamp(epoch) -
                         lockLastPoint.timestamp));
 
             // Increment amount to claim

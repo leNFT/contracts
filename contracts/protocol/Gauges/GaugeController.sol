@@ -53,6 +53,11 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         _;
     }
 
+    modifier noFutureEpoch(uint256 epoch) {
+        _requireNoFutureEpoch(epoch);
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -154,14 +159,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function getGaugeWeightAt(
         address gauge,
         uint256 epoch
-    ) public validGauge(gauge) returns (uint256) {
-        require(
-            epoch <=
-                IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
-                    block.timestamp
-                ),
-            "GC:GGWA:INVALID_EPOCH"
-        );
+    ) public noFutureEpoch(epoch) validGauge(gauge) returns (uint256) {
         // Update gauge weight history
         writeGaugeWeightHistory(gauge);
 
@@ -188,14 +186,9 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @notice Get the total weight of all gauges at a specific epoch
     /// @param epoch The epoch for which to retrieve the total weight
     /// @return The total weight of all gauges at the specified epoch
-    function getTotalWeightAt(uint256 epoch) public returns (uint256) {
-        require(
-            epoch <=
-                IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
-                    block.timestamp
-                ),
-            "GC:GTWA:INVALID_EPOCH"
-        );
+    function getTotalWeightAt(
+        uint256 epoch
+    ) public noFutureEpoch(epoch) returns (uint256) {
         // Update total weight history
         writeTotalWeightHistory();
 
@@ -205,7 +198,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @notice Get the current used vote power for a given lock.
     /// @param tokenId The tokenId of the lock.
     /// @return The current used vote power.
-    function lockVoteRatio(
+    function getLockVoteRatio(
         uint256 tokenId
     ) external view override returns (uint256) {
         return _lockVoteRatio[tokenId];
@@ -215,14 +208,14 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @param tokenId The tokenId of the lock.
     /// @param gauge The address of the gauge.
     /// @return The current used vote power for the given user in the specified gauge.
-    function lockVoteRatioForGauge(
+    function getLockVoteRatioForGauge(
         uint256 tokenId,
         address gauge
     ) external view validGauge(gauge) returns (uint256) {
         return _lockGaugeVoteRatio[tokenId][gauge];
     }
 
-    function lockVotePointForGauge(
+    function getLockVotePointForGauge(
         uint256 tokenId,
         address gauge
     ) external view validGauge(gauge) returns (DataTypes.Point memory) {
@@ -233,7 +226,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @param tokenId The tokenId of the lock.
     /// @param gauge The address of the gauge.
     /// @return The vote weight for the user in the specified gauge.
-    function lockVoteWeightForGauge(
+    function getLockVoteWeightForGauge(
         uint256 tokenId,
         address gauge
     ) external view validGauge(gauge) returns (uint256) {
@@ -259,10 +252,10 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         );
-        uint256 epochTimestampPointer = votingEscrow.epochTimestamp(
+        uint256 epochTimestampPointer = votingEscrow.getEpochTimestamp(
             _totalWeigthHistory.length
         );
-        uint256 epochPeriod = votingEscrow.epochPeriod();
+        uint256 epochPeriod = votingEscrow.getEpochPeriod();
 
         for (uint256 i = 0; i < 2 ** 7; i++) {
             if (epochTimestampPointer > block.timestamp) {
@@ -300,14 +293,14 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             _lastGaugeWeigthCheckpoint[gauge] = DataTypes.Point(
                 0,
                 0,
-                votingEscrow.epochTimestamp(0)
+                votingEscrow.getEpochTimestamp(0)
             );
         }
 
         // Update last saved weight checkpoint and record weight for epochs
         // Will break if is not used for 128 epochs
-        uint256 epochPeriod = votingEscrow.epochPeriod();
-        uint256 epochTimestampPointer = votingEscrow.epochTimestamp(
+        uint256 epochPeriod = votingEscrow.getEpochPeriod();
+        uint256 epochTimestampPointer = votingEscrow.getEpochTimestamp(
             _gaugeWeightHistory[gauge].length
         );
 
@@ -350,7 +343,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         // Get user locked balance
         DataTypes.LockedBalance memory lockedBalance = IVotingEscrow(
             votingEscrowAddress
-        ).locked(tokenId);
+        ).getLock(tokenId);
 
         require(
             ratio +
@@ -379,8 +372,9 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             votingEscrowAddress
         ).getLockHistoryPoint(
                 tokenId,
-                IVotingEscrow(votingEscrowAddress).lockHistoryLength(tokenId) -
-                    1
+                IVotingEscrow(votingEscrowAddress).getLockHistoryLength(
+                    tokenId
+                ) - 1
             );
         DataTypes.Point memory oldGaugeVoteWeight;
         DataTypes.Point memory newGaugeVoteWeight;
@@ -477,15 +471,9 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @dev The amount of tokens to distribute goes down as the number of locked tokens goes up.
     /// @param epoch The epoch for which to get the rewards.
     /// @return The amount of tokens to distribute as rewards for the specified epoch.
-    function getEpochRewards(uint256 epoch) public returns (uint256) {
-        require(
-            epoch <=
-                IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
-                    block.timestamp
-                ),
-            "GC:GER:FUTURE_EPOCH"
-        );
-
+    function getEpochRewards(
+        uint256 epoch
+    ) public noFutureEpoch(epoch) returns (uint256) {
         // If there are no votes in any gauge, return 0
         if (getTotalWeightAt(epoch) == 0) {
             return 0;
@@ -507,14 +495,6 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         address gauge,
         uint256 epoch
     ) external validGauge(gauge) returns (uint256 rewards) {
-        require(
-            epoch <=
-                IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
-                    block.timestamp
-                ),
-            "GC:GGR:INVALID_EPOCH"
-        );
-
         // If there are no votes in any gauge, return 0
         if (getTotalWeightAt(epoch) == 0) {
             return 0;
@@ -539,6 +519,16 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     }
 
     function _requireValidGauge(address gauge) internal view {
-        require(_isGauge[gauge], "GC:RIG:INVALID_GAUGE");
+        require(_isGauge[gauge], "GC:INVALID_GAUGE");
+    }
+
+    function _requireNoFutureEpoch(uint256 epoch) internal view {
+        require(
+            epoch <=
+                IVotingEscrow(_addressProvider.getVotingEscrow()).getEpoch(
+                    block.timestamp
+                ),
+            "GC:FUTURE_EPOCH"
+        );
     }
 }

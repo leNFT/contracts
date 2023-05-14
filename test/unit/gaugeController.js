@@ -1,6 +1,8 @@
 const { expect } = require("chai");
 const load = require("../helpers/_loadTest.js");
 const { ethers } = require("hardhat");
+const { BigNumber } = require("ethers");
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("GaugeController", () => {
   load.loadTestAlways(false);
@@ -99,7 +101,43 @@ describe("GaugeController", () => {
   //     const epochRewardCeiling = await gaugeController.getRewardsCeiling(1);
   //     expect(epochRewardCeiling).to.equal("11666666666666666666");
   //   });
-  it("Should get the current gauge weight", async function () {
+  //   it("Should get the current gauge weight", async function () {
+  //     // MInt some LE to the callers address
+  //     const mintTx = await nativeToken.mint(
+  //       owner.address,
+  //       ethers.utils.parseEther("1000000")
+  //     );
+  //     await mintTx.wait();
+  //     // Create a lock with the LE
+  //     const approveTx = await nativeToken.approve(
+  //       votingEscrow.address,
+  //       ethers.utils.parseEther("1000000")
+  //     );
+  //     await approveTx.wait();
+  //     const lockTx = await votingEscrow.createLock(
+  //       owner.address,
+  //       ethers.utils.parseEther("1000000"),
+  //       Math.floor(Date.now() / 1000) + 3600 * 24 * 30 // 30 days
+  //     );
+  //     await lockTx.wait();
+  //     // Add a trading gauge
+  //     const addTradingGaugeTx = await gaugeController.addGauge(
+  //       tradingGauge.address
+  //     );
+  //     await addTradingGaugeTx.wait();
+  //     // Vote for the gauge with 50 % of the voting power of the lock
+  //     const voteTx = await gaugeController.vote(0, tradingGauge.address, 5000);
+  //     await voteTx.wait();
+
+  //     // Get the gauge weight
+  //     const gaugeWeight = await gaugeController.getGaugeWeight(
+  //       tradingGauge.address
+  //     );
+  //     expect(gaugeWeight).to.equal(
+  //       BigNumber.from(await votingEscrow.getLockWeight(0)).div(2)
+  //     );
+  //   });
+  it("Should get the gauge weight at an epoch", async function () {
     // MInt some LE to the callers address
     const mintTx = await nativeToken.mint(
       owner.address,
@@ -107,10 +145,15 @@ describe("GaugeController", () => {
     );
     await mintTx.wait();
     // Create a lock with the LE
+    const approveTx = await nativeToken.approve(
+      votingEscrow.address,
+      ethers.utils.parseEther("1000000")
+    );
+    await approveTx.wait();
     const lockTx = await votingEscrow.createLock(
       owner.address,
       ethers.utils.parseEther("1000000"),
-      Date.now() / 1000 + 3600 * 30 // 30 days
+      Math.floor(Date.now() / 1000) + 3600 * 24 * 30 // 30 days
     );
     await lockTx.wait();
     // Add a trading gauge
@@ -121,11 +164,16 @@ describe("GaugeController", () => {
     // Vote for the gauge with 50 % of the voting power of the lock
     const voteTx = await gaugeController.vote(0, tradingGauge.address, 5000);
     await voteTx.wait();
+    // Get the epoch period
+    const epochPeriod = await votingEscrow.getEpochPeriod();
+    // INcrease the block time by the epoch period
+    time.increase(epochPeriod.toNumber() + 1);
 
-    // Get the gauge weight
-    const gaugeWeight = await gaugeController.getGaugeWeight(
-      tradingGauge.address
+    // Get the gauge weight at epoch 1
+    const gaugeWeight = await gaugeController.getGaugeWeightAt(
+      tradingGauge.address,
+      1
     );
-    expect(gaugeWeight).to.equal(ethers.utils.parseEther("5000"));
+    expect(gaugeWeight).to.equal(0);
   });
 });

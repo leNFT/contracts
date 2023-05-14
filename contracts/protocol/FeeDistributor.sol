@@ -63,9 +63,8 @@ contract FeeDistributor is
     /// @param token Token address
     function checkpoint(address token) external override {
         // Find epoch we're in
-        uint256 epoch = IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
-            block.timestamp
-        );
+        uint256 epoch = IVotingEscrow(_addressProvider.getVotingEscrow())
+            .getEpoch(block.timestamp);
         // Find the current balance of the token in question
         uint256 balance = IERC20Upgradeable(token).balanceOf(address(this));
 
@@ -85,14 +84,14 @@ contract FeeDistributor is
         );
         // Funds are only salvageable if the vote weight of the epoch in question is 0
         require(
-            votingEscrow.totalWeightAt(epoch) == 0,
+            votingEscrow.getTotalWeightAt(epoch) == 0,
             "FD:SV:FUNDS_CLAIMABLE"
         );
         // There needs to be funds to salvage
         require(_epochFees[token][epoch] > 0, "FD:SV:NO_FUNDS");
 
         // Transfer rewards to current epoch
-        _epochFees[token][votingEscrow.epoch(block.timestamp)] += _epochFees[
+        _epochFees[token][votingEscrow.getEpoch(block.timestamp)] += _epochFees[
             token
         ][epoch];
 
@@ -123,14 +122,14 @@ contract FeeDistributor is
         );
 
         // Check if user has any user actions and therefore possibly something to claim
-        if (votingEscrow.lockHistoryLength(tokenId) == 0) {
+        if (votingEscrow.getLockHistoryLength(tokenId) == 0) {
             return 0;
         }
 
         // Set the next claimable epoch if it's the first time the user claims
         if (_lockNextClaimableEpoch[token][tokenId] == 0) {
             _lockNextClaimableEpoch[token][tokenId] =
-                votingEscrow.epoch(
+                votingEscrow.getEpoch(
                     votingEscrow.getLockHistoryPoint(tokenId, 0).timestamp
                 ) +
                 1;
@@ -146,7 +145,9 @@ contract FeeDistributor is
             for (uint i = 0; i < 50; i++) {
                 nextClaimableEpoch = _lockNextClaimableEpoch[token][tokenId];
                 // Break if the next claimable epoch is the one we are in
-                if (nextClaimableEpoch >= votingEscrow.epoch(block.timestamp)) {
+                if (
+                    nextClaimableEpoch >= votingEscrow.getEpoch(block.timestamp)
+                ) {
                     break;
                 } else {
                     // Get the current user history point
@@ -157,18 +158,18 @@ contract FeeDistributor is
                     );
 
                     // Get the user's next claimable epoch and its timestamp
-                    nextClaimableEpochTimestamp = votingEscrow.epochTimestamp(
-                        nextClaimableEpoch
-                    );
+                    nextClaimableEpochTimestamp = votingEscrow
+                        .getEpochTimestamp(nextClaimableEpoch);
 
                     // Check if the user entire activity history has been iterated
                     if (
                         lockHistoryPointer ==
-                        votingEscrow.lockHistoryLength(tokenId) - 1
+                        votingEscrow.getLockHistoryLength(tokenId) - 1
                     ) {
                         // Sum claimable amount if its the last activity
                         if (
-                            votingEscrow.totalWeightAt(nextClaimableEpoch) > 0
+                            votingEscrow.getTotalWeightAt(nextClaimableEpoch) >
+                            0
                         ) {
                             amountToClaim +=
                                 (_epochFees[token][nextClaimableEpoch] *
@@ -176,14 +177,16 @@ contract FeeDistributor is
                                         lockHistoryPoint.slope *
                                         (nextClaimableEpochTimestamp -
                                             lockHistoryPoint.timestamp))) /
-                                votingEscrow.totalWeightAt(nextClaimableEpoch);
+                                votingEscrow.getTotalWeightAt(
+                                    nextClaimableEpoch
+                                );
                         }
 
                         // Increment next claimable epoch
                         _lockNextClaimableEpoch[token][tokenId]++;
                     } else {
                         // Find the epoch of the next user history point
-                        nextPointEpoch = votingEscrow.epoch(
+                        nextPointEpoch = votingEscrow.getEpoch(
                             votingEscrow
                                 .getLockHistoryPoint(
                                     tokenId,
@@ -193,15 +196,16 @@ contract FeeDistributor is
                         );
                         if (
                             nextPointEpoch ==
-                            votingEscrow.epoch(lockHistoryPoint.timestamp)
+                            votingEscrow.getEpoch(lockHistoryPoint.timestamp)
                         ) {
                             // If the next user activity is in the same epoch we increase the pointer
                             _lockHistoryPointer[token][tokenId]++;
                         } else {
                             // If the next user activity is in a different epoch we sum the claimable amount for his epoch
                             if (
-                                votingEscrow.totalWeightAt(nextClaimableEpoch) >
-                                0
+                                votingEscrow.getTotalWeightAt(
+                                    nextClaimableEpoch
+                                ) > 0
                             ) {
                                 amountToClaim +=
                                     (_epochFees[token][nextClaimableEpoch] *
@@ -209,7 +213,7 @@ contract FeeDistributor is
                                             lockHistoryPoint.slope *
                                             (nextClaimableEpochTimestamp -
                                                 lockHistoryPoint.timestamp))) /
-                                    votingEscrow.totalWeightAt(
+                                    votingEscrow.getTotalWeightAt(
                                         nextClaimableEpoch
                                     );
                             }

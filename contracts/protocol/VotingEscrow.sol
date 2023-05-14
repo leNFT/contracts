@@ -86,14 +86,14 @@ contract VotingEscrow is
 
     /// @notice Returns the length of an epoch period in seconds.
     /// @return The length of an epoch period in seconds.
-    function epochPeriod() external pure override returns (uint256) {
+    function getEpochPeriod() external pure override returns (uint256) {
         return EPOCH_PERIOD;
     }
 
     /// @notice Returns the epoch number for a given timestamp.
     /// @param timestamp The timestamp for which to retrieve the epoch number.
     /// @return The epoch number.
-    function epoch(uint256 timestamp) public view returns (uint256) {
+    function getEpoch(uint256 timestamp) public view returns (uint256) {
         require(timestamp > _deployTimestamp, "VE:E:INVALID_TIMESTAMP");
         return (timestamp / EPOCH_PERIOD) - (_deployTimestamp / EPOCH_PERIOD);
     }
@@ -101,7 +101,7 @@ contract VotingEscrow is
     /// @notice Returns the timestamp of the start of an epoch.
     /// @param _epoch The epoch number for which to retrieve the start timestamp.
     /// @return The start timestamp of the epoch.
-    function epochTimestamp(uint256 _epoch) public view returns (uint256) {
+    function getEpochTimestamp(uint256 _epoch) public view returns (uint256) {
         return (_deployTimestamp / EPOCH_PERIOD + _epoch) * EPOCH_PERIOD;
     }
 
@@ -150,7 +150,7 @@ contract VotingEscrow is
                                     ),
                                     '" },',
                                     '{ "trait_type": "weight", "value": "',
-                                    Strings.toString(lockWeight(tokenId)),
+                                    Strings.toString(getLockWeight(tokenId)),
                                     '" },',
                                     '{ "trait_type": "amount", "value": "',
                                     Strings.toString(
@@ -171,7 +171,7 @@ contract VotingEscrow is
     /// @dev This function will break if it is not called for 128 epochs.
     function writeTotalWeightHistory() public {
         // Update last saved weight checkpoint and record weight for epochs
-        uint256 epochTimestampPointer = epochTimestamp(
+        uint256 epochTimestampPointer = getEpochTimestamp(
             _totalWeightHistory.length
         );
         for (uint256 i = 0; i < 2 ** 7; i++) {
@@ -286,7 +286,7 @@ contract VotingEscrow is
     /// @notice Returns the length of the history array for the specified user.
     /// @param tokenId The token id of the lock for which to retrieve the history length.
     /// @return The length of the user's history array.
-    function lockHistoryLength(
+    function getLockHistoryLength(
         uint256 tokenId
     ) public view override returns (uint256) {
         return _lockHistory[tokenId].length;
@@ -306,7 +306,7 @@ contract VotingEscrow is
     function getLockedRatioAt(
         uint256 _epoch
     ) external override returns (uint256) {
-        require(_epoch <= epoch(block.timestamp), "VE:GLRA:INVALID_EPOCH");
+        require(_epoch <= getEpoch(block.timestamp), "VE:GLRA:INVALID_EPOCH");
 
         // Update total weight history
         writeTotalWeightHistory();
@@ -323,8 +323,8 @@ contract VotingEscrow is
     /// @notice Returns the total weight of locked tokens at a given epoch.
     /// @param _epoch The epoch number for which to retrieve the total weight.
     /// @return The total weight of locked tokens at the given epoch.
-    function totalWeightAt(uint256 _epoch) external returns (uint256) {
-        require(_epoch <= epoch(block.timestamp), "VE:TWA:INVALID_EPOCH");
+    function getTotalWeightAt(uint256 _epoch) external returns (uint256) {
+        require(_epoch <= getEpoch(block.timestamp), "VE:TWA:INVALID_EPOCH");
 
         // Update total weight history
         writeTotalWeightHistory();
@@ -335,7 +335,7 @@ contract VotingEscrow is
     /// @notice Returns the total weight of locked tokens.
     /// @dev Might not return the most up-to-date value if the total weight has not been updated in the current epoch.
     /// @return The total weight of locked tokens.
-    function totalWeight() public returns (uint256) {
+    function getTotalWeight() public returns (uint256) {
         // Update total weight history
         writeTotalWeightHistory();
         return
@@ -347,7 +347,7 @@ contract VotingEscrow is
     /// @notice Returns the weight of locked tokens for a given lock.
     /// @param tokenId The tokenid for which to retrieve the locked balance weight.
     /// @return The weight of locked tokens for the given account.
-    function lockWeight(uint256 tokenId) public view returns (uint256) {
+    function getLockWeight(uint256 tokenId) public view returns (uint256) {
         // If the locked token end time has passed
         if (_lockedBalance[tokenId].end < block.timestamp) {
             return 0;
@@ -365,10 +365,12 @@ contract VotingEscrow is
     /// @notice Returns the weight of locked tokens for a given account.
     /// @param user The address for which to retrieve the locked balance weight.
     /// @return weight The weight of locked tokens for the given account.
-    function userWeight(address user) external view returns (uint256 weight) {
+    function getUserWeight(
+        address user
+    ) external view returns (uint256 weight) {
         uint256 length = balanceOf(user);
         for (uint256 i = 0; i < length; i++) {
-            weight += lockWeight(tokenOfOwnerByIndex(user, i));
+            weight += getLockWeight(tokenOfOwnerByIndex(user, i));
         }
     }
 
@@ -401,7 +403,7 @@ contract VotingEscrow is
         _tokenIdCounter.increment();
 
         // Setup the next claimable rebate epoch
-        _nextClaimableEpoch[tokenId] = epoch(block.timestamp) + 1;
+        _nextClaimableEpoch[tokenId] = getEpoch(block.timestamp) + 1;
 
         // Save oldLocked and update the locked balance
         DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
@@ -510,7 +512,7 @@ contract VotingEscrow is
         // Make sure the tokenId has no active votes
         require(
             IGaugeController(_addressProvider.getGaugeController())
-                .lockVoteRatio(tokenId) == 0,
+                .getLockVoteRatio(tokenId) == 0,
             "VE:W:HAS_ACTIVE_VOTES"
         );
 
@@ -548,14 +550,15 @@ contract VotingEscrow is
         // Claim all the available rebates for the lock
         uint256 maxEpochRebates;
         uint256 nextClaimableEpoch;
-        uint256 currentEpoch = epoch(block.timestamp);
+        uint256 currentEpoch = getEpoch(block.timestamp);
 
         // Claim a maximum of 50 epochs at a time
         for (uint i = 0; i < 50; i++) {
             nextClaimableEpoch = _nextClaimableEpoch[tokenId];
             if (
                 nextClaimableEpoch >= currentEpoch ||
-                epochTimestamp(nextClaimableEpoch) > _lockedBalance[tokenId].end
+                getEpochTimestamp(nextClaimableEpoch) >
+                _lockedBalance[tokenId].end
             ) {
                 break;
             }
@@ -574,7 +577,7 @@ contract VotingEscrow is
                     (maxEpochRebates *
                         _lockedBalance[tokenId].amount *
                         (_lockedBalance[tokenId].end -
-                            epochTimestamp(nextClaimableEpoch))) /
+                            getEpochTimestamp(nextClaimableEpoch))) /
                     (_totalLockedHistory[nextClaimableEpoch] * MAXLOCKTIME);
             }
 
@@ -594,7 +597,7 @@ contract VotingEscrow is
     /// @notice Returns the details for a single lock
     /// @param tokenId The token id of the lock to get the locked balance of and end time of
     /// @return The locked object of the user
-    function locked(
+    function getLock(
         uint256 tokenId
     ) external view returns (DataTypes.LockedBalance memory) {
         return _lockedBalance[tokenId];
