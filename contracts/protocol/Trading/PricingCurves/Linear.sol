@@ -13,20 +13,9 @@ contract LinearPriceCurve is IPricingCurve, ERC165 {
     function priceAfterBuy(
         uint256 price,
         uint256 delta,
-        uint256 fee
+        uint256
     ) external pure override returns (uint256) {
-        // If the next price makes it so the next sell price is higher than the current buy price we dont update
-        uint256 nextSellPrice = ((price + delta) *
-            (PercentageMath.PERCENTAGE_FACTOR - fee)) /
-            PercentageMath.PERCENTAGE_FACTOR;
-        uint256 currentBuyPrice = (price *
-            (PercentageMath.PERCENTAGE_FACTOR + fee)) /
-            PercentageMath.PERCENTAGE_FACTOR;
-
-        if (nextSellPrice < currentBuyPrice) {
-            return price + delta;
-        }
-        return price;
+        return price + delta;
     }
 
     /// @notice Calculates the price after selling 1 token
@@ -38,19 +27,11 @@ contract LinearPriceCurve is IPricingCurve, ERC165 {
         uint256 delta,
         uint256 fee
     ) external pure override returns (uint256) {
-        if (delta > price) {
-            return price;
-        }
-
         // If the next price makes it so the next buy price is lower than the current sell price we dont update
-        uint256 nextBuyPrice = ((price - delta) *
-            (PercentageMath.PERCENTAGE_FACTOR + fee)) /
-            PercentageMath.PERCENTAGE_FACTOR;
-        uint256 currentSellPrice = (price *
-            (PercentageMath.PERCENTAGE_FACTOR - fee)) /
-            PercentageMath.PERCENTAGE_FACTOR;
-
-        if (nextBuyPrice > currentSellPrice) {
+        if (
+            ((price - delta) * (PercentageMath.PERCENTAGE_FACTOR + fee)) >
+            (price * (PercentageMath.PERCENTAGE_FACTOR - fee))
+        ) {
             return price - delta;
         }
 
@@ -59,10 +40,20 @@ contract LinearPriceCurve is IPricingCurve, ERC165 {
 
     function validateLpParameters(
         uint256 spotPrice,
-        uint256,
-        uint256
+        uint256 delta,
+        uint256 fee
     ) external pure override {
         require(spotPrice > 0, "LPC:VLPP:INVALID_PRICE");
+
+        if (fee > 0 && delta > 0) {
+            // If this doesn't happen then a user would be able to profitably buy and sell from the same LP and drain its funds
+            require(
+                ((spotPrice - delta) *
+                    (PercentageMath.PERCENTAGE_FACTOR + fee)) >
+                    (spotPrice * (PercentageMath.PERCENTAGE_FACTOR - fee)),
+                "LPC:VLPP:INVALID_FEE_DELTA_RATIO"
+            );
+        }
     }
 
     function supportsInterface(
