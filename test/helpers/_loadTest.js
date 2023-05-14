@@ -198,7 +198,7 @@ let loadEnv = async function (isMainnetFork) {
   const LiquidityPairMetadata = await ethers.getContractFactory(
     "LiquidityPairMetadata"
   );
-  const liquidityPairMetadata = await LiquidityPairMetadata.deploy();
+  liquidityPairMetadata = await LiquidityPairMetadata.deploy();
   await liquidityPairMetadata.deployed();
 
   // Deploy the Interest Rate contract

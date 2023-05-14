@@ -148,6 +148,7 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
         {
             // forgefmt: disable-next-item
             _svg = abi.encodePacked(
+                _svg,
                 "Trading pool: ",
                 Strings.toHexString(address(tradingPool)),
                 "</text>",
