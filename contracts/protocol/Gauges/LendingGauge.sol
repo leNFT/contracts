@@ -12,11 +12,12 @@ import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
 import {IGauge} from "../../interfaces/IGauge.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /// @title LendingGauge contract
 /// @notice Liquidity Gauge contract. Distributes incentives to users who have deposited into the LendingPool.
 /// @dev The gauge tracks the balance and work done by users, which are then used to calculate rewards.
-contract LendingGauge is IGauge {
+contract LendingGauge is IGauge, ERC165 {
     IAddressesProvider private _addressProvider;
     mapping(address => uint256) private _balanceOf;
     mapping(address => DataTypes.WorkingBalance[])
@@ -358,5 +359,13 @@ contract LendingGauge is IGauge {
         _checkpoint(msg.sender);
 
         IERC20(_lpToken).safeTransfer(msg.sender, amount);
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC165) returns (bool) {
+        return
+            interfaceId == type(IGauge).interfaceId ||
+            ERC165.supportsInterface(interfaceId);
     }
 }

@@ -16,10 +16,11 @@ import {IGauge} from "../../interfaces/IGauge.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /// @title Trading Gauge Contract
 /// @notice A contract for managing the distribution of rewards to Trading LPs
-contract TradingGauge is IGauge, ERC721Holder, ReentrancyGuard {
+contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
     IAddressesProvider private _addressProvider;
     mapping(uint256 => address) private _ownerOf;
     mapping(address => uint256) private _balanceOf;
@@ -465,5 +466,13 @@ contract TradingGauge is IGauge, ERC721Holder, ReentrancyGuard {
         // Value is higher if the lp is in equilibrium
         return
             nftsAppraisal > validTokenAmount ? validTokenAmount : nftsAppraisal;
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC165) returns (bool) {
+        return
+            interfaceId == type(IGauge).interfaceId ||
+            ERC165.supportsInterface(interfaceId);
     }
 }

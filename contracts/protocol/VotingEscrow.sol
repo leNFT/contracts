@@ -375,7 +375,7 @@ contract VotingEscrow is
     /// @dev Locks tokens into the voting escrow contract for a specified amount of time.
     /// @param receiver The address that will receive the locked tokens.
     /// @param amount The amount of tokens to be locked.
-    /// @param unlockTime The unlock time for the lock operation.
+    /// @param unlockTime The timestamp at which the tokens will be unlocked.
     function createLock(
         address receiver,
         uint256 amount,

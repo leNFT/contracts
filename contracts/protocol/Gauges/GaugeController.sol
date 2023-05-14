@@ -8,6 +8,8 @@ import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IGaugeController} from "../../interfaces/IGaugeController.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+
 import {IGauge} from "../../interfaces/IGauge.sol";
 
 /// @title Gauge Controller
@@ -44,6 +46,13 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     uint256 private _initialRewards;
     uint256 private _lpMaturityPeriod;
 
+    using ERC165CheckerUpgradeable for address;
+
+    modifier validGauge(address gauge) {
+        _requireValidGauge(gauge);
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -69,6 +78,15 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @dev Only the contract owner can call this method.
     /// @param gauge Address of the gauge contract to add.
     function addGauge(address gauge) external onlyOwner {
+        // Check if the gauge is already registered
+        require(!_isGauge[gauge], "GC:AG:GAUGE_ALREADY_ADDED");
+
+        // Check if the gauge is a valid gauge
+        require(
+            gauge.supportsInterface(type(IGauge).interfaceId),
+            "GC:AG:INVALID_GAUGE"
+        );
+
         address liquidityPool = IGauge(gauge).lpToken();
         _liquidityPoolToGauge[liquidityPool] = gauge;
         _isGauge[gauge] = true;
@@ -79,9 +97,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @notice Remove a gauge
     /// @dev Only the contract owner can call this method.
     /// @param gauge The address of the gauge to be removed
-    function removeGauge(address gauge) external onlyOwner {
-        require(_isGauge[gauge], "GC:RG:INVALID_GAUGE");
-
+    function removeGauge(address gauge) external onlyOwner validGauge(gauge) {
         address liquidityPool = IGauge(gauge).lpToken();
         if (_liquidityPoolToGauge[liquidityPool] == gauge) {
             delete _liquidityPoolToGauge[liquidityPool];
@@ -109,9 +125,9 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @notice Get the current weight of a gauge
     /// @param gauge The address of the gauge to check
     /// @return The current weight of the gauge
-    function getGaugeWeight(address gauge) external view returns (uint256) {
-        require(_isGauge[gauge], "GC:GGW:INVALID_GAUGE");
-
+    function getGaugeWeight(
+        address gauge
+    ) external view validGauge(gauge) returns (uint256) {
         DataTypes.Point
             memory lastGaugeWeightCheckpoint = _lastGaugeWeigthCheckpoint[
                 gauge
@@ -138,8 +154,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function getGaugeWeightAt(
         address gauge,
         uint256 epoch
-    ) public returns (uint256) {
-        require(_isGauge[gauge], "GC:GGWA:INVALID_GAUGE");
+    ) public validGauge(gauge) returns (uint256) {
         require(
             epoch <=
                 IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
@@ -203,18 +218,14 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function lockVoteRatioForGauge(
         uint256 tokenId,
         address gauge
-    ) external view returns (uint256) {
-        require(_isGauge[gauge], "GC:LVRFG:INVALID_GAUGE");
-
+    ) external view validGauge(gauge) returns (uint256) {
         return _lockGaugeVoteRatio[tokenId][gauge];
     }
 
     function lockVotePointForGauge(
         uint256 tokenId,
         address gauge
-    ) external view returns (DataTypes.Point memory) {
-        require(_isGauge[gauge], "GC:LVPFG:INVALID_GAUGE");
-
+    ) external view validGauge(gauge) returns (DataTypes.Point memory) {
         return _lockGaugeVotePoint[tokenId][gauge];
     }
 
@@ -225,9 +236,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function lockVoteWeightForGauge(
         uint256 tokenId,
         address gauge
-    ) external view returns (uint256) {
-        require(_isGauge[gauge], "GC:LVWFG:INVALID_GAUGE");
-
+    ) external view validGauge(gauge) returns (uint256) {
         if (
             _lockGaugeVotePoint[tokenId][gauge].slope *
                 (block.timestamp -
@@ -280,9 +289,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
 
     /// @notice Update the weight history of a gauge
     /// @param gauge The address of the gauge to update
-    function writeGaugeWeightHistory(address gauge) public {
-        require(_isGauge[gauge], "GC:WGW:INVALID_GAUGE");
-
+    function writeGaugeWeightHistory(address gauge) public validGauge(gauge) {
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         );
@@ -476,7 +483,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
                 IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
                     block.timestamp
                 ),
-            "GC:GER:INVALID_EPOCH"
+            "GC:GER:FUTURE_EPOCH"
         );
 
         // If there are no votes in any gauge, return 0
@@ -499,8 +506,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function getGaugeRewards(
         address gauge,
         uint256 epoch
-    ) external returns (uint256 rewards) {
-        require(_isGauge[gauge], "GC:GGR:INVALID_GAUGE");
+    ) external validGauge(gauge) returns (uint256 rewards) {
         require(
             epoch <=
                 IVotingEscrow(_addressProvider.getVotingEscrow()).epoch(
@@ -530,5 +536,9 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @return The maturity period in epochs
     function getLPMaturityPeriod() external view override returns (uint256) {
         return _lpMaturityPeriod;
+    }
+
+    function _requireValidGauge(address gauge) internal view {
+        require(_isGauge[gauge], "GC:RIG:INVALID_GAUGE");
     }
 }

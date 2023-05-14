@@ -116,8 +116,7 @@ contract TradingPoolFactory is
     }
 
     /// @notice Sets the address of the trading pool for a certain collection and token
-    /// @dev Meant to be used by owner if there's a need to update a pool
-    /// @dev Owner needs to make sure the pool is valid
+    /// @dev Meant to be used by owner if there's a need to update or delete a pool
     /// @param nft The NFT collection address
     /// @param token The token address
     /// @param pool The address of the trading pool for the given NFT collection and token
@@ -126,6 +125,12 @@ contract TradingPoolFactory is
         address token,
         address pool
     ) external onlyOwner {
+        // Make sure the pool supports the interface or is the zero address
+        require(
+            pool.supportsInterface(type(ITradingPool).interfaceId) ||
+                pool == address(0),
+            "TPF:STP:NOT_POOL"
+        );
         _pools[nft][token] = pool;
     }
 

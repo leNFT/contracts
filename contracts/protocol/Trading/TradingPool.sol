@@ -528,6 +528,7 @@ contract TradingPool is
         bytes4 interfaceId
     ) public view override(ERC165, ERC721Enumerable) returns (bool) {
         return
+            type(ITradingPool).interfaceId == interfaceId ||
             ERC721Enumerable.supportsInterface(interfaceId) ||
             ERC165.supportsInterface(interfaceId);
     }
