@@ -13,6 +13,7 @@ import {IGauge} from "../../interfaces/IGauge.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "hardhat/console.sol";
 
 /// @title LendingGauge contract
 /// @notice Liquidity Gauge contract. Distributes incentives to users who have deposited into the LendingPool.
@@ -250,8 +251,14 @@ contract LendingGauge is IGauge, ERC165 {
         writeTotalWeightHistory();
 
         if (totalVotingSupply == 0) {
+            console.log("totalVotingSupply is 0");
             newWeight = _balanceOf[user];
         } else {
+            console.log("totalVotingSupply is not 0");
+            console.log("userVotingBalance: %s", userVotingBalance);
+            console.log("totalVotingSupply: %s", totalVotingSupply);
+            console.log("totalSupply(): %s", totalSupply());
+            console.log("userBalance: %s", _balanceOf[user]);
             newWeight = Math.min(
                 _balanceOf[user],
                 (PercentageMath.HALF_PERCENTAGE_FACTOR *
@@ -261,6 +268,8 @@ contract LendingGauge is IGauge, ERC165 {
                         totalSupply()) /
                     totalVotingSupply) / PercentageMath.PERCENTAGE_FACTOR
             );
+
+            console.log("newWeight: %s", newWeight);
         }
 
         DataTypes.WorkingBalance memory oldWorkingBalance;
@@ -278,8 +287,8 @@ contract LendingGauge is IGauge, ERC165 {
 
         _workingWeight =
             _workingWeight +
-            newWorkingBalance.amount -
-            oldWorkingBalance.amount;
+            newWorkingBalance.weight -
+            oldWorkingBalance.weight;
 
         _workingBalanceHistory[user].push(newWorkingBalance);
     }
@@ -291,11 +300,18 @@ contract LendingGauge is IGauge, ERC165 {
         if (_balanceOf[user] == 0) {
             return 0;
         }
+        console.log(
+            "_workingBalanceHistory[user][_workingBalanceHistory[user].length - 1].weight: %s",
+            _workingBalanceHistory[user][
+                _workingBalanceHistory[user].length - 1
+            ].weight
+        );
+        console.log("_balanceOf[user]: %s", _balanceOf[user]);
         return
             (2 *
                 _workingBalanceHistory[user][
                     _workingBalanceHistory[user].length - 1
-                ].amount *
+                ].weight *
                 PercentageMath.PERCENTAGE_FACTOR) / _balanceOf[user];
     }
 
@@ -320,8 +336,8 @@ contract LendingGauge is IGauge, ERC165 {
             );
     }
 
-    /// @notice Updates the working balance of a user if their locked has expired.
-    /// @param tokenId The tokenId of the user's locked balance.
+    /// @notice Updates the working balance of a user if one of their locks has expired.
+    /// @param tokenId The tokenId of the user's lock that has expired.
     function kick(uint256 tokenId) external {
         address votingEscrowAddress = _addressProvider.getVotingEscrow();
         // Get user locked balance end time
@@ -330,6 +346,7 @@ contract LendingGauge is IGauge, ERC165 {
             .end;
 
         if (lockEnd < block.timestamp) {
+            console.log("Kicking");
             _checkpoint(IERC721(votingEscrowAddress).ownerOf(tokenId));
         }
     }
@@ -342,9 +359,9 @@ contract LendingGauge is IGauge, ERC165 {
         // Update balance
         _balanceOf[msg.sender] += amount;
 
-        _checkpoint(msg.sender);
-
         IERC20(_lpToken).safeTransferFrom(msg.sender, address(this), amount);
+
+        _checkpoint(msg.sender);
     }
 
     /// @notice Withdraws LP tokens from the contract and updates the user's balance and working balance.
@@ -358,9 +375,9 @@ contract LendingGauge is IGauge, ERC165 {
         // Update balance
         _balanceOf[msg.sender] -= amount;
 
-        _checkpoint(msg.sender);
-
         IERC20(_lpToken).safeTransfer(msg.sender, amount);
+
+        _checkpoint(msg.sender);
     }
 
     function supportsInterface(

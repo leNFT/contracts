@@ -277,4 +277,77 @@ describe("LendingGauge", () => {
       "1990911999999999999"
     );
   });
+  it("Should use kick to update the boost for a user whose lock is over", async function () {
+    //  Mint and lock some LE for the user
+    const mintNativeTokenTx = await nativeToken.mint(
+      owner.address,
+      ethers.utils.parseEther("2")
+    );
+    await mintNativeTokenTx.wait();
+    const approveNativeTokenTx = await nativeToken.approve(
+      votingEscrow.address,
+      ethers.utils.parseEther("2")
+    );
+    await approveNativeTokenTx.wait();
+    // Create a lock for 30 days for the user
+    const lockTx = await votingEscrow.createLock(
+      owner.address,
+      ethers.utils.parseEther("1"),
+      Math.floor(Date.now() / 1000) + 3600 * 24 * 30 // 30 days
+    );
+    await lockTx.wait();
+    // Create a lock for 120 days for the user
+    const lockTx2 = await votingEscrow.createLock(
+      address1.address,
+      ethers.utils.parseEther("1"),
+      Math.floor(Date.now() / 1000) + 3600 * 24 * 120 // 30 days
+    );
+    await lockTx2.wait();
+    // Deposit into the lending pool
+    const depositWETHTx = await weth.deposit({
+      value: ethers.utils.parseEther("1"),
+    });
+    await depositWETHTx.wait();
+
+    // Approve the lending pool to spend the weth
+    const approveTx = await weth.approve(
+      lendingPool.address,
+      ethers.utils.parseEther("1")
+    );
+    await approveTx.wait();
+    // Deposit into the pool
+    const depositLendingPoolTx = await lendingPool.deposit(
+      ethers.utils.parseEther("1"),
+      owner.address
+    );
+    await depositLendingPoolTx.wait();
+
+    // Approve the lending gauge to spend the lending pool tokens
+    const approveLendingGaugeTx = await lendingPool.approve(
+      lendingGauge.address,
+      ethers.utils.parseEther("1")
+    );
+    await approveLendingGaugeTx.wait();
+
+    // Deposit into the lending gauge
+    const depositLendingGaugeTx = await lendingGauge.deposit(
+      ethers.utils.parseEther("1")
+    );
+    await depositLendingGaugeTx.wait();
+
+    // Let 30 days pass
+    await time.increase(3600 * 24 * 30);
+
+    expect(Number(await lendingGauge.userBoost(owner.address)))
+      .to.greaterThan(10000)
+      .and.lessThan(20000);
+
+    // Kick the user's lock
+    const kickTx = await lendingGauge.kick(0);
+    await kickTx.wait();
+
+    // The boost should be updated
+    console.log("Get user boost");
+    expect(await lendingGauge.userBoost(owner.address)).to.equal(10000);
+  });
 });

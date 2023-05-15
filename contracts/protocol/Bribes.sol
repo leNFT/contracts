@@ -34,6 +34,16 @@ contract Bribes is
 
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+    modifier validGauge(address gauge) {
+        _requireValidGauge(gauge);
+        _;
+    }
+
+    modifier noFutureEpoch(uint256 epoch) {
+        _requireNoFutureEpoch(epoch);
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -51,7 +61,7 @@ contract Bribes is
     }
 
     /// @notice Deposits a bribe for a specific gauge
-    /// @param briber The account to deposit the bribe for
+    /// @param briber The account hat will own the bribe
     /// @param token The token to bribe with
     /// @param gauge The gauge to bribe
     /// @param amount The amount to bribe with
@@ -60,7 +70,7 @@ contract Bribes is
         address token,
         address gauge,
         uint256 amount
-    ) external override nonReentrant {
+    ) external override validGauge(gauge) nonReentrant {
         // Find what's the next epoch
         uint256 nextEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
             .getEpoch(block.timestamp) + 1;
@@ -88,7 +98,7 @@ contract Bribes is
         address token,
         address gauge,
         uint256 amount
-    ) external override nonReentrant {
+    ) external override validGauge(gauge) nonReentrant {
         // Find what's the next epoch
         uint256 nextEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
             .getEpoch(block.timestamp) + 1;
@@ -117,20 +127,12 @@ contract Bribes is
         address token,
         address gauge,
         uint256 epoch
-    ) external nonReentrant {
-        require(
-            epoch <=
-                IVotingEscrow(_addressProvider.getVotingEscrow()).getEpoch(
-                    block.timestamp
-                ),
-            "B:SB:EPOCH_NOT_STARTED"
-        );
-
+    ) external nonReentrant validGauge(gauge) noFutureEpoch(epoch) {
         IGaugeController gaugeController = IGaugeController(
             _addressProvider.getGaugeController()
         );
 
-        // Funds not claimable by users are epoch in which there was no voting power for gauge
+        // Bribes are only salvageable if there were no votes for the gauge in the bribe's epoch
         require(
             gaugeController.getGaugeWeightAt(gauge, epoch) == 0,
             "B:SB:FUNDS_CLAIMABLE"
@@ -163,7 +165,7 @@ contract Bribes is
         address gauge,
         uint256 epoch,
         address user
-    ) external view returns (uint256) {
+    ) external view validGauge(gauge) returns (uint256) {
         return _userBribes[token][gauge][epoch][user];
     }
 
@@ -175,7 +177,7 @@ contract Bribes is
         address token,
         address gauge,
         uint256 epoch
-    ) external view returns (uint256) {
+    ) external view validGauge(gauge) returns (uint256) {
         return _gaugeBribes[token][gauge][epoch];
     }
 
@@ -188,7 +190,7 @@ contract Bribes is
         address token,
         address gauge,
         uint256 tokenId
-    ) external nonReentrant returns (uint256 amountToClaim) {
+    ) external validGauge(gauge) nonReentrant returns (uint256 amountToClaim) {
         address votingEscrow = _addressProvider.getVotingEscrow();
         // Make sure the caller is the owner of the token
         require(
@@ -213,16 +215,14 @@ contract Bribes is
         uint256 currentEpoch = IVotingEscrow(votingEscrow).getEpoch(
             block.timestamp
         );
-        uint256 lockLastPointEpoch = IVotingEscrow(votingEscrow).getEpoch(
-            lockLastPoint.timestamp
-        );
 
         // Bring the next claimable epoch up to date if needed
         if (
-            _voteNextClaimableEpoch[token][gauge][tokenId] <= lockLastPointEpoch
+            _voteNextClaimableEpoch[token][gauge][tokenId] <=
+            IVotingEscrow(votingEscrow).getEpoch(lockLastPoint.timestamp)
         ) {
             _voteNextClaimableEpoch[token][gauge][tokenId] =
-                lockLastPointEpoch +
+                IVotingEscrow(votingEscrow).getEpoch(lockLastPoint.timestamp) +
                 1;
         }
 
@@ -255,5 +255,24 @@ contract Bribes is
         if (amountToClaim > 0) {
             IERC20Upgradeable(token).safeTransfer(_msgSender(), amountToClaim);
         }
+    }
+
+    function _requireValidGauge(address gauge) internal view {
+        require(
+            IGaugeController(_addressProvider.getGaugeController()).isGauge(
+                gauge
+            ),
+            "B:INVALID_GAUGE"
+        );
+    }
+
+    function _requireNoFutureEpoch(uint256 epoch) internal view {
+        require(
+            epoch <=
+                IVotingEscrow(_addressProvider.getVotingEscrow()).getEpoch(
+                    block.timestamp
+                ),
+            "B:FUTURE_EPOCH"
+        );
     }
 }

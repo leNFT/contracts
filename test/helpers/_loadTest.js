@@ -21,7 +21,7 @@ let loadEnv = async function (isMainnetFork) {
   const ONE_DAY = 86400;
   console.log("Setting up enviroment...");
 
-  [owner] = await ethers.getSigners();
+  [owner, address1] = await ethers.getSigners();
 
   // Mainnet weth address
   if (isMainnetFork) {

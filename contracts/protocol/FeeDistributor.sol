@@ -11,6 +11,7 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "hardhat/console.sol";
 
 /// @title FeeDistributor
 /// @notice This contract distributes fees from the protocol to LE stakers, using the VotingEscrow interface to check the user's staked amount
@@ -52,7 +53,7 @@ contract FeeDistributor is
     /// @param token Token address
     /// @param epoch Epoch to retrieve fees from
     /// @return uint256 Amount of fees in the specified epoch
-    function totalFeesAt(
+    function getTotalFeesAt(
         address token,
         uint256 epoch
     ) external view returns (uint256) {
@@ -78,7 +79,7 @@ contract FeeDistributor is
     /// @notice Allows anyone to retrieve any leftover rewards unclaimable by users and add them to the current epoch
     /// @param token Token address
     /// @param epoch Epoch to retrieve funds from
-    function salvageRewards(address token, uint256 epoch) external {
+    function salvageFees(address token, uint256 epoch) external {
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         );
@@ -231,6 +232,8 @@ contract FeeDistributor is
             }
         }
 
+        console.log("amountToClaim: %s", amountToClaim);
+
         if (amountToClaim > 0) {
             IERC20Upgradeable(token).safeTransfer(
                 IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
@@ -250,6 +253,7 @@ contract FeeDistributor is
         uint256[] calldata tokensIds
     ) external returns (uint256 amountToClaim) {
         for (uint256 i = 0; i < tokensIds.length; i++) {
+            console.log("tokensIds[i]: %s", tokensIds[i]);
             amountToClaim += claim(token, tokensIds[i]);
         }
     }

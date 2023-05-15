@@ -17,6 +17,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "hardhat/console.sol";
 
 /// @title Trading Gauge Contract
 /// @notice A contract for managing the distribution of rewards to Trading LPs
@@ -243,6 +244,11 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
 
         writeTotalWeightHistory();
 
+        console.log("userVotingBalance", userVotingBalance);
+        console.log("totalVotingSupply", totalVotingSupply);
+        console.log("userLPValue", _userLPValue[user]);
+        console.log("totalLPValue", _totalLPValue);
+
         if (totalVotingSupply == 0) {
             newWeight = _userLPValue[user];
         } else {
@@ -256,6 +262,8 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
                     totalVotingSupply) / PercentageMath.PERCENTAGE_FACTOR
             );
         }
+
+        console.log("newWeight", newWeight);
 
         DataTypes.WorkingBalance memory oldWorkingBalance;
         if (_workingBalanceHistory[user].length > 0) {
@@ -279,8 +287,8 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
         _workingBalanceHistory[user].push(newWorkingBalance);
     }
 
-    /// @notice Triggers a checkpoint for a user if their locked balance has ended.
-    /// @param tokenId The ID of token
+    /// @notice Updates the working balance of a user if one of their locks has expired.
+    /// @param tokenId The tokenId of the user's lock that has expired.
     function kick(uint256 tokenId) external {
         address votingEscrowAddress = _addressProvider.getVotingEscrow();
         // Get user locked balance end time
@@ -320,8 +328,6 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
         _userLPValue[msg.sender] += depositLpValue;
         _totalLPValue += depositLpValue;
 
-        _checkpoint(msg.sender);
-
         IERC721(_lpToken).safeTransferFrom(msg.sender, address(this), lpId);
 
         uint256 lastTokenIndex = _balanceOf[msg.sender];
@@ -329,6 +335,8 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
         _ownedTokensIndex[lpId] = lastTokenIndex;
         _balanceOf[msg.sender] += 1;
         _totalSupply += 1;
+
+        _checkpoint(msg.sender);
 
         emit DepositLP(msg.sender, lpId);
     }
@@ -345,8 +353,6 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
         // Update balance
         delete _ownerOf[lpId];
         delete _lpValue[lpId];
-
-        _checkpoint(msg.sender);
 
         IERC721(_lpToken).safeTransferFrom(address(this), msg.sender, lpId);
 
@@ -367,6 +373,8 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
 
         _balanceOf[msg.sender] -= 1;
         _totalSupply -= 1;
+
+        _checkpoint(msg.sender);
 
         emit WithdrawLP(msg.sender, lpId);
     }
@@ -403,7 +411,7 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
             (2 *
                 _workingBalanceHistory[user][
                     _workingBalanceHistory[user].length - 1
-                ].amount *
+                ].weight *
                 PercentageMath.PERCENTAGE_FACTOR) / _userLPValue[user];
     }
 

@@ -151,6 +151,89 @@ describe("TradingGauge", () => {
     // THe balance for the user should be 0
     expect(await tradingGauge.balanceOf(owner.address)).to.equal(0);
   });
+  it("Should batch withdraw from  a trading gauge", async function () {
+    const depositWETHTx = await weth.deposit({
+      value: ethers.utils.parseEther("2"),
+    });
+    await depositWETHTx.wait();
+
+    // Approve the trading pool to spend the weth
+    const approveTx = await weth.approve(
+      tradingPool.address,
+      ethers.utils.parseEther("2")
+    );
+    await approveTx.wait();
+    // Mint two new NFT
+    const mintTx1 = await testNFT.mint(owner.address);
+    await mintTx1.wait();
+    const mintTx2 = await testNFT.mint(owner.address);
+    await mintTx2.wait();
+    // Approve the trading pool to spend the NFT
+    const approveNFTTx = await testNFT.approve(tradingPool.address, 0);
+    await approveNFTTx.wait();
+    const approveNFTTx2 = await testNFT.approve(tradingPool.address, 1);
+    await approveNFTTx2.wait();
+    // Add liquidity to the trading pool
+    const depositTx1 = await tradingPool.addLiquidity(
+      owner.address,
+      0,
+      [0],
+      ethers.utils.parseEther("1"),
+      ethers.utils.parseEther("0.5"),
+      exponentialCurve.address,
+      "50",
+      "500"
+    );
+    await depositTx1.wait();
+    const depositTx2 = await tradingPool.addLiquidity(
+      owner.address,
+      0,
+      [1],
+      ethers.utils.parseEther("1"),
+      ethers.utils.parseEther("0.5"),
+      exponentialCurve.address,
+      "50",
+      "500"
+    );
+    await depositTx2.wait();
+
+    // Approve the trading gauge to spend the trading pool NFTs
+    const approveTradingGaugeTx = await tradingPool.approve(
+      tradingGauge.address,
+      0
+    );
+    await approveTradingGaugeTx.wait();
+    const approveTradingGaugeTx2 = await tradingPool.approve(
+      tradingGauge.address,
+      1
+    );
+    await approveTradingGaugeTx2.wait();
+
+    // Deposit into the trading gauge
+    const depositTradingGaugeTx = await tradingGauge.deposit(0);
+    await depositTradingGaugeTx.wait();
+    const depositTradingGaugeTx2 = await tradingGauge.deposit(1);
+    await depositTradingGaugeTx2.wait();
+
+    // Withdraw from the trading gauge in batch
+    const withdrawBatchTradingGaugeTx = await tradingGauge.withdrawBatch([
+      0, 1,
+    ]);
+    await withdrawBatchTradingGaugeTx.wait();
+
+    // The balance and token supply should be 0
+    expect(await tradingGauge.userLPValue(owner.address)).to.equal(0);
+    expect(await tradingGauge.totalSupply()).to.equal(
+      ethers.utils.parseEther("0")
+    );
+
+    // The user should own the liquidity pair NFTs
+    expect(await tradingPool.ownerOf(0)).to.equal(owner.address);
+    expect(await tradingPool.ownerOf(1)).to.equal(owner.address);
+
+    // THe balance for the user should be 0
+    expect(await tradingGauge.balanceOf(owner.address)).to.equal(0);
+  });
   it("Should get the user boost", async function () {
     const depositWETHTx = await weth.deposit({
       value: ethers.utils.parseEther("1"),
@@ -327,5 +410,86 @@ describe("TradingGauge", () => {
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
       "1990911999999999999"
     );
+  });
+  it("Should use kick to update the boost for a user whose lock is over", async function () {
+    //  Mint and lock some LE for the user
+    const mintNativeTokenTx = await nativeToken.mint(
+      owner.address,
+      ethers.utils.parseEther("2")
+    );
+    await mintNativeTokenTx.wait();
+    const approveNativeTokenTx = await nativeToken.approve(
+      votingEscrow.address,
+      ethers.utils.parseEther("2")
+    );
+    await approveNativeTokenTx.wait();
+    // Create a lock for 30 days for the user
+    const lockTx = await votingEscrow.createLock(
+      owner.address,
+      ethers.utils.parseEther("1"),
+      Math.floor(Date.now() / 1000) + 3600 * 24 * 30 // 30 days
+    );
+    await lockTx.wait();
+    // Create a lock for 120 days for the user
+    const lockTx2 = await votingEscrow.createLock(
+      address1.address,
+      ethers.utils.parseEther("1"),
+      Math.floor(Date.now() / 1000) + 3600 * 24 * 120 // 120 days
+    );
+    await lockTx2.wait();
+    const depositWETHTx = await weth.deposit({
+      value: ethers.utils.parseEther("1"),
+    });
+    await depositWETHTx.wait();
+
+    // Approve the trading pool to spend the weth
+    const approveTx = await weth.approve(
+      tradingPool.address,
+      ethers.utils.parseEther("1")
+    );
+    await approveTx.wait();
+    // Mint a new NFT
+    const mintTx = await testNFT.mint(owner.address);
+    await mintTx.wait();
+    // Approve the trading pool to spend the NFT
+    const approveNFTTx = await testNFT.approve(tradingPool.address, 0);
+    await approveNFTTx.wait();
+    // Add liquidity to the trading pool
+    const depositTx = await tradingPool.addLiquidity(
+      owner.address,
+      0,
+      [0],
+      ethers.utils.parseEther("1"),
+      ethers.utils.parseEther("0.5"),
+      exponentialCurve.address,
+      "50",
+      "500"
+    );
+    await depositTx.wait();
+
+    // Approve the trading gauge to spend the trading pool NFTs
+    const approveTradingGaugeTx = await tradingPool.approve(
+      tradingGauge.address,
+      0
+    );
+    await approveTradingGaugeTx.wait();
+    // Deposit into the trading gauge
+    const depositTradingGaugeTx = await tradingGauge.deposit(0);
+    await depositTradingGaugeTx.wait();
+
+    // Let 30 days pass
+    await time.increase(3600 * 24 * 30);
+
+    expect(Number(await tradingGauge.userBoost(owner.address)))
+      .to.be.greaterThan(10000)
+      .and.lessThan(20000);
+
+    // Kick the user's lock
+    const kickTx = await tradingGauge.kick(0);
+    await kickTx.wait();
+
+    // The boost should be updated
+    console.log("Get user boost");
+    expect(await tradingGauge.userBoost(owner.address)).to.equal(10000);
   });
 });
