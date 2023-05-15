@@ -182,10 +182,12 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
             }
         }
 
-        INativeToken(_addressProvider.getNativeToken()).mintGaugeRewards(
-            msg.sender,
-            amountToClaim
-        );
+        if (amountToClaim > 0) {
+            INativeToken(_addressProvider.getNativeToken()).mintGaugeRewards(
+                msg.sender,
+                amountToClaim
+            );
+        }
     }
 
     /// @notice Updates the total weight history for the contract and records the total weight for epochs.

@@ -231,12 +231,14 @@ contract FeeDistributor is
             }
         }
 
-        IERC20Upgradeable(token).safeTransfer(
-            IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
-                tokenId
-            ),
-            amountToClaim
-        );
+        if (amountToClaim > 0) {
+            IERC20Upgradeable(token).safeTransfer(
+                IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
+                    tokenId
+                ),
+                amountToClaim
+            );
+        }
     }
 
     /// @notice Allows a user to claim their rewards from multiple locks for a specific token

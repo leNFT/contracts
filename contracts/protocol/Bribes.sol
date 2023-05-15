@@ -252,6 +252,8 @@ contract Bribes is
         }
 
         // Transfer claim to user
-        IERC20Upgradeable(token).safeTransfer(_msgSender(), amountToClaim);
+        if (amountToClaim > 0) {
+            IERC20Upgradeable(token).safeTransfer(_msgSender(), amountToClaim);
+        }
     }
 }

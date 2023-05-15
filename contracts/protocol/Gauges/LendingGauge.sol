@@ -185,10 +185,12 @@ contract LendingGauge is IGauge, ERC165 {
             }
         }
 
-        INativeToken(_addressProvider.getNativeToken()).mintGaugeRewards(
-            msg.sender,
-            amountToClaim
-        );
+        if (amountToClaim > 0) {
+            INativeToken(_addressProvider.getNativeToken()).mintGaugeRewards(
+                msg.sender,
+                amountToClaim
+            );
+        }
     }
 
     /// @notice Updates the total weight history by recording the current total weight for the current epoch and 128 previous epochs.
