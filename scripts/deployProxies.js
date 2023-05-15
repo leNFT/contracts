@@ -255,6 +255,16 @@ async function main() {
   await linearCurve.deployed();
   addresses["LinearCurve"] = linearCurve.address;
 
+  // Deploy the vesting contract
+  const NativeTokenVesting = await ethers.getContractFactory(
+    "NativeTokenVesting"
+  );
+  const nativeTokenVesting = await NativeTokenVesting.deploy(
+    addressesProvider.address
+  );
+  await nativeTokenVesting.deployed();
+  addresses["NativeTokenVesting"] = nativeTokenVesting.address;
+
   console.log("Deployed Non-Proxies");
 
   // If we are not on mainnet, deploy a faucet contract

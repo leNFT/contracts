@@ -257,6 +257,15 @@ let loadEnv = async function (isMainnetFork) {
   linearCurve = await LinearCurve.deploy();
   await linearCurve.deployed();
 
+  // Deploy the vesting contract
+  const NativeTokenVesting = await ethers.getContractFactory(
+    "NativeTokenVesting"
+  );
+  nativeTokenVesting = await NativeTokenVesting.deploy(
+    addressesProvider.address
+  );
+  await nativeTokenVesting.deployed();
+
   console.log("Deployed Non-Proxies");
 
   // Set all contracts in the addresses provider

@@ -463,6 +463,6 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
      * @dev Revert fallback calls
      */
     fallback() external payable {
-        revert("ETHG:FALLBACK:INVALID_CALL");
+        revert("ETHG:F:INVALID_CALL");
     }
 }

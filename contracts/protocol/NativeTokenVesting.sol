@@ -41,7 +41,7 @@ contract NativeTokenVesting is Ownable {
     /// @param period The vesting period in seconds
     /// @param cliff The cliff period in seconds
     /// @param amount The amount of tokens to vest
-    function addVesting(
+    function setVesting(
         address account,
         uint256 period,
         uint256 cliff,

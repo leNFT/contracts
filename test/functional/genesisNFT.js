@@ -75,12 +75,9 @@ describe("GenesisNFT", function () {
     expect(await genesisNFT.ownerOf(1)).to.equal(owner.address);
 
     // Check if dev received the ETH
-    expect(await ethers.provider.getBalance(owner.address)).to.equal(
-      "1500000000000000000"
+    expect(await ethers.provider.getBalance(address1.address)).to.equal(
+      "10001500000000000000000"
     );
-
-    // Print the NFT's token URI
-    console.log("Token URI: ", await genesisNFT.tokenURI(1));
   });
   it("Should burn a token", async function () {
     const lpValue = await genesisNFT.callStatic.getLPValueInLE([1, 2]);
