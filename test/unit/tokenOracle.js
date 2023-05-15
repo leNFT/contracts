@@ -11,6 +11,7 @@ describe("TokenOracle", function () {
   const testDataFeed = "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419"; // Price feed for ETH/USD
   const testTokenAddress = "0x853d955aCEf822Db058eb8505911ED77F175b99e";
 
+  // Dont need to call the entire loadTestAlways function since the setup is only the tokenOracle deployment
   beforeEach(async () => {
     // Go to a mainnet fork so we can test the oracle data feed
     await helpers.reset(

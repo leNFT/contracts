@@ -63,7 +63,7 @@ describe("GenesisNFT", function () {
     locktime = 60 * 60 * 24 * 120;
     console.log(
       "LE Reward per NFT: ",
-      await genesisNFT.getNativeTokenReward(1, locktime)
+      await genesisNFT.getCurrentLEReward(1, locktime)
     );
     // Mint Genesis NFT
     const mintGenesisNFTTx = await genesisNFT.mint(locktime, 10, {
@@ -75,11 +75,9 @@ describe("GenesisNFT", function () {
     expect(await genesisNFT.ownerOf(1)).to.equal(owner.address);
 
     // Check if dev received the ETH
-    expect(
-      await ethers.provider.getBalance(
-        "0x91A7cEeAf399e9f933FF13F9575A2B74ac9c3EA7"
-      )
-    ).to.equal("1500000000000000000");
+    expect(await ethers.provider.getBalance(owner.address)).to.equal(
+      "1500000000000000000"
+    );
 
     // Print the NFT's token URI
     console.log("Token URI: ", await genesisNFT.tokenURI(1));

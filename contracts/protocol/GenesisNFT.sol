@@ -66,6 +66,11 @@ contract GenesisNFT is
         _;
     }
 
+    modifier tokenExists(uint256 tokenId) {
+        _requireTokenExists(tokenId);
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -114,10 +119,18 @@ contract GenesisNFT is
         _tokenIdCounter.increment();
     }
 
+    /// @notice Sets an approved address as a loan operator for the caller
+    /// @dev This approval allows for the user of the genesis NFT by the loan operator in a loan
+    /// @param operator Address to set approval for
+    /// @param approved True if the operator is approved, false to revoke approval
     function setLoanOperatorApproval(address operator, bool approved) external {
         _loanOperatorApprovals[_msgSender()][operator] = approved;
     }
 
+    /// @notice Checks if an address is approved as a loan operator for an owner
+    /// @param owner Address of the owner
+    /// @param operator Address of the operator
+    /// @return True if the operator is approved, false otherwise
     function isLoanOperatorApproved(
         address owner,
         address operator
@@ -127,10 +140,16 @@ contract GenesisNFT is
 
     /// @notice Returns the URI for a given token ID
     /// @param tokenId ID of the token
-    /// @return The URI
+    /// @return The token's URI
     function tokenURI(
         uint256 tokenId
-    ) public view override(ERC721Upgradeable) returns (string memory) {
+    )
+        public
+        view
+        override(ERC721Upgradeable)
+        tokenExists(tokenId)
+        returns (string memory)
+    {
         require(_exists(tokenId), "G:TU:INVALID_TOKEN_ID");
         return
             string(
@@ -173,7 +192,9 @@ contract GenesisNFT is
             );
     }
 
-    function svg(uint256 tokenId) public view returns (bytes memory _svg) {
+    function svg(
+        uint256 tokenId
+    ) public view tokenExists(tokenId) returns (bytes memory _svg) {
         require(_exists(tokenId), "G:S:INVALID_TOKEN_ID");
         {
             _svg = abi.encodePacked(
@@ -248,7 +269,7 @@ contract GenesisNFT is
     /// @return The active state
     function getLockedState(
         uint256 tokenId
-    ) external view override returns (bool) {
+    ) external view override tokenExists(tokenId) returns (bool) {
         return _locked[tokenId];
     }
 
@@ -258,7 +279,7 @@ contract GenesisNFT is
     function setLockedState(
         uint256 tokenId,
         bool newState
-    ) external override onlyMarket {
+    ) external override tokenExists(tokenId) onlyMarket {
         _locked[tokenId] = newState;
     }
 
@@ -266,16 +287,13 @@ contract GenesisNFT is
     /// @param amount Amount of tokens to be minted
     /// @param locktime Lock time for lock in seconds
     /// @return The native token reward
-    function getNativeTokenReward(
+    function getCurrentLEReward(
         uint256 amount,
         uint256 locktime
     ) public view returns (uint256) {
+        require(_tokenIdCounter.current() <= _cap, "G:GNTR:MINT_OVER");
         require(locktime >= _minLocktime, "G:GNTR:LOCKTIME_TOO_LOW");
         require(locktime <= _maxLocktime, "G:GNTR:LOCKTIME_TOO_HIGH");
-
-        if (_tokenIdCounter.current() > _cap) {
-            return 0;
-        }
 
         return
             ((amount * locktime * (_cap - (_tokenIdCounter.current() / 2))) /
@@ -297,7 +315,7 @@ contract GenesisNFT is
     }
 
     /// @notice Mint new Genesis NFTs with locked LE tokens and LP tokens
-    /// @param locktime The locktime for the minted tokens
+    /// @param locktime The time for which the tokens yielded by the genesis NFT are locked for
     /// @param amount The amount of tokens to mint
     function mint(
         uint256 locktime,
@@ -333,7 +351,7 @@ contract GenesisNFT is
         uint256 leAmount = LP_LE_AMOUNT * amount;
 
         // Mint LE tokens
-        uint256 totalRewards = getNativeTokenReward(amount, locktime);
+        uint256 totalRewards = getCurrentLEReward(amount, locktime);
         INativeToken(nativeToken).mintGenesisTokens(leAmount + totalRewards);
 
         // Mint WETH tokens
@@ -444,7 +462,9 @@ contract GenesisNFT is
     /// @notice Get the unlock timestamp for a specific Genesis NFT
     /// @param tokenId The ID of the Genesis NFT to check
     /// @return The unlock timestamp for the specified token
-    function getUnlockTimestamp(uint256 tokenId) public view returns (uint256) {
+    function getUnlockTimestamp(
+        uint256 tokenId
+    ) public view tokenExists(tokenId) returns (uint256) {
         return _mintDetails[tokenId].timestamp + _mintDetails[tokenId].locktime;
     }
 
@@ -527,6 +547,8 @@ contract GenesisNFT is
         uint256 lpAmountSum;
         IVault vault = IVault(_balancerDetails.vault);
         for (uint256 i = 0; i < tokenIds.length; i++) {
+            // Make sure the token exists
+            require(_exists(tokenIds[i]), "G:GLPVLE:NOT_FOUND");
             // Add the LP amount to the sum
             lpAmountSum += _mintDetails[tokenIds[i]].lpAmount;
         }
@@ -606,6 +628,10 @@ contract GenesisNFT is
             _msgSender() == _addressProvider.getLendingMarket(),
             "G:NOT_MARKET"
         );
+    }
+
+    function _requireTokenExists(uint256 tokenId) internal view {
+        require(_exists(tokenId), "G:TOKEN_NOT_FOUND");
     }
 
     // Function to receive Ether

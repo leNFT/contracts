@@ -6,27 +6,7 @@ const load = require("../helpers/_loadTest.js");
 const { getPriceSig, priceSigner } = require("../helpers/getPriceSig.js");
 const { parse } = require("dotenv");
 const { Liquidity } = require("@balancer-labs/sdk");
-const parseSVG = require("svg-parser").parse;
-
-const isValidJSON = (str) => {
-  try {
-    JSON.parse(str);
-    return true;
-  } catch (e) {
-    console.log(e);
-    return false;
-  }
-};
-
-const isValidSVG = (str) => {
-  try {
-    parseSVG(str);
-    return true;
-  } catch (e) {
-    console.error(e);
-    return false;
-  }
-};
+const { isValidJSON, isValidSVG } = require("../helpers/validateFormats.js");
 
 describe("LiquidityPairMetadata", function () {
   load.loadTestAlways(false);
