@@ -60,7 +60,7 @@ contract Bribes is
         _addressProvider = addressProvider;
     }
 
-    /// @notice Deposits a bribe for a specific gauge
+    /// @notice Deposits a bribe for a specific gauge for the next epoch
     /// @param briber The account hat will own the bribe
     /// @param token The token to bribe with
     /// @param gauge The gauge to bribe
@@ -117,9 +117,9 @@ contract Bribes is
         IERC20Upgradeable(token).safeTransfer(receiver, amount);
     }
 
-    /// @notice Get bribes back if no user voted for the gauge
+    /// @notice Get deposited bribes back if no user voted for the gauge
     /// @dev Only works after the next epoch has started
-    /// @dev Anyone can do this for any user
+    /// @dev Anyone can do this
     /// @param token The token to salvage the bribe from
     /// @param gauge The gauge to salvage the bribe from
     /// @param epoch The epoch to salvage the bribe from

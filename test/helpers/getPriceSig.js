@@ -13,7 +13,7 @@ function getPriceSig(
 ) {
   const requestID =
     "0x0000000000000000000000000000000000000000000000000000000000000000";
-  const expireInSec = 5 * 60;
+  const expireInSec = 5 * 60; // 5 minutes expiration time
 
   const payload = abi.encodeParameter(
     {

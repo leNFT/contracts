@@ -15,7 +15,6 @@ import {Trustus} from "./Trustus/Trustus.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import "hardhat/console.sol";
 
 /// @title WETHGateway Contract
 /// @author leNFT
@@ -120,8 +119,9 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
     /// @notice Repay an an active loan with ETH
     /// @param loanId The ID of the loan to be paid
     function repay(uint256 loanId) external payable nonReentrant {
-        address pool = ILoanCenter(_addressProvider.getLoanCenter())
-            .getLoanLendingPool(loanId);
+        ILoanCenter loanCenter = ILoanCenter(_addressProvider.getLoanCenter());
+        address pool = loanCenter.getLoanLendingPool(loanId);
+
         ILendingMarket market = ILendingMarket(
             _addressProvider.getLendingMarket()
         );
@@ -131,9 +131,17 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
             "ETHG:R:UNDERLYING_NOT_WETH"
         );
 
+        // If we are repaying an auctioned loan we also need to pay the auctineer fee
+        uint256 auctioneerFee;
+        if (loanCenter.getLoanState(loanId) == DataTypes.LoanState.Auctioned) {
+            auctioneerFee = loanCenter.getAuctioneerFee(loanId);
+            require(auctioneerFee < msg.value, "ETHG:R:NO_AUCTIONEER_FEE");
+            _weth.approve(address(market), auctioneerFee);
+        }
+
         // Deposit and approve WETH
         _weth.deposit{value: msg.value}();
-        _weth.approve(pool, msg.value);
+        _weth.approve(pool, msg.value - auctioneerFee);
 
         // Repay loan
         market.repay(loanId, msg.value);

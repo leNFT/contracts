@@ -90,7 +90,7 @@ let loadEnv = async function (isMainnetFork) {
       "25000000000000000000", // TVLSafeguard
       {
         maxLiquidatorDiscount: "2000", // maxLiquidatorDiscount
-        auctionerFee: "50", // defaultAuctionerFee
+        auctioneerFee: "50", // defaultauctioneerFee
         liquidationFee: "200", // defaultProtocolLiquidationFee
         maxUtilizationRate: "8500", // defaultmaxUtilizationRate
       },

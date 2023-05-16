@@ -511,9 +511,14 @@ describe("WETHGateway", () => {
     const balanceBefore = await ethers.provider.getBalance(owner.address);
 
     // Buy the tokens
-    const buyTx = await wethGateway.buy(owner.address, [0], "105000000000000", {
-      value: "105000000000000",
-    });
+    const buyTx = await wethGateway.buy(
+      tradingPool.address,
+      [0],
+      "105000000000000",
+      {
+        value: "105000000000000",
+      }
+    );
 
     // Get transaction details
     const buyTxDetails = await ethers.provider.getTransaction(buyTx.hash);

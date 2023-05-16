@@ -13,7 +13,6 @@ import {IGauge} from "../../interfaces/IGauge.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "hardhat/console.sol";
 
 /// @title LendingGauge contract
 /// @notice Liquidity Gauge contract. Distributes incentives to users who have deposited into the LendingPool.
@@ -251,14 +250,8 @@ contract LendingGauge is IGauge, ERC165 {
         writeTotalWeightHistory();
 
         if (totalVotingSupply == 0) {
-            console.log("totalVotingSupply is 0");
             newWeight = _balanceOf[user];
         } else {
-            console.log("totalVotingSupply is not 0");
-            console.log("userVotingBalance: %s", userVotingBalance);
-            console.log("totalVotingSupply: %s", totalVotingSupply);
-            console.log("totalSupply(): %s", totalSupply());
-            console.log("userBalance: %s", _balanceOf[user]);
             newWeight = Math.min(
                 _balanceOf[user],
                 (PercentageMath.HALF_PERCENTAGE_FACTOR *
@@ -268,8 +261,6 @@ contract LendingGauge is IGauge, ERC165 {
                         totalSupply()) /
                     totalVotingSupply) / PercentageMath.PERCENTAGE_FACTOR
             );
-
-            console.log("newWeight: %s", newWeight);
         }
 
         DataTypes.WorkingBalance memory oldWorkingBalance;
@@ -300,13 +291,7 @@ contract LendingGauge is IGauge, ERC165 {
         if (_balanceOf[user] == 0) {
             return 0;
         }
-        console.log(
-            "_workingBalanceHistory[user][_workingBalanceHistory[user].length - 1].weight: %s",
-            _workingBalanceHistory[user][
-                _workingBalanceHistory[user].length - 1
-            ].weight
-        );
-        console.log("_balanceOf[user]: %s", _balanceOf[user]);
+
         return
             (2 *
                 _workingBalanceHistory[user][
@@ -346,7 +331,6 @@ contract LendingGauge is IGauge, ERC165 {
             .end;
 
         if (lockEnd < block.timestamp) {
-            console.log("Kicking");
             _checkpoint(IERC721(votingEscrowAddress).ownerOf(tokenId));
         }
     }

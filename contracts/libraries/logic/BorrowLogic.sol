@@ -12,7 +12,6 @@ import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "hardhat/console.sol";
 
 /// @title BorrowLogic
 /// @notice Contains the logic for the borrow and repay functions
@@ -44,17 +43,17 @@ library BorrowLogic {
             );
         }
 
+        // If a genesis NFT was used with this loan we need to lock it
+        if (params.genesisNFTId != 0) {
+            // Lock genesis NFT to this loan
+            IGenesisNFT(addressesProvider.getGenesisNFT()).setLockedState(
+                params.genesisNFTId,
+                true
+            );
+        }
+
         // Get the borrow rate index
         uint256 borrowRate = ILendingPool(lendingPool).getBorrowRate();
-
-        // If a genesis NFT was used with this loan
-        if (params.genesisNFTId != 0) {
-            IGenesisNFT genesisNFT = IGenesisNFT(
-                addressesProvider.getGenesisNFT()
-            );
-            // Lock genesis NFT to this loan
-            genesisNFT.setLockedState(params.genesisNFTId, true);
-        }
 
         // Create the loan
         loanId = loanCenter.createLoan(
@@ -67,7 +66,7 @@ library BorrowLogic {
             borrowRate
         );
 
-        //Activate Loan
+        // Activate the loan
         loanCenter.activateLoan(loanId);
 
         // Send the principal to the borrower
@@ -102,30 +101,18 @@ library BorrowLogic {
                     memory liquidationData = loanCenter.getLoanLiquidationData(
                         params.loanId
                     );
-                // Return the bid to the liquidator
-                console.log("auctioner bid: %s", liquidationData.auctionMaxBid);
-                console.log(
-                    "balance: %s",
-                    IERC20Upgradeable(IERC4626(loanData.pool).asset())
-                        .balanceOf(address(this))
-                );
-                // Get the fee from the user
-                console.log(
-                    "auctioner fee: %s",
-                    (liquidationData.auctionMaxBid *
-                        ILendingPool(loanData.pool)
-                            .getPoolConfig()
-                            .auctionerFee) / PercentageMath.PERCENTAGE_FACTOR
-                );
+
+                // Give max bid back to liquidator
+                IERC20Upgradeable(IERC4626(loanData.pool).asset()).safeTransfer(
+                        liquidationData.liquidator,
+                        liquidationData.auctionMaxBid
+                    );
+                // Get the fee from the user and give it to the auctioneer
                 IERC20Upgradeable(IERC4626(loanData.pool).asset())
                     .safeTransferFrom(
                         params.caller,
-                        liquidationData.auctioner,
-                        (liquidationData.auctionMaxBid *
-                            ILendingPool(loanData.pool)
-                                .getPoolConfig()
-                                .auctionerFee) /
-                            PercentageMath.PERCENTAGE_FACTOR
+                        liquidationData.auctioneer,
+                        loanCenter.getAuctioneerFee(params.loanId)
                     );
             }
 

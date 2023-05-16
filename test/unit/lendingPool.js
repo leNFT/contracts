@@ -24,7 +24,7 @@ describe("LendingPool", function () {
         "LPT",
         {
           maxLiquidatorDiscount: "2000", // maxLiquidatorDiscount
-          auctionerFee: "50", // defaultAuctionerFee
+          auctioneerFee: "50", // defaultauctioneerFee
           liquidationFee: "200", // defaultProtocolLiquidationFee
           maxUtilizationRate: "8500", // defaultmaxUtilizationRate
         }
@@ -150,7 +150,7 @@ describe("LendingPool", function () {
     // Define the new pool configuration
     const newPoolConfig = {
       maxLiquidatorDiscount: "300",
-      auctionerFee: "50",
+      auctioneerFee: "50",
       liquidationFee: "350",
       maxUtilizationRate: "8500",
     };
@@ -164,7 +164,9 @@ describe("LendingPool", function () {
     expect(updatedPoolConfig.maxLiquidatorDiscount).to.equal(
       newPoolConfig.maxLiquidatorDiscount
     );
-    expect(updatedPoolConfig.auctionerFee).to.equal(newPoolConfig.auctionerFee);
+    expect(updatedPoolConfig.auctioneerFee).to.equal(
+      newPoolConfig.auctioneerFee
+    );
     expect(updatedPoolConfig.liquidationFee).to.equal(
       newPoolConfig.liquidationFee
     );

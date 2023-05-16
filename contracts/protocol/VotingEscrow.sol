@@ -19,7 +19,6 @@ import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC72
 import {ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import {PercentageMath} from "../libraries/utils/PercentageMath.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "hardhat/console.sol";
 
 /// @title VotingEscrow
 /// @notice Provides functionality for locking LE tokens for a specified period of time and is the center of the epoch logic
@@ -444,10 +443,6 @@ contract VotingEscrow is
 
         // Setup the next claimable rebate epoch
         _nextClaimableEpoch[tokenId] = getEpoch(block.timestamp) + 1;
-        console.log(
-            "create: next claimable epoch: %s",
-            _nextClaimableEpoch[tokenId]
-        );
 
         // Save oldLocked and update the locked balance
         DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
@@ -603,7 +598,6 @@ contract VotingEscrow is
         // Claim a maximum of 50 epochs at a time
         for (uint i = 0; i < 50; i++) {
             nextClaimableEpoch = _nextClaimableEpoch[tokenId];
-            console.log("nextClaimableEpoch: %s", nextClaimableEpoch);
             if (
                 nextClaimableEpoch >= currentEpoch ||
                 getEpochTimestamp(nextClaimableEpoch) >
@@ -613,27 +607,12 @@ contract VotingEscrow is
             }
 
             if (_totalSupplyHistory[nextClaimableEpoch] > 0) {
-                console.log(
-                    "totalSupplyHistory: %s",
-                    _totalSupplyHistory[nextClaimableEpoch]
-                );
-                console.log(
-                    "totalLockedHistory: %s",
-                    _totalLockedHistory[nextClaimableEpoch]
-                );
-                console.log(
-                    "epochRewards: %s",
-                    IGaugeController(_addressProvider.getGaugeController())
-                        .getEpochRewards(nextClaimableEpoch)
-                );
                 // Get the full amount of rebates to claim for the epoch as if everyone was locked at max locktime
                 maxEpochRebates =
                     (_totalLockedHistory[nextClaimableEpoch] *
                         IGaugeController(_addressProvider.getGaugeController())
                             .getEpochRewards(nextClaimableEpoch)) /
                     _totalSupplyHistory[nextClaimableEpoch];
-
-                console.log("maxEpochRebates: %s", maxEpochRebates);
 
                 // Get the rebate share for this specific lock
                 // It will depend on the size and duration of the lock

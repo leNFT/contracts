@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
+import {ConfigTypes} from "../../libraries/types/ConfigTypes.sol";
 import {LoanLogic} from "../../libraries/logic/LoanLogic.sol";
 import {ERC721HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -12,6 +13,7 @@ import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 import {SafeCast} from "../../libraries/utils/SafeCast.sol";
+import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 
 /// @title LoanCenter contract
 /// @dev A smart contract managing loans with NFTs as collateral
@@ -52,6 +54,11 @@ contract LoanCenter is
 
     modifier loanExists(uint256 loanId) {
         _requireLoanExists(loanId);
+        _;
+    }
+
+    modifier loanAuctioned(uint256 loanId) {
+        _requireLoanAuctioned(loanId);
         _;
     }
 
@@ -197,7 +204,7 @@ contract LoanCenter is
 
         // Create the liquidation data
         _loansLiquidationData[loanId] = DataTypes.LoanLiquidationData({
-            auctioner: user,
+            auctioneer: user,
             liquidator: user,
             auctionStartTimestamp: SafeCast.toUint40(block.timestamp),
             auctionMaxBid: bid
@@ -258,6 +265,7 @@ contract LoanCenter is
         view
         override
         loanExists(loanId)
+        loanAuctioned(loanId)
         returns (DataTypes.LoanLiquidationData memory)
     {
         return _loansLiquidationData[loanId];
@@ -347,8 +355,21 @@ contract LoanCenter is
     /// @return The state of the loan
     function getLoanState(
         uint256 loanId
-    ) external view returns (DataTypes.LoanState) {
+    ) external view override returns (DataTypes.LoanState) {
         return _loans[loanId].state;
+    }
+
+    /// @notice Get auctioner fee for a repayment of an auctioned loan
+    /// @param loanId The ID of the loan
+    /// @return The auctioner fee
+    function getAuctioneerFee(
+        uint256 loanId
+    ) external view loanExists(loanId) loanAuctioned(loanId) returns (uint256) {
+        return
+            (getLoanDebt(loanId) *
+                ILendingPool(_loans[loanId].pool)
+                    .getPoolConfig()
+                    .auctioneerFee) / PercentageMath.PERCENTAGE_FACTOR;
     }
 
     /// @notice Get the owner of a loan
@@ -442,6 +463,13 @@ contract LoanCenter is
         require(
             _loans[loanId].state != DataTypes.LoanState.None,
             "LC:UNEXISTENT_LOAN"
+        );
+    }
+
+    function _requireLoanAuctioned(uint256 loanId) internal view {
+        require(
+            _loans[loanId].state == DataTypes.LoanState.Auctioned,
+            "LC:NOT_AUCTIONED"
         );
     }
 }

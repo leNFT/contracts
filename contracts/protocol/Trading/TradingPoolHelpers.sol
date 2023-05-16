@@ -8,7 +8,6 @@ import {IPricingCurve} from "../../interfaces/IPricingCurve.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
-import "hardhat/console.sol";
 
 contract TradingPoolHelpers {
     // Address provider state variable

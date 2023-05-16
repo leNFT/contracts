@@ -11,7 +11,6 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "hardhat/console.sol";
 
 /// @title FeeDistributor
 /// @notice This contract distributes fees from the protocol to LE stakers, using the VotingEscrow interface to check the user's staked amount
@@ -57,6 +56,13 @@ contract FeeDistributor is
         address token,
         uint256 epoch
     ) external view returns (uint256) {
+        require(
+            epoch <=
+                IVotingEscrow(_addressProvider.getVotingEscrow()).getEpoch(
+                    block.timestamp
+                ),
+            "FD:GTFA:FUTURE_EPOCH"
+        );
         return _epochFees[token][epoch];
     }
 
@@ -64,13 +70,13 @@ contract FeeDistributor is
     /// @param token Token address
     function checkpoint(address token) external override {
         // Find epoch we're in
-        uint256 epoch = IVotingEscrow(_addressProvider.getVotingEscrow())
+        uint256 currentEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
             .getEpoch(block.timestamp);
         // Find the current balance of the token in question
         uint256 balance = IERC20Upgradeable(token).balanceOf(address(this));
 
         // Add unaccounted fees to current epoch
-        _epochFees[token][epoch] += balance - _accountedFees[token];
+        _epochFees[token][currentEpoch] += balance - _accountedFees[token];
 
         // Update total fees accounted for
         _accountedFees[token] = balance;
@@ -83,31 +89,21 @@ contract FeeDistributor is
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         );
+        uint256 currentEpoch = votingEscrow.getEpoch(block.timestamp);
+        // Must be a past epoch
+        require(epoch < currentEpoch, "FD:SV:NOT_PAST_EPOCH");
         // Funds are only salvageable if the vote weight of the epoch in question is 0
         require(
             votingEscrow.getTotalWeightAt(epoch) == 0,
-            "FD:SV:FUNDS_CLAIMABLE"
+            "FD:SV:CLAIMABLE_FUNDS"
         );
         // There needs to be funds to salvage
         require(_epochFees[token][epoch] > 0, "FD:SV:NO_FUNDS");
 
         // Transfer rewards to current epoch
-        _epochFees[token][votingEscrow.getEpoch(block.timestamp)] += _epochFees[
-            token
-        ][epoch];
+        _epochFees[token][currentEpoch] += _epochFees[token][epoch];
 
         delete _epochFees[token][epoch];
-    }
-
-    /// @notice Returns the next claimable epoch for a user
-    /// @param token Token address to claim for
-    /// @param tokenId the token id of the lock
-    /// @return uint256 Next claimable epoch
-    function getLockNextClaimableEpoch(
-        address token,
-        uint256 tokenId
-    ) external view returns (uint256) {
-        return _lockNextClaimableEpoch[token][tokenId];
     }
 
     /// @notice Allows a user to claim their rewards from a lock for a specific token
@@ -120,6 +116,13 @@ contract FeeDistributor is
     ) public nonReentrant returns (uint256 amountToClaim) {
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
+        );
+
+        // Make sure the lock exists
+        require(
+            IERC721Upgradeable(address(votingEscrow)).ownerOf(tokenId) !=
+                address(0),
+            "FD:C:LOCK_NOT_FOUND"
         );
 
         // Check if user has any user actions and therefore possibly something to claim
@@ -232,8 +235,6 @@ contract FeeDistributor is
             }
         }
 
-        console.log("amountToClaim: %s", amountToClaim);
-
         if (amountToClaim > 0) {
             IERC20Upgradeable(token).safeTransfer(
                 IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
@@ -253,7 +254,6 @@ contract FeeDistributor is
         uint256[] calldata tokensIds
     ) external returns (uint256 amountToClaim) {
         for (uint256 i = 0; i < tokensIds.length; i++) {
-            console.log("tokensIds[i]: %s", tokensIds[i]);
             amountToClaim += claim(token, tokensIds[i]);
         }
     }

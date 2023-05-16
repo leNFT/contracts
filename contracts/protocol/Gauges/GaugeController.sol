@@ -58,6 +58,11 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         _;
     }
 
+    modifier lockExists(uint256 lockId) {
+        _requireLockExists(lockId);
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -200,7 +205,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @return The current used vote power.
     function getLockVoteRatio(
         uint256 tokenId
-    ) external view override returns (uint256) {
+    ) external view override lockExists(tokenId) returns (uint256) {
         return _lockVoteRatio[tokenId];
     }
 
@@ -211,14 +216,20 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function getLockVoteRatioForGauge(
         uint256 tokenId,
         address gauge
-    ) external view validGauge(gauge) returns (uint256) {
+    ) external view validGauge(gauge) lockExists(tokenId) returns (uint256) {
         return _lockGaugeVoteRatio[tokenId][gauge];
     }
 
     function getLockVotePointForGauge(
         uint256 tokenId,
         address gauge
-    ) external view validGauge(gauge) returns (DataTypes.Point memory) {
+    )
+        external
+        view
+        validGauge(gauge)
+        lockExists(tokenId)
+        returns (DataTypes.Point memory)
+    {
         return _lockGaugeVotePoint[tokenId][gauge];
     }
 
@@ -229,7 +240,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function getLockVoteWeightForGauge(
         uint256 tokenId,
         address gauge
-    ) external view validGauge(gauge) returns (uint256) {
+    ) external view validGauge(gauge) lockExists(tokenId) returns (uint256) {
         if (
             _lockGaugeVotePoint[tokenId][gauge].slope *
                 (block.timestamp -
@@ -331,19 +342,25 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @param tokenId The tokenId of the lock.
     /// @param gauge The address of the gauge to vote for
     /// @param ratio The ratio of the vote power to use
-    function vote(uint256 tokenId, address gauge, uint256 ratio) external {
+    function vote(
+        uint256 tokenId,
+        address gauge,
+        uint256 ratio
+    ) external lockExists(tokenId) validGauge(gauge) {
         //Must be the owner of the lock to use it to vote
-        address votingEscrowAddress = _addressProvider.getVotingEscrow();
+        IVotingEscrow votingEscrow = IVotingEscrow(
+            _addressProvider.getVotingEscrow()
+        );
         require(
-            IERC721Upgradeable(votingEscrowAddress).ownerOf(tokenId) ==
+            IERC721Upgradeable(address(votingEscrow)).ownerOf(tokenId) ==
                 msg.sender,
             "GC:V:NOT_LOCK_OWNER"
         );
 
         // Get user locked balance
-        DataTypes.LockedBalance memory lockedBalance = IVotingEscrow(
-            votingEscrowAddress
-        ).getLock(tokenId);
+        DataTypes.LockedBalance memory lockedBalance = votingEscrow.getLock(
+            tokenId
+        );
 
         require(
             ratio +
@@ -368,14 +385,10 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         writeGaugeWeightHistory(gauge);
 
         // Get lock last action
-        DataTypes.Point memory lockLastPoint = IVotingEscrow(
-            votingEscrowAddress
-        ).getLockHistoryPoint(
-                tokenId,
-                IVotingEscrow(votingEscrowAddress).getLockHistoryLength(
-                    tokenId
-                ) - 1
-            );
+        DataTypes.Point memory lockLastPoint = votingEscrow.getLockHistoryPoint(
+            tokenId,
+            votingEscrow.getLockHistoryLength(tokenId) - 1
+        );
         DataTypes.Point memory oldGaugeVoteWeight;
         DataTypes.Point memory newGaugeVoteWeight;
 
@@ -494,7 +507,12 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function getGaugeRewards(
         address gauge,
         uint256 epoch
-    ) external validGauge(gauge) returns (uint256 rewards) {
+    )
+        external
+        validGauge(gauge)
+        noFutureEpoch(epoch)
+        returns (uint256 rewards)
+    {
         // If there are no votes in any gauge, return 0
         if (getTotalWeightAt(epoch) == 0) {
             return 0;
@@ -520,6 +538,15 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
 
     function _requireValidGauge(address gauge) internal view {
         require(_isGauge[gauge], "GC:INVALID_GAUGE");
+    }
+
+    function _requireLockExists(uint256 tokenId) internal view {
+        require(
+            IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
+                tokenId
+            ) != address(0),
+            "GC:LOCK_NOT_FOUND"
+        );
     }
 
     function _requireNoFutureEpoch(uint256 epoch) internal view {

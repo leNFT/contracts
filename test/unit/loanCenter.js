@@ -288,18 +288,10 @@ describe("LoanCenter", function () {
     );
     await borrowTx.wait();
 
-    // Get the loan liquidation data
-    const loanLiquidationData = await loanCenter.getLoanLiquidationData(0);
-
-    // The loan liquidation data should have the correct values (none since the loan is in auction)
-    expect(loanLiquidationData.auctioner).to.equal(
-      ethers.constants.AddressZero
+    // Get the loan liquidation data, should throw an error since the loan hasn't been auctioned yet
+    await expect(loanCenter.getLoanLiquidationData(0)).to.be.revertedWith(
+      "LC:NOT_AUCTIONED"
     );
-    expect(loanLiquidationData.liquidator).to.equal(
-      ethers.constants.AddressZero
-    );
-    expect(loanLiquidationData.auctionStartTimestamp).to.equal(0);
-    expect(loanLiquidationData.auctionMaxBid).to.equal(0);
 
     // Get a new price signature for the NFT that allows liquidation
     const priceSig2 = getPriceSig(
@@ -338,7 +330,7 @@ describe("LoanCenter", function () {
 
     // Get the loan liquidation data
     const loanLiquidationData2 = await loanCenter.getLoanLiquidationData(0);
-    expect(loanLiquidationData2.auctioner).to.equal(owner.address);
+    expect(loanLiquidationData2.auctioneer).to.equal(owner.address);
     expect(loanLiquidationData2.liquidator).to.equal(owner.address);
     expect(loanLiquidationData2.auctionStartTimestamp).to.be.equal(evmTime);
     expect(loanLiquidationData2.auctionMaxBid).to.equal(

@@ -107,7 +107,7 @@ library DataTypes {
 
     struct LoanLiquidationData {
         // address of the user who first auctioned the loan
-        address auctioner;
+        address auctioneer;
         // address of the liquidator withe highest bid
         address liquidator;
         // timestamp of the liquidation auction start

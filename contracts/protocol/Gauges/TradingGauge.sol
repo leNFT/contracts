@@ -17,7 +17,6 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "hardhat/console.sol";
 
 /// @title Trading Gauge Contract
 /// @notice A contract for managing the distribution of rewards to Trading LPs
@@ -244,11 +243,6 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
 
         writeTotalWeightHistory();
 
-        console.log("userVotingBalance", userVotingBalance);
-        console.log("totalVotingSupply", totalVotingSupply);
-        console.log("userLPValue", _userLPValue[user]);
-        console.log("totalLPValue", _totalLPValue);
-
         if (totalVotingSupply == 0) {
             newWeight = _userLPValue[user];
         } else {
@@ -262,8 +256,6 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
                     totalVotingSupply) / PercentageMath.PERCENTAGE_FACTOR
             );
         }
-
-        console.log("newWeight", newWeight);
 
         DataTypes.WorkingBalance memory oldWorkingBalance;
         if (_workingBalanceHistory[user].length > 0) {

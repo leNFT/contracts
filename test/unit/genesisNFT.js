@@ -117,50 +117,50 @@ describe("GenesisNFT", () => {
     await depositPoolTx.wait();
   });
 
-  // it("Should mint a Genesis NFT", async function () {
-  //   const locktime = 60 * 60 * 24 * 120; // 120 days
-  //   const nativeTokenReward = await genesisNFT.getCurrentLEReward(1, locktime);
+  it("Should mint a Genesis NFT", async function () {
+    const locktime = 60 * 60 * 24 * 120; // 120 days
+    const nativeTokenReward = await genesisNFT.getCurrentLEReward(1, locktime);
 
-  //   // Save dev balance before
-  //   const devBalanceBefore = await ethers.provider.getBalance(address1.address);
+    // Save dev balance before
+    const devBalanceBefore = await ethers.provider.getBalance(address1.address);
 
-  //   // Mint Genesis NFT
-  //   const mintGenesisNFTTx = await genesisNFT.mint(locktime, 1, {
-  //     value: await genesisNFT.getPrice(), // 0.35 ETH
-  //   });
-  //   await mintGenesisNFTTx.wait();
+    // Mint Genesis NFT
+    const mintGenesisNFTTx = await genesisNFT.mint(locktime, 1, {
+      value: await genesisNFT.getPrice(), // 0.35 ETH
+    });
+    await mintGenesisNFTTx.wait();
 
-  //   // Check if dev received the ETH minus the gas cost
-  //   expect(await ethers.provider.getBalance(address1.address)).to.equal(
-  //     BigNumber.from(ethers.utils.parseEther("0.15")).add(devBalanceBefore)
-  //   );
+    // Check if dev received the ETH minus the gas cost
+    expect(await ethers.provider.getBalance(address1.address)).to.equal(
+      BigNumber.from(ethers.utils.parseEther("0.15")).add(devBalanceBefore)
+    );
 
-  //   // Save the timestamp of the mint
-  //   const mintTimestamp = await time.latest();
+    // Save the timestamp of the mint
+    const mintTimestamp = await time.latest();
 
-  //   // Find if the NFT was minted
-  //   expect(await genesisNFT.ownerOf(1)).to.equal(owner.address);
+    // Find if the NFT was minted
+    expect(await genesisNFT.ownerOf(1)).to.equal(owner.address);
 
-  //   // Should get the locked state of the NFT
-  //   expect(await genesisNFT.getLockedState(1)).to.equal(false);
+    // Should get the locked state of the NFT
+    expect(await genesisNFT.getLockedState(1)).to.equal(false);
 
-  //   // SHould get the right unlock timestamp
-  //   expect(await genesisNFT.getUnlockTimestamp(1)).to.equal(
-  //     BigNumber.from(mintTimestamp).add(locktime)
-  //   );
+    // SHould get the right unlock timestamp
+    expect(await genesisNFT.getUnlockTimestamp(1)).to.equal(
+      BigNumber.from(mintTimestamp).add(locktime)
+    );
 
-  //   // THe valur of the LP associated with the NFT should be higher than 0
-  //   expect(await genesisNFT.callStatic.getLPValueInLE([1])).to.be.gt(0);
+    // THe valur of the LP associated with the NFT should be higher than 0
+    expect(await genesisNFT.callStatic.getLPValueInLE([1])).to.be.gt(0);
 
-  //   // The mint count should be 1
-  //   expect(await genesisNFT.mintCount()).to.equal(1);
+    // The mint count should be 1
+    expect(await genesisNFT.mintCount()).to.equal(1);
 
-  //   // Find if the user received has a an LE lock
-  //   expect(await votingEscrow.balanceOf(owner.address)).to.equal(1);
+    // Find if the user received has a an LE lock
+    expect(await votingEscrow.balanceOf(owner.address)).to.equal(1);
 
-  //   // Find if the received lock is for the right amount of LE
-  //   expect((await votingEscrow.getLock(0)).amount).to.equal(nativeTokenReward);
-  // });
+    // Find if the received lock is for the right amount of LE
+    expect((await votingEscrow.getLock(0)).amount).to.equal(nativeTokenReward);
+  });
   it("Should burn a Genesis NFT", async function () {
     const locktime = 60 * 60 * 24 * 120; // 120 days
     // Mint 2 Genesis NFT so the pool has enough liquidity to exit

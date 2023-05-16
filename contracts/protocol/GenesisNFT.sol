@@ -71,6 +71,11 @@ contract GenesisNFT is
         _;
     }
 
+    modifier validPool() {
+        _requireValidPool();
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -120,7 +125,7 @@ contract GenesisNFT is
     }
 
     /// @notice Sets an approved address as a loan operator for the caller
-    /// @dev This approval allows for the user of the genesis NFT by the loan operator in a loan
+    /// @dev This approval allows for the use of the genesis NFT by the loan operator in a loan
     /// @param operator Address to set approval for
     /// @param approved True if the operator is approved, false to revoke approval
     function setLoanOperatorApproval(address operator, bool approved) external {
@@ -320,19 +325,12 @@ contract GenesisNFT is
     function mint(
         uint256 locktime,
         uint256 amount
-    ) external payable nonReentrant {
+    ) external payable nonReentrant validPool {
         // Make sure amount is bigger than 0
         require(amount > 0, "G:M:AMOUNT_0");
         // Make sure locktimes are within limits
         require(locktime >= _minLocktime, "G:M:LOCKTIME_TOO_LOW");
         require(locktime <= _maxLocktime, "G:M:LOCKTIME_TOO_HIGH");
-
-        // Make sure the genesis incentived pool is set
-        require(
-            _balancerDetails.poolId != bytes32(0) &&
-                _balancerDetails.pool != address(0),
-            "G:M:BALANCER_NOT_SET"
-        );
 
         // Make sure there are enough tokens to mint
         require(
@@ -470,7 +468,7 @@ contract GenesisNFT is
 
     /// @notice Burn Genesis NFTs and unlock LP tokens and LE tokens
     /// @param tokenIds The IDs of the Genesis NFTs to burn
-    function burn(uint256[] calldata tokenIds) external nonReentrant {
+    function burn(uint256[] calldata tokenIds) external validPool nonReentrant {
         // Make sure we are burning at least one token
         require(tokenIds.length > 0, "G:B:0_TOKENS");
         uint256 lpAmountSum;
@@ -491,12 +489,13 @@ contract GenesisNFT is
             emit Burn(tokenIds[i]);
         }
         // Get the native token address to save on gas
-        address nativeToken = _addressProvider.getNativeToken();
+        address nativeTokenAddress = _addressProvider.getNativeToken();
 
         // Withdraw LP tokens from the pool
         (IERC20[] memory tokens, , ) = IVault(_balancerDetails.vault)
             .getPoolTokens(_balancerDetails.poolId);
-        uint256 oldLEBalance = IERC20Upgradeable(nativeToken).balanceOf(
+
+        uint256 oldLEBalance = IERC20Upgradeable(nativeTokenAddress).balanceOf(
             address(this)
         );
 
@@ -514,19 +513,18 @@ contract GenesisNFT is
                         .ExitKind
                         .EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
                     lpAmountSum,
-                    _findTokenIndex(tokens, IERC20(nativeToken))
+                    _findTokenIndex(tokens, IERC20(nativeTokenAddress))
                 ),
                 toInternalBalance: false
             })
         );
 
-        uint256 withdrawAmount = IERC20Upgradeable(nativeToken).balanceOf(
-            address(this)
-        ) - oldLEBalance;
+        uint256 withdrawAmount = IERC20Upgradeable(nativeTokenAddress)
+            .balanceOf(address(this)) - oldLEBalance;
         uint256 burnTokens = LP_LE_AMOUNT * tokenIds.length;
         if (withdrawAmount > burnTokens) {
             // Send the rest of the LE tokens to the owner of the Genesis NFT
-            IERC20Upgradeable(nativeToken).transfer(
+            IERC20Upgradeable(nativeTokenAddress).transfer(
                 _msgSender(),
                 withdrawAmount - burnTokens
             );
@@ -534,7 +532,7 @@ contract GenesisNFT is
             burnTokens = withdrawAmount;
         }
         if (burnTokens > 0) {
-            INativeToken(nativeToken).burnGenesisTokens(burnTokens);
+            INativeToken(nativeTokenAddress).burnGenesisTokens(burnTokens);
         }
     }
 
@@ -543,7 +541,7 @@ contract GenesisNFT is
     /// @return The value of the LP tokens in wei
     function getLPValueInLE(
         uint256[] calldata tokenIds
-    ) external returns (uint256) {
+    ) external validPool returns (uint256) {
         uint256 lpAmountSum;
         IVault vault = IVault(_balancerDetails.vault);
         for (uint256 i = 0; i < tokenIds.length; i++) {
@@ -556,12 +554,11 @@ contract GenesisNFT is
         (IERC20[] memory tokens, , ) = vault.getPoolTokens(
             _balancerDetails.poolId
         );
+        uint256[] memory minAmountsOut = new uint256[](2);
         uint256 leIndex = _findTokenIndex(
             tokens,
             IERC20(_addressProvider.getNativeToken())
         );
-        uint256[] memory minAmountsOut = new uint256[](2);
-
         // Calculate the value of the LP tokens in LE tokens
         (, uint256[] memory amountsOut) = IBalancerQueries(
             _balancerDetails.queries
@@ -632,6 +629,22 @@ contract GenesisNFT is
 
     function _requireTokenExists(uint256 tokenId) internal view {
         require(_exists(tokenId), "G:TOKEN_NOT_FOUND");
+    }
+
+    function _requireValidPool() internal view {
+        require(_balancerDetails.pool != address(0), "G:M:BALANCER_NOT_SET");
+        (IERC20[] memory tokens, , ) = IVault(_balancerDetails.vault)
+            .getPoolTokens(_balancerDetails.poolId);
+        // Make sure there are only two assets in the pool
+        require(tokens.length == 2, "G:M:INVALID_POOL_LENGTH");
+        // Make sure those two assets are the native token and WETH
+        for (uint i = 0; i < tokens.length; i++) {
+            require(
+                tokens[i] == IERC20(_addressProvider.getNativeToken()) ||
+                    tokens[i] == IERC20(_addressProvider.getWETH()),
+                "G:B:INVALID_POOL_TOKENS"
+            );
+        }
     }
 
     // Function to receive Ether

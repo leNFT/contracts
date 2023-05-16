@@ -160,6 +160,8 @@ library ValidationLogic {
 
     /// @notice Validates a repay of a loan
     /// @param params The repay params
+    /// @param loanState The state of the loan
+    /// @param loanDebt The debt of the loan
     function validateRepay(
         DataTypes.RepayParams memory params,
         DataTypes.LoanState loanState,
@@ -175,7 +177,7 @@ library ValidationLogic {
             "VL:VR:LOAN_NOT_FOUND"
         );
 
-        // Check if user is over paying
+        // Check if user is over-paying
         require(params.amount <= loanDebt, "VL:VR:AMOUNT_EXCEEDS_DEBT");
 
         // Can only do partial repayments if the loan is not being auctioned
@@ -232,16 +234,14 @@ library ValidationLogic {
             "VL:VCLA:MAX_DEBT_NOT_EXCEEDED"
         );
 
-        // Check if bid is big enough
-        uint256 maxLiquidatorDiscount = ILendingPool(loanPool)
-            .getPoolConfig()
-            .maxLiquidatorDiscount;
-
+        // Check if bid is large enough
         require(
             (assetETHPrice * params.bid) / pricePrecision >=
                 (collateralETHPrice *
                     (PercentageMath.PERCENTAGE_FACTOR -
-                        maxLiquidatorDiscount)) /
+                        ILendingPool(loanPool)
+                            .getPoolConfig()
+                            .maxLiquidatorDiscount)) /
                     PercentageMath.PERCENTAGE_FACTOR,
             "VL:VCLA:BID_TOO_LOW"
         );
