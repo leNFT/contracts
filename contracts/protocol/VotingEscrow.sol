@@ -19,6 +19,7 @@ import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC72
 import {ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import {PercentageMath} from "../libraries/utils/PercentageMath.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "hardhat/console.sol";
 
 /// @title VotingEscrow
 /// @notice Provides functionality for locking LE tokens for a specified period of time and is the center of the epoch logic
@@ -58,6 +59,26 @@ contract VotingEscrow is
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using LockLogic for DataTypes.LockedBalance;
 
+    modifier lockExists(uint256 lockId) {
+        _requireLockExists(lockId);
+        _;
+    }
+
+    modifier lockOwner(uint256 lockId) {
+        _requireLockOwner(lockId);
+        _;
+    }
+
+    modifier lockNotExpired(uint256 lockId) {
+        _requireLockNotExpired(lockId);
+        _;
+    }
+
+    modifier noFutureEpoch(uint256 epoch) {
+        _requireNoFutureEpoch(epoch);
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -94,7 +115,7 @@ contract VotingEscrow is
     /// @param timestamp The timestamp for which to retrieve the epoch number.
     /// @return The epoch number.
     function getEpoch(uint256 timestamp) public view returns (uint256) {
-        require(timestamp > _deployTimestamp, "VE:E:INVALID_TIMESTAMP");
+        require(timestamp > _deployTimestamp, "VE:E:FUTURE_TIMESTAMP");
         return (timestamp / EPOCH_PERIOD) - (_deployTimestamp / EPOCH_PERIOD);
     }
 
@@ -110,7 +131,13 @@ contract VotingEscrow is
     /// @return The token's encoded URI.
     function tokenURI(
         uint256 tokenId
-    ) public view override(ERC721Upgradeable) returns (string memory) {
+    )
+        public
+        view
+        override(ERC721Upgradeable)
+        lockExists(tokenId)
+        returns (string memory)
+    {
         return
             string(
                 abi.encodePacked(
@@ -124,22 +151,7 @@ contract VotingEscrow is
                             '"description": "Vote Escrowed LE Lock",',
                             '"image": ',
                             '"data:image/svg+xml;base64,',
-                            Base64.encode(
-                                abi.encodePacked(
-                                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" style="width:100%;background:#eaeaea;fill:black;font-family:monospace">',
-                                    '<text x="50%" y="30%" text-anchor="middle" font-size="18">',
-                                    "veLE Lock #",
-                                    Strings.toString(tokenId),
-                                    "</text>",
-                                    '<text x="50%" y="50%" text-anchor="middle" font-size="14">',
-                                    Strings.toString(
-                                        _lockedBalance[tokenId].amount
-                                    ),
-                                    " LE",
-                                    "</text>",
-                                    "</svg>"
-                                )
-                            ),
+                            Base64.encode(svg(tokenId)),
                             '",',
                             '"attributes": [',
                             string(
@@ -164,6 +176,27 @@ contract VotingEscrow is
                         )
                     )
                 )
+            );
+    }
+
+    /// @notice Returns a token's encoded SVG
+    /// @param tokenId The token ID for which to retrieve the SVG.
+    /// @return The token's encoded SVG.
+    function svg(
+        uint256 tokenId
+    ) public view lockExists(tokenId) returns (bytes memory) {
+        return
+            abi.encodePacked(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" style="width:100%;background:#eaeaea;fill:black;font-family:monospace">',
+                '<text x="50%" y="30%" text-anchor="middle" font-size="18">',
+                "veLE Lock #",
+                Strings.toString(tokenId),
+                "</text>",
+                '<text x="50%" y="50%" text-anchor="middle" font-size="14">',
+                Strings.toString(_lockedBalance[tokenId].amount),
+                " LE",
+                "</text>",
+                "</svg>"
             );
     }
 
@@ -207,10 +240,10 @@ contract VotingEscrow is
         }
     }
 
-    /// @notice Simulates a lock for a given amount of tokens and unlock time.
+    /// @notice Simulates a lock's weight for a given amount of tokens and unlock time.
     /// @param amount The amount of tokens to be locked.
     /// @param end The unlock time for the lock operation.
-    /// @return The number of voting escrow tokens that would be minted as a result of the lock operation.
+    /// @return The weight of the lock.
     function simulateLock(
         uint256 amount,
         uint256 end
@@ -288,7 +321,7 @@ contract VotingEscrow is
     /// @return The length of the user's history array.
     function getLockHistoryLength(
         uint256 tokenId
-    ) public view override returns (uint256) {
+    ) public view override lockExists(tokenId) returns (uint256) {
         return _lockHistory[tokenId].length;
     }
 
@@ -299,15 +332,20 @@ contract VotingEscrow is
     function getLockHistoryPoint(
         uint256 tokenId,
         uint256 index
-    ) public view override returns (DataTypes.Point memory) {
+    )
+        public
+        view
+        override
+        lockExists(tokenId)
+        returns (DataTypes.Point memory)
+    {
+        require(index < _lockHistory[tokenId].length, "VE:GLHP:INDEX_TOO_HIGH");
         return _lockHistory[tokenId][index];
     }
 
     function getLockedRatioAt(
         uint256 _epoch
-    ) external override returns (uint256) {
-        require(_epoch <= getEpoch(block.timestamp), "VE:GLRA:INVALID_EPOCH");
-
+    ) external override noFutureEpoch(_epoch) returns (uint256) {
         // Update total weight history
         writeTotalWeightHistory();
 
@@ -323,9 +361,9 @@ contract VotingEscrow is
     /// @notice Returns the total weight of locked tokens at a given epoch.
     /// @param _epoch The epoch number for which to retrieve the total weight.
     /// @return The total weight of locked tokens at the given epoch.
-    function getTotalWeightAt(uint256 _epoch) external returns (uint256) {
-        require(_epoch <= getEpoch(block.timestamp), "VE:TWA:INVALID_EPOCH");
-
+    function getTotalWeightAt(
+        uint256 _epoch
+    ) external noFutureEpoch(_epoch) returns (uint256) {
         // Update total weight history
         writeTotalWeightHistory();
 
@@ -347,7 +385,9 @@ contract VotingEscrow is
     /// @notice Returns the weight of locked tokens for a given lock.
     /// @param tokenId The tokenid for which to retrieve the locked balance weight.
     /// @return The weight of locked tokens for the given account.
-    function getLockWeight(uint256 tokenId) public view returns (uint256) {
+    function getLockWeight(
+        uint256 tokenId
+    ) public view lockExists(tokenId) returns (uint256) {
         // If the locked token end time has passed
         if (_lockedBalance[tokenId].end < block.timestamp) {
             return 0;
@@ -404,6 +444,10 @@ contract VotingEscrow is
 
         // Setup the next claimable rebate epoch
         _nextClaimableEpoch[tokenId] = getEpoch(block.timestamp) + 1;
+        console.log(
+            "create: next claimable epoch: %s",
+            _nextClaimableEpoch[tokenId]
+        );
 
         // Save oldLocked and update the locked balance
         DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
@@ -428,13 +472,13 @@ contract VotingEscrow is
     function increaseAmount(
         uint256 tokenId,
         uint256 amount
-    ) external nonReentrant {
-        require(
-            _lockedBalance[tokenId].end > block.timestamp,
-            "VE:IA:LOCK_EXPIRED"
-        );
-        require(ownerOf(tokenId) == _msgSender(), "VE:IA:NOT_OWNER");
-
+    )
+        external
+        nonReentrant
+        lockExists(tokenId)
+        lockOwner(tokenId)
+        lockNotExpired(tokenId)
+    {
         // Claim any existing rebates
         claimRebates(tokenId);
 
@@ -462,13 +506,13 @@ contract VotingEscrow is
     function increaseUnlockTime(
         uint256 tokenId,
         uint256 newUnlockTime
-    ) external nonReentrant {
-        require(ownerOf(tokenId) == _msgSender(), "VE:IUT:NOT_OWNER");
-        require(
-            _lockedBalance[tokenId].end > block.timestamp,
-            "VE:IUT:LOCK_EXPIRED"
-        );
-
+    )
+        external
+        nonReentrant
+        lockExists(tokenId)
+        lockOwner(tokenId)
+        lockNotExpired(tokenId)
+    {
         // Round the locktime to whole epochs
         uint256 roundedUnlocktime = (newUnlockTime / EPOCH_PERIOD) *
             EPOCH_PERIOD;
@@ -501,8 +545,9 @@ contract VotingEscrow is
     /// @dev Transfers the native token from this contract to the caller
     /// @dev Calls a checkpoint event
     /// @dev User needs to claim fees before withdrawing or will lose them
-    function withdraw(uint256 tokenId) external {
-        require(ownerOf(tokenId) == _msgSender(), "VE:W:NOT_OWNER");
+    function withdraw(
+        uint256 tokenId
+    ) external lockExists(tokenId) lockOwner(tokenId) {
         require(_lockedBalance[tokenId].amount > 0, "VE:W:ZERO_BALANCE");
         require(
             block.timestamp > _lockedBalance[tokenId].end,
@@ -542,9 +587,12 @@ contract VotingEscrow is
     /// @return amountToClaim The amount of rebates claimed
     function claimRebates(
         uint256 tokenId
-    ) public returns (uint256 amountToClaim) {
-        require(ownerOf(tokenId) == _msgSender(), "VE:CR:NOT_OWNER");
-
+    )
+        public
+        lockExists(tokenId)
+        lockOwner(tokenId)
+        returns (uint256 amountToClaim)
+    {
         writeTotalWeightHistory();
 
         // Claim all the available rebates for the lock
@@ -555,6 +603,7 @@ contract VotingEscrow is
         // Claim a maximum of 50 epochs at a time
         for (uint i = 0; i < 50; i++) {
             nextClaimableEpoch = _nextClaimableEpoch[tokenId];
+            console.log("nextClaimableEpoch: %s", nextClaimableEpoch);
             if (
                 nextClaimableEpoch >= currentEpoch ||
                 getEpochTimestamp(nextClaimableEpoch) >
@@ -564,12 +613,27 @@ contract VotingEscrow is
             }
 
             if (_totalSupplyHistory[nextClaimableEpoch] > 0) {
+                console.log(
+                    "totalSupplyHistory: %s",
+                    _totalSupplyHistory[nextClaimableEpoch]
+                );
+                console.log(
+                    "totalLockedHistory: %s",
+                    _totalLockedHistory[nextClaimableEpoch]
+                );
+                console.log(
+                    "epochRewards: %s",
+                    IGaugeController(_addressProvider.getGaugeController())
+                        .getEpochRewards(nextClaimableEpoch)
+                );
                 // Get the full amount of rebates to claim for the epoch as if everyone was locked at max locktime
                 maxEpochRebates =
                     (_totalLockedHistory[nextClaimableEpoch] *
                         IGaugeController(_addressProvider.getGaugeController())
                             .getEpochRewards(nextClaimableEpoch)) /
                     _totalSupplyHistory[nextClaimableEpoch];
+
+                console.log("maxEpochRebates: %s", maxEpochRebates);
 
                 // Get the rebate share for this specific lock
                 // It will depend on the size and duration of the lock
@@ -594,12 +658,23 @@ contract VotingEscrow is
         }
     }
 
+    function claimRebatesBatch(uint256[] calldata tokensIds) external {
+        for (uint i = 0; i < tokensIds.length; i++) {
+            claimRebates(tokensIds[i]);
+        }
+    }
+
     /// @notice Returns the details for a single lock
     /// @param tokenId The token id of the lock to get the locked balance of and end time of
     /// @return The locked object of the user
     function getLock(
         uint256 tokenId
-    ) external view returns (DataTypes.LockedBalance memory) {
+    )
+        external
+        view
+        lockExists(tokenId)
+        returns (DataTypes.LockedBalance memory)
+    {
         return _lockedBalance[tokenId];
     }
 
@@ -628,5 +703,24 @@ contract VotingEscrow is
         return
             ERC721EnumerableUpgradeable.supportsInterface(interfaceId) ||
             ERC165Upgradeable.supportsInterface(interfaceId);
+    }
+
+    function _requireLockExists(uint256 tokenId) internal view {
+        require(_exists(tokenId), "VE:LOCK_NOT_FOUND");
+    }
+
+    function _requireLockOwner(uint256 tokenId) internal view {
+        require(ownerOf(tokenId) == _msgSender(), "VE:NOT_OWNER");
+    }
+
+    function _requireLockNotExpired(uint256 tokenId) internal view {
+        require(
+            _lockedBalance[tokenId].end > block.timestamp,
+            "VE:LOCK_EXPIRED"
+        );
+    }
+
+    function _requireNoFutureEpoch(uint256 epoch) internal view {
+        require(epoch <= getEpoch(block.timestamp), "VE:FUTURE_EPOCH");
     }
 }

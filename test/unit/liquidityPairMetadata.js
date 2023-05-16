@@ -102,8 +102,8 @@ describe("LiquidityPairMetadata", function () {
     );
     await depositTx.wait();
 
-    const tokenURI = await liquidityPairMetadata.svg(poolAddress, 0);
-    const decodedData = ethers.utils.toUtf8String(tokenURI); // Convert the hex string to a UTF-8 string
+    const svg = await liquidityPairMetadata.svg(poolAddress, 0);
+    const decodedData = ethers.utils.toUtf8String(svg); // Convert the hex string to a UTF-8 string
 
     expect(isValidSVG(decodedData)).to.be.true;
   });

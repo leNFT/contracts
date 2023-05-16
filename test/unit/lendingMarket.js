@@ -3,6 +3,7 @@ const { ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
 const load = require("../helpers/_loadTest.js");
 const { getPriceSig } = require("../helpers/getPriceSig.js");
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("LendingMarket", function () {
   load.loadTestAlways(false);
@@ -58,7 +59,6 @@ describe("LendingMarket", function () {
     expect(defaultPoolConfig.liquidationFee).to.equal("300");
     expect(defaultPoolConfig.maxUtilizationRate).to.equal("8000");
   });
-
   it("Should borrow an asset from a lending pool using an NFT as collateral", async function () {
     // Create a lending pool
     const tx = await lendingMarket.createLendingPool(
@@ -134,7 +134,6 @@ describe("LendingMarket", function () {
       )
     ).to.be.revertedWith("ERC721: transfer from incorrect owner");
   });
-
   it("Should not be able to borrow an asset if the price has expired", async function () {
     // Create a lending pool
     const tx = await lendingMarket.createLendingPool(
@@ -249,7 +248,7 @@ describe("LendingMarket", function () {
     );
   });
 
-  it("Should partially repay a loan", async function () {
+  it("Should partially repay a loan (more than interest)", async function () {
     // Create a lending pool
     const tx = await lendingMarket.createLendingPool(
       testNFT.address,
@@ -324,6 +323,209 @@ describe("LendingMarket", function () {
 
     // Check if the borrower received his NFT collateral back
     expect(await testNFT.ownerOf(0)).to.equal(owner.address);
+  });
+
+  it("Should partially repay a loan (less than interest)", async function () {
+    // Create a lending pool
+    const tx = await lendingMarket.createLendingPool(
+      testNFT.address,
+      wethAddress
+    );
+    await tx.wait();
+    // Deposit ETH into the lending pool
+    const depositTx = await wethGateway.depositLendingPool(
+      await lendingMarket.getLendingPool(testNFT.address, weth.address),
+      { value: "1000000000000000000" } // 1 ETH
+    );
+    await depositTx.wait();
+
+    // Mint an NFT & approve it to be used by the lending market
+    const mintTx = await testNFT.mint(owner.address);
+    await mintTx.wait();
+    const approveNftTx = await testNFT.approve(lendingMarket.address, 0);
+    await approveNftTx.wait();
+
+    // Get the price signature for the NFT
+    const priceSig = getPriceSig(
+      testNFT.address,
+      [0],
+      "800000000000000", //Price of 0.08 ETH
+      Math.floor(Date.now() / 1000),
+      nftOracle.address
+    );
+
+    // Borrow wETH using the NFT as collateral
+    const borrowTx = await lendingMarket.borrow(
+      owner.address,
+      weth.address,
+      "200000000000000", // 0.02 ETH
+      testNFT.address,
+      [0],
+      0,
+      priceSig.request,
+      priceSig
+    );
+    await borrowTx.wait();
+
+    // Let 30 days pass
+    await time.increase(30 * 24 * 60 * 60);
+
+    // Get loan debt
+    var loanInterest = await loanCenter.getLoanInterest(0);
+
+    // Mint wETH to repay the loan interest
+    const depositWethTx = await weth.deposit({ value: loanInterest });
+    await depositWethTx.wait();
+
+    // Aprove the lending pool to spend the wETH
+    const approveTx = await weth.approve(
+      await lendingMarket.getLendingPool(testNFT.address, weth.address),
+      loanDebt.div(2)
+    );
+    await approveTx.wait();
+
+    // Repay the interest
+    const repayTx = await lendingMarket.repay(0, loanInterest);
+    await repayTx.wait();
+
+    // Check if the collateral is still with the pool
+    expect(await testNFT.ownerOf(0)).to.equal(loanCenter.address);
+
+    // Check if the interest is now 0
+    expect(await loanCenter.getLoanInterest(0)).to.equal(0);
+  });
+
+  it("Should be able repay an auctioned loan", async function () {
+    // Create a lending pool
+    const tx = await lendingMarket.createLendingPool(
+      testNFT.address,
+      wethAddress
+    );
+    await tx.wait();
+    // Deposit ETH into the lending pool
+    const depositTx = await wethGateway.depositLendingPool(
+      await lendingMarket.getLendingPool(testNFT.address, weth.address),
+      { value: "1000000000000000000" } // 1 ETH
+    );
+    await depositTx.wait();
+
+    // Mint an NFT & approve it to be used by the lending market
+    const mintTx = await testNFT.mint(owner.address);
+    await mintTx.wait();
+    const approveNftTx = await testNFT.approve(lendingMarket.address, 0);
+    await approveNftTx.wait();
+
+    // Get the price signature for the NFT
+    const priceSig = getPriceSig(
+      testNFT.address,
+      [0],
+      "800000000000000", //Price of 0.08 ETH
+      Math.floor(Date.now() / 1000),
+      nftOracle.address
+    );
+
+    // Borrow wETH using the NFT as collateral
+    const borrowTx = await lendingMarket.borrow(
+      owner.address,
+      weth.address,
+      "200000000000000", // 0.02 ETH
+      testNFT.address,
+      [0],
+      0,
+      priceSig.request,
+      priceSig
+    );
+    await borrowTx.wait();
+
+    // Get a new lower price signature for the NFT
+    const priceSig2 = getPriceSig(
+      testNFT.address,
+      [0],
+      "250000000000000", //Price of 0.025 ETH
+      Math.floor(Date.now() / 1000),
+      nftOracle.address
+    );
+
+    // Mint weth to create the auction
+    const depositAuctionWethTx = await weth.deposit({
+      value: "220000000000000",
+    });
+    await depositAuctionWethTx.wait();
+
+    // Aprove the lending market to spend the wETH
+    const approveAuctionTx = await weth.approve(
+      lendingMarket.address,
+      "220000000000000"
+    );
+    await approveAuctionTx.wait();
+
+    // Create a liquidation auction
+    const auctionTx = await lendingMarket.createLiquidationAuction(
+      0,
+      "220000000000000", //Price of 0.022 ETH
+      priceSig2.request,
+      priceSig2
+    );
+    await auctionTx.wait();
+
+    // GEt the lending pool address
+    const lendingPool = await ethers.getContractAt(
+      "LendingPool",
+      await lendingMarket.getLendingPool(testNFT.address, weth.address)
+    );
+
+    // Get the auctioner Fee
+    const auctionerFee = (await lendingPool.getPoolConfig()).auctionerFee;
+    const auctionerFeeAmount = ethers.BigNumber.from("220000000000000")
+      .mul(auctionerFee)
+      .div(10000);
+
+    console.log("auctionerFeeAmount", auctionerFeeAmount.toString());
+
+    // Get loan debt
+    const loanDebt = await loanCenter.getLoanDebt(0);
+
+    console.log("loanDebt", loanDebt.toString());
+
+    console.log(
+      "Sum",
+      BigNumber.from(loanDebt).add(auctionerFeeAmount).toString()
+    );
+
+    // Mint wETH to repay the loan
+    const depositRepayWethTx = await weth.deposit({
+      value: BigNumber.from(loanDebt).add(auctionerFeeAmount),
+    });
+    await depositRepayWethTx.wait();
+
+    // Aprove the lending pool to spend the wETH
+    const approveTx = await weth.approve(
+      await lendingMarket.getLendingPool(testNFT.address, weth.address),
+      BigNumber.from(loanDebt)
+    );
+    await approveTx.wait();
+    // Approve the market to spend the fee
+    const approveFeeTx = await weth.approve(
+      lendingMarket.address,
+      auctionerFeeAmount
+    );
+    await approveFeeTx.wait();
+
+    const repayTx = await lendingMarket.repay(0, loanDebt);
+    await repayTx.wait();
+
+    // User Balance should now be the borrowed amount + auctioner fee which was sent to himself
+    expect(await weth.balanceOf(owner.address)).to.equal(
+      BigNumber.from("200000000000000").add(auctionerFeeAmount)
+    );
+
+    // Check if the borrower received his NFT collateral back
+    expect(await testNFT.ownerOf(0)).to.equal(owner.address);
+
+    // Should revert if we try to repay again
+    await expect(lendingMarket.repay(0, loanDebt)).to.be.revertedWith(
+      "VL:VR:LOAN_NOT_FOUND"
+    );
   });
 
   it("Should create a liquidation auction", async function () {
@@ -419,6 +621,9 @@ describe("LendingMarket", function () {
     );
     await auctionTx.wait();
 
+    // Save the timestamp of the auction
+    const auctionTimestamp = await time.latest();
+
     // Check if the auction was created
     const loanLiquidationData = await loanCenter.getLoanLiquidationData(0);
     expect(loanLiquidationData.auctioner).to.equal(owner.address);
@@ -427,8 +632,8 @@ describe("LendingMarket", function () {
       BigNumber.from("220000000000000")
     );
     // Expect the auction starttime to have been in the last 5 minutes
-    expect(loanLiquidationData.auctionStartTimestamp).to.be.gt(
-      Math.floor(Date.now() / 1000) - 300
+    expect(loanLiquidationData.auctionStartTimestamp).to.equal(
+      auctionTimestamp
     );
   });
 
@@ -508,6 +713,9 @@ describe("LendingMarket", function () {
     );
     await auctionTx.wait();
 
+    // Get the created auction timestamp
+    const creationTimetamp = await time.latest();
+
     // Should make a lower bid than the current bid
     console.log("Bidding on liquidation auction");
     await expect(
@@ -528,9 +736,8 @@ describe("LendingMarket", function () {
     expect(loanLiquidationData.auctionMaxBid).to.equal(
       BigNumber.from("230000000000000")
     );
-    // Expect the auction starttime to have been in the last 5 minutes
-    expect(loanLiquidationData.auctionStartTimestamp).to.be.gt(
-      Math.floor(Date.now() / 1000) - 300
+    expect(loanLiquidationData.auctionStartTimestamp).to.equal(
+      creationTimetamp
     );
   });
 

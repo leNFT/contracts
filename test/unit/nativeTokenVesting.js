@@ -77,7 +77,7 @@ describe("NativeTokenVesting", () => {
     await setVestingTx.wait();
 
     // Move 30 days forward
-    await time.increase(period);
+    await time.increase(period + 1);
 
     // Withdraw 500 tokens
     const withdrawTx = await nativeTokenVesting.withdraw(500);
@@ -110,5 +110,12 @@ describe("NativeTokenVesting", () => {
     expect(
       await nativeTokenVesting.getAvailableToWithdraw(owner.address)
     ).to.equal(0);
+  });
+  it("Should let the owner withdraw tokens", async function () {
+    const withdrawTx = await nativeTokenVesting.withdrawOwner(1000);
+    await withdrawTx.wait();
+
+    // Check the balance
+    expect(await nativeToken.balanceOf(owner.address)).to.equal(1000);
   });
 });

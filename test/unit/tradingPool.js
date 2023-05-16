@@ -183,6 +183,9 @@ describe("TradingPool", function () {
     // The lp count should be still be 1
     expect(await tradingPool.getLpCount()).to.equal(1);
 
+    // The NFTs should be returned to the caller
+    expect(await testNFT.ownerOf(0)).to.equal(owner.address);
+
     // Should throw an error when trying to get the lp
     await expect(tradingPool.getLP(0)).to.be.revertedWith("TP:LP_NOT_FOUND");
   });

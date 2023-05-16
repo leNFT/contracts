@@ -15,6 +15,7 @@ import {Trustus} from "./Trustus/Trustus.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import "hardhat/console.sol";
 
 /// @title WETHGateway Contract
 /// @author leNFT
@@ -212,7 +213,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
 
         // Send NFTs back to the user
         for (uint i = 0; i < lp.nftIds.length; i++) {
-            IERC721(pool).safeTransferFrom(
+            IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
                 address(this),
                 _msgSender(),
                 lp.nftIds[i]
@@ -267,7 +268,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         // Send NFTs back to the user
         for (uint a = 0; a < nftIds.length; a++) {
             for (uint b = 0; b < nftIds[a].length; b++) {
-                IERC721(pool).safeTransferFrom(
+                IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
                     address(this),
                     _msgSender(),
                     nftIds[a][b]
@@ -433,7 +434,6 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         // Send ETH back to the user
         if (returnedAmount > 0) {
             _weth.withdraw(returnedAmount);
-
             (bool sent, ) = _msgSender().call{value: returnedAmount}("");
             require(sent, "ETHG:S:ETH_TRANSFER_FAILED");
         }

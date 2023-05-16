@@ -12,6 +12,7 @@ import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "hardhat/console.sol";
 
 /// @title BorrowLogic
 /// @notice Contains the logic for the borrow and repay functions
@@ -102,13 +103,20 @@ library BorrowLogic {
                         params.loanId
                     );
                 // Return the bid to the liquidator
-                IERC20Upgradeable(IERC4626(loanData.pool).asset())
-                    .safeTransferFrom(
-                        address(this),
-                        liquidationData.liquidator,
-                        liquidationData.auctionMaxBid
-                    );
+                console.log("auctioner bid: %s", liquidationData.auctionMaxBid);
+                console.log(
+                    "balance: %s",
+                    IERC20Upgradeable(IERC4626(loanData.pool).asset())
+                        .balanceOf(address(this))
+                );
                 // Get the fee from the user
+                console.log(
+                    "auctioner fee: %s",
+                    (liquidationData.auctionMaxBid *
+                        ILendingPool(loanData.pool)
+                            .getPoolConfig()
+                            .auctionerFee) / PercentageMath.PERCENTAGE_FACTOR
+                );
                 IERC20Upgradeable(IERC4626(loanData.pool).asset())
                     .safeTransferFrom(
                         params.caller,
