@@ -43,7 +43,7 @@ module.exports = {
 
 ```
 
-Tests are performed in a forked mainnet environment, so you'll also need a .env file with an Infura API Key.
+Some tests are performed in a forked mainnet environment, so you'll also need a .env file with an Infura API Key.
 
 ```bash
 INFURA_API_KEY="YOUR_API_KEY"
