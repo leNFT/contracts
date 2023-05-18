@@ -1,15 +1,13 @@
 const { expect } = require("chai");
 const { time } = require("@nomicfoundation/hardhat-network-helpers");
 const { ethers } = require("hardhat");
-const { BigNumber } = require("ethers");
 const load = require("../helpers/_loadTest.js");
-const { getPriceSig } = require("../helpers/getPriceSig.js");
 
 describe("Bribes", function () {
-  load.loadTestAlways(false);
+  load.loadTest(false);
 
   // SHould create a new (trading) gauge and add it to the market so we can bribe it
-  beforeEach(async () => {
+  before(async () => {
     // Create a new trading pool through the market
     const createTx = await tradingPoolFactory.createTradingPool(
       testNFT.address,
@@ -32,6 +30,17 @@ describe("Bribes", function () {
     // Add both the trading gauge to the gauge controller
     const addGaugeTx = await gaugeController.addGauge(tradingGauge.address);
     await addGaugeTx.wait();
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
+  });
+
+  beforeEach(async function () {
+    // Restore the blockchain state to the snapshot before each test
+    await ethers.provider.send("evm_revert", [snapshotId]);
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
   });
 
   it("Should deposit a bribe", async function () {

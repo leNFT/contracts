@@ -1,3 +1,9 @@
 module.exports = {
-  skipFiles: ["test/", "libraries/balancer/"],
+  skipFiles: [
+    "test/NativeTokenFaucet",
+    "test/TestNFT",
+    "test/WETH",
+    "protocol/NativeToken.sol",
+    "libraries/balancer/",
+  ],
 };

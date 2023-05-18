@@ -4,10 +4,10 @@ const { ethers } = require("hardhat");
 const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("TradingGauge", () => {
-  load.loadTestAlways(false);
+  load.loadTest(false);
 
   // Create a new trading pool and its associated trading gauge
-  beforeEach(async () => {
+  before(async () => {
     // Create a new trading pool through the market
     const createTx = await tradingPoolFactory.createTradingPool(
       testNFT.address,
@@ -30,6 +30,17 @@ describe("TradingGauge", () => {
     // Add both the trading gauge to the gauge controller
     const addGaugeTx = await gaugeController.addGauge(tradingGauge.address);
     await addGaugeTx.wait();
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
+  });
+
+  beforeEach(async function () {
+    // Restore the blockchain state to the snapshot before each test
+    await ethers.provider.send("evm_revert", [snapshotId]);
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
   });
 
   it("Should deposit into a trading gauge", async function () {

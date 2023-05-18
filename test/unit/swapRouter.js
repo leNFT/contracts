@@ -3,9 +3,22 @@ const load = require("../helpers/_loadTest.js");
 const { ethers } = require("hardhat");
 
 describe("SwapRouter", () => {
-  load.loadTestAlways(false);
+  load.loadTest(false);
   var sellPoolAddress;
   var buyPoolAddress;
+
+  before(async function () {
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
+  });
+
+  beforeEach(async function () {
+    // Restore the blockchain state to the snapshot before each test
+    await ethers.provider.send("evm_revert", [snapshotId]);
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
+  });
 
   it("Should swap between two assets for the exact predicted price", async function () {
     // Create a pool

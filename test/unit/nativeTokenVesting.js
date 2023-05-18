@@ -4,15 +4,26 @@ const { ethers } = require("hardhat");
 const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("NativeTokenVesting", () => {
-  load.loadTestAlways(false);
+  load.loadTest(false);
 
   // Feed LE tokens to the vesting contract
-  beforeEach(async () => {
+  before(async () => {
     const mintTokensTx = await nativeToken.mint(
       nativeTokenVesting.address,
       ethers.utils.parseEther("1000")
     );
     await mintTokensTx.wait();
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
+  });
+
+  beforeEach(async function () {
+    // Restore the blockchain state to the snapshot before each test
+    await ethers.provider.send("evm_revert", [snapshotId]);
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
   });
 
   it("Set vesting for an account", async function () {

@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@nomicfoundation/hardhat-foundry": "^1.0.1",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@nomiclabs/hardhat-etherscan": "^3.1.6",
@@ -23,7 +24,7 @@
     "eslint": "^8.39.0",
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.9",
-    "hardhat": "^2.12.1-ir.0",
+    "hardhat": "^2.14.0",
     "hardhat-gas-reporter": "^1.0.9",
     "mocha": "^10.0.0",
     "solhint": "^3.4.1"
@@ -36,6 +37,7 @@
     "@openzeppelin/contracts": "^4.6.0",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
     "bignumber.js": "^9.0.2",
+    "chance": "^1.1.11",
     "dotenv": "^16.0.1",
     "eip-712": "^1.0.0",
     "solidity-coverage": "^0.8.2",

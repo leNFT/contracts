@@ -12,7 +12,7 @@ describe("TokenOracle", function () {
   const testTokenAddress = "0x853d955aCEf822Db058eb8505911ED77F175b99e";
 
   // Dont need to call the entire loadTestAlways function since the setup is only the tokenOracle deployment
-  beforeEach(async () => {
+  before(async () => {
     // Go to a mainnet fork so we can test the oracle data feed
     await helpers.reset(
       "https://mainnet.infura.io/v3/" + process.env.INFURA_API_KEY,
@@ -22,6 +22,17 @@ describe("TokenOracle", function () {
     [owner] = await ethers.getSigners();
     tokenOracle = await TokenOracle.deploy();
     await tokenOracle.deployed();
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
+  });
+
+  beforeEach(async function () {
+    // Restore the blockchain state to the snapshot before each test
+    await ethers.provider.send("evm_revert", [snapshotId]);
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
   });
 
   it("Should be able to add a token's datafeed", async function () {

@@ -5,10 +5,10 @@ const { BigNumber } = require("ethers");
 const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("GaugeController", () => {
-  load.loadTestAlways(false);
+  load.loadTest(false);
 
   // Deploy one trading pool and one lending pool and their gauges
-  beforeEach(async function () {
+  before(async function () {
     // Create a new trading pool
     const createTradingPoolTx = await tradingPoolFactory.createTradingPool(
       testNFT.address,
@@ -48,6 +48,17 @@ describe("GaugeController", () => {
       lendingPool.address
     );
     await lendingGauge.deployed();
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
+  });
+
+  beforeEach(async function () {
+    // Restore the blockchain state to the snapshot before each test
+    await ethers.provider.send("evm_revert", [snapshotId]);
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
   });
 
   it("Should be able to add a gauge", async function () {

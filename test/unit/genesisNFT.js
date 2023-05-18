@@ -9,10 +9,10 @@ const weightedPoolFactoryABI = require("../../scripts/balancer/weightedPoolFacto
 const vaultABI = require("../../scripts/balancer/vaultABI.json");
 
 describe("GenesisNFT", () => {
-  load.loadTestAlways(true);
+  load.loadTest(true);
 
   // Set the balancer pool details before each test
-  beforeEach(async function () {
+  before(async function () {
     const vaultAddress = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
     const queryAddress = "0xE39B5e3B6D74016b2F6A9673D7d7493B6DF549d5";
     const poolFactoryAddress = "0x5Dd94Da3644DDD055fcf6B3E1aa310Bb7801EB8b";
@@ -115,6 +115,17 @@ describe("GenesisNFT", () => {
       }
     );
     await depositPoolTx.wait();
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
+  });
+
+  beforeEach(async function () {
+    // Restore the blockchain state to the snapshot before each test
+    await ethers.provider.send("evm_revert", [snapshotId]);
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
   });
 
   it("Should mint a Genesis NFT", async function () {

@@ -11,7 +11,7 @@ describe("TradingPoolFactory", function () {
     AddressProvider,
     addressProvider;
 
-  beforeEach(async () => {
+  before(async () => {
     AddressProvider = await ethers.getContractFactory("AddressesProvider");
     addressProvider = await upgrades.deployProxy(AddressProvider);
     TradingPoolFactory = await ethers.getContractFactory("TradingPoolFactory");
@@ -24,6 +24,17 @@ describe("TradingPoolFactory", function () {
 
     // Set the address in the address provider contract
     await addressProvider.setTradingPoolFactory(tradingPoolFactory.address);
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
+  });
+
+  beforeEach(async function () {
+    // Restore the blockchain state to the snapshot before each test
+    await ethers.provider.send("evm_revert", [snapshotId]);
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
   });
 
   it("Should be able to add a new price curve", async function () {

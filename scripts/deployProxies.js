@@ -102,7 +102,12 @@ async function main() {
   console.log("Deployed LoanCenter");
 
   // Deploy and initialize the native token (different for mainnet and sepolia)
-  const NativeToken = await ethers.getContractFactory("NativeToken");
+  let NativeToken;
+  if (chainID == 1) {
+    NativeToken = await ethers.getContractFactory("NativeToken");
+  } else {
+    NativeToken = await ethers.getContractFactory("NativeTokenTest");
+  }
   const nativeToken = await upgrades.deployProxy(NativeToken, [
     addressesProvider.address,
     "leNFT Token",

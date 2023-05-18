@@ -5,7 +5,20 @@ const load = require("../helpers/_loadTest.js");
 const { getPriceSig } = require("../helpers/getPriceSig.js");
 
 describe("LendingPool", function () {
-  load.loadTestAlways(false);
+  load.loadTest(false);
+
+  before(async function () {
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
+  });
+
+  beforeEach(async function () {
+    // Restore the blockchain state to the snapshot before each test
+    await ethers.provider.send("evm_revert", [snapshotId]);
+
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
+  });
 
   it("Should fail to directly create a new lending pool", async function () {
     const LendingPool = await ethers.getContractFactory("LendingPool", {
