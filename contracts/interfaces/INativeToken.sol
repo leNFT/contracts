@@ -2,6 +2,8 @@
 pragma solidity 0.8.19;
 
 interface INativeToken {
+    function mintVestingTokens(address receiver, uint256 amount) external;
+
     function mintGenesisTokens(uint256 amount) external;
 
     function burnGenesisTokens(uint256 amount) external;

@@ -260,7 +260,8 @@ async function main() {
     "NativeTokenVesting"
   );
   const nativeTokenVesting = await NativeTokenVesting.deploy(
-    addressesProvider.address
+    addressesProvider.address,
+    "17500000000000000000000000" //17.5M Vesting Cap
   );
   await nativeTokenVesting.deployed();
   addresses["NativeTokenVesting"] = nativeTokenVesting.address;
@@ -372,6 +373,10 @@ async function main() {
     nativeToken.address
   );
   await setNativeTokenTx.wait();
+  const setNativeTokenVestingTx = await addressesProvider.setNativeTokenVesting(
+    nativeTokenVesting.address
+  );
+  await setNativeTokenVestingTx.wait();
   const setGenesisNFT = await addressesProvider.setGenesisNFT(
     genesisNFT.address
   );

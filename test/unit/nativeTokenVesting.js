@@ -111,11 +111,4 @@ describe("NativeTokenVesting", () => {
       await nativeTokenVesting.getAvailableToWithdraw(owner.address)
     ).to.equal(0);
   });
-  it("Should let the owner withdraw tokens", async function () {
-    const withdrawTx = await nativeTokenVesting.withdrawOwner(1000);
-    await withdrawTx.wait();
-
-    // Check the balance
-    expect(await nativeToken.balanceOf(owner.address)).to.equal(1000);
-  });
 });

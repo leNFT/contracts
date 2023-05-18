@@ -9,9 +9,9 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {IGaugeController} from "../interfaces/IGaugeController.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
-/// @title NativeToken
-/// @notice Provides functionality distributing native tokens
-contract NativeToken is
+/// @title NativeTokenTest
+/// @notice Provides test functionality for minting, burning, and distributing native tokens
+contract NativeTokenTest is
     ContextUpgradeable,
     INativeToken,
     ERC20Upgradeable,
@@ -49,6 +49,10 @@ contract NativeToken is
     /// @return The maximum supply of the token
     function getCap() public view returns (uint256) {
         return _cap;
+    }
+
+    function mint(address receiver, uint256 amount) external nonReentrant {
+        _mint(receiver, amount);
     }
 
     /// @notice Internal function to mint tokens and assign them to the specified account

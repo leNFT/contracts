@@ -16,6 +16,7 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _interestRate;
     address private _votingEscrow;
     address private _nativeToken;
+    address private _nativeTokenVesting;
     address private _weth;
     address private _genesisNFT;
     address private _gaugeController;
@@ -95,6 +96,16 @@ contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
 
     function getNativeToken() external view override returns (address) {
         return _nativeToken;
+    }
+
+    function setNativeTokenVesting(
+        address nativeTokenVesting
+    ) external onlyOwner {
+        _nativeTokenVesting = nativeTokenVesting;
+    }
+
+    function getNativeTokenVesting() external view override returns (address) {
+        return _nativeTokenVesting;
     }
 
     function setFeeDistributor(

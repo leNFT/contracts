@@ -20,11 +20,20 @@ contract NativeTokenVesting is Ownable {
     IAddressesProvider private _addressProvider;
     mapping(address => DataTypes.VestingParams) private _vestingParams;
     mapping(address => uint256) _withdrawn;
+    uint256 private _vestingCap;
+    uint256 private _totalWithdrawn;
 
     using SafeERC20 for IERC20;
 
-    constructor(IAddressesProvider addressProvider) {
+    constructor(IAddressesProvider addressProvider, uint256 vestingCap) {
         _addressProvider = addressProvider;
+        _vestingCap = vestingCap;
+    }
+
+    /// @notice Gets the maximum supply of the vesting token
+    /// @return The maximum supply of the vesting token
+    function getVestingCap() public view returns (uint256) {
+        return _vestingCap;
     }
 
     /// @notice Gets the vesting parameters for the specified account
@@ -97,21 +106,17 @@ contract NativeTokenVesting is Ownable {
             getAvailableToWithdraw(_msgSender()) >= amount,
             "NTV:W:AMOUNT_TOO_HIGH"
         );
+        require(
+            _totalWithdrawn + amount <= _vestingCap,
+            "NTV:W:VESTING_CAP_REACHED"
+        );
         _withdrawn[_msgSender()] += amount;
+        _totalWithdrawn += amount;
         IERC20(_addressProvider.getNativeToken()).safeTransfer(
             _msgSender(),
             amount
         );
 
         emit VestingWithdrawn(_msgSender(), amount);
-    }
-
-    // @notice Let owner withdraw tokens
-    // @param amount The amount of tokens to withdraw
-    function withdrawOwner(uint256 amount) external onlyOwner {
-        IERC20(_addressProvider.getNativeToken()).safeTransfer(
-            _msgSender(),
-            amount
-        );
     }
 }

@@ -113,7 +113,7 @@ let loadEnv = async function (isMainnetFork) {
   console.log("Deployed LoanCenter");
 
   // Deploy and initialize the native token
-  const NativeToken = await ethers.getContractFactory("NativeToken");
+  const NativeToken = await ethers.getContractFactory("NativeTokenTest");
   nativeToken = await upgrades.deployProxy(NativeToken, [
     addressesProvider.address,
     "leNFT Token",
@@ -262,7 +262,8 @@ let loadEnv = async function (isMainnetFork) {
     "NativeTokenVesting"
   );
   nativeTokenVesting = await NativeTokenVesting.deploy(
-    addressesProvider.address
+    addressesProvider.address,
+    "17500000000000000000000000" //17.5M Vesting Cap
   );
   await nativeTokenVesting.deployed();
 
@@ -299,6 +300,10 @@ let loadEnv = async function (isMainnetFork) {
     nativeToken.address
   );
   await setNativeTokenTx.wait();
+  const setNativeTokenVestingTx = await addressesProvider.setNativeTokenVesting(
+    nativeTokenVesting.address
+  );
+  await setNativeTokenVestingTx.wait();
   const setLoanCenterTx = await addressesProvider.setLoanCenter(
     loanCenter.address
   );
