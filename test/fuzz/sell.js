@@ -7,54 +7,36 @@ const { getPriceSig } = require("../helpers/getPriceSig.js");
 const { time } = require("@nomicfoundation/hardhat-network-helpers");
 const chance = new Chance();
 
-const nTests = 50;
-const nLoans = 5;
+const nTests = 100;
 
 describe("Sell fuzzing", function () {
   load.loadTest(false);
 
   before(async function () {
-    // Create a lending pool
-    const tx = await lendingMarket.createLendingPool(
+    // Create a new trading pool
+    const createPoolTx = await tradingPoolFactory.createTradingPool(
       testNFT.address,
-      wethAddress
+      weth.address
     );
-    await tx.wait();
-    // Get the lending pool address
-    lendingPoolAddress = await lendingMarket.getLendingPool(
-      testNFT.address,
-      wethAddress
+    createPoolTx.wait();
+
+    tradingPool = await ethers.getContractAt(
+      "TradingPool",
+      await tradingPoolFactory.getTradingPool(testNFT.address, weth.address)
     );
-    // Get the lending pool
-    lendingPool = await ethers.getContractAt("LendingPool", lendingPoolAddress);
-    // Deposit ETH into the lending pool
-    const depositTx = await wethGateway.depositLendingPool(
-      await lendingMarket.getLendingPool(testNFT.address, weth.address),
-      { value: "1000000000000000000" } // 1 ETH
-    );
-    await depositTx.wait();
 
-    priceSigArray = [];
-    for (var j = 0; j < nLoans; j++) {
-      const mintNFTTx = await testNFT.mint(owner.address);
-      await mintNFTTx.wait();
-
-      // Approve the lending pool to take the NFT
-      const approveTx = await testNFT.approve(lendingMarket.address, j);
-      await approveTx.wait();
-
-      // Get the price signature for the NFT
-      const priceSig = getPriceSig(
-        testNFT.address,
-        [j],
-        "800000",
-        (await time.latest()) + 3600,
-        nftOracle.address
-      );
-      priceSigArray.push(priceSig);
+    // Mint and approve 5 test NFTs
+    for (let i = 0; i < 5; i++) {
+      const mintTestNFTTx = await testNFT.mint(owner.address);
+      await mintTestNFTTx.wait();
     }
 
-    // Create a lending pool and initialize variables, etc...
+    const approveNFTTx = await testNFT.setApprovalForAll(
+      wethGateway.address,
+      true
+    );
+    await approveNFTTx.wait();
+
     // Take a snapshot before the tests start
     snapshotId = await ethers.provider.send("evm_snapshot", []);
   });
@@ -69,73 +51,95 @@ describe("Sell fuzzing", function () {
 
   for (let i = 0; i < nTests; i++) {
     it(`Fuzz test iteration ${i}`, async function () {
-      const loanAmounts = Array.from({ length: nLoans }, () =>
-        chance.natural({
-          min: 1,
-          max: 10000,
-        })
-      );
-      const borrowRates = [];
-      const creationTimes = [];
+      // Generate random values for the deposit arguments
+      const numNfts = chance.integer({ min: 1, max: 5 });
+      console.log("Num NFTs: " + numNfts);
+      var sellNftIds = [];
+      for (let j = 0; j < numNfts; j++) {
+        sellNftIds.push(j);
+      }
+      const initialPrice = chance.integer({ min: 100, max: 10000 });
+      // Exclude sell LPs (4) since this is a sell test and you cant sell against a sell LP
+      const lpType = chance.integer({ min: 0, max: 3 });
+      console.log("LP Type: " + lpType);
 
-      // Time between the loan being taken and the interest being checked
-      // 1 day to 1000 days
-      const timeIncrease = chance.integer({
-        min: 3600 * 24,
-        max: 3600 * 24 * 1000,
-      });
-
-      for (var j = 0; j < nLoans; j++) {
-        // Save the borrow rate before the loan
-        const borrowRate = await lendingPool.getBorrowRate();
-        borrowRates.push(borrowRate);
-
-        // Borrow wETH using the NFT as collateral
-        const borrowTx = await lendingMarket.borrow(
-          owner.address,
-          weth.address,
-          loanAmounts[j],
-          testNFT.address,
-          [j],
-          0,
-          priceSigArray[j].request,
-          priceSigArray[j]
-        );
-        await borrowTx.wait();
-
-        // Save the creation time of the loan
-        const creationTime = await time.latest();
-        creationTimes.push(creationTime);
+      // Generate a random fee and tokens ids for non buy LPs
+      var fee = 0;
+      if (lpType != 3) {
+        fee = chance.integer({ min: 0, max: 8000 });
       }
 
-      // Advance the blockchain by the time between the loan being taken and the interest being checked
-      await time.increase(timeIncrease);
+      const curveAddress = chance.bool()
+        ? linearCurve.address
+        : exponentialCurve.address;
 
-      // Check the interest accrued on each loan
-      for (let j = 0; j < nLoans; j++) {
-        const interestAccrued = await loanCenter.getLoanInterest(j);
-        const loanInterestTimestamp = await time.latest();
-        // Calculate the expected interest based on the borrow rate and the time elapsed
-        // Interest is calculated every 30 minutes
-        const loanInterestTimestampRounded = roundToNextHalfHour(
-          loanInterestTimestamp
+      var delta;
+      if (curveAddress == linearCurve.address) {
+        delta = chance.integer({ min: 0, max: 800 }); // between 0 and 800
+        console.log("Linear Curve");
+      } else {
+        delta = chance.integer({ min: 0, max: 8000 }); // between 0 and 80%
+        console.log("Exponential Curve");
+      }
+
+      const depositPromise = wethGateway.depositTradingPool(
+        tradingPool.address,
+        lpType,
+        [],
+        initialPrice,
+        curveAddress,
+        delta,
+        fee,
+        {
+          value: initialPrice * sellNftIds.length,
+        }
+      );
+
+      if (lpType != 3) {
+        if (curveAddress == linearCurve.address) {
+          if (
+            delta < initialPrice &&
+            (initialPrice - delta) * (10000 + fee) >
+              initialPrice * (10000 - fee)
+          ) {
+            // should not revert
+            await expect(depositPromise).to.not.be.reverted;
+            sellTokens();
+          } else {
+            await expect(depositPromise).to.be.revertedWith(
+              delta >= initialPrice
+                ? "LPC:VLPP:INVALID_DELTA"
+                : "LPC:VLPP:INVALID_FEE_DELTA_RATIO"
+            );
+          }
+        } else {
+          if (10000 * (10000 + fee) > (10000 + delta) * (10000 - fee)) {
+            // should not revert
+            await expect(depositPromise).to.not.be.reverted;
+            sellTokens();
+          } else {
+            await expect(depositPromise).to.be.revertedWith(
+              "EPC:VLPP:INVALID_FEE_DELTA_RATIO"
+            );
+          }
+        }
+      } else {
+        sellTokens();
+      }
+      async function sellTokens() {
+        // Sell the tokens
+        const sellTx = await wethGateway.sell(
+          tradingPool.address,
+          sellNftIds,
+          new Array(numNfts).fill(0),
+          0 // Will always be lower than the actual sell price
         );
-        const expectedInterest = BigNumber.from(loanAmounts[j])
-          .mul(borrowRates[j])
-          .mul(loanInterestTimestampRounded - creationTimes[j])
-          .div(10000)
-          .div(3600 * 24 * 365);
-        expect(interestAccrued).to.equal(expectedInterest);
+        await sellTx.wait();
+
+        // Check that the pool has all the NFTs
+        const nftBalances = await testNFT.balanceOf(tradingPool.address);
+        expect(nftBalances).to.equal(numNfts);
       }
     });
   }
 });
-
-// Rounds a time in seconds to the nearest half hour
-function roundToNextHalfHour(timeInSeconds) {
-  const halfHourInSeconds = 30 * 60;
-  return (
-    (Math.floor((timeInSeconds - 1) / halfHourInSeconds) + 1) *
-    halfHourInSeconds
-  );
-}
