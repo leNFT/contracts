@@ -6,6 +6,7 @@ import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {INativeToken} from "../interfaces/INativeToken.sol";
 
 /// @title NativeTokenVesting
 /// @notice Contract that allows to set vesting parameters for a specified account
@@ -112,7 +113,7 @@ contract NativeTokenVesting is Ownable {
         );
         _withdrawn[_msgSender()] += amount;
         _totalWithdrawn += amount;
-        IERC20(_addressProvider.getNativeToken()).safeTransfer(
+        INativeToken(_addressProvider.getNativeToken()).mintVestingTokens(
             _msgSender(),
             amount
         );

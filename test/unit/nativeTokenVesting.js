@@ -8,12 +8,6 @@ describe("NativeTokenVesting", () => {
 
   // Feed LE tokens to the vesting contract
   before(async () => {
-    const mintTokensTx = await nativeToken.mint(
-      nativeTokenVesting.address,
-      ethers.utils.parseEther("1000")
-    );
-    await mintTokensTx.wait();
-
     // Take a snapshot before the tests start
     snapshotId = await ethers.provider.send("evm_snapshot", []);
   });

@@ -7,7 +7,8 @@ const { getPriceSig } = require("../helpers/getPriceSig.js");
 const { time } = require("@nomicfoundation/hardhat-network-helpers");
 const chance = new Chance();
 
-const nTests = 20;
+const nTests = 100;
+var counter = 0;
 
 describe("Buy fuzzing", function () {
   load.loadTest(false);
