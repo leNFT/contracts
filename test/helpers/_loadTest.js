@@ -222,7 +222,7 @@ let loadEnv = async function (isMainnetFork) {
 
   // Deploy TokenOracle contract
   const TokenOracle = await ethers.getContractFactory("TokenOracle");
-  const tokenOracle = await TokenOracle.deploy();
+  tokenOracle = await TokenOracle.deploy();
   await tokenOracle.deployed();
 
   // Deploy  Swap Router

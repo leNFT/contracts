@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const load = require("../helpers/_loadTest.js");
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("Trading Gauge", () => {
   load.loadTest(false);
@@ -105,10 +106,9 @@ describe("Trading Gauge", () => {
     await voteForGaugeTx.wait();
   });
   it("Should claim rewards from the gauge", async function () {
-    // 2 hours pass
-    await ethers.provider.send("evm_increaseTime", [3600 * 12]);
-    // Mine a new block
-    await ethers.provider.send("evm_mine", []);
+    // Let 2 epochs pass
+    const epochPeriod = await votingEscrow.getEpochPeriod();
+    await time.increase(epochPeriod.mul(2).toNumber());
 
     console.log("CLAIMING REWARDS");
     // Claim rewards from gauge
