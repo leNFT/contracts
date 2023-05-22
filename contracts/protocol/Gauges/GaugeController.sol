@@ -9,7 +9,6 @@ import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC7
 import {IGaugeController} from "../../interfaces/IGaugeController.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
-
 import {IGauge} from "../../interfaces/IGauge.sol";
 
 /// @title Gauge Controller
@@ -44,7 +43,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     mapping(address => bool) private _isGauge;
     mapping(address => address) private _liquidityPoolToGauge;
     uint256 private _initialRewards;
-    uint256 private _lpMaturityPeriod;
+    uint256 private _lpMaturityPeriod; // in seconds
 
     using ERC165CheckerUpgradeable for address;
 

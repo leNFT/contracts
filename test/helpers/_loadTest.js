@@ -162,7 +162,7 @@ let loadEnv = async function (isMainnetFork) {
   gaugeController = await upgrades.deployProxy(GaugeController, [
     addressesProvider.address,
     "280000000000000000000", // Initial epoch rewards
-    6, // LP Maturation Period (in epochs)
+    6 * 7 * 24 * 3600, // LP Maturation Period in seconds (set to 6 weeks)
   ]);
 
   console.log("Deployed GaugeController");

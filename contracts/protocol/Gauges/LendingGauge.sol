@@ -217,16 +217,15 @@ contract LendingGauge is IGauge, ERC165 {
     function _maturityMultiplier(
         uint256 timeInterval
     ) internal view returns (uint256) {
-        uint256 lpMaturityTime = IGaugeController(
+        uint256 lpMaturityPeriod = IGaugeController(
             _addressProvider.getGaugeController()
-        ).getLPMaturityPeriod() *
-            IVotingEscrow(_addressProvider.getVotingEscrow()).getEpochPeriod();
-        if (timeInterval > lpMaturityTime) {
+        ).getLPMaturityPeriod();
+        if (timeInterval > lpMaturityPeriod) {
             return PercentageMath.PERCENTAGE_FACTOR;
         } else {
             return
                 (PercentageMath.PERCENTAGE_FACTOR * timeInterval) /
-                lpMaturityTime;
+                lpMaturityPeriod;
         }
     }
 
