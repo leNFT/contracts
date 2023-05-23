@@ -79,10 +79,9 @@ describe("Borrow fuzzing", function () {
         priceSig
       );
 
-      const loanLTV = (borrowAmount / price) * 10000;
-      console.log("Loan LTV: " + loanLTV);
+      const maxAmount = Math.round((price * maxLTV.toNumber()) / 10000);
 
-      if (loanLTV <= maxLTV) {
+      if (borrowAmount <= maxAmount) {
         // should not revert if borrowAmount/price <= maxLTV
         await expect(borrowPromise).to.not.be.reverted;
       } else {
