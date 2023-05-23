@@ -79,10 +79,10 @@ describe("LendingGauge", () => {
     await depositLendingGaugeTx.wait();
 
     // THe balance and token supply should be 1
-    expect(await lendingGauge.balanceOf(owner.address)).to.equal(
+    expect(await lendingGauge.getBalanceOf(owner.address)).to.equal(
       ethers.utils.parseEther("1")
     );
-    expect(await lendingGauge.totalSupply()).to.equal(
+    expect(await lendingGauge.getTotalSupply()).to.equal(
       ethers.utils.parseEther("1")
     );
   });
@@ -120,7 +120,7 @@ describe("LendingGauge", () => {
     await depositLendingGaugeTx.wait();
 
     // THe balance and token supply should be 1
-    expect(await lendingGauge.balanceOf(owner.address)).to.equal(
+    expect(await lendingGauge.getBalanceOf(owner.address)).to.equal(
       ethers.utils.parseEther("1")
     );
 
@@ -131,10 +131,10 @@ describe("LendingGauge", () => {
     await withdrawLendingGaugeTx.wait();
 
     // The balance and token supply should be 0
-    expect(await lendingGauge.balanceOf(owner.address)).to.equal(
+    expect(await lendingGauge.getBalanceOf(owner.address)).to.equal(
       ethers.utils.parseEther("0")
     );
-    expect(await lendingGauge.totalSupply()).to.equal(
+    expect(await lendingGauge.getTotalSupply()).to.equal(
       ethers.utils.parseEther("0")
     );
   });
@@ -171,7 +171,7 @@ describe("LendingGauge", () => {
     );
     await depositLendingGaugeTx.wait();
 
-    expect(await lendingGauge.userBoost(owner.address)).to.equal(20000);
+    expect(await lendingGauge.getUserBoost(owner.address)).to.equal(20000);
   });
   it("Should get the user maturity", async function () {
     // Deposit into the lending pool
@@ -211,9 +211,9 @@ describe("LendingGauge", () => {
     // Let 3 epochs pass
     await time.increase(epochPeriod.mul(3).toNumber());
 
-    expect(await lendingGauge.userMaturityMultiplier(owner.address)).to.equal(
-      5000
-    );
+    expect(
+      await lendingGauge.getUserMaturityMultiplier(owner.address)
+    ).to.equal(5000);
   });
   it("Should claim rewards", async function () {
     // Deposit into the lending pool
@@ -349,7 +349,7 @@ describe("LendingGauge", () => {
     // Let 30 days pass
     await time.increase(3600 * 24 * 30);
 
-    expect(Number(await lendingGauge.userBoost(owner.address)))
+    expect(Number(await lendingGauge.getUserBoost(owner.address)))
       .to.greaterThan(10000)
       .and.lessThan(20000);
 
@@ -359,6 +359,6 @@ describe("LendingGauge", () => {
 
     // The boost should be updated
     console.log("Get user boost");
-    expect(await lendingGauge.userBoost(owner.address)).to.equal(10000);
+    expect(await lendingGauge.getUserBoost(owner.address)).to.equal(10000);
   });
 });

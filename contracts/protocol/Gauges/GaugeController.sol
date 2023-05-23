@@ -96,7 +96,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             "GC:AG:INVALID_GAUGE"
         );
 
-        address liquidityPool = IGauge(gauge).lpToken();
+        address liquidityPool = IGauge(gauge).getLPToken();
         _liquidityPoolToGauge[liquidityPool] = gauge;
         _isGauge[gauge] = true;
 
@@ -107,7 +107,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @dev Only the contract owner can call this method.
     /// @param gauge The address of the gauge to be removed
     function removeGauge(address gauge) external onlyOwner validGauge(gauge) {
-        address liquidityPool = IGauge(gauge).lpToken();
+        address liquidityPool = IGauge(gauge).getLPToken();
         if (_liquidityPoolToGauge[liquidityPool] == gauge) {
             delete _liquidityPoolToGauge[liquidityPool];
         }

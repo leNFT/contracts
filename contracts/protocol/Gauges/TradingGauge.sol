@@ -51,7 +51,7 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
 
     /// @notice Returns the address of the LP token supported by the gauge
     /// @return The address of the LP token
-    function lpToken() external view returns (address) {
+    function getLPToken() external view returns (address) {
         return _lpToken;
     }
 
@@ -381,20 +381,20 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
     /// @notice Returns the value of a user's liquidity positions.
     /// @param user The address of the user whose liquidity positions will be valued.
     /// @return The total value of the user's liquidity positions.
-    function userLPValue(address user) external view returns (uint256) {
+    function getUserLPValue(address user) external view returns (uint256) {
         return _userLPValue[user];
     }
 
     /// @notice Returns the total value of all liquidity positions in the contract.
     /// @return The total value of all liquidity positions.
-    function totalLPValue() external view returns (uint256) {
+    function getTotalLPValue() external view returns (uint256) {
         return _totalLPValue;
     }
 
     /// @notice Returns the boost multiplier for a user's liquidity positions.
     /// @param user The address of the user whose boost multiplier will be returned.
     /// @return The boost multiplier for the user's liquidity positions.
-    function userBoost(address user) external view returns (uint256) {
+    function getUserBoost(address user) external view returns (uint256) {
         if (_userLPValue[user] == 0) {
             return 0;
         }
@@ -409,7 +409,7 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
     /// @notice Returns the current maturity boost for a user
     /// @param user The address of the user whose maturity boost will be returned.
     /// @return The current maturity boost for the user.
-    function userMaturityMultiplier(
+    function getUserMaturityMultiplier(
         address user
     ) external view returns (uint256) {
         uint256 workingBalanceHistoryLength = _workingBalanceHistory[user]
@@ -431,7 +431,7 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
     /// @param user The address of the user whose list of liquidity positions will be accessed.
     /// @param index The index of the liquidity position to be returned.
     /// @return The ID of the liquidity position at the specified index.
-    function lpOfOwnerByIndex(
+    function getLPOfOwnerByIndex(
         address user,
         uint256 index
     ) external view returns (uint256) {
@@ -441,13 +441,13 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
     /// @notice Retrieves the number of staked liquidity positions a user has staked.
     /// @param user Address of the account to retrieve balance from.
     /// @return Returns the balance of the specified address.
-    function balanceOf(address user) external view returns (uint256) {
+    function getBalanceOf(address user) external view returns (uint256) {
         return _balanceOf[user];
     }
 
     /// @notice Retrieves the total supply of staked LP's.
     /// @return Returns the total supply of staked LP's.
-    function totalSupply() external view returns (uint256) {
+    function getTotalSupply() external view returns (uint256) {
         return _totalSupply;
     }
 

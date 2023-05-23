@@ -45,7 +45,7 @@ describe("Trading Pool & Gauge", function () {
   });
 
   it("The trading gauge's lp token should be set to the trading pool", async function () {
-    expect(await tradingGauge.lpToken()).to.equal(tradingPool.address);
+    expect(await tradingGauge.getLPToken()).to.equal(tradingPool.address);
   });
   it("The trading gauge's total supply should be its LP token balance", async function () {
     const depositWETHTx = await weth.deposit({
@@ -90,7 +90,7 @@ describe("Trading Pool & Gauge", function () {
     await depositTradingGaugeTx.wait();
 
     // The total supply should be the trading gauge's balance
-    expect(await tradingGauge.totalSupply()).to.equal(
+    expect(await tradingGauge.getTotalSupply()).to.equal(
       await tradingPool.balanceOf(tradingGauge.address)
     );
   });

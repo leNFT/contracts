@@ -41,20 +41,20 @@ contract LendingGauge is IGauge, ERC165 {
 
     /// @notice Returns the address of the LendingPool token
     /// @return The address of the LendingPool token
-    function lpToken() external view returns (address) {
+    function getLPToken() external view returns (address) {
         return _lpToken;
     }
 
     /// @notice Returns the total supply of the LendingPool token in the contract
     /// @return The total supply of the LendingPool token in the contract
-    function totalSupply() public view returns (uint256) {
+    function getTotalSupply() public view returns (uint256) {
         return IERC20(_lpToken).balanceOf(address(this));
     }
 
     /// @notice Returns the balance of staked LP tokens for a given user
     /// @param user The address of the user to check balance for
-    /// @return The balance of the user
-    function balanceOf(address user) external view returns (uint256) {
+    /// @return The balance of the userget
+    function getBalanceOf(address user) external view returns (uint256) {
         return _balanceOf[user];
     }
 
@@ -257,7 +257,7 @@ contract LendingGauge is IGauge, ERC165 {
                     _balanceOf[user] +
                     (PercentageMath.HALF_PERCENTAGE_FACTOR *
                         userVotingBalance *
-                        totalSupply()) /
+                        getTotalSupply()) /
                     totalVotingSupply) / PercentageMath.PERCENTAGE_FACTOR
             );
         }
@@ -286,7 +286,7 @@ contract LendingGauge is IGauge, ERC165 {
     /// @notice Computes the boost of a user based on their working balance and their balance.
     /// @param user The address of the user.
     /// @return The boost of the user.
-    function userBoost(address user) external view returns (uint256) {
+    function getUserBoost(address user) external view returns (uint256) {
         if (_balanceOf[user] == 0) {
             return 0;
         }
@@ -302,7 +302,7 @@ contract LendingGauge is IGauge, ERC165 {
     /// @notice Returns the current maturity boost for a user
     /// @param user The address of the user whose maturity boost will be returned.
     /// @return The current maturity boost for the user.
-    function userMaturityMultiplier(
+    function getUserMaturityMultiplier(
         address user
     ) external view returns (uint256) {
         uint256 workingBalanceHistoryLength = _workingBalanceHistory[user]

@@ -119,7 +119,7 @@ describe("Voting & Gauge Rewards", function () {
     console.log("Gauge Rewards", gaugeRewards.toString());
     const claimableRewards = await tradingGauge.callStatic.claim();
     console.log("Claimable Rewards", claimableRewards.toString());
-    const userMaturityMultiplier = await tradingGauge.userMaturityMultiplier(
+    const userMaturityMultiplier = await tradingGauge.getUserMaturityMultiplier(
       owner.address
     );
     console.log("User Maturity Multiplier", userMaturityMultiplier.toString());
@@ -302,13 +302,13 @@ describe("Voting & Gauge Rewards", function () {
     const lendingClaimableRewards = await lendingGauge.callStatic.claim();
     console.log("Lending laimable Rewards", lendingClaimableRewards.toString());
     const userTradingMaturityMultiplier =
-      await tradingGauge.userMaturityMultiplier(owner.address);
+      await tradingGauge.getUserMaturityMultiplier(owner.address);
     console.log(
       "User Trading Maturity Multiplier",
       userTradingMaturityMultiplier.toString()
     );
     const userLendingMaturityMultiplier =
-      await lendingGauge.userMaturityMultiplier(owner.address);
+      await lendingGauge.getUserMaturityMultiplier(owner.address);
     console.log(
       "User Lending Maturity Multiplier",
       userLendingMaturityMultiplier.toString()

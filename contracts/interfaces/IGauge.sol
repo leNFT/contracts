@@ -2,5 +2,5 @@
 pragma solidity 0.8.19;
 
 interface IGauge {
-    function lpToken() external view returns (address);
+    function getLPToken() external view returns (address);
 }

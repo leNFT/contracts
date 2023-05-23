@@ -93,16 +93,16 @@ describe("TradingGauge", () => {
     console.log(lpValue.toString());
 
     // THe user value should be the same a the lp he deposited
-    expect(await tradingGauge.userLPValue(owner.address)).to.equal(lpValue);
+    expect(await tradingGauge.getUserLPValue(owner.address)).to.equal(lpValue);
 
     // The total value should be the same a the lp he deposited
-    expect(await tradingGauge.totalLPValue()).to.equal(lpValue);
+    expect(await tradingGauge.getTotalLPValue()).to.equal(lpValue);
 
     // The trading gauge should own the liquidity pair NFT
     expect(await tradingPool.ownerOf(0)).to.equal(tradingGauge.address);
 
     // THe balance for the user should be 1
-    expect(await tradingGauge.balanceOf(owner.address)).to.equal(1);
+    expect(await tradingGauge.getBalanceOf(owner.address)).to.equal(1);
   });
   it("Should withdraw from  a trading gauge", async function () {
     const depositWETHTx = await weth.deposit({
@@ -151,8 +151,8 @@ describe("TradingGauge", () => {
     await withdrawTradingGaugeTx.wait();
 
     // The balance and token supply should be 0
-    expect(await tradingGauge.userLPValue(owner.address)).to.equal(0);
-    expect(await tradingGauge.totalSupply()).to.equal(
+    expect(await tradingGauge.getUserLPValue(owner.address)).to.equal(0);
+    expect(await tradingGauge.getTotalSupply()).to.equal(
       ethers.utils.parseEther("0")
     );
 
@@ -160,7 +160,7 @@ describe("TradingGauge", () => {
     expect(await tradingPool.ownerOf(0)).to.equal(owner.address);
 
     // THe balance for the user should be 0
-    expect(await tradingGauge.balanceOf(owner.address)).to.equal(0);
+    expect(await tradingGauge.getBalanceOf(owner.address)).to.equal(0);
   });
   it("Should batch withdraw from  a trading gauge", async function () {
     const depositWETHTx = await weth.deposit({
@@ -233,8 +233,8 @@ describe("TradingGauge", () => {
     await withdrawBatchTradingGaugeTx.wait();
 
     // The balance and token supply should be 0
-    expect(await tradingGauge.userLPValue(owner.address)).to.equal(0);
-    expect(await tradingGauge.totalSupply()).to.equal(
+    expect(await tradingGauge.getUserLPValue(owner.address)).to.equal(0);
+    expect(await tradingGauge.getTotalSupply()).to.equal(
       ethers.utils.parseEther("0")
     );
 
@@ -243,7 +243,7 @@ describe("TradingGauge", () => {
     expect(await tradingPool.ownerOf(1)).to.equal(owner.address);
 
     // THe balance for the user should be 0
-    expect(await tradingGauge.balanceOf(owner.address)).to.equal(0);
+    expect(await tradingGauge.getBalanceOf(owner.address)).to.equal(0);
   });
   it("Should get the user boost", async function () {
     const depositWETHTx = await weth.deposit({
@@ -287,7 +287,7 @@ describe("TradingGauge", () => {
     const depositTradingGaugeTx = await tradingGauge.deposit(0);
     await depositTradingGaugeTx.wait();
 
-    expect(await tradingGauge.userBoost(owner.address)).to.equal(20000);
+    expect(await tradingGauge.getUserBoost(owner.address)).to.equal(20000);
   });
   it("Should get the user maturity", async function () {
     const depositWETHTx = await weth.deposit({
@@ -336,9 +336,9 @@ describe("TradingGauge", () => {
     // Let 3 epochs pass
     await time.increase(epochPeriod.mul(3).toNumber());
 
-    expect(await tradingGauge.userMaturityMultiplier(owner.address)).to.equal(
-      5000
-    );
+    expect(
+      await tradingGauge.getUserMaturityMultiplier(owner.address)
+    ).to.equal(5000);
   });
   it("Should claim rewards", async function () {
     const depositWETHTx = await weth.deposit({
@@ -491,7 +491,7 @@ describe("TradingGauge", () => {
     // Let 30 days pass
     await time.increase(3600 * 24 * 30);
 
-    expect(Number(await tradingGauge.userBoost(owner.address)))
+    expect(Number(await tradingGauge.getUserBoost(owner.address)))
       .to.be.greaterThan(10000)
       .and.lessThan(20000);
 
@@ -501,6 +501,6 @@ describe("TradingGauge", () => {
 
     // The boost should be updated
     console.log("Get user boost");
-    expect(await tradingGauge.userBoost(owner.address)).to.equal(10000);
+    expect(await tradingGauge.getUserBoost(owner.address)).to.equal(10000);
   });
 });

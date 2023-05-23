@@ -45,7 +45,7 @@ describe("Lending Pool & Gauge", function () {
   });
 
   it("The lending gauge's lp token should be set to the lending pool", async function () {
-    expect(await lendingGauge.lpToken()).to.equal(lendingPool.address);
+    expect(await lendingGauge.getLPToken()).to.equal(lendingPool.address);
   });
   it("The lending gauge's total supply should be its LP token balance", async function () {
     // Deposit into the lending pool
@@ -83,9 +83,9 @@ describe("Lending Pool & Gauge", function () {
 
     // THe balance and token supply should be 3
     expect(await lendingPool.balanceOf(lendingGauge.address)).to.equal(
-      await lendingGauge.totalSupply()
+      await lendingGauge.getTotalSupply()
     );
-    expect(await lendingGauge.totalSupply()).to.equal(
+    expect(await lendingGauge.getTotalSupply()).to.equal(
       ethers.utils.parseEther("3")
     );
   });
@@ -124,7 +124,7 @@ describe("Lending Pool & Gauge", function () {
     await depositLendingGaugeTx.wait();
 
     // THe balance and token supply should be 1
-    expect(await lendingGauge.balanceOf(owner.address)).to.equal(
+    expect(await lendingGauge.getBalanceOf(owner.address)).to.equal(
       ethers.utils.parseEther("1")
     );
 
