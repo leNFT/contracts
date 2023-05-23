@@ -211,11 +211,6 @@ contract Bribes is
             return 0;
         }
 
-        // Find epoch we're in
-        uint256 currentEpoch = IVotingEscrow(votingEscrow).getEpoch(
-            block.timestamp
-        );
-
         // Bring the next claimable epoch up to date if needed
         if (
             _voteNextClaimableEpoch[token][gauge][tokenId] <=
@@ -226,10 +221,15 @@ contract Bribes is
                 1;
         }
 
+        // Find epoch we're in
+        uint256 currentEpoch = IVotingEscrow(votingEscrow).getEpoch(
+            block.timestamp
+        );
+
         // Iterate over a max of 50 epochs
-        uint256 lockWeightAtEpoch;
         uint256 epoch;
         uint256 gaugeWeightAtEpoch;
+
         for (uint i = 0; i < 50; i++) {
             // Break if we're at the current epoch or higher
             epoch = _voteNextClaimableEpoch[token][gauge][tokenId];
@@ -239,15 +239,14 @@ contract Bribes is
 
             gaugeWeightAtEpoch = gaugeController.getGaugeWeightAt(gauge, epoch);
             if (gaugeWeightAtEpoch > 0) {
-                lockWeightAtEpoch =
-                    lockLastPoint.bias -
-                    (lockLastPoint.slope *
-                        (IVotingEscrow(votingEscrow).getEpochTimestamp(epoch) -
-                            lockLastPoint.timestamp));
-
                 // Increment amount to claim
                 amountToClaim +=
-                    (_gaugeBribes[token][gauge][epoch] * lockWeightAtEpoch) /
+                    (_gaugeBribes[token][gauge][epoch] *
+                        (lockLastPoint.bias -
+                            (lockLastPoint.slope *
+                                (IVotingEscrow(votingEscrow).getEpochTimestamp(
+                                    epoch
+                                ) - lockLastPoint.timestamp)))) /
                     gaugeWeightAtEpoch;
             }
 
