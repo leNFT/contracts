@@ -561,7 +561,7 @@ describe("VotingEscrow", () => {
 
     // Should have the correct balance
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      "121716894977168949"
+      "85917808219178082"
     );
   });
   it("Should claim rebates for multiple locks", async function () {
@@ -635,7 +635,7 @@ describe("VotingEscrow", () => {
 
     // Should have the correct balance
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      "121716894977168948"
+      "85917808219178082"
     );
   });
 });

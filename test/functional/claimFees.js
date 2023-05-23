@@ -1,5 +1,6 @@
 const { expect, assert } = require("chai");
 const load = require("../helpers/_loadTest.js");
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("Fee Distributor ", () => {
   load.loadTest(false);
@@ -32,9 +33,8 @@ describe("Fee Distributor ", () => {
   });
 
   it("Should deposit into the fee distributor contract", async function () {
-    await ethers.provider.send("evm_increaseTime", [6 * 3600]);
-    // Mine a new block
-    await ethers.provider.send("evm_mine", []);
+    const epochPeriod = await votingEscrow.getEpochPeriod();
+    await time.increase(epochPeriod.toNumber());
 
     // Mint weth tokens to the fee distributor contract
     const mintNativeTokenTx = await nativeToken.mint(
@@ -57,9 +57,8 @@ describe("Fee Distributor ", () => {
     );
   });
   it("Should be able to claim the tokens after the epoch is over", async function () {
-    await ethers.provider.send("evm_increaseTime", [24 * 3600]);
-    // Mine a new block
-    await ethers.provider.send("evm_mine", []);
+    const epochPeriod = await votingEscrow.getEpochPeriod();
+    await time.increase(epochPeriod.toNumber());
 
     // Claim fees
     const claimFeesTx = await feeDistributor.claim(nativeToken.address, 0);

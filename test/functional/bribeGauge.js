@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const load = require("../helpers/_loadTest.js");
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("Bribes", () => {
   load.loadTest(false);
@@ -111,10 +112,9 @@ describe("Bribes", () => {
     );
   });
   it("Should claim the bribe", async function () {
-    // 2 day pass
-    await ethers.provider.send("evm_increaseTime", [56400 * 2]);
-    // Mine a new block
-    await ethers.provider.send("evm_mine", []);
+    console.log("CLAIMING BRIBE");
+    const epochPeriod = await votingEscrow.getEpochPeriod();
+    await time.increase(epochPeriod.toNumber());
 
     // Claim rewards from bribes
     const claimBribesTx = await bribes.claim(weth.address, gauge.address, 0);
