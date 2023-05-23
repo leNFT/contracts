@@ -338,9 +338,7 @@ contract TradingPool is
             require(lp.lpType != DataTypes.LPType.Buy, "TP:B:IS_BUY_LP");
 
             fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
-            protocolFee =
-                (fee * protocolFeePercentage) /
-                PercentageMath.PERCENTAGE_FACTOR;
+            protocolFee = PercentageMath.percentMul(fee, protocolFeePercentage);
 
             // Remove nft from liquidity pair nft list
             _liquidityPairs[lpIndex].nftIds[_nftToLp[nftIds[i]].index] = lp
@@ -383,8 +381,7 @@ contract TradingPool is
         // Send protocol fee to protocol fee distributor
         IERC20(_token).safeTransfer(
             _addressProvider.getFeeDistributor(),
-            (totalFee * protocolFeePercentage) /
-                PercentageMath.PERCENTAGE_FACTOR
+            PercentageMath.percentMul(totalFee, protocolFeePercentage)
         );
         IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
             _token
@@ -422,12 +419,11 @@ contract TradingPool is
             );
         }
 
-        uint256 fee;
         uint256 totalFee;
+        uint256 fee;
         uint256 protocolFee;
         DataTypes.LiquidityPair memory lp;
         uint256 lpIndex;
-
         // Transfer the NFTs to the pool
         for (uint i = 0; i < nftIds.length; i++) {
             // Check if the LP exists
@@ -448,12 +444,12 @@ contract TradingPool is
             require(lp.lpType != DataTypes.LPType.Sell, "TP:S:IS_SELL_LP");
 
             fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
-            protocolFee =
-                (fee *
-                    ITradingPoolFactory(
-                        _addressProvider.getTradingPoolFactory()
-                    ).getProtocolFeePercentage()) /
-                PercentageMath.PERCENTAGE_FACTOR;
+            protocolFee = PercentageMath.percentMul(
+                fee,
+                ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
+                    .getProtocolFeePercentage()
+            );
+
             require(
                 lp.tokenAmount >= lp.spotPrice - fee + protocolFee,
                 "TP:S:INSUFFICIENT_TOKENS_IN_LP"
@@ -490,10 +486,11 @@ contract TradingPool is
         // Send protocol fee to protocol fee distributor
         IERC20(_token).safeTransfer(
             _addressProvider.getFeeDistributor(),
-            (totalFee *
+            PercentageMath.percentMul(
+                totalFee,
                 ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                    .getProtocolFeePercentage()) /
-                PercentageMath.PERCENTAGE_FACTOR
+                    .getProtocolFeePercentage()
+            )
         );
         IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
             _token

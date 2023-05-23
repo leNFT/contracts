@@ -445,7 +445,7 @@ describe("TradingPool", function () {
     const lp = await tradingPool.getLP(0);
     expect(lp.nftIds).to.deep.equal([BigNumber.from(0)]);
     expect(lp.tokenAmount).to.equal("52250000000000");
-    expect(lp.spotPrice).to.equal("49751243781094");
+    expect(lp.spotPrice).to.equal("49751243781095");
   });
   it("Should be able to sell multiple tokens", async function () {
     // Create a new trading pool
@@ -507,8 +507,8 @@ describe("TradingPool", function () {
     // Get the lp
     const lp = await tradingPool.getLP(0);
     expect(lp.nftIds).to.deep.equal([BigNumber.from(0), BigNumber.from(1)]);
-    expect(lp.tokenAmount).to.equal("4737562189055");
-    expect(lp.spotPrice).to.equal("49503725155317");
+    expect(lp.tokenAmount).to.equal("4737562189054");
+    expect(lp.spotPrice).to.equal("49503725155318");
   });
   it("Should be able to add liquidity to a paused pool", async function () {
     // Create a new trading pool

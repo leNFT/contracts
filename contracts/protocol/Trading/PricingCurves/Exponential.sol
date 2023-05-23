@@ -18,8 +18,10 @@ contract ExponentialPriceCurve is IPricingCurve, ERC165 {
         uint256
     ) external pure override returns (uint256) {
         return
-            ((PercentageMath.PERCENTAGE_FACTOR + delta) * price) /
-            PercentageMath.PERCENTAGE_FACTOR;
+            PercentageMath.percentMul(
+                price,
+                PercentageMath.PERCENTAGE_FACTOR + delta
+            );
     }
 
     /// @notice Calculates the price after selling 1 token
@@ -32,8 +34,10 @@ contract ExponentialPriceCurve is IPricingCurve, ERC165 {
         uint256
     ) external pure override returns (uint256) {
         return
-            (PercentageMath.PERCENTAGE_FACTOR * price) /
-            (PercentageMath.PERCENTAGE_FACTOR + delta);
+            PercentageMath.percentDiv(
+                price,
+                PercentageMath.PERCENTAGE_FACTOR + delta
+            );
     }
 
     function validateLpParameters(

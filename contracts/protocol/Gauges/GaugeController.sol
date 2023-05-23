@@ -392,14 +392,17 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         DataTypes.Point memory newGaugeVoteWeight;
 
         // Get the updated gauge vote weight
-        newGaugeVoteWeight.bias =
-            ((lockLastPoint.bias -
+        newGaugeVoteWeight.bias = PercentageMath.percentMul(
+            lockLastPoint.bias -
                 (lockLastPoint.slope *
-                    (block.timestamp - lockLastPoint.timestamp))) * ratio) /
-            PercentageMath.PERCENTAGE_FACTOR;
-        newGaugeVoteWeight.slope =
-            (lockLastPoint.slope * ratio) /
-            PercentageMath.PERCENTAGE_FACTOR;
+                    (block.timestamp - lockLastPoint.timestamp)),
+            ratio
+        );
+        newGaugeVoteWeight.slope = PercentageMath.percentMul(
+            lockLastPoint.slope,
+            ratio
+        );
+
         newGaugeVoteWeight.timestamp = block.timestamp;
 
         // If we already have valid votes in this gauge

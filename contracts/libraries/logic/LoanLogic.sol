@@ -5,6 +5,8 @@ import {DataTypes} from "../types/DataTypes.sol";
 import {PercentageMath} from "../utils/PercentageMath.sol";
 import {SafeCast} from "../utils/SafeCast.sol";
 
+/// @title LoanLogic library
+/// @notice Defines the logic for a loan data type
 library LoanLogic {
     function init(
         DataTypes.LoanData storage loanData,

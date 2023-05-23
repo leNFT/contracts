@@ -237,12 +237,13 @@ library ValidationLogic {
         // Check if bid is large enough
         require(
             (assetETHPrice * params.bid) / pricePrecision >=
-                (collateralETHPrice *
+                PercentageMath.percentMul(
+                    collateralETHPrice,
                     (PercentageMath.PERCENTAGE_FACTOR -
                         ILendingPool(loanPool)
                             .getPoolConfig()
-                            .maxLiquidatorDiscount)) /
-                    PercentageMath.PERCENTAGE_FACTOR,
+                            .maxLiquidatorDiscount)
+                ),
             "VL:VCLA:BID_TOO_LOW"
         );
     }

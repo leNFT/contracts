@@ -88,6 +88,7 @@ contract TradingPoolHelpers {
             uint256 fee;
             uint256 totalFee;
             uint256 protocolFee;
+
             for (uint i = 0; i < nftIds.length; i++) {
                 lpIndex = ITradingPool(tradingPool).nftToLp(nftIds[i]);
                 // Find the liquidity pair in the array
@@ -98,16 +99,13 @@ contract TradingPoolHelpers {
                     }
                 }
 
-                fee =
-                    (liquidityPairsData[lpDataIndex].spotPrice *
-                        liquidityPairsData[lpDataIndex].fee) /
-                    PercentageMath.PERCENTAGE_FACTOR;
-                protocolFee =
-                    (fee *
-                        ITradingPoolFactory(
-                            _addressesProvider.getTradingPoolFactory()
-                        ).getProtocolFeePercentage()) /
-                    PercentageMath.PERCENTAGE_FACTOR;
+                fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
+                protocolFee = PercentageMath.percentMul(
+                    fee,
+                    ITradingPoolFactory(
+                        _addressesProvider.getTradingPoolFactory()
+                    ).getProtocolFeePercentage()
+                );
 
                 liquidityPairsData[lpDataIndex]
                     .tokenAmount += (liquidityPairsData[lpDataIndex].spotPrice +
@@ -205,6 +203,7 @@ contract TradingPoolHelpers {
             uint256 fee;
             uint256 totalFee;
             uint256 protocolFee;
+
             for (uint i = 0; i < nftIds.length; i++) {
                 // Check if the LP exists
                 lpIndex = liquidityPairs[i];
@@ -217,16 +216,13 @@ contract TradingPoolHelpers {
                     }
                 }
 
-                fee =
-                    (liquidityPairsData[lpDataIndex].spotPrice *
-                        liquidityPairsData[lpDataIndex].fee) /
-                    PercentageMath.PERCENTAGE_FACTOR;
-                protocolFee =
-                    (fee *
-                        ITradingPoolFactory(
-                            _addressesProvider.getTradingPoolFactory()
-                        ).getProtocolFeePercentage()) /
-                    PercentageMath.PERCENTAGE_FACTOR;
+                fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
+                protocolFee = PercentageMath.percentMul(
+                    fee,
+                    ITradingPoolFactory(
+                        _addressesProvider.getTradingPoolFactory()
+                    ).getProtocolFeePercentage()
+                );
 
                 require(
                     liquidityPairsData[lpDataIndex].tokenAmount >=
@@ -288,12 +284,11 @@ contract TradingPoolHelpers {
                 IERC721(pool).ownerOf(i) != address(0) &&
                 lp.lpType != DataTypes.LPType.Sell
             ) {
-                fee =
-                    (lp.spotPrice * lp.fee) /
-                    PercentageMath.PERCENTAGE_FACTOR;
-                protocolFee =
-                    (fee * protocolFeePercentage) /
-                    PercentageMath.PERCENTAGE_FACTOR;
+                fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
+                protocolFee = PercentageMath.percentMul(
+                    fee,
+                    protocolFeePercentage
+                );
 
                 // Check if the amount is enough to buy the asset
                 if (lp.tokenAmount >= lp.spotPrice - fee + protocolFee) {
@@ -355,12 +350,8 @@ contract TradingPoolHelpers {
                 lp.delta,
                 lp.fee
             );
-            fee =
-                (nextSpotPrice * sellLiquidityPairsData[x].fee) /
-                PercentageMath.PERCENTAGE_FACTOR;
-            protocolFee =
-                (fee * protocolFeePercentage) /
-                PercentageMath.PERCENTAGE_FACTOR;
+            fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
+            protocolFee = PercentageMath.percentMul(fee, protocolFeePercentage);
 
             // Replace the worst liquidity pair with the current one
             if (

@@ -3,6 +3,8 @@ pragma solidity 0.8.19;
 
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 
+/// @title DataTypes library
+/// @notice Defines the data types used in the protocol
 library DataTypes {
     /// @notice Struct to store the price data of an array of assets from the same collection
     /// @param collection The address of the collection

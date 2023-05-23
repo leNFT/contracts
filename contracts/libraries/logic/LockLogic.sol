@@ -3,6 +3,8 @@ pragma solidity 0.8.19;
 
 import {DataTypes} from "../types/DataTypes.sol";
 
+/// @title LockLogic library
+/// @notice Defines the logic for a locked balance data type
 library LockLogic {
     function init(
         DataTypes.LockedBalance storage lockedBalance,
