@@ -8,9 +8,7 @@ import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Cou
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IGaugeController} from "../interfaces/IGaugeController.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {LockLogic} from "../libraries/logic/LockLogic.sol";
 import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
@@ -23,11 +21,9 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 /// @title VotingEscrow
 /// @notice Provides functionality for locking LE tokens for a specified period of time and is the center of the epoch logic
 contract VotingEscrow is
-    ContextUpgradeable,
     IVotingEscrow,
     ERC165Upgradeable,
     ERC721EnumerableUpgradeable,
-    OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
     uint256 public constant MINLOCKTIME = 2 weeks;
@@ -93,8 +89,6 @@ contract VotingEscrow is
         __ERC721_init(name, symbol);
         __ERC721Enumerable_init();
         __ERC165_init();
-        __Context_init();
-        __Ownable_init();
         __ReentrancyGuard_init();
         _addressProvider = addressProvider;
         _deployTimestamp = block.timestamp;
@@ -452,7 +446,7 @@ contract VotingEscrow is
         _checkpoint(tokenId, oldLocked, _lockedBalance[tokenId]);
 
         IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransferFrom(
-            _msgSender(),
+            msg.sender,
             address(this),
             amount
         );
@@ -486,7 +480,7 @@ contract VotingEscrow is
         _checkpoint(tokenId, oldLocked, _lockedBalance[tokenId]);
 
         IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransferFrom(
-            _msgSender(),
+            msg.sender,
             address(this),
             amount
         );
@@ -569,7 +563,7 @@ contract VotingEscrow is
 
         // Send locked amount back to user
         IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransfer(
-            _msgSender(),
+            msg.sender,
             oldLocked.amount
         );
 
@@ -632,7 +626,7 @@ contract VotingEscrow is
         // Mint the rebates to the user's wallet
         if (amountToClaim > 0) {
             INativeToken(_addressProvider.getNativeToken()).mintRebates(
-                _msgSender(),
+                msg.sender,
                 amountToClaim
             );
         }
@@ -690,7 +684,7 @@ contract VotingEscrow is
     }
 
     function _requireLockOwner(uint256 tokenId) internal view {
-        require(ownerOf(tokenId) == _msgSender(), "VE:NOT_OWNER");
+        require(ownerOf(tokenId) == msg.sender, "VE:NOT_OWNER");
     }
 
     function _requireLockNotExpired(uint256 tokenId) internal view {

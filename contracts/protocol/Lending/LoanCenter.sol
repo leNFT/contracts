@@ -4,13 +4,11 @@ pragma solidity 0.8.19;
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
-import {ConfigTypes} from "../../libraries/types/ConfigTypes.sol";
 import {LoanLogic} from "../../libraries/logic/LoanLogic.sol";
 import {ERC721HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 import {SafeCast} from "../../libraries/utils/SafeCast.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
@@ -18,7 +16,6 @@ import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 /// @title LoanCenter contract
 /// @dev A smart contract managing loans with NFTs as collateral
 contract LoanCenter is
-    ContextUpgradeable,
     ILoanCenter,
     ERC721HolderUpgradeable,
     OwnableUpgradeable
@@ -78,7 +75,6 @@ contract LoanCenter is
     ) external initializer {
         __Ownable_init();
         __ERC721Holder_init();
-        __Context_init();
         _addressProvider = addressesProvider;
         _defaultCollectionsRiskParameters = defaultCollectionsRiskParameters;
     }
@@ -455,7 +451,7 @@ contract LoanCenter is
 
     function _requireOnlyMarket() internal view {
         require(
-            _msgSender() == _addressProvider.getLendingMarket(),
+            msg.sender == _addressProvider.getLendingMarket(),
             "LC:NOT_MARKET"
         );
     }

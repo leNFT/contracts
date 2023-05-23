@@ -7,12 +7,10 @@ import {INativeToken} from "../interfaces/INativeToken.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {IGaugeController} from "../interfaces/IGaugeController.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 /// @title NativeTokenTest
 /// @notice Provides test functionality for minting, burning, and distributing native tokens
 contract NativeTokenTest is
-    ContextUpgradeable,
     INativeToken,
     ERC20Upgradeable,
     OwnableUpgradeable,
@@ -40,7 +38,6 @@ contract NativeTokenTest is
         __ERC20_init(name, symbol);
         __Ownable_init();
         __ReentrancyGuard_init();
-        __Context_init();
         _addressProvider = addressProvider;
         _cap = cap;
     }

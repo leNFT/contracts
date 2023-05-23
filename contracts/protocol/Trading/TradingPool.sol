@@ -7,14 +7,12 @@ import {IPricingCurve} from "../../interfaces/IPricingCurve.sol";
 import {IFeeDistributor} from "../../interfaces/IFeeDistributor.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
@@ -26,7 +24,6 @@ import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 /// @notice A contract that enables the creation of liquidity pools and the trading of NFTs and ERC20 tokens.
 /// @dev This contract manages liquidity pairs, each consisting of a set of NFTs and an ERC20 token, as well as the trading of these pairs.
 contract TradingPool is
-    Context,
     ERC165,
     ERC721Enumerable,
     ERC721Holder,
@@ -73,7 +70,7 @@ contract TradingPool is
         string memory symbol
     ) ERC721(name, symbol) {
         require(
-            _msgSender() == addressProvider.getTradingPoolFactory(),
+            msg.sender == addressProvider.getTradingPoolFactory(),
             "TP:C:MUST_BE_FACTORY"
         );
         _addressProvider = addressProvider;
@@ -210,7 +207,7 @@ contract TradingPool is
         // Add user nfts to the pool
         for (uint i = 0; i < nftIds.length; i++) {
             IERC721(_nft).safeTransferFrom(
-                _msgSender(),
+                msg.sender,
                 address(this),
                 nftIds[i]
             );
@@ -223,7 +220,7 @@ contract TradingPool is
         // Send user token to the pool
         if (tokenAmount > 0) {
             IERC20(_token).safeTransferFrom(
-                _msgSender(),
+                msg.sender,
                 address(this),
                 tokenAmount
             );
@@ -264,14 +261,14 @@ contract TradingPool is
         uint256 lpId
     ) public override nonReentrant poolNotPaused {
         //Require the caller owns LP
-        require(_msgSender() == ERC721.ownerOf(lpId), "TP:RL:NOT_OWNER");
+        require(msg.sender == ERC721.ownerOf(lpId), "TP:RL:NOT_OWNER");
 
         // Send pool nfts to the user
         uint256 nftIdsLength = _liquidityPairs[lpId].nftIds.length;
         for (uint i = 0; i < nftIdsLength; i++) {
             IERC721(_nft).safeTransferFrom(
                 address(this),
-                _msgSender(),
+                msg.sender,
                 _liquidityPairs[lpId].nftIds[i]
             );
             delete _nftToLp[_liquidityPairs[lpId].nftIds[i]];
@@ -279,7 +276,7 @@ contract TradingPool is
 
         // Send pool token back to user
         IERC20(_token).safeTransfer(
-            _msgSender(),
+            msg.sender,
             _liquidityPairs[lpId].tokenAmount
         );
 
@@ -289,7 +286,7 @@ contract TradingPool is
         // Burn liquidity position NFT
         ERC721._burn(lpId);
 
-        emit RemoveLiquidity(_msgSender(), lpId);
+        emit RemoveLiquidity(msg.sender, lpId);
     }
 
     /// @notice Removes liquidity in batches by calling the removeLiquidity function for each LP token ID in the lpIds array
@@ -381,11 +378,7 @@ contract TradingPool is
         require(finalPrice <= maximumPrice, "TP:B:MAX_PRICE_EXCEEDED");
 
         // Get tokens from user
-        IERC20(_token).safeTransferFrom(
-            _msgSender(),
-            address(this),
-            finalPrice
-        );
+        IERC20(_token).safeTransferFrom(msg.sender, address(this), finalPrice);
 
         // Send protocol fee to protocol fee distributor
         IERC20(_token).safeTransfer(
@@ -422,9 +415,9 @@ contract TradingPool is
         require(nftIds.length > 0, "TP:S:NFTS_0");
 
         // Only the swap router can call this function on behalf of another address
-        if (onBehalfOf != _msgSender()) {
+        if (onBehalfOf != msg.sender) {
             require(
-                _msgSender() == _addressProvider.getSwapRouter(),
+                msg.sender == _addressProvider.getSwapRouter(),
                 "TP:S:NOT_SWAP_ROUTER"
             );
         }
@@ -492,7 +485,7 @@ contract TradingPool is
 
         require(finalPrice >= minimumPrice, "TP:S:MINIMUM_PRICE_NOT_REACHED");
 
-        IERC20(_token).safeTransfer(_msgSender(), finalPrice);
+        IERC20(_token).safeTransfer(msg.sender, finalPrice);
 
         // Send protocol fee to protocol fee distributor
         IERC20(_token).safeTransfer(

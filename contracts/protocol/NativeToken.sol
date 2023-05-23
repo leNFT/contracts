@@ -4,18 +4,14 @@ pragma solidity 0.8.19;
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {IGaugeController} from "../interfaces/IGaugeController.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 /// @title NativeToken
 /// @notice Provides functionality distributing native tokens
 contract NativeToken is
-    ContextUpgradeable,
     INativeToken,
     ERC20Upgradeable,
-    OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
     IAddressesProvider private _addressProvider;
@@ -38,9 +34,7 @@ contract NativeToken is
         uint256 cap
     ) external initializer {
         __ERC20_init(name, symbol);
-        __Ownable_init();
         __ReentrancyGuard_init();
-        __Context_init();
         _addressProvider = addressProvider;
         _cap = cap;
     }
@@ -76,7 +70,7 @@ contract NativeToken is
         uint256 amount
     ) external override {
         require(
-            _msgSender() == _addressProvider.getNativeTokenVesting(),
+            msg.sender == _addressProvider.getNativeTokenVesting(),
             "NT:MVT:NOT_VESTING"
         );
         _mint(receiver, amount);
@@ -87,10 +81,10 @@ contract NativeToken is
     /// @param amount The amount of tokens to mint
     function mintGenesisTokens(uint256 amount) external {
         require(
-            _msgSender() == _addressProvider.getGenesisNFT(),
+            msg.sender == _addressProvider.getGenesisNFT(),
             "NT:MGT:NOT_GENESIS"
         );
-        _mint(_msgSender(), amount);
+        _mint(msg.sender, amount);
     }
 
     /// @notice Burns the specified amount of tokens for the Genesis contract.
@@ -98,10 +92,10 @@ contract NativeToken is
     ///@param amount The amount of Genesis tokens to burn.
     function burnGenesisTokens(uint256 amount) external {
         require(
-            _msgSender() == _addressProvider.getGenesisNFT(),
+            msg.sender == _addressProvider.getGenesisNFT(),
             "NT:BGT:NOT_GENESIS"
         );
-        _burn(_msgSender(), amount);
+        _burn(msg.sender, amount);
     }
 
     /// @notice Mints the specified amount of gauge rewards to the specified receiver.
@@ -114,7 +108,7 @@ contract NativeToken is
     ) external override {
         require(
             IGaugeController(_addressProvider.getGaugeController()).isGauge(
-                _msgSender()
+                msg.sender
             ),
             "NT:MGR:NOT_GAUGE"
         );
@@ -123,7 +117,7 @@ contract NativeToken is
 
     function mintRebates(address receiver, uint256 amount) external override {
         require(
-            _msgSender() == _addressProvider.getVotingEscrow(),
+            msg.sender == _addressProvider.getVotingEscrow(),
             "NT:MR:NOT_VOTING_ESCROW"
         );
         _mint(receiver, amount);

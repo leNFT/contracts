@@ -18,7 +18,6 @@ import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Cou
 import {ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {IVault} from "@balancer-labs/v2-interfaces/contracts/vault/IVault.sol";
 import {WeightedPoolUserData} from "@balancer-labs/v2-interfaces/contracts/pool-weighted/WeightedPoolUserData.sol";
@@ -29,7 +28,6 @@ import "../libraries/balancer/ERC20Helpers.sol"; // Custom (pragma ^0.8.0) ERC20
 /// @title GenesisNFT
 /// @notice This contract manages the creation and minting of Genesis NFTs
 contract GenesisNFT is
-    ContextUpgradeable,
     ERC165Upgradeable,
     ERC721EnumerableUpgradeable,
     OwnableUpgradeable,
@@ -111,7 +109,6 @@ contract GenesisNFT is
         __ERC165_init();
         __Ownable_init();
         __ReentrancyGuard_init();
-        __Context_init();
         _addressProvider = addressProvider;
         _cap = cap;
         _price = price;
@@ -130,7 +127,7 @@ contract GenesisNFT is
     /// @param operator Address to set approval for
     /// @param approved True if the operator is approved, false to revoke approval
     function setLoanOperatorApproval(address operator, bool approved) external {
-        _loanOperatorApprovals[_msgSender()][operator] = approved;
+        _loanOperatorApprovals[msg.sender][operator] = approved;
     }
 
     /// @notice Checks if an address is approved as a loan operator for an owner
@@ -423,7 +420,7 @@ contract GenesisNFT is
         );
 
         IVotingEscrow(_addressProvider.getVotingEscrow()).createLock(
-            _msgSender(),
+            msg.sender,
             totalRewards,
             block.timestamp + locktime
         );
@@ -436,7 +433,7 @@ contract GenesisNFT is
 
         for (uint256 i = 0; i < amount; i++) {
             // Mint genesis NFT
-            _safeMint(_msgSender(), _tokenIdCounter.current());
+            _safeMint(msg.sender, _tokenIdCounter.current());
 
             // Add mint details
             _mintDetails[_tokenIdCounter.current()] = DataTypes.MintDetails(
@@ -445,7 +442,7 @@ contract GenesisNFT is
                 lpAmount / amount
             );
 
-            emit Mint(_msgSender(), _tokenIdCounter.current());
+            emit Mint(msg.sender, _tokenIdCounter.current());
 
             //Increase supply
             _tokenIdCounter.increment();
@@ -475,7 +472,7 @@ contract GenesisNFT is
         uint256 lpAmountSum;
         for (uint256 i = 0; i < tokenIds.length; i++) {
             //Require the caller owns the token
-            require(_msgSender() == ownerOf(tokenIds[i]), "G:B:NOT_OWNER");
+            require(msg.sender == ownerOf(tokenIds[i]), "G:B:NOT_OWNER");
             // Token can only be burned after locktime is over
             require(
                 block.timestamp >= getUnlockTimestamp(tokenIds[i]),
@@ -526,7 +523,7 @@ contract GenesisNFT is
         if (withdrawAmount > burnTokens) {
             // Send the rest of the LE tokens to the owner of the Genesis NFT
             IERC20Upgradeable(nativeTokenAddress).transfer(
-                _msgSender(),
+                msg.sender,
                 withdrawAmount - burnTokens
             );
         } else {
@@ -623,7 +620,7 @@ contract GenesisNFT is
 
     function _requireOnlyMarket() internal view {
         require(
-            _msgSender() == _addressProvider.getLendingMarket(),
+            msg.sender == _addressProvider.getLendingMarket(),
             "G:NOT_MARKET"
         );
     }

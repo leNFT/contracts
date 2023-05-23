@@ -5,14 +5,12 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {TradingPool} from "./TradingPool.sol";
 import {ISwapRouter} from "../../interfaces/ISwapRouter.sol";
 import {IPricingCurve} from "../../interfaces/IPricingCurve.sol";
 import {IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
@@ -21,7 +19,6 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 /// @notice This contract is responsible for creating new trading pools
 contract TradingPoolFactory is
     ITradingPoolFactory,
-    ContextUpgradeable,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
@@ -57,7 +54,6 @@ contract TradingPoolFactory is
     ) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
-        __Context_init();
         _addressProvider = addressesProvider;
         _protocolFeePercentage = protocolFeePercentage;
         _tvlSafeguard = tvlSafeguard;

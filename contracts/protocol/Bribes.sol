@@ -3,8 +3,6 @@ pragma solidity 0.8.19;
 
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {IGaugeController} from "../interfaces/IGaugeController.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -15,12 +13,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 
 /// @title Bribes contract
 /// @notice Allows users to bribe the veLE token holders in order to incentivize them to vote for a specific gauge
-contract Bribes is
-    ContextUpgradeable,
-    OwnableUpgradeable,
-    IBribes,
-    ReentrancyGuardUpgradeable
-{
+contract Bribes is IBribes, ReentrancyGuardUpgradeable {
     IAddressesProvider private _addressProvider;
     // Token + Gauge + Epoch = Amount
     mapping(address => mapping(address => mapping(uint256 => uint256)))
@@ -54,9 +47,7 @@ contract Bribes is
     function initialize(
         IAddressesProvider addressProvider
     ) external initializer {
-        __Ownable_init();
         __ReentrancyGuard_init();
-        __Context_init();
         _addressProvider = addressProvider;
     }
 
@@ -82,7 +73,7 @@ contract Bribes is
 
         // Transfer the bribe tokens to this contract
         IERC20Upgradeable(token).safeTransferFrom(
-            _msgSender(),
+            msg.sender,
             address(this),
             amount
         );
@@ -107,13 +98,13 @@ contract Bribes is
 
         // Make sure there are enough funds to withdraw
         require(
-            _userBribes[token][gauge][nextEpoch][_msgSender()] >= amount,
+            _userBribes[token][gauge][nextEpoch][msg.sender] >= amount,
             "B:WB:NOT_ENOUGH_FUNDS"
         );
 
         // Subtract the amount from the bribes
         _gaugeBribes[token][gauge][nextEpoch] -= amount;
-        _userBribes[token][gauge][nextEpoch][_msgSender()] -= amount;
+        _userBribes[token][gauge][nextEpoch][msg.sender] -= amount;
 
         // Transfer the bribe tokens back to the user
         IERC20Upgradeable(token).safeTransfer(receiver, amount);
@@ -140,21 +131,19 @@ contract Bribes is
             "B:SB:FUNDS_CLAIMABLE"
         );
 
-        uint256 epochUserBribes = _userBribes[token][gauge][epoch][
-            _msgSender()
-        ];
+        uint256 epochUserBribes = _userBribes[token][gauge][epoch][msg.sender];
 
         // THere needs to be funds to salvage
         require(epochUserBribes > 0, "B:SB:NO_FUNDS");
 
         // Tranfer bribe back to briber
-        IERC20Upgradeable(token).safeTransfer(_msgSender(), epochUserBribes);
+        IERC20Upgradeable(token).safeTransfer(msg.sender, epochUserBribes);
 
         // Subtract the amount from the gauge bribes
         _gaugeBribes[token][gauge][epoch] -= epochUserBribes;
 
         // Clear the user bribes
-        delete _userBribes[token][gauge][epoch][_msgSender()];
+        delete _userBribes[token][gauge][epoch][msg.sender];
     }
 
     /// @notice Get bribes from a user for a specific gauge in a specific epoch
@@ -196,7 +185,7 @@ contract Bribes is
         address votingEscrow = _addressProvider.getVotingEscrow();
         // Make sure the caller is the owner of the token
         require(
-            IERC721Upgradeable(votingEscrow).ownerOf(tokenId) == _msgSender(),
+            IERC721Upgradeable(votingEscrow).ownerOf(tokenId) == msg.sender,
             "B:C:NOT_OWNER"
         );
 
@@ -258,7 +247,7 @@ contract Bribes is
 
         // Transfer claim to user
         if (amountToClaim > 0) {
-            IERC20Upgradeable(token).safeTransfer(_msgSender(), amountToClaim);
+            IERC20Upgradeable(token).safeTransfer(msg.sender, amountToClaim);
         }
     }
 

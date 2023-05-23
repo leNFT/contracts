@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.19;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
@@ -14,7 +13,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 /// @title SwapRouter Contract
 /// @author leNFT
 /// @notice This contract is responsible for swapping between assets in different pools
-contract SwapRouter is ISwapRouter, Ownable, ReentrancyGuard {
+contract SwapRouter is ISwapRouter, ReentrancyGuard {
     IAddressesProvider private immutable _addressProvider;
 
     using SafeERC20 for IERC20;

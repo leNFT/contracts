@@ -3,8 +3,6 @@ pragma solidity 0.8.19;
 
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {IFeeDistributor} from "../interfaces/IFeeDistributor.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -14,12 +12,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 
 /// @title FeeDistributor
 /// @notice This contract distributes fees from the protocol to LE stakers, using the VotingEscrow interface to check the user's staked amount
-contract FeeDistributor is
-    ContextUpgradeable,
-    OwnableUpgradeable,
-    IFeeDistributor,
-    ReentrancyGuardUpgradeable
-{
+contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
     IAddressesProvider private _addressProvider;
     // Token + Lock token id = Epoch
     mapping(address => mapping(uint256 => uint256)) private _lockHistoryPointer;
@@ -42,9 +35,7 @@ contract FeeDistributor is
     function initialize(
         IAddressesProvider addressProvider
     ) external initializer {
-        __Ownable_init();
         __ReentrancyGuard_init();
-        __Ownable_init();
         _addressProvider = addressProvider;
     }
 

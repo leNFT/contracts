@@ -12,14 +12,13 @@ import {ITradingPool} from "../interfaces/ITradingPool.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Trustus} from "./Trustus/Trustus.sol";
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 /// @title WETHGateway Contract
 /// @author leNFT
 /// @notice This contract is the proxy for ETH interactions with the leNFT protocol
-contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
+contract WETHGateway is ReentrancyGuard, ERC721Holder {
     IAddressesProvider private immutable _addressProvider;
     IWETH private immutable _weth;
 
@@ -44,7 +43,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         _weth.deposit{value: msg.value}();
         _weth.approve(lendingPool, msg.value);
 
-        IERC4626(lendingPool).deposit(msg.value, _msgSender());
+        IERC4626(lendingPool).deposit(msg.value, msg.sender);
     }
 
     /// @notice Withdraw ETH from a WETH lending pool
@@ -58,10 +57,10 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
             "ETHG:WLP:UNDERLYING_NOT_WETH"
         );
 
-        IERC4626(lendingPool).withdraw(amount, address(this), _msgSender());
+        IERC4626(lendingPool).withdraw(amount, address(this), msg.sender);
         _weth.withdraw(amount);
 
-        (bool sent, ) = _msgSender().call{value: amount}("");
+        (bool sent, ) = msg.sender.call{value: amount}("");
         require(sent, "ETHG:WLP:ETH_TRANSFER_FAILED");
     }
 
@@ -87,7 +86,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         // Transfer the collateral to the WETH Gateway
         for (uint256 i = 0; i < nftTokenIds.length; i++) {
             IERC721(nftAddress).safeTransferFrom(
-                _msgSender(),
+                msg.sender,
                 address(this),
                 nftTokenIds[i]
             );
@@ -97,7 +96,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         }
 
         market.borrow(
-            _msgSender(),
+            msg.sender,
             address(_weth),
             amount,
             nftAddress,
@@ -112,7 +111,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
 
         _weth.withdraw(amount);
 
-        (bool sent, ) = _msgSender().call{value: amount}("");
+        (bool sent, ) = msg.sender.call{value: amount}("");
         require(sent, "ETHG:B:ETH_TRANSFER_FAILED");
     }
 
@@ -172,7 +171,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         if (nftIds.length > 0) {
             for (uint i = 0; i < nftIds.length; i++) {
                 IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
-                    _msgSender(),
+                    msg.sender,
                     address(this),
                     nftIds[i]
                 );
@@ -211,7 +210,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         );
 
         // Send LP NFT to this contract
-        IERC721(pool).safeTransferFrom(_msgSender(), address(this), lpId);
+        IERC721(pool).safeTransferFrom(msg.sender, address(this), lpId);
 
         // Get LP info so we can send the correct amounts back
         DataTypes.LiquidityPair memory lp = ITradingPool(pool).getLP(lpId);
@@ -223,7 +222,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         for (uint i = 0; i < lp.nftIds.length; i++) {
             IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
                 address(this),
-                _msgSender(),
+                msg.sender,
                 lp.nftIds[i]
             );
         }
@@ -231,7 +230,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         // Send ETH back to the user
         _weth.withdraw(lp.tokenAmount);
 
-        (bool sent, ) = _msgSender().call{value: lp.tokenAmount}("");
+        (bool sent, ) = msg.sender.call{value: lp.tokenAmount}("");
         require(sent, "ETHG:WTP:ETH_TRANSFER_FAILED");
     }
 
@@ -252,11 +251,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
 
         // Send LP NFTs to this contract
         for (uint i = 0; i < lpIds.length; i++) {
-            IERC721(pool).safeTransferFrom(
-                _msgSender(),
-                address(this),
-                lpIds[i]
-            );
+            IERC721(pool).safeTransferFrom(msg.sender, address(this), lpIds[i]);
 
             // Get LP info so we can send the correct amounts back
             DataTypes.LiquidityPair memory lp = ITradingPool(pool).getLP(
@@ -278,7 +273,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
             for (uint b = 0; b < nftIds[a].length; b++) {
                 IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
                     address(this),
-                    _msgSender(),
+                    msg.sender,
                     nftIds[a][b]
                 );
             }
@@ -287,7 +282,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         // Send ETH back to the user
         _weth.withdraw(totalAmount);
 
-        (bool sent, ) = _msgSender().call{value: totalAmount}("");
+        (bool sent, ) = msg.sender.call{value: totalAmount}("");
         require(sent, "ETHG:WBTP:ETH_TRANSFER_FAILED");
     }
 
@@ -321,9 +316,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         if (msg.value > finalPrice) {
             _weth.withdraw(msg.value - finalPrice);
 
-            (bool sent, ) = _msgSender().call{value: msg.value - finalPrice}(
-                ""
-            );
+            (bool sent, ) = msg.sender.call{value: msg.value - finalPrice}("");
             require(sent, "ETHG:B:ETH_TRANSFER_FAILED");
         }
     }
@@ -347,7 +340,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         // Send NFTs to this contract and approve them for pool use
         for (uint i = 0; i < nftIds.length; i++) {
             IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
-                _msgSender(),
+                msg.sender,
                 address(this),
                 nftIds[i]
             );
@@ -365,7 +358,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         // Send ETH back to the user
         _weth.withdraw(finalPrice);
 
-        (bool sent, ) = _msgSender().call{value: finalPrice}("");
+        (bool sent, ) = msg.sender.call{value: finalPrice}("");
         require(sent, "ETHG:S:ETH_TRANSFER_FAILED");
     }
 
@@ -412,7 +405,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         // Send NFTs to this contract and approve them for pool use
         for (uint i = 0; i < sellNftIds.length; i++) {
             IERC721(sellPool.getNFT()).safeTransferFrom(
-                _msgSender(),
+                msg.sender,
                 address(this),
                 sellNftIds[i]
             );
@@ -434,7 +427,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         for (uint i = 0; i < buyNftIds.length; i++) {
             IERC721(buyPool.getNFT()).safeTransferFrom(
                 address(this),
-                _msgSender(),
+                msg.sender,
                 buyNftIds[i]
             );
         }
@@ -442,7 +435,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         // Send ETH back to the user
         if (returnedAmount > 0) {
             _weth.withdraw(returnedAmount);
-            (bool sent, ) = _msgSender().call{value: returnedAmount}("");
+            (bool sent, ) = msg.sender.call{value: returnedAmount}("");
             require(sent, "ETHG:S:ETH_TRANSFER_FAILED");
         }
     }
@@ -454,7 +447,7 @@ contract WETHGateway is ReentrancyGuard, Context, ERC721Holder {
         _weth.deposit{value: msg.value}();
         _weth.approve(address(_addressProvider.getBribes()), msg.value);
         IBribes(_addressProvider.getBribes()).depositBribe(
-            _msgSender(),
+            msg.sender,
             address(_weth),
             gauge,
             msg.value

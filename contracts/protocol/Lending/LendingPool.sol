@@ -6,7 +6,6 @@ import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.so
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {IInterestRate} from "../../interfaces/IInterestRate.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ConfigTypes} from "../../libraries/types/ConfigTypes.sol";
@@ -15,7 +14,7 @@ import {ValidationLogic} from "../../libraries/logic/ValidationLogic.sol";
 
 /// @title LendingPool contract
 /// @dev The LendingPool contract uses the ERC4626 contract to track the shares in a liquidity pool held by users
-contract LendingPool is Context, ILendingPool, ERC4626, Ownable {
+contract LendingPool is ILendingPool, ERC4626, Ownable {
     IAddressesProvider private immutable _addressProvider;
     IERC20 private immutable _asset;
     uint256 private _debt;
@@ -289,7 +288,7 @@ contract LendingPool is Context, ILendingPool, ERC4626, Ownable {
 
     function _requireOnlyMarket() internal view {
         require(
-            _msgSender() == _addressProvider.getLendingMarket(),
+            msg.sender == _addressProvider.getLendingMarket(),
             "LP:NOT_MARKET"
         );
     }

@@ -18,7 +18,6 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {Trustus} from "../Trustus/Trustus.sol";
 import {LendingPool} from "./LendingPool.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
@@ -28,7 +27,6 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 /// @notice This contract is the entrypoint for the leNFT lending protocol
 /// @dev Call these contract functions to interact with the lending part of the protocol
 contract LendingMarket is
-    ContextUpgradeable,
     ILendingMarket,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
@@ -63,7 +61,6 @@ contract LendingMarket is
     ) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
-        __Context_init();
         _addressProvider = addressesProvider;
         _tvlSafeguard = tvlSafeguard;
         _defaultLendingPoolConfig = defaultLendingPoolConfig;
@@ -93,7 +90,7 @@ contract LendingMarket is
             _addressProvider,
             _pools[nftAddress][asset],
             DataTypes.BorrowParams({
-                caller: _msgSender(),
+                caller: msg.sender,
                 onBehalfOf: onBehalfOf,
                 asset: asset,
                 amount: amount,
@@ -105,7 +102,7 @@ contract LendingMarket is
             })
         );
 
-        emit Borrow(_msgSender(), asset, nftAddress, nftTokenIds, amount);
+        emit Borrow(msg.sender, asset, nftAddress, nftTokenIds, amount);
     }
 
     /// @notice Repay an an active loan
@@ -118,13 +115,13 @@ contract LendingMarket is
         BorrowLogic.repay(
             _addressProvider,
             DataTypes.RepayParams({
-                caller: _msgSender(),
+                caller: msg.sender,
                 loanId: loanId,
                 amount: amount
             })
         );
 
-        emit Repay(_msgSender(), loanId);
+        emit Repay(msg.sender, loanId);
     }
 
     /// @notice Liquidate an active loan
@@ -142,7 +139,7 @@ contract LendingMarket is
         LiquidationLogic.createLiquidationAuction(
             _addressProvider,
             DataTypes.CreateAuctionParams({
-                caller: _msgSender(),
+                caller: msg.sender,
                 loanId: loanId,
                 bid: bid,
                 request: request,
@@ -150,7 +147,7 @@ contract LendingMarket is
             })
         );
 
-        emit CreateLiquidationAuction(_msgSender(), loanId, bid);
+        emit CreateLiquidationAuction(msg.sender, loanId, bid);
     }
 
     /// @notice Bid on a liquidation auction
@@ -164,13 +161,13 @@ contract LendingMarket is
         LiquidationLogic.bidLiquidationAuction(
             _addressProvider,
             DataTypes.AuctionBidParams({
-                caller: _msgSender(),
+                caller: msg.sender,
                 loanId: loanId,
                 bid: bid
             })
         );
 
-        emit BidLiquidationAuction(_msgSender(), loanId, bid);
+        emit BidLiquidationAuction(msg.sender, loanId, bid);
     }
 
     /// @notice Claim the collateral of a liquidated loan
@@ -180,7 +177,7 @@ contract LendingMarket is
             _addressProvider,
             DataTypes.ClaimLiquidationParams({loanId: loanId})
         );
-        emit ClaimLiquidation(_msgSender(), loanId);
+        emit ClaimLiquidation(msg.sender, loanId);
     }
 
     /// @notice Set the lending pool address for a certain collection and asset
