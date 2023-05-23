@@ -337,7 +337,7 @@ contract TradingPool is
             // Can't buy from buy LP
             require(lp.lpType != DataTypes.LPType.Buy, "TP:B:IS_BUY_LP");
 
-            fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
+            fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
             protocolFee =
                 (fee * protocolFeePercentage) /
                 PercentageMath.PERCENTAGE_FACTOR;
@@ -447,7 +447,7 @@ contract TradingPool is
             // Can't sell to sell LP
             require(lp.lpType != DataTypes.LPType.Sell, "TP:S:IS_SELL_LP");
 
-            fee = (lp.spotPrice * lp.fee) / PercentageMath.PERCENTAGE_FACTOR;
+            fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
             protocolFee =
                 (fee *
                     ITradingPoolFactory(

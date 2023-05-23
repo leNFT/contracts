@@ -363,10 +363,10 @@ contract LoanCenter is
         uint256 loanId
     ) external view loanExists(loanId) loanAuctioned(loanId) returns (uint256) {
         return
-            (getLoanDebt(loanId) *
-                ILendingPool(_loans[loanId].pool)
-                    .getPoolConfig()
-                    .auctioneerFee) / PercentageMath.PERCENTAGE_FACTOR;
+            PercentageMath.percentMul(
+                getLoanDebt(loanId),
+                ILendingPool(_loans[loanId].pool).getPoolConfig().auctioneerFee
+            );
     }
 
     /// @notice Get the owner of a loan
