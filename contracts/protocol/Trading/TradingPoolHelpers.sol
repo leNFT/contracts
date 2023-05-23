@@ -9,6 +9,8 @@ import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
 
+/// @title TradingPoolHelpers Contract
+/// @notice Helper functions for the TradingPool contract
 contract TradingPoolHelpers {
     // Address provider state variable
     IAddressesProvider private _addressesProvider;
@@ -17,6 +19,10 @@ contract TradingPoolHelpers {
         _addressesProvider = IAddressesProvider(addressesProvider);
     }
 
+    /// @notice Simulates a trading pool buy call
+    /// @param tradingPool The address of the trading pool
+    /// @param nftIds The array of NFT IDs to buy
+    /// @return finalPrice The final price quote for the NFTs
     function simulateBuy(
         address tradingPool,
         uint256[] calldata nftIds
@@ -129,6 +135,11 @@ contract TradingPoolHelpers {
         }
     }
 
+    /// @notice Simulates a trading pool sell call
+    /// @param tradingPool The address of the trading pool
+    /// @param nftIds The array of NFT IDs to sell
+    /// @param liquidityPairs The array of liquidity pair IDs to sell
+    /// @return finalPrice The final price quote for the sell operation
     function simulateSell(
         address tradingPool,
         uint256[] calldata nftIds,
@@ -250,6 +261,10 @@ contract TradingPoolHelpers {
         }
     }
 
+    /// @notice Returns the best liquidity pairs to sell the NFTs into
+    /// @param pool The address of the trading pool
+    /// @param amount The amount of tokens the user wants to sell
+    /// @return sellLiquidityPairs The array of liquidity pairs to sell into
     function getSellLiquidityPairs(
         address pool,
         uint256 amount
@@ -300,7 +315,7 @@ contract TradingPoolHelpers {
 
             if (priceAfterFees > priceSellLiquidityPairs[amount - 1]) {
                 // Replace the worst liquidity pair with the current one
-                sellLiquidityPairs[amount - 1] = i;
+                sellLiquidityPairs[amount - 1] = validLiquidityPairs[i];
                 priceSellLiquidityPairs[amount - 1] = priceAfterFees;
 
                 // Sort the array
@@ -397,6 +412,7 @@ contract TradingPoolHelpers {
                 break;
             }
         }
+
         uint256[] memory finalSellLiquidityPairs = new uint256[](
             finalSellLiquidityPairsCount
         );

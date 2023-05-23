@@ -2,7 +2,6 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
 const load = require("../helpers/_loadTest.js");
-const { getPriceSig } = require("../helpers/getPriceSig.js");
 
 describe("TradingPoolHelpers", function () {
   load.loadTest(false);
@@ -150,7 +149,7 @@ describe("TradingPoolHelpers", function () {
       balanceBefore.add(sellQuote)
     );
   });
-  it("Should get the right liquidity pairs to sell into", async function () {
+  it("Should get the right liquidity pair to sell into", async function () {
     // Create a new trading pool
     const createPoolTx = await tradingPoolFactory.createTradingPool(
       testNFT.address,
@@ -163,31 +162,23 @@ describe("TradingPoolHelpers", function () {
       await tradingPoolFactory.getTradingPool(testNFT.address, weth.address)
     );
 
-    const mintTestNFTTx1 = await testNFT.mint(owner.address);
-    await mintTestNFTTx1.wait();
-    const mintTestNFTTx2 = await testNFT.mint(owner.address);
-    await mintTestNFTTx2.wait();
-
-    const approveNFTTx = await testNFT.setApprovalForAll(
-      tradingPool.address,
-      true
-    );
-    await approveNFTTx.wait();
     // Mint and approve test tokens to the callers address
-    const mintTestTokenTx = await weth.deposit({ value: "100000000000000" });
+    const mintTestTokenTx = await weth.deposit({
+      value: ethers.utils.parseEther("5"),
+    });
     await mintTestTokenTx.wait();
     // Deposit the tokens into the market
     const approveTokenTx = await weth.approve(
       tradingPool.address,
-      "100000000000000"
+      ethers.utils.parseEther("5")
     );
     await approveTokenTx.wait();
     const depositTx = await tradingPool.addLiquidity(
       owner.address,
       0,
       [],
-      "100000000000000",
-      "50000000000000",
+      ethers.utils.parseEther("5"), // Amount of tokens to deposit
+      ethers.utils.parseEther("1"), // Price of the NFTs
       exponentialCurve.address,
       "50",
       "500"
@@ -201,5 +192,72 @@ describe("TradingPoolHelpers", function () {
 
     // Should give the correct liquidity pairs
     expect(sellLps).to.deep.equal([BigNumber.from(0)]);
+  });
+  it("Should get the right liquidity pairs to sell into", async function () {
+    // Create a new trading pool
+    const createPoolTx = await tradingPoolFactory.createTradingPool(
+      testNFT.address,
+      weth.address
+    );
+    createPoolTx.wait();
+
+    const tradingPool = await ethers.getContractAt(
+      "TradingPool",
+      await tradingPoolFactory.getTradingPool(testNFT.address, weth.address)
+    );
+
+    // Mint and approve test tokens to the callers address
+    const mintTestTokenTx = await weth.deposit({
+      value: ethers.utils.parseEther("1"),
+    });
+    await mintTestTokenTx.wait();
+    // Deposit the tokens into the market
+    const approveTokenTx = await weth.approve(
+      tradingPool.address,
+      ethers.utils.parseEther("1")
+    );
+    await approveTokenTx.wait();
+    const depositTx = await tradingPool.addLiquidity(
+      owner.address,
+      0,
+      [],
+      ethers.utils.parseEther("1"), // Amount of tokens to deposit
+      ethers.utils.parseEther("5"), // Price of the NFTs
+      exponentialCurve.address,
+      "50",
+      "500"
+    );
+    await depositTx.wait();
+
+    // Mint and approve test tokens to the callers address
+    const mintTestTokenTx2 = await weth.deposit({
+      value: ethers.utils.parseEther("15"),
+    });
+    await mintTestTokenTx2.wait();
+    // Deposit the tokens into the market
+    const approveTokenTx2 = await weth.approve(
+      tradingPool.address,
+      ethers.utils.parseEther("15")
+    );
+    await approveTokenTx2.wait();
+    const depositTx2 = await tradingPool.addLiquidity(
+      owner.address,
+      0,
+      [],
+      ethers.utils.parseEther("15"), // Amount of tokens to deposit
+      ethers.utils.parseEther("5"), // Price of the NFTs
+      exponentialCurve.address,
+      "50",
+      "500"
+    );
+    await depositTx2.wait();
+
+    const sellLps = await tradingPoolHelpers.getSellLiquidityPairs(
+      tradingPool.address,
+      2
+    );
+
+    // Should give the correct liquidity pairs
+    expect(sellLps).to.deep.equal([BigNumber.from(1), BigNumber.from(1)]);
   });
 });
