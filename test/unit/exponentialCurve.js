@@ -25,7 +25,7 @@ describe("ExponentialPriceCurve", function () {
   it("Should calculate the correct price after selling", async function () {
     const price = ethers.utils.parseEther("1");
     const delta = 500;
-    const expectedPrice = ethers.utils.parseEther("0.95238095238095238");
+    const expectedPrice = ethers.utils.parseEther("0.952380952380952381");
 
     const newPrice = await exponentialPriceCurve.priceAfterSell(
       price,

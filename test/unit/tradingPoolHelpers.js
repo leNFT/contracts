@@ -144,7 +144,6 @@ describe("TradingPoolHelpers", function () {
     );
     await sellTx.wait();
 
-    // Should now own both tokens
     expect(await weth.balanceOf(owner.address)).to.equal(
       balanceBefore.add(sellQuote)
     );

@@ -636,7 +636,7 @@ describe("WETHGateway", () => {
     const lp = await tradingPool.getLP(0);
     expect(lp.nftIds).to.deep.equal([BigNumber.from(0)]);
     expect(lp.tokenAmount).to.equal("52250000000000");
-    expect(lp.spotPrice).to.equal("49751243781094");
+    expect(lp.spotPrice).to.equal("49751243781095");
   });
   it("Should swap between two assets ", async function () {
     // Create a pool
