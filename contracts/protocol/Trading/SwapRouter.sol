@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.19;
 
-import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
 import {ISwapRouter} from "../../interfaces/ISwapRouter.sol";
@@ -14,14 +14,14 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 /// @author leNFT
 /// @notice This contract is responsible for swapping between assets in different pools
 contract SwapRouter is ISwapRouter, ReentrancyGuard {
-    IAddressesProvider private immutable _addressProvider;
+    IAddressProvider private immutable _addressProvider;
 
     using SafeERC20 for IERC20;
 
     /// @notice Initialize the market
-    /// @param addressesProvider The address of the AddressesProvider contract
-    constructor(IAddressesProvider addressesProvider) {
-        _addressProvider = addressesProvider;
+    /// @param addressProvider The address of the addressProvider contract
+    constructor(IAddressProvider addressProvider) {
+        _addressProvider = addressProvider;
     }
 
     /// @notice Swaps tokens between two different trading pools

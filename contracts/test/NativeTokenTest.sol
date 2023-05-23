@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../interfaces/IAddressProvider.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -16,7 +16,7 @@ contract NativeTokenTest is
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    IAddressesProvider private _addressProvider;
+    IAddressProvider private _addressProvider;
     uint256 private _cap;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -30,7 +30,7 @@ contract NativeTokenTest is
     /// @param symbol The symbol of the token
     /// @param cap The maximum supply of the token
     function initialize(
-        IAddressesProvider addressProvider,
+        IAddressProvider addressProvider,
         string calldata name,
         string calldata symbol,
         uint256 cap

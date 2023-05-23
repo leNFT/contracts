@@ -36,7 +36,7 @@ describe("GaugeController", () => {
     // Deploy a trading gauge
     const TradingGauge = await ethers.getContractFactory("TradingGauge");
     tradingGauge = await TradingGauge.deploy(
-      addressesProvider.address,
+      addressProvider.address,
       tradingPool.address
     );
     await tradingGauge.deployed();
@@ -44,7 +44,7 @@ describe("GaugeController", () => {
     // Deploy a lending gauge
     const LendingGauge = await ethers.getContractFactory("LendingGauge");
     lendingGauge = await LendingGauge.deploy(
-      addressesProvider.address,
+      addressProvider.address,
       lendingPool.address
     );
     await lendingGauge.deployed();

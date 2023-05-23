@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.19;
 
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../interfaces/IAddressProvider.sol";
 import {IFeeDistributor} from "../interfaces/IFeeDistributor.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
@@ -13,7 +13,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 /// @title FeeDistributor
 /// @notice This contract distributes fees from the protocol to LE stakers, using the VotingEscrow interface to check the user's staked amount
 contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
-    IAddressesProvider private _addressProvider;
+    IAddressProvider private _addressProvider;
     // Token + Lock token id = Epoch
     mapping(address => mapping(uint256 => uint256)) private _lockHistoryPointer;
     // Token + Epoch = Amount
@@ -30,11 +30,9 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
         _disableInitializers();
     }
 
-    /// @notice Initializes the contract with an AddressesProvider
-    /// @param addressProvider AddressesProvider contract address
-    function initialize(
-        IAddressesProvider addressProvider
-    ) external initializer {
+    /// @notice Initializes the contract with an addressProvider
+    /// @param addressProvider addressProvider contract address
+    function initialize(IAddressProvider addressProvider) external initializer {
         __ReentrancyGuard_init();
         _addressProvider = addressProvider;
     }

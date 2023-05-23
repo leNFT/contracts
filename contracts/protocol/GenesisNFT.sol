@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.19;
 
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../interfaces/IAddressProvider.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
@@ -40,7 +40,7 @@ contract GenesisNFT is
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    IAddressesProvider private _addressProvider;
+    IAddressProvider private _addressProvider;
     uint256 private _cap;
     uint256 private _price;
     uint256 private _maxLocktime;
@@ -92,7 +92,7 @@ contract GenesisNFT is
     /// @param minLocktime Minimum lock time for staking in seconds
     /// @param devAddress Address of the developer
     function initialize(
-        IAddressesProvider addressProvider,
+        IAddressProvider addressProvider,
         string calldata name,
         string calldata symbol,
         uint256 cap,

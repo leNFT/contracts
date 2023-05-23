@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../interfaces/IAddressProvider.sol";
 import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IGaugeController} from "../interfaces/IGaugeController.sol";
@@ -30,7 +30,7 @@ contract VotingEscrow is
     uint256 public constant MAXLOCKTIME = 4 * 365 days;
     uint256 public constant EPOCH_PERIOD = 1 weeks;
 
-    IAddressesProvider private _addressProvider;
+    IAddressProvider private _addressProvider;
     uint256 private _deployTimestamp;
     // Locked balance for each lock
     mapping(uint256 => DataTypes.LockedBalance) private _lockedBalance;
@@ -80,9 +80,9 @@ contract VotingEscrow is
     }
 
     /// @notice Initializes the VotingEscrow contract.
-    /// @param addressProvider The address of the AddressesProvider contract.
+    /// @param addressProvider The address of the addressProvider contract.
     function initialize(
-        IAddressesProvider addressProvider,
+        IAddressProvider addressProvider,
         string calldata name,
         string calldata symbol
     ) external initializer {

@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {DataTypes} from "../libraries/types/DataTypes.sol";
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../interfaces/IAddressProvider.sol";
 
 interface IVotingEscrow {
     function getLockHistoryLength(

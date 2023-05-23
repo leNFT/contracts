@@ -58,11 +58,9 @@ async function main() {
   ******************************************************************/
 
   // Deploy and initialize addresses provider proxy
-  const AddressesProvider = await ethers.getContractFactory(
-    "AddressesProvider"
-  );
-  const addressesProvider = await upgrades.deployProxy(AddressesProvider);
-  addresses["AddressesProvider"] = addressesProvider.address;
+  const AddressProvider = await ethers.getContractFactory("AddressProvider");
+  const addressProvider = await upgrades.deployProxy(AddressProvider);
+  addresses["AddressProvider"] = addressProvider.address;
 
   // Deploy and initialize market proxy
   const LendingMarket = await ethers.getContractFactory("LendingMarket", {
@@ -75,7 +73,7 @@ async function main() {
   const lendingMarket = await upgrades.deployProxy(
     LendingMarket,
     [
-      addressesProvider.address,
+      addressProvider.address,
       "25000000000000000000", // TVL Safeguard for pools
       {
         maxLiquidatorDiscount: "2000", // maxLiquidatorDiscount
@@ -91,7 +89,7 @@ async function main() {
   // Deploy and initialize loan center provider proxy
   const LoanCenter = await ethers.getContractFactory("LoanCenter");
   const loanCenter = await upgrades.deployProxy(LoanCenter, [
-    addressesProvider.address,
+    addressProvider.address,
     {
       maxLTV: "3000", // Default Max LTV for loans - 30%
       liquidationThreshold: "6000", // Default Liquidation Threshold for loanss - 60%
@@ -109,7 +107,7 @@ async function main() {
     NativeToken = await ethers.getContractFactory("NativeTokenTest");
   }
   const nativeToken = await upgrades.deployProxy(NativeToken, [
-    addressesProvider.address,
+    addressProvider.address,
     "leNFT Token",
     "LE",
     "100000000000000000000000000", //100M Max Cap
@@ -121,7 +119,7 @@ async function main() {
   // Deploy and initialize Genesis NFT
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
   const genesisNFT = await upgrades.deployProxy(GenesisNFT, [
-    addressesProvider.address,
+    addressProvider.address,
     "leNFT Genesis",
     "LGEN",
     "3333", // 3333 of total supply
@@ -139,7 +137,7 @@ async function main() {
   // Deploy and initialize Voting Escrow contract
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   const votingEscrow = await upgrades.deployProxy(VotingEscrow, [
-    addressesProvider.address,
+    addressProvider.address,
     "Vote Escrowed LE",
     "veLE",
   ]);
@@ -150,7 +148,7 @@ async function main() {
   // Deploy and initialize Gauge Controller
   const GaugeController = await ethers.getContractFactory("GaugeController");
   const gaugeController = await upgrades.deployProxy(GaugeController, [
-    addressesProvider.address,
+    addressProvider.address,
     "280000000000000000000000", // Initial epoch rewards (280k LE)
     6 * 7 * 24 * 3600, // LP Maturation Period in seconds (set to 6 weeks)
   ]);
@@ -161,7 +159,7 @@ async function main() {
   // Deploy and initialize Fee distributor
   const FeeDistributor = await ethers.getContractFactory("FeeDistributor");
   const feeDistributor = await upgrades.deployProxy(FeeDistributor, [
-    addressesProvider.address,
+    addressProvider.address,
   ]);
   addresses["FeeDistributor"] = feeDistributor.address;
 
@@ -169,9 +167,7 @@ async function main() {
 
   // Deploy and initialize the Bribes contract
   const Bribes = await ethers.getContractFactory("Bribes");
-  const bribes = await upgrades.deployProxy(Bribes, [
-    addressesProvider.address,
-  ]);
+  const bribes = await upgrades.deployProxy(Bribes, [addressProvider.address]);
   addresses["Bribes"] = bribes.address;
 
   console.log("Deployed Bribes");
@@ -181,7 +177,7 @@ async function main() {
     "TradingPoolFactory"
   );
   const tradingPoolFactory = await upgrades.deployProxy(TradingPoolFactory, [
-    addressesProvider.address,
+    addressProvider.address,
     "1000", // Default protocol fee percentage (10%)
     "25000000000000000000", // TVL Safeguard for pools
   ]);
@@ -209,7 +205,7 @@ async function main() {
     "TradingPoolHelpers"
   );
   const tradingPoolHelpers = await TradingPoolHelpers.deploy(
-    addressesProvider.address
+    addressProvider.address
   );
   await tradingPoolHelpers.deployed();
   addresses["TradingPoolHelpers"] = tradingPoolHelpers.address;
@@ -234,13 +230,13 @@ async function main() {
 
   // Deploy Swap Router
   const SwapRouter = await ethers.getContractFactory("SwapRouter");
-  const swapRouter = await SwapRouter.deploy(addressesProvider.address);
+  const swapRouter = await SwapRouter.deploy(addressProvider.address);
   addresses["SwapRouter"] = swapRouter.address;
 
   // Deploy WETH Gateway contract
   const WETHGateway = await ethers.getContractFactory("WETHGateway");
   const wethGateway = await WETHGateway.deploy(
-    addressesProvider.address,
+    addressProvider.address,
     addresses["ETH"].address
   );
   await wethGateway.deployed();
@@ -265,7 +261,7 @@ async function main() {
     "NativeTokenVesting"
   );
   const nativeTokenVesting = await NativeTokenVesting.deploy(
-    addressesProvider.address,
+    addressProvider.address,
     "40000000000000000000000000" // 40M Vesting Cap (17.5M Team + 17.5M Treasury + 5M Liquidity Mining)
   );
   await nativeTokenVesting.deployed();
@@ -279,9 +275,7 @@ async function main() {
     const NativeTokenFaucet = await ethers.getContractFactory(
       "NativeTokenFaucet"
     );
-    nativeTokenFaucet = await NativeTokenFaucet.deploy(
-      addressesProvider.address
-    );
+    nativeTokenFaucet = await NativeTokenFaucet.deploy(addressProvider.address);
     await nativeTokenFaucet.deployed();
     addresses["NativeTokenFaucet"] = nativeTokenFaucet.address;
   }
@@ -340,75 +334,71 @@ async function main() {
   ******************************************************************/
 
   //Set every address in the address provider
-  const setLendingMarketTx = await addressesProvider.setLendingMarket(
+  const setLendingMarketTx = await addressProvider.setLendingMarket(
     lendingMarket.address
   );
   await setLendingMarketTx.wait();
-  const setTradingPoolFactoryTx = await addressesProvider.setTradingPoolFactory(
+  const setTradingPoolFactoryTx = await addressProvider.setTradingPoolFactory(
     tradingPoolFactory.address
   );
   await setTradingPoolFactoryTx.wait();
   const setLiquidityPairMetadataTx =
-    await addressesProvider.setLiquidityPairMetadata(
+    await addressProvider.setLiquidityPairMetadata(
       liquidityPairMetadata.address
     );
   await setLiquidityPairMetadataTx.wait();
-  const setTradingPoolHelpersTx = await addressesProvider.setTradingPoolHelpers(
+  const setTradingPoolHelpersTx = await addressProvider.setTradingPoolHelpers(
     tradingPoolHelpers.address
   );
   await setTradingPoolHelpersTx.wait();
-  const setInterestRateTx = await addressesProvider.setInterestRate(
+  const setInterestRateTx = await addressProvider.setInterestRate(
     interestRate.address
   );
   await setInterestRateTx.wait();
-  const setNFTOracleTx = await addressesProvider.setNFTOracle(
-    nftOracle.address
-  );
+  const setNFTOracleTx = await addressProvider.setNFTOracle(nftOracle.address);
   await setNFTOracleTx.wait();
-  const setTokenOracleTx = await addressesProvider.setTokenOracle(
+  const setTokenOracleTx = await addressProvider.setTokenOracle(
     tokenOracle.address
   );
   await setTokenOracleTx.wait();
-  const setLoanCenterTx = await addressesProvider.setLoanCenter(
+  const setLoanCenterTx = await addressProvider.setLoanCenter(
     loanCenter.address
   );
   await setLoanCenterTx.wait();
 
-  const setNativeTokenTx = await addressesProvider.setNativeToken(
+  const setNativeTokenTx = await addressProvider.setNativeToken(
     nativeToken.address
   );
   await setNativeTokenTx.wait();
-  const setNativeTokenVestingTx = await addressesProvider.setNativeTokenVesting(
+  const setNativeTokenVestingTx = await addressProvider.setNativeTokenVesting(
     nativeTokenVesting.address
   );
   await setNativeTokenVestingTx.wait();
-  const setGenesisNFT = await addressesProvider.setGenesisNFT(
-    genesisNFT.address
-  );
+  const setGenesisNFT = await addressProvider.setGenesisNFT(genesisNFT.address);
   await setGenesisNFT.wait();
-  const setFeeDistributorTx = await addressesProvider.setFeeDistributor(
+  const setFeeDistributorTx = await addressProvider.setFeeDistributor(
     feeDistributor.address
   );
   await setFeeDistributorTx.wait();
-  const setGaugeControllerTx = await addressesProvider.setGaugeController(
+  const setGaugeControllerTx = await addressProvider.setGaugeController(
     gaugeController.address
   );
   await setGaugeControllerTx.wait();
-  const setVotingEscrowTx = await addressesProvider.setVotingEscrow(
+  const setVotingEscrowTx = await addressProvider.setVotingEscrow(
     votingEscrow.address
   );
   await setVotingEscrowTx.wait();
-  const setSwapRouterTx = await addressesProvider.setSwapRouter(
+  const setSwapRouterTx = await addressProvider.setSwapRouter(
     swapRouter.address
   );
   await setSwapRouterTx.wait();
 
   // Set bribes address
-  const setBribesTx = await addressesProvider.setBribes(bribes.address);
+  const setBribesTx = await addressProvider.setBribes(bribes.address);
   await setBribesTx.wait();
 
   // Set WETH address
-  const setWETHTx = await addressesProvider.setWETH(addresses["ETH"].address);
+  const setWETHTx = await addressProvider.setWETH(addresses["ETH"].address);
   await setWETHTx.wait();
 
   // Set price curves

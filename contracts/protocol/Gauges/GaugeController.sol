@@ -7,7 +7,7 @@ import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IGaugeController} from "../../interfaces/IGaugeController.sol";
-import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import {IGauge} from "../../interfaces/IGauge.sol";
 
@@ -18,7 +18,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     uint256 public constant MAX_INFLATION_PERIODS = 8; // Maximum 8 inflation periods (8 years) and then base emissions
     uint256 public constant LOADING_PERIOD = 24; // 24 epochs (6 months)
 
-    IAddressesProvider private _addressProvider;
+    IAddressProvider private _addressProvider;
 
     // Epoch history of gauge vote weight
     mapping(address => uint256[]) private _gaugeWeightHistory;
@@ -71,7 +71,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @param addressProvider Address provider contract.
     /// @param initialRewards The initial rewards rate for the token (after the loading period)
     function initialize(
-        IAddressesProvider addressProvider,
+        IAddressProvider addressProvider,
         uint256 initialRewards,
         uint256 lpMaturityPeriod
     ) external initializer {
@@ -470,12 +470,14 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     }
 
     function getRewardsCeiling(uint256 epoch) public view returns (uint256) {
-        uint256 inflationEpoch = epoch / INFLATION_PERIOD;
+        uint256 inflationEpoch;
         // If we are in the loading period, return smaller rewards
         if (epoch < LOADING_PERIOD) {
             return (_initialRewards * epoch) / LOADING_PERIOD;
         } else if (inflationEpoch > MAX_INFLATION_PERIODS) {
             inflationEpoch = MAX_INFLATION_PERIODS;
+        } else {
+            inflationEpoch = epoch / INFLATION_PERIOD;
         }
 
         return

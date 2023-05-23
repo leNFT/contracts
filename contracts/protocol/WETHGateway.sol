@@ -12,20 +12,20 @@ import {ITradingPool} from "../interfaces/ITradingPool.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Trustus} from "./Trustus/Trustus.sol";
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../interfaces/IAddressProvider.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 /// @title WETHGateway Contract
 /// @author leNFT
 /// @notice This contract is the proxy for ETH interactions with the leNFT protocol
 contract WETHGateway is ReentrancyGuard, ERC721Holder {
-    IAddressesProvider private immutable _addressProvider;
+    IAddressProvider private immutable _addressProvider;
     IWETH private immutable _weth;
 
     /// @notice Constructor for the WETHGateway contract
-    /// @param addressesProvider The address of the AddressesProvider contract
-    constructor(IAddressesProvider addressesProvider, IWETH weth) {
-        _addressProvider = addressesProvider;
+    /// @param addressProvider The address of the addressProvider contract
+    constructor(IAddressProvider addressProvider, IWETH weth) {
+        _addressProvider = addressProvider;
         _weth = weth;
     }
 

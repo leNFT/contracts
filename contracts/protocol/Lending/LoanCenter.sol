@@ -8,7 +8,7 @@ import {LoanLogic} from "../../libraries/logic/LoanLogic.sol";
 import {ERC721HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 import {SafeCast} from "../../libraries/utils/SafeCast.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
@@ -31,7 +31,7 @@ contract LoanCenter is
         private _loansLiquidationData;
 
     uint256 private _loansCount;
-    IAddressesProvider private _addressProvider;
+    IAddressProvider private _addressProvider;
 
     // Collection to liquidation threshold
     mapping(address => DataTypes.CollectionRiskParameters)
@@ -66,16 +66,16 @@ contract LoanCenter is
     }
 
     /// @notice Initializes the contract
-    /// @param addressesProvider The address of the AddressesProvider contract
+    /// @param addressProvider The address of the addressProvider contract
     /// @param defaultCollectionsRiskParameters The default collection Risk Parameters
     function initialize(
-        IAddressesProvider addressesProvider,
+        IAddressProvider addressProvider,
         DataTypes.CollectionRiskParameters
             calldata defaultCollectionsRiskParameters
     ) external initializer {
         __Ownable_init();
         __ERC721Holder_init();
-        _addressProvider = addressesProvider;
+        _addressProvider = addressProvider;
         _defaultCollectionsRiskParameters = defaultCollectionsRiskParameters;
     }
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.19;
 
-import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {INativeToken} from "../../interfaces/INativeToken.sol";
 import {IGaugeController} from "../../interfaces/IGaugeController.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -21,7 +21,8 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 /// @title Trading Gauge Contract
 /// @notice A contract for managing the distribution of rewards to Trading LPs
 contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
-    IAddressesProvider private _addressProvider;
+    IAddressProvider private immutable _addressProvider;
+    address private immutable _lpToken;
     mapping(uint256 => address) private _ownerOf;
     mapping(address => uint256) private _balanceOf;
     uint256 private _totalSupply;
@@ -33,7 +34,6 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
     mapping(address => uint256) private _userNextClaimableEpoch;
     uint256 private _workingWeight;
     uint256[] private _workingWeightHistory;
-    address private _lpToken;
     mapping(uint256 => uint256) private _lpValue;
     mapping(address => uint256) private _userLPValue;
     uint256 private _totalLPValue;
@@ -43,7 +43,7 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
     event DepositLP(address indexed user, uint256 lpId);
     event WithdrawLP(address indexed user, uint256 lpId);
 
-    constructor(IAddressesProvider addressProvider, address lpToken_) {
+    constructor(IAddressProvider addressProvider, address lpToken_) {
         _addressProvider = addressProvider;
         _lpToken = lpToken_;
         _workingWeightHistory = [0];

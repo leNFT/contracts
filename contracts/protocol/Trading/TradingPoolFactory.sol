@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
 import {TradingPool} from "./TradingPool.sol";
@@ -22,7 +22,7 @@ contract TradingPoolFactory is
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    IAddressesProvider private _addressProvider;
+    IAddressProvider private _addressProvider;
 
     // collection + asset = pool
     mapping(address => mapping(address => address)) private _pools;
@@ -44,17 +44,17 @@ contract TradingPoolFactory is
     }
 
     /// @notice Initialize the contract
-    /// @param addressesProvider Address of the AddressesProvider contract
+    /// @param addressProvider Address of the addressProvider contract
     /// @param protocolFeePercentage Protocol fee percentage charged on lp trade fees
     /// @param tvlSafeguard default TVL safeguard for pools
     function initialize(
-        IAddressesProvider addressesProvider,
+        IAddressProvider addressProvider,
         uint256 protocolFeePercentage,
         uint256 tvlSafeguard
     ) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
-        _addressProvider = addressesProvider;
+        _addressProvider = addressProvider;
         _protocolFeePercentage = protocolFeePercentage;
         _tvlSafeguard = tvlSafeguard;
     }

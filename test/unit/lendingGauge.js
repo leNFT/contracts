@@ -22,7 +22,7 @@ describe("LendingGauge", () => {
     // Create a new lending gauge and add it to the gauge controller
     const LendingGauge = await ethers.getContractFactory("LendingGauge");
     lendingGauge = await LendingGauge.deploy(
-      addressesProvider.address,
+      addressProvider.address,
       lendingPool.address
     );
     await lendingGauge.deployed();

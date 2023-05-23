@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {DataTypes} from "../types/DataTypes.sol";
 import {PercentageMath} from "../utils/PercentageMath.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
-import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {IFeeDistributor} from "../../interfaces/IFeeDistributor.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
@@ -20,20 +20,20 @@ library LiquidationLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /// @notice Liquidates a loan
-    /// @param addressesProvider The address of the addresses provider
+    /// @param addressProvider The address of the addresses provider
     /// @param params A struct with the parameters of the liquidate function
     function createLiquidationAuction(
-        IAddressesProvider addressesProvider,
+        IAddressProvider addressProvider,
         DataTypes.CreateAuctionParams memory params
     ) external {
         // Get loan center
-        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
+        ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
         // Get the loan
         DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
 
         // Verify if liquidation conditions are met
         ValidationLogic.validateCreateLiquidationAuction(
-            addressesProvider,
+            addressProvider,
             params,
             loanData.state,
             loanData.pool,
@@ -53,11 +53,11 @@ library LiquidationLogic {
     }
 
     function bidLiquidationAuction(
-        IAddressesProvider addressesProvider,
+        IAddressProvider addressProvider,
         DataTypes.AuctionBidParams memory params
     ) external {
         // Get the loan center
-        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
+        ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
         // Get the loan
         DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
         // Get the loan liquidation data
@@ -97,11 +97,11 @@ library LiquidationLogic {
     }
 
     function claimLiquidation(
-        IAddressesProvider addressesProvider,
+        IAddressProvider addressProvider,
         DataTypes.ClaimLiquidationParams memory params
     ) external {
         // Get the loan center
-        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
+        ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
         // Get the loan
         DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
         // Get the loan liquidation data
@@ -152,10 +152,10 @@ library LiquidationLogic {
                 protocolFee = fundsLeft;
             }
             IERC20Upgradeable(poolAsset).safeTransfer(
-                addressesProvider.getFeeDistributor(),
+                addressProvider.getFeeDistributor(),
                 protocolFee
             );
-            IFeeDistributor(addressesProvider.getFeeDistributor()).checkpoint(
+            IFeeDistributor(addressProvider.getFeeDistributor()).checkpoint(
                 poolAsset
             );
             fundsLeft -= protocolFee;
@@ -184,7 +184,7 @@ library LiquidationLogic {
         // Unlock Genesis NFT for use
         if (loanData.genesisNFTId != 0) {
             // Unlock Genesis NFT
-            IGenesisNFT(addressesProvider.getGenesisNFT()).setLockedState(
+            IGenesisNFT(addressProvider.getGenesisNFT()).setLockedState(
                 uint256(loanData.genesisNFTId),
                 false
             );

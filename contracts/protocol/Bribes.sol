@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.19;
 
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../interfaces/IAddressProvider.sol";
 import {IGaugeController} from "../interfaces/IGaugeController.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
@@ -14,7 +14,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 /// @title Bribes contract
 /// @notice Allows users to bribe the veLE token holders in order to incentivize them to vote for a specific gauge
 contract Bribes is IBribes, ReentrancyGuardUpgradeable {
-    IAddressesProvider private _addressProvider;
+    IAddressProvider private _addressProvider;
     // Token + Gauge + Epoch = Amount
     mapping(address => mapping(address => mapping(uint256 => uint256)))
         private _gaugeBribes;
@@ -42,11 +42,9 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
         _disableInitializers();
     }
 
-    /// @notice Initializes the contract with an AddressesProvider
-    /// @param addressProvider AddressesProvider contract address
-    function initialize(
-        IAddressesProvider addressProvider
-    ) external initializer {
+    /// @notice Initializes the contract with an addressProvider
+    /// @param addressProvider addressProvider contract address
+    function initialize(IAddressProvider addressProvider) external initializer {
         __ReentrancyGuard_init();
         _addressProvider = addressProvider;
     }

@@ -9,7 +9,7 @@ import {BorrowLogic} from "../../libraries/logic/BorrowLogic.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {ConfigTypes} from "../../libraries/types/ConfigTypes.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
@@ -42,7 +42,7 @@ contract LendingMarket is
     // The TVL safeguard for the lending pools
     uint256 private _tvlSafeguard;
 
-    IAddressesProvider private _addressProvider;
+    IAddressProvider private _addressProvider;
     ConfigTypes.LendingPoolConfig private _defaultLendingPoolConfig;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -51,17 +51,17 @@ contract LendingMarket is
     }
 
     /// @notice Initialize the LendingMarket contract
-    /// @param addressesProvider Address of the addresses provider contract
+    /// @param addressProvider Address of the addresses provider contract
     /// @param tvlSafeguard The TVL safeguard for the lending pools
     /// @param defaultLendingPoolConfig The default lending pool configuration
     function initialize(
-        IAddressesProvider addressesProvider,
+        IAddressProvider addressProvider,
         uint256 tvlSafeguard,
         ConfigTypes.LendingPoolConfig calldata defaultLendingPoolConfig
     ) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
-        _addressProvider = addressesProvider;
+        _addressProvider = addressProvider;
         _tvlSafeguard = tvlSafeguard;
         _defaultLendingPoolConfig = defaultLendingPoolConfig;
     }

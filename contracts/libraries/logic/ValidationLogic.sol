@@ -6,7 +6,7 @@ import {PercentageMath} from "../utils/PercentageMath.sol";
 import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {IInterestRate} from "../../interfaces/IInterestRate.sol";
-import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {ILendingMarket} from "../../interfaces/ILendingMarket.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
@@ -20,12 +20,12 @@ library ValidationLogic {
     uint256 private constant MININUM_DEPOSIT_EMPTY_VAULT = 1e10;
 
     /// @notice Validates a deposit into a lending pool
-    /// @param addressesProvider The address of the addresses provider
+    /// @param addressProvider The address of the addresses provider
     /// @param totalAssets The total assets of the pool
     /// @param totalShares The total shares of the pool
     /// @param amount The amount of tokens to deposit
     function validateDeposit(
-        IAddressesProvider addressesProvider,
+        IAddressProvider addressProvider,
         uint256 totalAssets,
         uint256 totalShares,
         uint256 amount
@@ -40,21 +40,21 @@ library ValidationLogic {
         // Check if pool will exceed maximum permitted amount
         require(
             amount + totalAssets <
-                ILendingMarket(addressesProvider.getLendingMarket())
+                ILendingMarket(addressProvider.getLendingMarket())
                     .getTVLSafeguard(),
             "VL:VD:SAFEGUARD_EXCEEDED"
         );
     }
 
     /// @notice Validates a withdraw from a lending pool
-    /// @param addressesProvider The address of the addresses provider
+    /// @param addressProvider The address of the addresses provider
     /// @param maxUtilizationRate The maximum utilization rate of the pool
     /// @param debt The total debt of the pool
     /// @param underlyingBalance The underlying balance of the pool
     /// @param asset The address of the asset to withdraw
     /// @param amount The amount of tokens to withdraw
     function validateWithdrawal(
-        IAddressesProvider addressesProvider,
+        IAddressProvider addressProvider,
         uint256 maxUtilizationRate,
         uint256 debt,
         uint256 underlyingBalance,
@@ -65,7 +65,7 @@ library ValidationLogic {
         require(amount > 0, "VL:VW:AMOUNT_0");
 
         uint256 updatedUtilizationRate = IInterestRate(
-            addressesProvider.getInterestRate()
+            addressProvider.getInterestRate()
         ).calculateUtilizationRate(asset, underlyingBalance - amount, debt);
 
         // Check if the utilization rate doesn't go above maximum
@@ -76,11 +76,11 @@ library ValidationLogic {
     }
 
     /// @notice Validates a borrow from a lending pool
-    /// @param addressesProvider The address of the addresses provider
+    /// @param addressProvider The address of the addresses provider
     /// @param lendingPool The address of the lending pool
     /// @param params The borrow params
     function validateBorrow(
-        IAddressesProvider addressesProvider,
+        IAddressProvider addressProvider,
         address lendingPool,
         DataTypes.BorrowParams memory params
     ) external view {
@@ -94,7 +94,7 @@ library ValidationLogic {
         require(lendingPool != address(0), "VL:VB:INVALID_LENDING_POOL");
 
         ITokenOracle tokenOracle = ITokenOracle(
-            addressesProvider.getTokenOracle()
+            addressProvider.getTokenOracle()
         );
         uint256 assetETHPrice = tokenOracle.getTokenETHPrice(params.asset);
         uint256 pricePrecision = tokenOracle.getPricePrecision();
@@ -103,7 +103,7 @@ library ValidationLogic {
         uint256 maxLTVBoost;
         if (params.genesisNFTId != 0) {
             IGenesisNFT genesisNFT = IGenesisNFT(
-                addressesProvider.getGenesisNFT()
+                addressProvider.getGenesisNFT()
             );
 
             // If the caller is not the user we are borrowing on behalf Of, check if the caller is approved
@@ -130,9 +130,8 @@ library ValidationLogic {
         }
 
         // Get assets ETH price
-        uint256 collateralETHPrice = INFTOracle(
-            addressesProvider.getNFTOracle()
-        ).getTokensETHPrice(
+        uint256 collateralETHPrice = INFTOracle(addressProvider.getNFTOracle())
+            .getTokensETHPrice(
                 params.nftAddress,
                 params.nftTokenIds,
                 params.request,
@@ -144,7 +143,7 @@ library ValidationLogic {
             params.amount <=
                 (PercentageMath.percentMul(
                     collateralETHPrice,
-                    ILoanCenter(addressesProvider.getLoanCenter())
+                    ILoanCenter(addressProvider.getLoanCenter())
                         .getCollectionMaxLTV(params.nftAddress) + maxLTVBoost
                 ) * pricePrecision) /
                     assetETHPrice,
@@ -190,10 +189,10 @@ library ValidationLogic {
     }
 
     /// @notice Validates a liquidation of a loan
-    /// @param addressesProvider The address of the addresses provider
+    /// @param addressProvider The address of the addresses provider
     /// @param params The liquidation params
     function validateCreateLiquidationAuction(
-        IAddressesProvider addressesProvider,
+        IAddressProvider addressProvider,
         DataTypes.CreateAuctionParams memory params,
         DataTypes.LoanState loanState,
         address loanPool,
@@ -208,15 +207,14 @@ library ValidationLogic {
 
         // Check if collateral / debt relation allows for liquidation
         ITokenOracle tokenOracle = ITokenOracle(
-            addressesProvider.getTokenOracle()
+            addressProvider.getTokenOracle()
         );
         uint256 assetETHPrice = tokenOracle.getTokenETHPrice(
             IERC4626(loanPool).asset()
         );
         uint256 pricePrecision = tokenOracle.getPricePrecision();
-        uint256 collateralETHPrice = INFTOracle(
-            addressesProvider.getNFTOracle()
-        ).getTokensETHPrice(
+        uint256 collateralETHPrice = INFTOracle(addressProvider.getNFTOracle())
+            .getTokensETHPrice(
                 loanNFTAsset,
                 loanNFTTokenIds,
                 params.request,
@@ -224,7 +222,7 @@ library ValidationLogic {
             );
 
         // Get loan center
-        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
+        ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
 
         require(
             (loanCenter.getLoanMaxDebt(params.loanId, collateralETHPrice) *

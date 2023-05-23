@@ -23,7 +23,7 @@ describe("Trading Pool & Gauge", function () {
     // Create a new trading gauge and add it to the gauge controller
     const TradingGauge = await ethers.getContractFactory("TradingGauge");
     tradingGauge = await TradingGauge.deploy(
-      addressesProvider.address,
+      addressProvider.address,
       tradingPool.address
     );
     await tradingGauge.deployed();

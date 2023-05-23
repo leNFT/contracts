@@ -6,17 +6,17 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 import {IPricingCurve} from "../../interfaces/IPricingCurve.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
-import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
 
 /// @title TradingPoolHelpers Contract
 /// @notice Helper functions for the TradingPool contract
 contract TradingPoolHelpers {
     // Address provider state variable
-    IAddressesProvider private _addressesProvider;
+    IAddressProvider private immutable _addressProvider;
 
-    constructor(address addressesProvider) {
-        _addressesProvider = IAddressesProvider(addressesProvider);
+    constructor(address addressProvider) {
+        _addressProvider = IAddressProvider(addressProvider);
     }
 
     /// @notice Simulates a trading pool buy call
@@ -83,7 +83,7 @@ contract TradingPoolHelpers {
             uint256 lpDataIndex;
             uint256 protocolFee;
             uint256 protocolFeePercentage = ITradingPoolFactory(
-                _addressesProvider.getTradingPoolFactory()
+                _addressProvider.getTradingPoolFactory()
             ).getProtocolFeePercentage();
             for (uint i = 0; i < nftIds.length; i++) {
                 // Find the liquidity pair in the array
@@ -188,7 +188,7 @@ contract TradingPoolHelpers {
             uint256 protocolFee;
             uint256 lpDataIndex;
             uint256 protocolFeePercentage = ITradingPoolFactory(
-                _addressesProvider.getTradingPoolFactory()
+                _addressProvider.getTradingPoolFactory()
             ).getProtocolFeePercentage();
             for (uint i = 0; i < nftIds.length; i++) {
                 // Find the liquidity pair in the array
@@ -244,7 +244,7 @@ contract TradingPoolHelpers {
         uint256 fee;
         uint256 protocolFee;
         uint256 protocolFeePercentage = ITradingPoolFactory(
-            _addressesProvider.getTradingPoolFactory()
+            _addressProvider.getTradingPoolFactory()
         ).getProtocolFeePercentage();
         DataTypes.LiquidityPair memory lp;
         // Go through all liquidity pairs

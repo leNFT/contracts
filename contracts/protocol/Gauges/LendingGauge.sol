@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.19;
 
-import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {INativeToken} from "../../interfaces/INativeToken.sol";
 import {IGaugeController} from "../../interfaces/IGaugeController.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -18,7 +18,8 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 /// @notice Liquidity Gauge contract. Distributes incentives to users who have deposited into the LendingPool.
 /// @dev The gauge tracks the balance and work done by users, which are then used to calculate rewards.
 contract LendingGauge is IGauge, ERC165 {
-    IAddressesProvider private _addressProvider;
+    IAddressProvider private immutable _addressProvider;
+    address private immutable _lpToken;
     mapping(address => uint256) private _balanceOf;
     mapping(address => DataTypes.WorkingBalance[])
         private _workingBalanceHistory;
@@ -26,14 +27,13 @@ contract LendingGauge is IGauge, ERC165 {
     mapping(address => uint256) private _userNextClaimableEpoch;
     uint256 private _workingWeight;
     uint256[] private _workingWeightHistory;
-    address private _lpToken;
 
     using SafeERC20 for IERC20;
 
     /// @notice Constructor function for LendingGauge
     /// @param addressProvider The address provider contract
     /// @param lpToken_ The address of the LendingPool token
-    constructor(IAddressesProvider addressProvider, address lpToken_) {
+    constructor(IAddressProvider addressProvider, address lpToken_) {
         _addressProvider = addressProvider;
         _lpToken = lpToken_;
         _workingWeightHistory = [0];

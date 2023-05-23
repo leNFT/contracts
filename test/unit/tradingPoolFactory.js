@@ -12,7 +12,7 @@ describe("TradingPoolFactory", function () {
     addressProvider;
 
   before(async () => {
-    AddressProvider = await ethers.getContractFactory("AddressesProvider");
+    AddressProvider = await ethers.getContractFactory("AddressProvider");
     addressProvider = await upgrades.deployProxy(AddressProvider);
     TradingPoolFactory = await ethers.getContractFactory("TradingPoolFactory");
     [owner] = await ethers.getSigners();

@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.19;
 
-interface IAddressesProvider {
+interface IAddressProvider {
     function setLendingMarket(address market) external;
 
     function getLendingMarket() external view returns (address);

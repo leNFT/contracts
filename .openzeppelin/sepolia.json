@@ -454,128 +454,128 @@
             "offset": 0,
             "slot": "101",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:10"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:10"
           },
           {
             "label": "_debtToken",
             "offset": 0,
             "slot": "102",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:11"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:11"
           },
           {
             "label": "_feeDistributor",
             "offset": 0,
             "slot": "103",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:12"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:12"
           },
           {
             "label": "_swapRouter",
             "offset": 0,
             "slot": "104",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:13"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:13"
           },
           {
             "label": "_loanCenter",
             "offset": 0,
             "slot": "105",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:14"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:14"
           },
           {
             "label": "_nftOracle",
             "offset": 0,
             "slot": "106",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:15"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:15"
           },
           {
             "label": "_tokenOracle",
             "offset": 0,
             "slot": "107",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:16"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:16"
           },
           {
             "label": "_interestRate",
             "offset": 0,
             "slot": "108",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:17"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:17"
           },
           {
             "label": "_votingEscrow",
             "offset": 0,
             "slot": "109",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:18"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:18"
           },
           {
             "label": "_nativeToken",
             "offset": 0,
             "slot": "110",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:19"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:19"
           },
           {
             "label": "_weth",
             "offset": 0,
             "slot": "111",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:20"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:20"
           },
           {
             "label": "_genesisNFT",
             "offset": 0,
             "slot": "112",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:21"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:21"
           },
           {
             "label": "_gaugeController",
             "offset": 0,
             "slot": "113",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:22"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:22"
           },
           {
             "label": "_tradingPoolFactory",
             "offset": 0,
             "slot": "114",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:23"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:23"
           },
           {
             "label": "_bribes",
             "offset": 0,
             "slot": "115",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:24"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:24"
           },
           {
             "label": "_liquidityPairMetadata",
             "offset": 0,
             "slot": "116",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:25"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:25"
           }
         ],
         "types": {
@@ -697,7 +697,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "154",
-            "type": "t_contract(IAddressesProvider)9419",
+            "type": "t_contract(IAddressProvider)9419",
             "contract": "LendingMarket",
             "src": "contracts/protocol/Lending/LendingMarket.sol:49"
           },
@@ -727,8 +727,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)9419": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)9419": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -875,7 +875,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "155",
-            "type": "t_contract(IAddressesProvider)9239",
+            "type": "t_contract(IAddressProvider)9239",
             "contract": "LoanCenter",
             "src": "contracts/protocol/Lending/LoanCenter.sol:37"
           },
@@ -925,8 +925,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)9239": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)9239": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_enum(LoanState)11962": {
@@ -1219,7 +1219,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "201",
-            "type": "t_contract(IAddressesProvider)10829",
+            "type": "t_contract(IAddressProvider)10829",
             "contract": "DebtToken",
             "src": "contracts/protocol/Lending/DebtToken.sol:20"
           }
@@ -1249,8 +1249,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)10829": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)10829": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_bool)": {
@@ -1407,7 +1407,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "201",
-            "type": "t_contract(IAddressesProvider)11441",
+            "type": "t_contract(IAddressProvider)11441",
             "contract": "NativeToken",
             "src": "contracts/protocol/NativeToken.sol:23"
           },
@@ -1449,8 +1449,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11441": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11441": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
@@ -1647,7 +1647,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "301",
-            "type": "t_contract(IAddressesProvider)9419",
+            "type": "t_contract(IAddressProvider)9419",
             "contract": "GenesisNFT",
             "src": "contracts/protocol/GenesisNFT.sol:46"
           },
@@ -1793,8 +1793,8 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(IAddressesProvider)9419": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)9419": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_bool)": {
@@ -2081,7 +2081,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "301",
-            "type": "t_contract(IAddressesProvider)5032",
+            "type": "t_contract(IAddressProvider)5032",
             "contract": "VotingEscrow",
             "src": "contracts/protocol/VotingEscrow.sol:40"
           },
@@ -2199,8 +2199,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)5032": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)5032": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_bool)": {
@@ -2355,7 +2355,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "101",
-            "type": "t_contract(IAddressesProvider)11441",
+            "type": "t_contract(IAddressProvider)11441",
             "contract": "GaugeController",
             "src": "contracts/protocol/Gauges/GaugeController.sol:20"
           },
@@ -2477,8 +2477,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11441": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11441": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -2619,7 +2619,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(IAddressesProvider)9419",
+            "type": "t_contract(IAddressProvider)9419",
             "contract": "FeeDistributor",
             "src": "contracts/protocol/FeeDistributor.sol:25"
           },
@@ -2673,8 +2673,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)9419": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)9419": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_mapping(t_uint256,t_uint256))": {
@@ -2767,7 +2767,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(IAddressesProvider)11441",
+            "type": "t_contract(IAddressProvider)11441",
             "contract": "Bribes",
             "src": "contracts/protocol/Bribes.sol:26"
           },
@@ -2813,8 +2813,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11441": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11441": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_address,t_uint256))))": {
@@ -2923,7 +2923,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(IAddressesProvider)11441",
+            "type": "t_contract(IAddressProvider)11441",
             "contract": "TradingPoolFactory",
             "src": "contracts/protocol/Trading/TradingPoolFactory.sol:29"
           },
@@ -2969,8 +2969,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11441": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11441": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -3083,7 +3083,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "154",
-            "type": "t_contract(IAddressesProvider)9419",
+            "type": "t_contract(IAddressProvider)9419",
             "contract": "LendingMarket",
             "src": "contracts/protocol/Lending/LendingMarket.sol:49"
           },
@@ -3113,8 +3113,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)9419": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)9419": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -3261,7 +3261,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "154",
-            "type": "t_contract(IAddressesProvider)7048",
+            "type": "t_contract(IAddressProvider)7048",
             "contract": "LendingMarket",
             "src": "contracts/protocol/Lending/LendingMarket.sol:49"
           },
@@ -3291,8 +3291,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)7048": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)7048": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -3439,7 +3439,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "155",
-            "type": "t_contract(IAddressesProvider)982",
+            "type": "t_contract(IAddressProvider)982",
             "contract": "LoanCenter",
             "src": "contracts/protocol/Lending/LoanCenter.sol:37"
           },
@@ -3489,8 +3489,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)982": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)982": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_enum(LoanState)1427": {
@@ -3831,7 +3831,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "301",
-            "type": "t_contract(IAddressesProvider)9192",
+            "type": "t_contract(IAddressProvider)9192",
             "contract": "GenesisNFT",
             "src": "contracts/protocol/GenesisNFT.sol:46"
           },
@@ -3977,8 +3977,8 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(IAddressesProvider)9192": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)9192": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_bool)": {
@@ -4161,7 +4161,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(IAddressesProvider)11441",
+            "type": "t_contract(IAddressProvider)11441",
             "contract": "TradingPoolFactory",
             "src": "contracts/protocol/Trading/TradingPoolFactory.sol:29"
           },
@@ -4207,8 +4207,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11441": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11441": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -4321,7 +4321,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "154",
-            "type": "t_contract(IAddressesProvider)8638",
+            "type": "t_contract(IAddressProvider)8638",
             "contract": "LendingMarket",
             "src": "contracts/protocol/Lending/LendingMarket.sol:49"
           },
@@ -4351,8 +4351,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)8638": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)8638": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -4499,7 +4499,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "155",
-            "type": "t_contract(IAddressesProvider)7095",
+            "type": "t_contract(IAddressProvider)7095",
             "contract": "LoanCenter",
             "src": "contracts/protocol/Lending/LoanCenter.sol:37"
           },
@@ -4549,8 +4549,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)7095": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)7095": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_enum(LoanState)9470": {
@@ -4891,7 +4891,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "301",
-            "type": "t_contract(IAddressesProvider)11441",
+            "type": "t_contract(IAddressProvider)11441",
             "contract": "GenesisNFT",
             "src": "contracts/protocol/GenesisNFT.sol:46"
           },
@@ -5037,8 +5037,8 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(IAddressesProvider)11441": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11441": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_bool)": {
@@ -5325,7 +5325,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "301",
-            "type": "t_contract(IAddressesProvider)5930",
+            "type": "t_contract(IAddressProvider)5930",
             "contract": "VotingEscrow",
             "src": "contracts/protocol/VotingEscrow.sol:40"
           },
@@ -5443,8 +5443,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)5930": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)5930": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_bool)": {
@@ -5599,7 +5599,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "101",
-            "type": "t_contract(IAddressesProvider)5930",
+            "type": "t_contract(IAddressProvider)5930",
             "contract": "GaugeController",
             "src": "contracts/protocol/Gauges/GaugeController.sol:20"
           },
@@ -5729,8 +5729,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)5930": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)5930": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -5871,7 +5871,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(IAddressesProvider)7516",
+            "type": "t_contract(IAddressProvider)7516",
             "contract": "TradingPoolFactory",
             "src": "contracts/protocol/Trading/TradingPoolFactory.sol:29"
           },
@@ -5925,8 +5925,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)7516": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)7516": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -6004,128 +6004,128 @@
             "offset": 0,
             "slot": "101",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:10"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:10"
           },
           {
             "label": "_debtToken",
             "offset": 0,
             "slot": "102",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:11"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:11"
           },
           {
             "label": "_feeDistributor",
             "offset": 0,
             "slot": "103",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:12"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:12"
           },
           {
             "label": "_swapRouter",
             "offset": 0,
             "slot": "104",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:13"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:13"
           },
           {
             "label": "_loanCenter",
             "offset": 0,
             "slot": "105",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:14"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:14"
           },
           {
             "label": "_nftOracle",
             "offset": 0,
             "slot": "106",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:15"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:15"
           },
           {
             "label": "_tokenOracle",
             "offset": 0,
             "slot": "107",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:16"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:16"
           },
           {
             "label": "_interestRate",
             "offset": 0,
             "slot": "108",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:17"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:17"
           },
           {
             "label": "_votingEscrow",
             "offset": 0,
             "slot": "109",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:18"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:18"
           },
           {
             "label": "_nativeToken",
             "offset": 0,
             "slot": "110",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:19"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:19"
           },
           {
             "label": "_weth",
             "offset": 0,
             "slot": "111",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:20"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:20"
           },
           {
             "label": "_genesisNFT",
             "offset": 0,
             "slot": "112",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:21"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:21"
           },
           {
             "label": "_gaugeController",
             "offset": 0,
             "slot": "113",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:22"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:22"
           },
           {
             "label": "_tradingPoolFactory",
             "offset": 0,
             "slot": "114",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:23"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:23"
           },
           {
             "label": "_bribes",
             "offset": 0,
             "slot": "115",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:24"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:24"
           },
           {
             "label": "_liquidityPairMetadata",
             "offset": 0,
             "slot": "116",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:25"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:25"
           }
         ],
         "types": {
@@ -6208,128 +6208,128 @@
             "offset": 0,
             "slot": "101",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:10"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:10"
           },
           {
             "label": "_debtToken",
             "offset": 0,
             "slot": "102",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:11"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:11"
           },
           {
             "label": "_feeDistributor",
             "offset": 0,
             "slot": "103",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:12"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:12"
           },
           {
             "label": "_swapRouter",
             "offset": 0,
             "slot": "104",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:13"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:13"
           },
           {
             "label": "_loanCenter",
             "offset": 0,
             "slot": "105",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:14"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:14"
           },
           {
             "label": "_nftOracle",
             "offset": 0,
             "slot": "106",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:15"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:15"
           },
           {
             "label": "_tokenOracle",
             "offset": 0,
             "slot": "107",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:16"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:16"
           },
           {
             "label": "_interestRate",
             "offset": 0,
             "slot": "108",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:17"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:17"
           },
           {
             "label": "_votingEscrow",
             "offset": 0,
             "slot": "109",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:18"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:18"
           },
           {
             "label": "_nativeToken",
             "offset": 0,
             "slot": "110",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:19"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:19"
           },
           {
             "label": "_weth",
             "offset": 0,
             "slot": "111",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:20"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:20"
           },
           {
             "label": "_genesisNFT",
             "offset": 0,
             "slot": "112",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:21"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:21"
           },
           {
             "label": "_gaugeController",
             "offset": 0,
             "slot": "113",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:22"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:22"
           },
           {
             "label": "_tradingPoolFactory",
             "offset": 0,
             "slot": "114",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:23"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:23"
           },
           {
             "label": "_bribes",
             "offset": 0,
             "slot": "115",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:24"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:24"
           },
           {
             "label": "_liquidityPairMetadata",
             "offset": 0,
             "slot": "116",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:25"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:25"
           }
         ],
         "types": {
@@ -6451,7 +6451,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "154",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "LendingMarket",
             "src": "contracts/protocol/Lending/LendingMarket.sol:47"
           },
@@ -6481,8 +6481,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -6629,7 +6629,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "155",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "LoanCenter",
             "src": "contracts/protocol/Lending/LoanCenter.sol:35"
           },
@@ -6679,8 +6679,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_enum(LoanState)14517": {
@@ -6967,7 +6967,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "201",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "NativeToken",
             "src": "contracts/protocol/NativeToken.sol:21"
           },
@@ -7001,8 +7001,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
@@ -7199,7 +7199,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "301",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "GenesisNFT",
             "src": "contracts/protocol/GenesisNFT.sol:44"
           },
@@ -7345,8 +7345,8 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_bool)": {
@@ -7553,7 +7553,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "154",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "LendingMarket",
             "src": "contracts/protocol/Lending/LendingMarket.sol:47"
           },
@@ -7583,8 +7583,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -7811,7 +7811,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "301",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "VotingEscrow",
             "src": "contracts/protocol/VotingEscrow.sol:37"
           },
@@ -7929,8 +7929,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_bool)": {
@@ -8085,7 +8085,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "101",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "GaugeController",
             "src": "contracts/protocol/Gauges/GaugeController.sol:20"
           },
@@ -8215,8 +8215,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -8357,7 +8357,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "FeeDistributor",
             "src": "contracts/protocol/FeeDistributor.sol:23"
           },
@@ -8411,8 +8411,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_mapping(t_uint256,t_uint256))": {
@@ -8505,7 +8505,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "Bribes",
             "src": "contracts/protocol/Bribes.sol:24"
           },
@@ -8551,8 +8551,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_address,t_uint256))))": {
@@ -8661,7 +8661,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "TradingPoolFactory",
             "src": "contracts/protocol/Trading/TradingPoolFactory.sol:27"
           },
@@ -8723,8 +8723,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -8841,7 +8841,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "154",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "LendingMarket",
             "src": "contracts/protocol/Lending/LendingMarket.sol:47"
           },
@@ -8871,8 +8871,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -8980,128 +8980,128 @@
             "offset": 0,
             "slot": "101",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:10"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:10"
           },
           {
             "label": "_feeDistributor",
             "offset": 0,
             "slot": "102",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:11"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:11"
           },
           {
             "label": "_swapRouter",
             "offset": 0,
             "slot": "103",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:12"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:12"
           },
           {
             "label": "_loanCenter",
             "offset": 0,
             "slot": "104",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:13"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:13"
           },
           {
             "label": "_nftOracle",
             "offset": 0,
             "slot": "105",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:14"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:14"
           },
           {
             "label": "_tokenOracle",
             "offset": 0,
             "slot": "106",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:15"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:15"
           },
           {
             "label": "_interestRate",
             "offset": 0,
             "slot": "107",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:16"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:16"
           },
           {
             "label": "_votingEscrow",
             "offset": 0,
             "slot": "108",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:17"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:17"
           },
           {
             "label": "_nativeToken",
             "offset": 0,
             "slot": "109",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:18"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:18"
           },
           {
             "label": "_weth",
             "offset": 0,
             "slot": "110",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:19"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:19"
           },
           {
             "label": "_genesisNFT",
             "offset": 0,
             "slot": "111",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:20"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:20"
           },
           {
             "label": "_gaugeController",
             "offset": 0,
             "slot": "112",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:21"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:21"
           },
           {
             "label": "_tradingPoolFactory",
             "offset": 0,
             "slot": "113",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:22"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:22"
           },
           {
             "label": "_tradingPoolHelpers",
             "offset": 0,
             "slot": "114",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:23"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:23"
           },
           {
             "label": "_bribes",
             "offset": 0,
             "slot": "115",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:24"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:24"
           },
           {
             "label": "_liquidityPairMetadata",
             "offset": 0,
             "slot": "116",
             "type": "t_address",
-            "contract": "AddressesProvider",
-            "src": "contracts/protocol/AddressesProvider.sol:25"
+            "contract": "AddressProvider",
+            "src": "contracts/protocol/addressProvider.sol:25"
           }
         ],
         "types": {
@@ -9223,7 +9223,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "154",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "LendingMarket",
             "src": "contracts/protocol/Lending/LendingMarket.sol:47"
           },
@@ -9253,8 +9253,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -9401,7 +9401,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "155",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "LoanCenter",
             "src": "contracts/protocol/Lending/LoanCenter.sol:37"
           },
@@ -9451,8 +9451,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_enum(LoanState)14501": {
@@ -9795,7 +9795,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "301",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "GenesisNFT",
             "src": "contracts/protocol/GenesisNFT.sol:44"
           },
@@ -9941,8 +9941,8 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_bool)": {
@@ -10229,7 +10229,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "301",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "VotingEscrow",
             "src": "contracts/protocol/VotingEscrow.sol:38"
           },
@@ -10347,8 +10347,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_bool)": {
@@ -10503,7 +10503,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "101",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "GaugeController",
             "src": "contracts/protocol/Gauges/GaugeController.sol:22"
           },
@@ -10633,8 +10633,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {
@@ -10775,7 +10775,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "FeeDistributor",
             "src": "contracts/protocol/FeeDistributor.sol:24"
           },
@@ -10829,8 +10829,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_mapping(t_uint256,t_uint256))": {
@@ -10923,7 +10923,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "Bribes",
             "src": "contracts/protocol/Bribes.sol:24"
           },
@@ -10969,8 +10969,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_address,t_uint256))))": {
@@ -11079,7 +11079,7 @@
             "label": "_addressProvider",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(IAddressesProvider)11477",
+            "type": "t_contract(IAddressProvider)11477",
             "contract": "TradingPoolFactory",
             "src": "contracts/protocol/Trading/TradingPoolFactory.sol:28"
           },
@@ -11141,8 +11141,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IAddressesProvider)11477": {
-            "label": "contract IAddressesProvider",
+          "t_contract(IAddressProvider)11477": {
+            "label": "contract IAddressProvider",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_address)": {

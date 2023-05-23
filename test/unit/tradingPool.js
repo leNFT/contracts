@@ -26,7 +26,7 @@ describe("TradingPool", function () {
     // Should fail on deployment from non-tradingPoolFactory address
     await expect(
       TradingPool.deploy(
-        addressesProvider.address,
+        addressProvider.address,
         owner.address,
         weth.address,
         testNFT.address,

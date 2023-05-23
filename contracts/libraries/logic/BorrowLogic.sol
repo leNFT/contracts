@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {DataTypes} from "../types/DataTypes.sol";
 import {PercentageMath} from "../utils/PercentageMath.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
-import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
@@ -19,20 +19,20 @@ library BorrowLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /// @notice Creates a new loan, transfers the collateral to the loan center and mints the debt token
-    /// @param addressesProvider The address of the addresses provider
+    /// @param addressProvider The address of the addresses provider
     /// @param lendingPool The address of the lending pool
     /// @param params A struct with the parameters of the borrow function
     /// @return loanId The id of the new loan
     function borrow(
-        IAddressesProvider addressesProvider,
+        IAddressProvider addressProvider,
         address lendingPool,
         DataTypes.BorrowParams memory params
     ) external returns (uint256 loanId) {
         // Validate the movement
-        ValidationLogic.validateBorrow(addressesProvider, lendingPool, params);
+        ValidationLogic.validateBorrow(addressProvider, lendingPool, params);
 
         // Get the loan center
-        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
+        ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
 
         // Transfer the collateral to the loan center
         for (uint256 i = 0; i < params.nftTokenIds.length; i++) {
@@ -46,7 +46,7 @@ library BorrowLogic {
         // If a genesis NFT was used with this loan we need to lock it
         if (params.genesisNFTId != 0) {
             // Lock genesis NFT to this loan
-            IGenesisNFT(addressesProvider.getGenesisNFT()).setLockedState(
+            IGenesisNFT(addressProvider.getGenesisNFT()).setLockedState(
                 params.genesisNFTId,
                 true
             );
@@ -78,14 +78,14 @@ library BorrowLogic {
     }
 
     /// @notice Repays a loan, transfers the principal and interest to the lending pool and returns the collateral to the owner
-    /// @param addressesProvider The address of the addresses provider
+    /// @param addressProvider The address of the addresses provider
     /// @param params A struct with the parameters of the repay function
     function repay(
-        IAddressesProvider addressesProvider,
+        IAddressProvider addressProvider,
         DataTypes.RepayParams memory params
     ) external {
         // Get the loan
-        ILoanCenter loanCenter = ILoanCenter(addressesProvider.getLoanCenter());
+        ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
         DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
         uint256 interest = loanCenter.getLoanInterest(params.loanId);
         uint256 loanDebt = interest + loanData.amount;
@@ -128,7 +128,7 @@ library BorrowLogic {
 
             if (loanData.genesisNFTId != 0) {
                 // Unlock Genesis NFT
-                IGenesisNFT(addressesProvider.getGenesisNFT()).setLockedState(
+                IGenesisNFT(addressProvider.getGenesisNFT()).setLockedState(
                     uint256(loanData.genesisNFTId),
                     false
                 );

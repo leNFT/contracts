@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
-import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {IPricingCurve} from "../../interfaces/IPricingCurve.sol";
 import {IFeeDistributor} from "../../interfaces/IFeeDistributor.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
@@ -33,7 +33,7 @@ contract TradingPool is
 {
     uint public constant MAX_FEE = 8000; // 80%
 
-    IAddressesProvider private immutable _addressProvider;
+    IAddressProvider private immutable _addressProvider;
     bool private _paused;
     address private immutable _token;
     address private immutable _nft;
@@ -62,7 +62,7 @@ contract TradingPool is
     /// @param name The name of the ERC721 token.
     /// @param symbol The symbol of the ERC721 token.
     constructor(
-        IAddressesProvider addressProvider,
+        IAddressProvider addressProvider,
         address owner,
         address token,
         address nft,

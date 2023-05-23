@@ -30,7 +30,7 @@ describe("LendingPool", function () {
     // Should fail on deployment from non-market address
     await expect(
       LendingPool.deploy(
-        addressesProvider.address,
+        addressProvider.address,
         owner.address,
         weth.address,
         "Lending Pool Token",

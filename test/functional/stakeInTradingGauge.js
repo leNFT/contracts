@@ -52,7 +52,7 @@ describe("Trading Gauge", () => {
   });
   it("Should create a gauge a stake into it", async function () {
     const Gauge = await ethers.getContractFactory("TradingGauge");
-    gauge = await Gauge.deploy(addressesProvider.address, poolAddress);
+    gauge = await Gauge.deploy(addressProvider.address, poolAddress);
     await gauge.deployed();
     console.log("Gauge address: ", gauge.address);
 

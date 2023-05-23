@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
-import {IAddressesProvider} from "../../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {IInterestRate} from "../../interfaces/IInterestRate.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -15,7 +15,7 @@ import {ValidationLogic} from "../../libraries/logic/ValidationLogic.sol";
 /// @title LendingPool contract
 /// @dev The LendingPool contract uses the ERC4626 contract to track the shares in a liquidity pool held by users
 contract LendingPool is ILendingPool, ERC4626, Ownable {
-    IAddressesProvider private immutable _addressProvider;
+    IAddressProvider private immutable _addressProvider;
     IERC20 private immutable _asset;
     uint256 private _debt;
     uint256 private _borrowRate;
@@ -43,7 +43,7 @@ contract LendingPool is ILendingPool, ERC4626, Ownable {
     /// @param symbol the symbol of the ERC20 token
     /// @param lendingPoolConfig the configuration parameters for the lending pool
     constructor(
-        IAddressesProvider addressProvider,
+        IAddressProvider addressProvider,
         address owner,
         address asset,
         string memory name,
@@ -196,7 +196,7 @@ contract LendingPool is ILendingPool, ERC4626, Ownable {
     /// @notice Updates the current borrow rate.
     function _updateBorrowRate() internal {
         _borrowRate = IInterestRate(
-            IAddressesProvider(_addressProvider).getInterestRate()
+            IAddressProvider(_addressProvider).getInterestRate()
         ).calculateBorrowRate(address(_asset), getUnderlyingBalance(), _debt);
 
         emit UpdatedBorrowRate(_borrowRate);

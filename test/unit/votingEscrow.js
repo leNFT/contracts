@@ -536,7 +536,7 @@ describe("VotingEscrow", () => {
     );
     const TradingGauge = await ethers.getContractFactory("TradingGauge");
     tradingGauge = await TradingGauge.deploy(
-      addressesProvider.address,
+      addressProvider.address,
       tradingPool.address
     );
     await tradingGauge.deployed();
@@ -604,7 +604,7 @@ describe("VotingEscrow", () => {
     );
     const TradingGauge = await ethers.getContractFactory("TradingGauge");
     tradingGauge = await TradingGauge.deploy(
-      addressesProvider.address,
+      addressProvider.address,
       tradingPool.address
     );
     await tradingGauge.deployed();

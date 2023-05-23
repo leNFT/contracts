@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
+import {IAddressProvider} from "../interfaces/IAddressProvider.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -18,15 +18,15 @@ contract NativeTokenVesting is Ownable {
         uint256 cliff,
         uint256 amount
     );
-    IAddressesProvider private _addressProvider;
+    IAddressProvider private immutable _addressProvider;
+    uint256 private immutable _vestingCap;
     mapping(address => DataTypes.VestingParams) private _vestingParams;
     mapping(address => uint256) private _withdrawn;
-    uint256 private _vestingCap;
     uint256 private _totalWithdrawn;
 
     using SafeERC20 for IERC20;
 
-    constructor(IAddressesProvider addressProvider, uint256 vestingCap) {
+    constructor(IAddressProvider addressProvider, uint256 vestingCap) {
         _addressProvider = addressProvider;
         _vestingCap = vestingCap;
     }
