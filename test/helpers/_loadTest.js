@@ -263,7 +263,7 @@ let loadEnv = async function (isMainnetFork) {
   );
   nativeTokenVesting = await NativeTokenVesting.deploy(
     addressesProvider.address,
-    "17500000000000000000000000" //17.5M Vesting Cap
+    "40000000000000000000000000" // 40M Vesting Cap (17.5M Team + 17.5M Treasury + 5M Liquidity Mining)
   );
   await nativeTokenVesting.deployed();
 
