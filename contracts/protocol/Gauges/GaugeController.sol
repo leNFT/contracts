@@ -219,6 +219,9 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         return _lockGaugeVoteRatio[tokenId][gauge];
     }
 
+    /// @notice Get the vote point for a lock in a specific gauge.
+    /// @param tokenId The tokenId of the lock.
+    /// @param gauge The address of the gauge.
     function getLockVotePointForGauge(
         uint256 tokenId,
         address gauge
@@ -469,6 +472,8 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         emit Vote(msg.sender, tokenId, gauge, ratio);
     }
 
+    /// @notice Returns the maximum amount of tokens that can be distributed as rewards for the specified epoch.
+    /// @param epoch The epoch for which to get the rewards.
     function getRewardsCeiling(uint256 epoch) public view returns (uint256) {
         uint256 inflationEpoch;
         // If we are in the loading period, return smaller rewards

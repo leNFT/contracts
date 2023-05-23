@@ -8,6 +8,15 @@ import {SafeCast} from "../utils/SafeCast.sol";
 /// @title LoanLogic library
 /// @notice Defines the logic for a loan data type
 library LoanLogic {
+    /// @notice Initializes a loan
+    /// @param loanData The loan data to initialize
+    /// @param owner The owner of the loan
+    /// @param pool The pool that the loan belongs to
+    /// @param amount The amount borrowed
+    /// @param genesisNFTId The genesis NFT ID associated with the loan
+    /// @param nftAsset The NFT asset address
+    /// @param nftTokenIds The NFT token IDs
+    /// @param borrowRate The borrow rate associated with the loan
     function init(
         DataTypes.LoanData storage loanData,
         address owner,
@@ -30,6 +39,9 @@ library LoanLogic {
         loanData.debtTimestamp = SafeCast.toUint40(block.timestamp);
     }
 
+    /// @notice Internal function calculate the interest a loan has accrued
+    /// @param loanData The loan data
+    /// @param timestamp The timestamp to calculate the interest for
     function getInterest(
         DataTypes.LoanData storage loanData,
         uint256 timestamp

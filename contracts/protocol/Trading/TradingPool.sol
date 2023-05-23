@@ -79,6 +79,9 @@ contract TradingPool is
         _transferOwnership(owner);
     }
 
+    /// @notice Returns the token URI for a specific liquidity pair
+    /// @param tokenId The ID of the liquidity pair.
+    /// @return The token URI.
     function tokenURI(
         uint256 tokenId
     ) public view override lpExists(tokenId) returns (string memory) {
@@ -114,6 +117,8 @@ contract TradingPool is
         return _liquidityPairs[lpId];
     }
 
+    /// @notice Gets the number of liquidity pairs ever created in the trading pool.
+    /// @return The number of liquidity pairs.
     function getLpCount() external view override returns (uint256) {
         return _lpCount;
     }

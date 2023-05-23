@@ -572,7 +572,6 @@ contract VotingEscrow is
     }
 
     /// @notice Claims all available rebates for the given token id
-    /// @dev Has to be called before changing the locked balance of a token id
     /// @param tokenId The token id of the lock to claim rebates for
     /// @return amountToClaim The amount of rebates claimed
     function claimRebates(
@@ -632,9 +631,14 @@ contract VotingEscrow is
         }
     }
 
-    function claimRebatesBatch(uint256[] calldata tokensIds) external {
+    /// @notice Claims all available rebates for the given token ids
+    /// @param tokensIds The token ids of the locks to claim rebates for
+    /// @return amountToClaim The amount of rebates claimed
+    function claimRebatesBatch(
+        uint256[] calldata tokensIds
+    ) external returns (uint256 amountToClaim) {
         for (uint i = 0; i < tokensIds.length; i++) {
-            claimRebates(tokensIds[i]);
+            amountToClaim += claimRebates(tokensIds[i]);
         }
     }
 

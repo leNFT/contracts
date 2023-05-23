@@ -195,6 +195,9 @@ contract GenesisNFT is
             );
     }
 
+    /// @notice Returns the SVG present in the token's metadata
+    /// @param tokenId ID of the token
+    /// @return _svg The token's SVG
     function svg(
         uint256 tokenId
     ) public view tokenExists(tokenId) returns (bytes memory _svg) {

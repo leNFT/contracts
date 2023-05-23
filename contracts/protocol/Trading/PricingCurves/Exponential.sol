@@ -40,6 +40,10 @@ contract ExponentialPriceCurve is IPricingCurve, ERC165 {
             );
     }
 
+    /// @notice Validates the parameters for a liquidity provider deposit
+    /// @param spotPrice The initial spot price of the LP
+    /// @param delta The delta of the LP
+    /// @param fee The fee of the LP
     function validateLpParameters(
         uint256 spotPrice,
         uint256 delta,

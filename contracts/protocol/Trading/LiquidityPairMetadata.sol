@@ -212,6 +212,9 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
         }
     }
 
+    /// @notice Returns a trait encoded as json.
+    /// @param traitType The trait type.
+    /// @param value The trait value.
     function trait(
         string memory traitType,
         string memory value

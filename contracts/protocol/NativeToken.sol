@@ -65,6 +65,10 @@ contract NativeToken is
         ERC20Upgradeable._burn(account, amount);
     }
 
+    /// @notice Mints vested tokens to the specified receiver
+    /// @dev The caller must be the native token vesting contract.
+    /// @param receiver The address to receive the vested tokens.
+    /// @param amount The amount of vested tokens to mint.
     function mintVestingTokens(
         address receiver,
         uint256 amount
