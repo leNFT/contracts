@@ -31,9 +31,11 @@ abstract contract Trustus {
     /// -----------------------------------------------------------------------
 
     /// @notice The chain ID used by EIP-712
+    // solhint-disable-next-line var-name-mixedcase
     uint256 internal INITIAL_CHAIN_ID;
 
     /// @notice The domain separator used by EIP-712
+    // solhint-disable-next-line var-name-mixedcase
     bytes32 internal INITIAL_DOMAIN_SEPARATOR;
 
     /// -----------------------------------------------------------------------
@@ -130,6 +132,7 @@ abstract contract Trustus {
     /// -----------------------------------------------------------------------
 
     /// @notice The domain separator used by EIP-712
+    // solhint-disable-next-line func-name-mixedcase
     function DOMAIN_SEPARATOR() public view virtual returns (bytes32) {
         return
             block.chainid == INITIAL_CHAIN_ID

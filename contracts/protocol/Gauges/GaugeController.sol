@@ -30,7 +30,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     // Epoch history of total vote weight
     uint256[] private _totalWeigthHistory;
     // Last checkpoint for the total vote weight
-    DataTypes.Point _lastWeightCheckpoint;
+    DataTypes.Point private _lastWeightCheckpoint;
     // Slope changes for total weight
     mapping(uint256 => uint256) private _totalWeightSlopeChanges;
     // vote ratio being used by each lock (%), smallest tick is 0.01%

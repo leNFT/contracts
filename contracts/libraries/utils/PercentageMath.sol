@@ -28,6 +28,7 @@ library PercentageMath {
         uint256 percentage
     ) internal pure returns (uint256 result) {
         // to avoid overflow, value <= (type(uint256).max - HALF_PERCENTAGE_FACTOR) / percentage
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             if iszero(
                 or(
@@ -62,6 +63,7 @@ library PercentageMath {
         uint256 percentage
     ) internal pure returns (uint256 result) {
         // to avoid overflow, value <= (type(uint256).max - halfPercentage) / PERCENTAGE_FACTOR
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             if or(
                 iszero(percentage),

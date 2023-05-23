@@ -6,6 +6,7 @@ import {IAddressesProvider} from "../interfaces/IAddressesProvider.sol";
 
 /// @title AddressesProvider
 /// @notice This contract is responsible for storing and providing all the protocol contract addresses
+// solhint-disable-next-line max-states-count
 contract AddressesProvider is OwnableUpgradeable, IAddressesProvider {
     address private _lendingMarket;
     address private _feeDistributor;

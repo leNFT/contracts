@@ -16,8 +16,8 @@ import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 /// @title ValidationLogic
 /// @notice Contains the logic for the lending validation functions
 library ValidationLogic {
-    uint256 constant LIQUIDATION_AUCTION_PERIOD = 3600 * 24;
-    uint256 constant MININUM_DEPOSIT_EMPTY_VAULT = 1e10;
+    uint256 private constant LIQUIDATION_AUCTION_PERIOD = 3600 * 24;
+    uint256 private constant MININUM_DEPOSIT_EMPTY_VAULT = 1e10;
 
     /// @notice Validates a deposit into a lending pool
     /// @param addressesProvider The address of the addresses provider

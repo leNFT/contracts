@@ -56,3 +56,10 @@ Then do:
 npm install
 npx hardhat test
 ```
+
+To run test coverage:
+
+```bash
+npm install
+npx hardhat coverage
+```

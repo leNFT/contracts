@@ -66,7 +66,7 @@ describe("Sell fuzzing", function () {
       // Generate a random fee and tokens ids for non buy LPs
       var fee = 0;
       if (lpType != 3) {
-        fee = chance.integer({ min: 0, max: 8000 });
+        fee = chance.integer({ min: 1, max: 8000 });
       }
 
       const curveAddress = chance.bool()

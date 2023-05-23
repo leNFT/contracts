@@ -12,7 +12,7 @@ contract TestNFT is ERC165, IERC721Metadata, ERC721Enumerable {
 
     constructor(
         string memory name,
-        string memory symbol
+        string memory symbol // solhint-disable-next-line no-empty-blocks
     ) ERC721(name, symbol) {}
 
     function mint(address owner) external returns (uint256) {

@@ -20,7 +20,7 @@ contract NativeTokenVesting is Ownable {
     );
     IAddressesProvider private _addressProvider;
     mapping(address => DataTypes.VestingParams) private _vestingParams;
-    mapping(address => uint256) _withdrawn;
+    mapping(address => uint256) private _withdrawn;
     uint256 private _vestingCap;
     uint256 private _totalWithdrawn;
 

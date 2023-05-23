@@ -23,6 +23,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {IVault} from "@balancer-labs/v2-interfaces/contracts/vault/IVault.sol";
 import {WeightedPoolUserData} from "@balancer-labs/v2-interfaces/contracts/pool-weighted/WeightedPoolUserData.sol";
 import {IBalancerQueries} from "@balancer-labs/v2-interfaces/contracts/standalone-utils/IBalancerQueries.sol";
+// solhint-disable-next-line no-global-import
 import "../libraries/balancer/ERC20Helpers.sol"; // Custom (pragma ^0.8.0) ERC20 helpers for Balancer tokens
 
 /// @title GenesisNFT
@@ -35,8 +36,8 @@ contract GenesisNFT is
     IGenesisNFT,
     ReentrancyGuardUpgradeable
 {
-    uint256 constant LP_LE_AMOUNT = 8000e18; // 8000 LE
-    uint256 constant LP_ETH_AMOUNT = 20e16; // 0.2 ETH
+    uint256 private constant LP_LE_AMOUNT = 8000e18; // 8000 LE
+    uint256 private constant LP_ETH_AMOUNT = 20e16; // 0.2 ETH
 
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using SafeERC20Upgradeable for IERC20Upgradeable;

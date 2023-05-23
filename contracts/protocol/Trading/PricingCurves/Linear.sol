@@ -4,7 +4,6 @@ pragma solidity 0.8.19;
 import {IPricingCurve} from "../../../interfaces/IPricingCurve.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {PercentageMath} from "../../../libraries/utils/PercentageMath.sol";
-import "hardhat/console.sol";
 
 contract LinearPriceCurve is IPricingCurve, ERC165 {
     /// @notice Calculates the price after buying 1 token

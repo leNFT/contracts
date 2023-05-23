@@ -40,7 +40,8 @@ contract LoanCenter is
     mapping(address => DataTypes.CollectionRiskParameters)
         private _collectionsRiskParameters;
 
-    DataTypes.CollectionRiskParameters _defaultCollectionsRiskParameters;
+    DataTypes.CollectionRiskParameters
+        private _defaultCollectionsRiskParameters;
 
     // Mapping from address to active loans
     mapping(address => uint256[]) private _activeLoans;
