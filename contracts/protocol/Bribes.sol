@@ -71,6 +71,7 @@ contract Bribes is
         address gauge,
         uint256 amount
     ) external override validGauge(gauge) nonReentrant {
+        require(amount > 0, "B:DB:ZERO_AMOUNT");
         // Find what's the next epoch
         uint256 nextEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
             .getEpoch(block.timestamp) + 1;
@@ -99,6 +100,7 @@ contract Bribes is
         address gauge,
         uint256 amount
     ) external override validGauge(gauge) nonReentrant {
+        require(amount > 0, "B:WB:ZERO_AMOUNT");
         // Find what's the next epoch
         uint256 nextEpoch = IVotingEscrow(_addressProvider.getVotingEscrow())
             .getEpoch(block.timestamp) + 1;

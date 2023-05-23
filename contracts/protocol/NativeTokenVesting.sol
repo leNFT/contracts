@@ -57,6 +57,7 @@ contract NativeTokenVesting is Ownable {
         uint256 cliff,
         uint256 amount
     ) external onlyOwner {
+        require(amount > 0, "NTV:SV:AMOUNT_TOO_LOW");
         _vestingParams[account] = DataTypes.VestingParams(
             block.timestamp,
             period,

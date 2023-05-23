@@ -474,6 +474,7 @@ contract VotingEscrow is
         lockOwner(tokenId)
         lockNotExpired(tokenId)
     {
+        require(amount > 0, "VE:IA:AMOUNT_ZERO");
         // Claim any existing rebates
         claimRebates(tokenId);
 
