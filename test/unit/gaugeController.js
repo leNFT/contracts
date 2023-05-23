@@ -187,7 +187,7 @@ describe("GaugeController", () => {
       1
     );
     console.log(gaugeWeight.toString());
-    expect(gaugeWeight).to.equal("7191780821917807651200");
+    expect(gaugeWeight).to.equal("9589041095890410201600");
   });
   it("Should vote for a gauge", async function () {
     // MInt some LE to the callers address

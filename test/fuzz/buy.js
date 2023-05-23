@@ -3,12 +3,10 @@ const { BigNumber } = require("ethers");
 const { expect } = require("chai");
 const load = require("../helpers/_loadTest.js");
 const Chance = require("chance");
-const { getPriceSig } = require("../helpers/getPriceSig.js");
 const { time } = require("@nomicfoundation/hardhat-network-helpers");
 const chance = new Chance();
 
 const nTests = 100;
-var counter = 0;
 
 describe("Buy fuzzing", function () {
   load.loadTest(false);
