@@ -22,7 +22,10 @@ describe("FeeDistributor", function () {
   });
 
   it("Should checkpoint the fees", async function () {
-    expect(await feeDistributor.getTotalFeesAt(weth.address, 0)).to.equal(0);
+    const epoch = await votingEscrow.getEpoch(await time.latest());
+    expect(await feeDistributor.getTotalFeesAt(weth.address, epoch)).to.equal(
+      0
+    );
     // Mint some weth to the fee Distributor
     const depositTx = await weth.deposit({
       value: ethers.utils.parseEther("1"),
@@ -39,7 +42,7 @@ describe("FeeDistributor", function () {
     await checkpointTx.wait();
 
     // Check the fees
-    expect(await feeDistributor.getTotalFeesAt(weth.address, 0)).to.equal(
+    expect(await feeDistributor.getTotalFeesAt(weth.address, epoch)).to.equal(
       ethers.utils.parseEther("1")
     );
   });
@@ -63,13 +66,17 @@ describe("FeeDistributor", function () {
     // Go to 1 epoch in the future
     await time.increase(await votingEscrow.getEpochPeriod());
 
-    // Salvage the fees from epoch 0
-    const salvageTx = await feeDistributor.salvageFees(weth.address, 0);
+    const epoch = await votingEscrow.getEpoch(await time.latest());
+
+    // Salvage the fees from epoch
+    const salvageTx = await feeDistributor.salvageFees(weth.address, epoch - 1);
     await salvageTx.wait();
 
     // Check the fees
-    expect(await feeDistributor.getTotalFeesAt(weth.address, 0)).to.equal(0);
-    expect(await feeDistributor.getTotalFeesAt(weth.address, 1)).to.equal(
+    expect(
+      await feeDistributor.getTotalFeesAt(weth.address, epoch - 1)
+    ).to.equal(0);
+    expect(await feeDistributor.getTotalFeesAt(weth.address, epoch)).to.equal(
       ethers.utils.parseEther("1")
     );
   });
@@ -85,12 +92,6 @@ describe("FeeDistributor", function () {
     );
     await transferTx.wait();
 
-    // Mint native tokens in order to lock them
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("1")
-    );
-    await mintTx.wait();
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -135,12 +136,6 @@ describe("FeeDistributor", function () {
     );
     await transferTx.wait();
 
-    // Mint native tokens in order to lock them
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("2")
-    );
-    await mintTx.wait();
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,

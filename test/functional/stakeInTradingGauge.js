@@ -73,15 +73,6 @@ describe("Trading Gauge", () => {
     console.log("Deposited LP 0 in gauge");
   });
   it("Should lock tokens and vote for gauge", async function () {
-    // Mint 10 native tokens to the callers address
-    const mintNativeTokenTx = await nativeToken.mint(
-      owner.address,
-      "20000000000000000000"
-    );
-    await mintNativeTokenTx.wait();
-
-    console.log("Minted tokens");
-
     // Approve tokens for use by the voting escrow contract
     const approveTokenTx = await nativeToken.approve(
       votingEscrow.address,
@@ -111,6 +102,10 @@ describe("Trading Gauge", () => {
     await time.increase(epochPeriod.mul(2).toNumber());
 
     console.log("CLAIMING REWARDS");
+    // Svave the balance before
+    const balanceBefore = await nativeToken.balanceOf(owner.address);
+    console.log("Balance before: ", balanceBefore.toString());
+
     // Claim rewards from gauge
     const claimRewardsTx = await gauge.claim();
     await claimRewardsTx.wait();
@@ -118,7 +113,7 @@ describe("Trading Gauge", () => {
 
     // Find if the user received the asset
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      "12834716499999999999"
+      balanceBefore.add("7776999999999999999")
     );
   });
   it("Should unstake from the gauge", async function () {

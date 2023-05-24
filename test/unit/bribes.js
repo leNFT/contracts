@@ -55,12 +55,14 @@ describe("Bribes", function () {
     );
     await approveTx.wait();
 
+    const epoch = (await votingEscrow.getEpoch(await time.latest())).toNumber();
+
     // Owner should have 0 balance in bribes
     expect(
       await bribes.getUserBribes(
         weth.address,
         tradingGauge.address,
-        1,
+        epoch + 1,
         owner.address
       )
     ).to.equal(0);
@@ -79,7 +81,7 @@ describe("Bribes", function () {
       await bribes.getUserBribes(
         weth.address,
         tradingGauge.address,
-        1,
+        epoch + 1,
         owner.address
       )
     ).to.equal(ethers.utils.parseEther("1"));
@@ -118,7 +120,7 @@ describe("Bribes", function () {
       await bribes.getUserBribes(
         weth.address,
         tradingGauge.address,
-        1,
+        (await votingEscrow.getEpoch(await time.latest())).toNumber() + 1,
         owner.address
       )
     ).to.equal(0);
@@ -146,7 +148,11 @@ describe("Bribes", function () {
 
     // Expect an error when trying to salvage a bribe for an epoch that hasn't started yet
     await expect(
-      bribes.salvageBribes(weth.address, tradingGauge.address, 1)
+      bribes.salvageBribes(
+        weth.address,
+        tradingGauge.address,
+        (await votingEscrow.getEpoch(await time.latest())).toNumber() + 1
+      )
     ).to.be.revertedWith("B:FUTURE_EPOCH");
 
     // Fast forward to the next epoch
@@ -159,7 +165,7 @@ describe("Bribes", function () {
     const salvageBribesTx = await bribes.salvageBribes(
       weth.address,
       tradingGauge.address,
-      1
+      (await votingEscrow.getEpoch(await time.latest())).toNumber()
     );
     await salvageBribesTx.wait();
 
@@ -190,11 +196,6 @@ describe("Bribes", function () {
     await depositBribeTx.wait();
 
     // Mint LE to create a lock and vote for the bribed gauge
-    const mintNativeTokenTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("1")
-    );
-    await mintNativeTokenTx.wait();
     const approveNativeTokenTx = await nativeToken.approve(
       votingEscrow.address,
       ethers.utils.parseEther("1")

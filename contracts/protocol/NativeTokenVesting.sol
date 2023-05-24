@@ -18,6 +18,7 @@ contract NativeTokenVesting is Ownable {
         uint256 cliff,
         uint256 amount
     );
+    uint256 private constant MIN_CLIFF_PERIOD = 1 weeks;
     IAddressProvider private immutable _addressProvider;
     uint256 private immutable _vestingCap;
     mapping(address => DataTypes.VestingParams) private _vestingParams;
@@ -57,6 +58,7 @@ contract NativeTokenVesting is Ownable {
         uint256 cliff,
         uint256 amount
     ) external onlyOwner {
+        require(cliff >= MIN_CLIFF_PERIOD, "NTV:SV:CLIFF_TOO_LOW");
         require(amount > 0, "NTV:SV:AMOUNT_TOO_LOW");
         _vestingParams[account] = DataTypes.VestingParams(
             block.timestamp,

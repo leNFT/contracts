@@ -248,13 +248,6 @@ describe("LendingGauge", () => {
     );
     await depositLendingGaugeTx.wait();
 
-    // Mint some LE tokens so we can vote
-    const mintLETx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("1")
-    );
-    await mintLETx.wait();
-
     // Approve the voting escrow to spend the LE tokens
     const approveVotingEscrowTx = await nativeToken.approve(
       votingEscrow.address,
@@ -279,22 +272,20 @@ describe("LendingGauge", () => {
     // Let 2 epochs pass
     await time.increase(2 * epochPeriod.toNumber());
 
+    // Save the current balance of the user
+    const balanceBefore = await nativeToken.balanceOf(owner.address);
+
     // Claim rewards
     const claimRewardsTx = await lendingGauge.claim();
     await claimRewardsTx.wait();
 
     // The user should have all the rewards for the epoch
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      "1990911999999999999"
+      balanceBefore.add("7776999999999999999")
     );
   });
   it("Should use kick to update the boost for a user whose lock is over", async function () {
     //  Mint and lock some LE for the user
-    const mintNativeTokenTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("2")
-    );
-    await mintNativeTokenTx.wait();
     const approveNativeTokenTx = await nativeToken.approve(
       votingEscrow.address,
       ethers.utils.parseEther("2")

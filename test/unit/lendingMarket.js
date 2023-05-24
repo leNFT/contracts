@@ -96,7 +96,7 @@ describe("LendingMarket", function () {
       testNFT.address,
       [0],
       "800000000000000", //Price of 0.08 ETH
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -216,7 +216,7 @@ describe("LendingMarket", function () {
       testNFT.address,
       [0],
       "800000000000000", //Price of 0.08 ETH
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -283,7 +283,7 @@ describe("LendingMarket", function () {
       testNFT.address,
       [0],
       "800000000000000", //Price of 0.08 ETH
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -359,7 +359,7 @@ describe("LendingMarket", function () {
       testNFT.address,
       [0],
       "800000000000000", //Price of 0.08 ETH
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -427,7 +427,7 @@ describe("LendingMarket", function () {
       testNFT.address,
       [0],
       ethers.utils.parseEther("80"),
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -449,7 +449,7 @@ describe("LendingMarket", function () {
       testNFT.address,
       [0],
       ethers.utils.parseEther("0.025"),
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -552,7 +552,7 @@ describe("LendingMarket", function () {
       testNFT.address,
       [0],
       "800000000000000", //Price of 0.08 ETH
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -586,7 +586,7 @@ describe("LendingMarket", function () {
       testNFT.address,
       [0],
       "250000000000000", //Price of 0.025 ETH
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -660,7 +660,7 @@ describe("LendingMarket", function () {
       testNFT.address,
       [0],
       "800000000000000", //Price of 0.08 ETH
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -682,7 +682,7 @@ describe("LendingMarket", function () {
       testNFT.address,
       [0],
       "250000000000000", //Price of 0.025 ETH
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -765,7 +765,7 @@ describe("LendingMarket", function () {
       testNFT.address,
       [0],
       "800000000000000", //Price of 0.08 ETH
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -787,7 +787,7 @@ describe("LendingMarket", function () {
       testNFT.address,
       [0],
       "250000000000000", //Price of 0.025 ETH
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 

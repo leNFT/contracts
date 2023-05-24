@@ -3,6 +3,7 @@ const { ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
 const load = require("../helpers/_loadTest.js");
 const { getPriceSig } = require("../helpers/getPriceSig.js");
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("WETHGateway", () => {
   load.loadTest(false);
@@ -125,7 +126,7 @@ describe("WETHGateway", () => {
       testNFT.address,
       [0],
       "800000000000000", //Price of 0.08 ETH
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -209,7 +210,7 @@ describe("WETHGateway", () => {
       testNFT.address,
       [0],
       "800000000000000", //Price of 0.08 ETH
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -804,12 +805,14 @@ describe("WETHGateway", () => {
     const addGaugeTx = await gaugeController.addGauge(tradingGauge.address);
     await addGaugeTx.wait();
 
+    const epoch = (await votingEscrow.getEpoch(await time.latest())).toNumber();
+
     // Owner should have 0 balance in bribes
     expect(
       await bribes.getUserBribes(
         weth.address,
         tradingGauge.address,
-        1,
+        epoch + 1,
         owner.address
       )
     ).to.equal(0);
@@ -823,12 +826,12 @@ describe("WETHGateway", () => {
     );
     await depositBribeTx.wait();
 
-    // Owner should have 1 bribe in bribes
+    // Owner should have an 1 ETH bribe
     expect(
       await bribes.getUserBribes(
         weth.address,
         tradingGauge.address,
-        1,
+        epoch + 1,
         owner.address
       )
     ).to.equal(ethers.utils.parseEther("1"));

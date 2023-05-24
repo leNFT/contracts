@@ -2,6 +2,7 @@ const { ethers } = require("hardhat");
 const helpers = require("@nomicfoundation/hardhat-network-helpers");
 require("dotenv").config();
 const { priceSigner } = require("./getPriceSig.js");
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 let loadEnv = async function (isMainnetFork) {
   //Reset the fork if it's genesis
@@ -111,7 +112,7 @@ let loadEnv = async function (isMainnetFork) {
   console.log("Deployed LoanCenter");
 
   // Deploy and initialize the native token
-  const NativeToken = await ethers.getContractFactory("NativeTokenTest");
+  const NativeToken = await ethers.getContractFactory("NativeToken");
   nativeToken = await upgrades.deployProxy(NativeToken, [
     addressProvider.address,
     "leNFT Token",
@@ -367,6 +368,24 @@ let loadEnv = async function (isMainnetFork) {
     true
   );
   await setLinearCurveTx.wait();
+
+  // Mint 10M tokens to the owner through the vesting contract
+  const setVestingTx = await nativeTokenVesting.setVesting(
+    owner.address,
+    0,
+    7 * 24 * 60 * 60, // 7 days
+    ethers.utils.parseEther("10000000") // 10M tokens
+  );
+  await setVestingTx.wait();
+
+  // Let 7 days pass
+  await time.increase(7 * 24 * 60 * 60);
+
+  // Mint 10M tokens to the owner
+  const mintTx = await nativeTokenVesting.withdraw(
+    ethers.utils.parseEther("10000000") // 10M tokens
+  );
+  await mintTx.wait();
 
   console.log("loaded");
 };

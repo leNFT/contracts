@@ -68,12 +68,6 @@ describe("Voting & Fees", function () {
     );
     await depositTx.wait();
 
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
-    );
-    await mintTx.wait();
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -95,11 +89,11 @@ describe("Voting & Fees", function () {
     );
     await buyTx.wait();
 
-    // Advange 1 epochs
+    // Advance 1 epochs
     const epochPeriod = await votingEscrow.getEpochPeriod();
     await time.increase(epochPeriod.toNumber());
 
-    // Claim the rewards, should have nothing to claim since the lock can only claim fees after 1 epoch
+    // Claim the rewards - should have nothing to claim since the lock can only claim fees after 1 epoch
     expect(await feeDistributor.callStatic.claim(weth.address, 0)).to.be.equal(
       0
     );
@@ -112,12 +106,14 @@ describe("Voting & Fees", function () {
     );
     await buyTx2.wait();
 
+    const epoch = (await votingEscrow.getEpoch(await time.latest())).toNumber();
+
     // Advange 1 epochs
     await time.increase(epochPeriod.toNumber());
 
     // Should now be able to claim the fees gathered in the last epoch
     expect(await feeDistributor.callStatic.claim(weth.address, 0)).to.be.equal(
-      await feeDistributor.getTotalFeesAt(weth.address, 1)
+      await feeDistributor.getTotalFeesAt(weth.address, epoch)
     );
   });
   it("2 locks should share fees in a pro rata vote weight basis", async function () {
@@ -168,12 +164,6 @@ describe("Voting & Fees", function () {
     );
     await depositTx.wait();
 
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("20000")
-    );
-    await mintTx.wait();
     // Create a two locks with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -221,19 +211,21 @@ describe("Voting & Fees", function () {
     );
     await buyTx2.wait();
 
+    const epoch = (await votingEscrow.getEpoch(await time.latest())).toNumber();
+
     // Advange 1 epochs
     await time.increase(epochPeriod.toNumber());
 
     // Should now be able to claim the fees gathered in the last epoch
     expect(await feeDistributor.callStatic.claim(weth.address, 0)).to.be.equal(
-      BigNumber.from(await feeDistributor.getTotalFeesAt(weth.address, 1)).div(
-        2
-      )
+      BigNumber.from(
+        await feeDistributor.getTotalFeesAt(weth.address, epoch)
+      ).div(2)
     );
     expect(await feeDistributor.callStatic.claim(weth.address, 1)).to.be.equal(
-      BigNumber.from(await feeDistributor.getTotalFeesAt(weth.address, 1)).div(
-        2
-      )
+      BigNumber.from(
+        await feeDistributor.getTotalFeesAt(weth.address, epoch)
+      ).div(2)
     );
   });
 });

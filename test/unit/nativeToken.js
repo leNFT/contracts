@@ -18,12 +18,6 @@ describe("NativeToken", () => {
     snapshotId = await ethers.provider.send("evm_snapshot", []);
   });
 
-  it("Should mint tokens", async function () {
-    const mintTokensTx = await nativeToken.mint(owner.address, 100);
-    await mintTokensTx.wait();
-
-    expect(await nativeToken.balanceOf(owner.address)).to.equal(100);
-  });
   it("Should throw an error when using mintGaugeRewards", async function () {
     // Should throw an errir when trying to mint tokens via any other function
     await expect(

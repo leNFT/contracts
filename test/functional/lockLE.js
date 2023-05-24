@@ -4,15 +4,6 @@ const load = require("../helpers/_loadTest.js");
 describe("Voting Escrow", () => {
   load.loadTest(false);
   it("Should lock tokens", async function () {
-    // Mint 10 native tokens to the callers address
-    const mintNativeTokenTx = await nativeToken.mint(
-      owner.address,
-      "10000000000000000000"
-    );
-    await mintNativeTokenTx.wait();
-
-    console.log("Minted tokens");
-
     // Approve tokens for use by the voting escrow contract
     const approveTokenTx = await nativeToken.approve(
       votingEscrow.address,

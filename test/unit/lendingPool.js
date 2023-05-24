@@ -3,6 +3,7 @@ const { ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
 const load = require("../helpers/_loadTest.js");
 const { getPriceSig } = require("../helpers/getPriceSig.js");
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("LendingPool", function () {
   load.loadTest(false);
@@ -238,7 +239,7 @@ describe("LendingPool", function () {
       testNFT.address,
       [0],
       "800000000000000", //Price of 0.08 ETH
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -309,7 +310,7 @@ describe("LendingPool", function () {
       testNFT.address,
       [0],
       ethers.utils.parseEther("1"),
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -379,7 +380,7 @@ describe("LendingPool", function () {
       testNFT.address,
       [0],
       ethers.utils.parseEther("1"),
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
@@ -446,7 +447,7 @@ describe("LendingPool", function () {
       testNFT.address,
       [0],
       ethers.utils.parseEther("1"),
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 

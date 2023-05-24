@@ -84,12 +84,17 @@ describe("NativeTokenVesting", () => {
     // Move 30 days forward
     await time.increase(period + 1);
 
+    // Get the balance before the withdraw
+    const balanceBefore = await nativeToken.balanceOf(owner.address);
+
     // Withdraw 500 tokens
     const withdrawTx = await nativeTokenVesting.withdraw(500);
     await withdrawTx.wait();
 
     // Check the balance
-    expect(await nativeToken.balanceOf(owner.address)).to.equal(500);
+    expect(await nativeToken.balanceOf(owner.address)).to.equal(
+      balanceBefore.add(500)
+    );
 
     // Should be able to withdraw 0 tokens
     expect(
@@ -104,12 +109,17 @@ describe("NativeTokenVesting", () => {
       await nativeTokenVesting.getAvailableToWithdraw(owner.address)
     ).to.equal(500);
 
+    // Get the balance before the withdraw
+    const balanceBefore2 = await nativeToken.balanceOf(owner.address);
+
     // Withdraw 500 tokens
     const withdrawTx2 = await nativeTokenVesting.withdraw(500);
     await withdrawTx2.wait();
 
     // Check the balance
-    expect(await nativeToken.balanceOf(owner.address)).to.equal(1000);
+    expect(await nativeToken.balanceOf(owner.address)).to.equal(
+      balanceBefore2.add(500)
+    );
 
     // Should be able to withdraw 0 tokens
     expect(

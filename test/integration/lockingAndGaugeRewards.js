@@ -84,12 +84,6 @@ describe("Voting & Gauge Rewards", function () {
     const depositTradingGaugeTx = await tradingGauge.deposit(0);
     await depositTradingGaugeTx.wait();
 
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
-    );
-    await mintTx.wait();
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -249,12 +243,6 @@ describe("Voting & Gauge Rewards", function () {
     );
     await depositLendingGaugeTx.wait();
 
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("20000")
-    );
-    await mintTx.wait();
     // Create two lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,

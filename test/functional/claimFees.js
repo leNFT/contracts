@@ -5,15 +5,6 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
 describe("Fee Distributor ", () => {
   load.loadTest(false);
   it("Should lock tokens", async function () {
-    // Mint 10 native tokens to the callers address
-    const mintNativeTokenTx = await nativeToken.mint(
-      owner.address,
-      "10000000000000000000"
-    );
-    await mintNativeTokenTx.wait();
-
-    console.log("Minted tokens");
-
     // Approve tokens for use by the voting escrow contract
     const approveTokenTx = await nativeToken.approve(
       votingEscrow.address,
@@ -37,13 +28,13 @@ describe("Fee Distributor ", () => {
     await time.increase(epochPeriod.toNumber());
 
     // Mint weth tokens to the fee distributor contract
-    const mintNativeTokenTx = await nativeToken.mint(
+    const mintNativeTokenTx = await nativeToken.transfer(
       feeDistributor.address,
       "10000000000000000000"
     );
     await mintNativeTokenTx.wait();
 
-    console.log("Minted tokens");
+    console.log("TRansfered tokens");
 
     // Call for a fee checkpoint on the fee distributor contract
     const checkpointTx = await feeDistributor.checkpoint(nativeToken.address);
@@ -60,14 +51,18 @@ describe("Fee Distributor ", () => {
     const epochPeriod = await votingEscrow.getEpochPeriod();
     await time.increase(epochPeriod.toNumber());
 
+    // SAve the balance before claiming
+    const balanceBefore = await nativeToken.balanceOf(owner.address);
+
     // Claim fees
     const claimFeesTx = await feeDistributor.claim(nativeToken.address, 0);
     await claimFeesTx.wait();
 
     console.log("Claimed fees");
 
+    // Check if the balance has increased
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      "10000000000000000000"
+      balanceBefore.add("10000000000000000000")
     );
   });
 });

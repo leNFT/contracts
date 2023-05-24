@@ -69,13 +69,6 @@ describe("Bribes", () => {
     console.log("Deposited LP 0 in gauge");
   });
   it("Should lock tokens and vote for gauge", async function () {
-    // Mint 10 native tokens to the callers address
-    const mintNativeTokenTx = await nativeToken.mint(
-      owner.address,
-      "20000000000000000000"
-    );
-    await mintNativeTokenTx.wait();
-
     console.log("Minted tokens");
 
     // Approve tokens for use by the voting escrow contract
@@ -98,18 +91,23 @@ describe("Bribes", () => {
     await voteForGaugeTx.wait();
   });
   it("Should deposit a bribe", async function () {
-    console.log("DEPOSITING BRIBE");
-    // Claim rewards from gauge
     const depositBribeTx = await wethGateway.depositBribe(gauge.address, {
       value: "100000000000000",
     });
     await depositBribeTx.wait();
     console.log("Deposited bribe");
 
-    // Find if the user received the asset
-    expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      "10000000000000000000"
-    );
+    const epoch = (await votingEscrow.getEpoch(await time.latest())).toNumber();
+
+    // Owner should have 1 bribe in bribes
+    expect(
+      await bribes.getUserBribes(
+        weth.address,
+        gauge.address,
+        epoch + 1,
+        owner.address
+      )
+    ).to.equal("100000000000000");
   });
   it("Should claim the bribe", async function () {
     console.log("CLAIMING BRIBE");

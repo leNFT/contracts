@@ -113,12 +113,6 @@ describe("GaugeController", () => {
     expect(epochRewardCeiling).to.equal("11666666666666666666");
   });
   it("Should get the current gauge weight", async function () {
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("1000000")
-    );
-    await mintTx.wait();
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -149,12 +143,6 @@ describe("GaugeController", () => {
     );
   });
   it("Should get the gauge weight at an epoch", async function () {
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("1000000")
-    );
-    await mintTx.wait();
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -177,25 +165,20 @@ describe("GaugeController", () => {
     await voteTx.wait();
     // Get the epoch period
     const epochPeriod = await votingEscrow.getEpochPeriod();
-    console.log(epochPeriod.toNumber());
-    // INcrease the block time by the epoch period
-    await time.increase(2 * epochPeriod.toNumber());
 
-    // Get the gauge weight at epoch 1
+    // INcrease the block time by the 1 epoch periods
+    await time.increase(epochPeriod.toNumber());
+    const epoch = await votingEscrow.getEpoch(await time.latest());
+
+    // Get the gauge weight at epoch
     const gaugeWeight = await gaugeController.callStatic.getGaugeWeightAt(
       tradingGauge.address,
-      1
+      epoch
     );
     console.log(gaugeWeight.toString());
-    expect(gaugeWeight).to.equal("9589041095890410201600");
+    expect(gaugeWeight).to.equal("7191780821917807651200");
   });
   it("Should vote for a gauge", async function () {
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("1000000")
-    );
-    await mintTx.wait();
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -253,12 +236,6 @@ describe("GaugeController", () => {
     );
   });
   it("Should get the rewards for a certain epoch", async function () {
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("1000000")
-    );
-    await mintTx.wait();
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -283,24 +260,22 @@ describe("GaugeController", () => {
     // Get the epoch period
     const epochPeriod = await votingEscrow.getEpochPeriod();
     console.log(epochPeriod.toNumber());
-    // INcrease the block time by the epoch period
+    // INcrease the block time by 2x the epoch period
     await time.increase(2 * epochPeriod.toNumber());
 
-    // Get the rewards for the epoch 0
-    expect(await gaugeController.callStatic.getEpochRewards(0)).to.equal("0");
+    const epoch = await votingEscrow.getEpoch(await time.latest());
+
+    // Get the rewards for the epoch
+    expect(
+      await gaugeController.callStatic.getEpochRewards(epoch - 2)
+    ).to.equal("0");
 
     // Get the rewards for the epoch 1
-    expect(await gaugeController.callStatic.getEpochRewards(1)).to.equal(
-      "5973333333333333332"
+    expect(await gaugeController.callStatic.getEpochRewards(epoch)).to.equal(
+      "32941720000000000000"
     );
   });
   it("Should get the gauge rewards for a certain epoch", async function () {
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("1000000")
-    );
-    await mintTx.wait();
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,

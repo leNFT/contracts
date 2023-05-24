@@ -87,12 +87,6 @@ describe("Borrow using Genesis NFT", function () {
     );
     await approveWETHTx.wait();
 
-    const mintNativeToken = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("20000")
-    );
-    await mintNativeToken.wait();
-
     const approveLETx = await nativeToken.approve(
       vault.address,
       ethers.utils.parseEther("20000")
