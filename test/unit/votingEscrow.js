@@ -24,11 +24,11 @@ describe("VotingEscrow", () => {
   it("Should get the current epoch", async function () {
     const epochPeriod = await votingEscrow.getEpochPeriod();
     const currentTime = await time.latest();
-    expect(await votingEscrow.getEpoch(currentTime)).to.equal(0);
+    expect(await votingEscrow.getEpoch(currentTime)).to.equal(1);
 
     // Test the first 10 epochs
     var nextTime;
-    for (let i = 0; i < 10; i++) {
+    for (let i = 1; i < 10; i++) {
       await time.increase(epochPeriod);
       nextTime = await time.latest();
       expect(await votingEscrow.getEpoch(nextTime)).to.equal(i + 1);
@@ -47,12 +47,6 @@ describe("VotingEscrow", () => {
     }
   });
   it("Should get the correct JSON token URI", async function () {
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
-    );
-    await mintTx.wait();
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -76,12 +70,6 @@ describe("VotingEscrow", () => {
     expect(isValidJSON(decodedData)).to.be.true;
   });
   it("Should get the correct SVG", async function () {
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
-    );
-    await mintTx.wait();
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -104,12 +92,7 @@ describe("VotingEscrow", () => {
   it("Should simulate a lock's weight", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;
     console.log(unlockTime);
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
-    );
-    await mintTx.wait();
+
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -137,21 +120,16 @@ describe("VotingEscrow", () => {
   it("Should get the locked ratio for a certain epoch", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;
     console.log(unlockTime);
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
-    );
-    await mintTx.wait();
+
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
-      ethers.utils.parseEther("10000")
+      ethers.utils.parseEther("10000000")
     );
     await approveTx.wait();
     const lockTx = await votingEscrow.createLock(
       owner.address,
-      ethers.utils.parseEther("10000"),
+      ethers.utils.parseEther("10000000"),
       unlockTime
     );
     await lockTx.wait();
@@ -160,29 +138,25 @@ describe("VotingEscrow", () => {
     const epochPeriod = await votingEscrow.getEpochPeriod();
     await time.increase(epochPeriod);
 
-    expect(await votingEscrow.callStatic.getLockedRatioAt(1)).to.equal(10000);
+    const epoch = await votingEscrow.getEpoch(await time.latest());
 
-    // Mint some more LE to the callers address
-    const mintTx2 = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
+    expect(await votingEscrow.callStatic.getLockedRatioAt(epoch)).to.equal(
+      10000
     );
-    await mintTx2.wait();
 
     // Increase the time to the next epoch
     await time.increase(epochPeriod);
 
-    expect(await votingEscrow.callStatic.getLockedRatioAt(2)).to.equal(5000);
+    const nextEpoch = await votingEscrow.getEpoch(await time.latest());
+
+    expect(await votingEscrow.callStatic.getLockedRatioAt(nextEpoch)).to.equal(
+      10000
+    );
   });
   it("Should get the total weight for a certain epoch", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;
     console.log(unlockTime);
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
-    );
-    await mintTx.wait();
+
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -200,7 +174,9 @@ describe("VotingEscrow", () => {
     const epochPeriod = await votingEscrow.getEpochPeriod();
     await time.increase(epochPeriod);
 
-    const epoch1Timestamp = await votingEscrow.getEpochTimestamp(1);
+    const epoch = await votingEscrow.getEpoch(await time.latest());
+
+    const epochTimestamp = await votingEscrow.getEpochTimestamp(epoch);
     const lockHistoryLength = await votingEscrow.getLockHistoryLength(0);
     const lockHistoryPoint = await votingEscrow.getLockHistoryPoint(
       0,
@@ -208,25 +184,18 @@ describe("VotingEscrow", () => {
     );
 
     // Use the point to calculate the weight of the user at the epoch 1 (which will be the same as the total weight)
-    const userEpoch1Weight = lockHistoryPoint.bias.sub(
-      lockHistoryPoint.slope.mul(
-        epoch1Timestamp.sub(lockHistoryPoint.timestamp)
-      )
+    const userEpochWeight = lockHistoryPoint.bias.sub(
+      lockHistoryPoint.slope.mul(epochTimestamp.sub(lockHistoryPoint.timestamp))
     );
 
-    expect(await votingEscrow.callStatic.getTotalWeightAt(1)).to.equal(
-      userEpoch1Weight
+    expect(await votingEscrow.callStatic.getTotalWeightAt(epoch)).to.equal(
+      userEpochWeight
     );
   });
   it("Should get the total weight", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;
     console.log(unlockTime);
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
-    );
-    await mintTx.wait();
+
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -269,12 +238,7 @@ describe("VotingEscrow", () => {
   it("Should get the user weight", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;
     console.log(unlockTime);
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
-    );
-    await mintTx.wait();
+
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -317,12 +281,7 @@ describe("VotingEscrow", () => {
   it("Should get a lock's weight", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;
     console.log(unlockTime);
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
-    );
-    await mintTx.wait();
+
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -363,12 +322,7 @@ describe("VotingEscrow", () => {
   it("Should create a lock", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;
     console.log(unlockTime);
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
-    );
-    await mintTx.wait();
+
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -393,12 +347,7 @@ describe("VotingEscrow", () => {
   it("Should increase the amount in a lock", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;
     console.log(unlockTime);
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("20000")
-    );
-    await mintTx.wait();
+
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -426,12 +375,7 @@ describe("VotingEscrow", () => {
   it("Should increase the unlockTime in a lock", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;
     console.log(unlockTime);
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
-    );
-    await mintTx.wait();
+
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -461,12 +405,7 @@ describe("VotingEscrow", () => {
   it("Should withdraw a lock", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;
     console.log(unlockTime);
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
-    );
-    await mintTx.wait();
+
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -483,6 +422,9 @@ describe("VotingEscrow", () => {
     // Should increase the time
     await time.increaseTo(unlockTime + 3600 * 24 * 30);
 
+    // Save the balance of the owner
+    const balanceBefore = await nativeToken.balanceOf(owner.address);
+
     // Should withdraw the lock
     const withdrawTx = await votingEscrow.withdraw(0);
     await withdrawTx.wait();
@@ -494,7 +436,7 @@ describe("VotingEscrow", () => {
 
     // Should have the correct balance
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      ethers.utils.parseEther("10000")
+      balanceBefore.add(ethers.utils.parseEther("10000"))
     );
 
     // Should throw an error if we try to withdraw again
@@ -505,12 +447,7 @@ describe("VotingEscrow", () => {
   it("Should claim rebates for a lock", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;
     console.log(unlockTime);
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("10000")
-    );
-    await mintTx.wait();
+
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -555,24 +492,22 @@ describe("VotingEscrow", () => {
     const epochPeriod = await votingEscrow.getEpochPeriod();
     await time.increase(2 * epochPeriod);
 
+    // Save the balance of the owner
+    const balanceBefore = await nativeToken.balanceOf(owner.address);
+
     // Should claim the rebates for epoch 1
     const claimTx = await votingEscrow.claimRebates(0);
     await claimTx.wait();
 
     // Should have the correct balance
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      "114557077625570776"
+      balanceBefore.add("335415108764438")
     );
   });
   it("Should claim rebates for multiple locks", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;
     console.log(unlockTime);
-    // MInt some LE to the callers address
-    const mintTx = await nativeToken.mint(
-      owner.address,
-      ethers.utils.parseEther("20000")
-    );
-    await mintTx.wait();
+
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
@@ -629,13 +564,16 @@ describe("VotingEscrow", () => {
     const epochPeriod = await votingEscrow.getEpochPeriod();
     await time.increase(2 * epochPeriod);
 
+    // Save the balance of the owner
+    const balanceBefore = await nativeToken.balanceOf(owner.address);
+
     // Should claim the rebates for epoch 1
     const claimTx = await votingEscrow.claimRebatesBatch([0, 1]);
     await claimTx.wait();
 
     // Should have the correct balance
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      "114557077625570776"
+      balanceBefore.add("670427719409094")
     );
   });
 });

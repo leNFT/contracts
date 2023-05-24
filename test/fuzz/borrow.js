@@ -63,7 +63,7 @@ describe("Borrow fuzzing", function () {
         testNFT.address,
         [0],
         price.toString(), // use the random price
-        Math.floor(Date.now() / 1000),
+        await time.latest(),
         nftOracle.address
       );
 

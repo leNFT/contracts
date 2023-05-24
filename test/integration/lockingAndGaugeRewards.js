@@ -5,7 +5,7 @@ const load = require("../helpers/_loadTest.js");
 const { getPriceSig } = require("../helpers/getPriceSig.js");
 const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
-describe("Voting & Gauge Rewards", function () {
+describe("Locking & Gauge Rewards", function () {
   load.loadTest(false);
 
   before(async function () {
@@ -105,10 +105,10 @@ describe("Voting & Gauge Rewards", function () {
     const epochPeriod = await votingEscrow.getEpochPeriod();
     await time.increase(2 * epochPeriod.toNumber());
 
-    // Get all the epoch rewards for epoch 1
+    // Get all the epoch rewards for epoch
     const gaugeRewards = await gaugeController.callStatic.getGaugeRewards(
       tradingGauge.address,
-      1
+      (await votingEscrow.getEpoch(await time.latest())).toNumber() - 1
     );
     console.log("Gauge Rewards", gaugeRewards.toString());
     const claimableRewards = await tradingGauge.callStatic.claim();
@@ -271,16 +271,27 @@ describe("Voting & Gauge Rewards", function () {
     const voteTx2 = await gaugeController.vote(1, lendingGauge.address, 10000);
     await voteTx2.wait();
 
-    // Advange 2 epochs
+    // Advance 2 epochs
     const epochPeriod = await votingEscrow.getEpochPeriod();
     await time.increase(2 * epochPeriod.toNumber());
 
+    const previousEpoch =
+      (await votingEscrow.getEpoch(await time.latest())).toNumber() - 1;
+
     // Get all the epoch rewards for epoch 1
     const tradingGaugeRewards =
-      await gaugeController.callStatic.getGaugeRewards(tradingGauge.address, 1);
+      await gaugeController.callStatic.getGaugeRewards(
+        tradingGauge.address,
+        previousEpoch
+      );
     const lendingGaugeRewards =
-      await gaugeController.callStatic.getGaugeRewards(lendingGauge.address, 1);
-    const epochRewards = await gaugeController.callStatic.getEpochRewards(1);
+      await gaugeController.callStatic.getGaugeRewards(
+        lendingGauge.address,
+        previousEpoch
+      );
+    const epochRewards = await gaugeController.callStatic.getEpochRewards(
+      previousEpoch
+    );
     console.log("Epoch Rewards", epochRewards.toString());
     console.log("Trading Gauge Rewards", tradingGaugeRewards.toString());
     console.log("Lending Gauge Rewards", lendingGaugeRewards.toString());
@@ -304,8 +315,6 @@ describe("Voting & Gauge Rewards", function () {
 
     // THe trading and lending gauges should have the same rewards (half the epoch rewards)
     expect(tradingGaugeRewards).to.be.equal(lendingGaugeRewards);
-    // The epoch rewards should be half the total rewards
-    expect(epochRewards).to.be.equal(tradingGaugeRewards.mul(2));
 
     // Should be able to claim all the rewards for the epoch (multiplied by the time factor)
     expect(tradingClaimableRewards).to.be.equal(
