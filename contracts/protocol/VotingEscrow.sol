@@ -450,6 +450,8 @@ contract VotingEscrow is
             address(this),
             amount
         );
+
+        emit CreateLock(receiver, tokenId, amount, roundedUnlockTime);
     }
 
     /// @notice Increases the locked balance of the caller by the given amount and performs a checkpoint
@@ -484,6 +486,8 @@ contract VotingEscrow is
             address(this),
             amount
         );
+
+        emit IncreaseAmount(tokenId, amount);
     }
 
     /// @notice Increases the unlock time of the caller's lock to the given time and performs a checkpoint
@@ -526,6 +530,8 @@ contract VotingEscrow is
 
         // Call a checkpoint and update global tracking vars
         _checkpoint(tokenId, oldLocked, _lockedBalance[tokenId]);
+
+        emit IncreaseUnlockTime(tokenId, roundedUnlocktime);
     }
 
     /// @notice Withdraws the locked balance of the caller and performs a checkpoint
@@ -569,6 +575,8 @@ contract VotingEscrow is
 
         // Burn the veNFT
         _burn(tokenId);
+
+        emit Withdraw(tokenId);
     }
 
     /// @notice Claims all available rebates for the given token id
@@ -628,6 +636,8 @@ contract VotingEscrow is
                 msg.sender,
                 amountToClaim
             );
+
+            emit ClaimRebates(msg.sender, tokenId, amountToClaim);
         }
     }
 

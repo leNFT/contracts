@@ -75,6 +75,8 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
             address(this),
             amount
         );
+
+        emit DepositBribe(briber, token, gauge, amount);
     }
 
     /// @notice Withdraws a bribe for a specific gauge
@@ -106,6 +108,8 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
 
         // Transfer the bribe tokens back to the user
         IERC20Upgradeable(token).safeTransfer(receiver, amount);
+
+        emit WithdrawBribe(receiver, token, gauge, amount);
     }
 
     /// @notice Get deposited bribes back if no user voted for the gauge
@@ -142,6 +146,8 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
 
         // Clear the user bribes
         delete _userBribes[token][gauge][epoch][msg.sender];
+
+        emit SalvageBribes(token, gauge, epoch, epochUserBribes);
     }
 
     /// @notice Get bribes from a user for a specific gauge in a specific epoch
@@ -246,6 +252,8 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
         // Transfer claim to user
         if (amountToClaim > 0) {
             IERC20Upgradeable(token).safeTransfer(msg.sender, amountToClaim);
+
+            emit ClaimBribes(msg.sender, token, gauge, tokenId, amountToClaim);
         }
     }
 

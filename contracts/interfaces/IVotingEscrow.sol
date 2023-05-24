@@ -5,6 +5,24 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IAddressProvider} from "../interfaces/IAddressProvider.sol";
 
 interface IVotingEscrow {
+    event CreateLock(
+        address indexed receiver,
+        uint256 indexed tokenId,
+        uint256 amount,
+        uint256 unlockTime
+    );
+    event IncreaseAmount(uint256 indexed tokenId, uint256 amount);
+
+    event IncreaseUnlockTime(uint256 indexed tokenId, uint256 unlockTime);
+
+    event Withdraw(uint256 indexed tokenId);
+
+    event ClaimRebates(
+        address indexed receiver,
+        uint256 indexed tokenId,
+        uint256 amount
+    );
+
     function getLockHistoryLength(
         uint256 tokenId
     ) external view returns (uint256);

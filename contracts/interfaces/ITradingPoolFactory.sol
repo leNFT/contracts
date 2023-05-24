@@ -7,6 +7,11 @@ interface ITradingPoolFactory {
         address indexed nft,
         address indexed token
     );
+    event SetTradingPool(
+        address indexed pool,
+        address indexed nft,
+        address indexed token
+    );
 
     function getProtocolFeePercentage() external view returns (uint256);
 

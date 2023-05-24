@@ -128,6 +128,8 @@ contract TradingPoolFactory is
             "TPF:STP:NOT_POOL"
         );
         _pools[nft][token] = pool;
+
+        emit SetTradingPool(pool, nft, token);
     }
 
     /// @notice Returns whether a pool is valid or not

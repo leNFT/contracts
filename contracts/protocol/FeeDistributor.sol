@@ -92,6 +92,8 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
         // Transfer rewards to current epoch
         _epochFees[token][currentEpoch] += _epochFees[token][epoch];
 
+        emit SalvageFees(token, epoch, _epochFees[token][epoch]);
+
         delete _epochFees[token][epoch];
     }
 
@@ -231,6 +233,8 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
                 ),
                 amountToClaim
             );
+
+            emit ClaimBribes(msg.sender, token, tokenId, amountToClaim);
         }
     }
 

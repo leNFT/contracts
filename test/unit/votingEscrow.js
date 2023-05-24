@@ -492,6 +492,8 @@ describe("VotingEscrow", () => {
     const epochPeriod = await votingEscrow.getEpochPeriod();
     await time.increase(2 * epochPeriod);
 
+    const epoch = await votingEscrow.getEpoch(await time.latest());
+
     // Save the balance of the owner
     const balanceBefore = await nativeToken.balanceOf(owner.address);
 
@@ -499,9 +501,23 @@ describe("VotingEscrow", () => {
     const claimTx = await votingEscrow.claimRebates(0);
     await claimTx.wait();
 
+    // Get the epoch rewards
+    const epochRewards = await gaugeController.callStatic.getEpochRewards(
+      epoch.toNumber() - 1
+    );
+    const epochTimestamp = await votingEscrow.getEpochTimestamp(
+      epoch.toNumber() - 1
+    );
+
+    const lock = await votingEscrow.getLock(0);
+
+    const rebates = BigNumber.from(epochRewards)
+      .mul(lock.end.sub(epochTimestamp))
+      .div(4 * 52 * 7 * 24 * 60 * 60 * 1000);
+
     // Should have the correct balance
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      balanceBefore.add("335415108764438")
+      balanceBefore.add(rebates)
     );
   });
   it("Should claim rebates for multiple locks", async function () {
@@ -564,6 +580,8 @@ describe("VotingEscrow", () => {
     const epochPeriod = await votingEscrow.getEpochPeriod();
     await time.increase(2 * epochPeriod);
 
+    const epoch = await votingEscrow.getEpoch(await time.latest());
+
     // Save the balance of the owner
     const balanceBefore = await nativeToken.balanceOf(owner.address);
 
@@ -571,9 +589,27 @@ describe("VotingEscrow", () => {
     const claimTx = await votingEscrow.claimRebatesBatch([0, 1]);
     await claimTx.wait();
 
+    const epochRewards = await gaugeController.callStatic.getEpochRewards(
+      epoch.toNumber() - 1
+    );
+    const epochTimestamp = await votingEscrow.getEpochTimestamp(
+      epoch.toNumber() - 1
+    );
+
+    const lock1 = await votingEscrow.getLock(0);
+    const lock2 = await votingEscrow.getLock(1);
+
+    const rebates1 = BigNumber.from(epochRewards)
+      .mul(lock1.end.sub(epochTimestamp))
+      .div(4 * 52 * 7 * 24 * 60 * 60 * 500 * 2);
+
+    const rebates2 = BigNumber.from(epochRewards)
+      .mul(lock2.end.sub(epochTimestamp))
+      .div(4 * 52 * 7 * 24 * 60 * 60 * 500 * 2);
+
     // Should have the correct balance
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      balanceBefore.add("670427719409094")
+      balanceBefore.add(rebates1).add(rebates2)
     );
   });
 });
