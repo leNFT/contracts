@@ -150,8 +150,8 @@ library DataTypes {
     /// @param locktime The locktime of the mint
     /// @param lpAmount The amount of LP tokens minted
     struct MintDetails {
-        uint256 timestamp;
-        uint256 locktime;
+        uint40 timestamp;
+        uint40 locktime;
         uint256 lpAmount;
     }
 

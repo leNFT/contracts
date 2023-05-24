@@ -22,6 +22,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {IVault} from "@balancer-labs/v2-interfaces/contracts/vault/IVault.sol";
 import {WeightedPoolUserData} from "@balancer-labs/v2-interfaces/contracts/pool-weighted/WeightedPoolUserData.sol";
 import {IBalancerQueries} from "@balancer-labs/v2-interfaces/contracts/standalone-utils/IBalancerQueries.sol";
+import {SafeCast} from "../libraries/utils/SafeCast.sol";
 // solhint-disable-next-line no-global-import
 import "../libraries/balancer/ERC20Helpers.sol"; // Custom (pragma ^0.8.0) ERC20 helpers for Balancer tokens
 
@@ -369,48 +370,50 @@ contract GenesisNFT is
         // Deposit tokens to the pool and get the LP amount
         uint256 oldLPBalance = IERC20Upgradeable(_balancerDetails.pool)
             .balanceOf(address(this));
+        // avoid stack too deep errors
+        {
+            (IERC20[] memory tokens, , ) = IVault(_balancerDetails.vault)
+                .getPoolTokens(_balancerDetails.poolId);
 
-        (IERC20[] memory tokens, , ) = IVault(_balancerDetails.vault)
-            .getPoolTokens(_balancerDetails.poolId);
+            uint256[] memory maxAmountsIn = new uint256[](2);
+            uint256[] memory amountsToEncode = new uint256[](2);
 
-        uint256[] memory maxAmountsIn = new uint256[](2);
-        uint256[] memory amountsToEncode = new uint256[](2);
+            amountsToEncode[
+                _findTokenIndex(tokens, IERC20(nativeToken))
+            ] = leAmount;
+            amountsToEncode[
+                _findTokenIndex(tokens, IERC20(_addressProvider.getWETH()))
+            ] = ethAmount;
+            maxAmountsIn[0] = type(uint256).max;
+            maxAmountsIn[1] = type(uint256).max;
+            bytes memory userData;
 
-        amountsToEncode[
-            _findTokenIndex(tokens, IERC20(nativeToken))
-        ] = leAmount;
-        amountsToEncode[
-            _findTokenIndex(tokens, IERC20(_addressProvider.getWETH()))
-        ] = ethAmount;
-        maxAmountsIn[0] = type(uint256).max;
-        maxAmountsIn[1] = type(uint256).max;
-        bytes memory userData;
+            if (IERC20Upgradeable(_balancerDetails.pool).totalSupply() == 0) {
+                userData = abi.encode(
+                    WeightedPoolUserData.JoinKind.INIT,
+                    amountsToEncode
+                );
+            } else {
+                userData = abi.encode(
+                    WeightedPoolUserData.JoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
+                    amountsToEncode,
+                    "0"
+                );
+            }
 
-        if (IERC20Upgradeable(_balancerDetails.pool).totalSupply() == 0) {
-            userData = abi.encode(
-                WeightedPoolUserData.JoinKind.INIT,
-                amountsToEncode
-            );
-        } else {
-            userData = abi.encode(
-                WeightedPoolUserData.JoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
-                amountsToEncode,
-                "0"
+            // Call the Vault to join the pool
+            IVault(_balancerDetails.vault).joinPool(
+                _balancerDetails.poolId,
+                address(this),
+                address(this),
+                IVault.JoinPoolRequest({
+                    assets: _asIAsset(tokens),
+                    maxAmountsIn: maxAmountsIn,
+                    userData: userData,
+                    fromInternalBalance: false
+                })
             );
         }
-
-        // Call the Vault to join the pool
-        IVault(_balancerDetails.vault).joinPool(
-            _balancerDetails.poolId,
-            address(this),
-            address(this),
-            IVault.JoinPoolRequest({
-                assets: _asIAsset(tokens),
-                maxAmountsIn: maxAmountsIn,
-                userData: userData,
-                fromInternalBalance: false
-            })
-        );
 
         uint256 lpAmount = IERC20Upgradeable(_balancerDetails.pool).balanceOf(
             address(this)
@@ -440,8 +443,8 @@ contract GenesisNFT is
 
             // Add mint details
             _mintDetails[_tokenIdCounter.current()] = DataTypes.MintDetails(
-                block.timestamp,
-                locktime,
+                SafeCast.toUint40(block.timestamp),
+                SafeCast.toUint40(locktime),
                 lpAmount / amount
             );
 
