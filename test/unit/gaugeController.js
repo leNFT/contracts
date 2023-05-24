@@ -130,8 +130,14 @@ describe("GaugeController", () => {
       tradingGauge.address
     );
     await addTradingGaugeTx.wait();
-    // Vote for the gauge with 50 % of the voting power of the lock
-    const voteTx = await gaugeController.vote(0, tradingGauge.address, 5000);
+
+    // Get gauge weight (should be 0)
+    expect(await gaugeController.getGaugeWeight(tradingGauge.address)).to.equal(
+      0
+    );
+
+    // Vote for the gauge with 100 % of the voting power of the lock
+    const voteTx = await gaugeController.vote(0, tradingGauge.address, 10000);
     await voteTx.wait();
 
     // Get the gauge weight
@@ -139,7 +145,7 @@ describe("GaugeController", () => {
       tradingGauge.address
     );
     expect(gaugeWeight).to.equal(
-      BigNumber.from(await votingEscrow.getLockWeight(0)).div(2)
+      BigNumber.from(await votingEscrow.getLockWeight(0))
     );
   });
   it("Should get the gauge weight at an epoch", async function () {
@@ -160,8 +166,8 @@ describe("GaugeController", () => {
       tradingGauge.address
     );
     await addTradingGaugeTx.wait();
-    // Vote for the gauge with 50 % of the voting power of the lock
-    const voteTx = await gaugeController.vote(0, tradingGauge.address, 5000);
+    // Vote for the gauge with 100 % of the voting power of the lock
+    const voteTx = await gaugeController.vote(0, tradingGauge.address, 10000);
     await voteTx.wait();
     // Get the epoch period
     const epochPeriod = await votingEscrow.getEpochPeriod();
@@ -175,8 +181,14 @@ describe("GaugeController", () => {
       tradingGauge.address,
       epoch
     );
-    console.log(gaugeWeight.toString());
-    expect(gaugeWeight).to.equal("7191780821917807651200");
+    // Use the point to calculate the weight of the user at the time of the nextblock (which will be the same as the total weight)
+    const lockHistoryPoint = await votingEscrow.getLockHistoryPoint(0, 0);
+    const epochTimestamp = await votingEscrow.getEpochTimestamp(epoch);
+    const userEpochWeight = lockHistoryPoint.bias.sub(
+      lockHistoryPoint.slope.mul(epochTimestamp.sub(lockHistoryPoint.timestamp))
+    );
+
+    expect(gaugeWeight).to.equal(userEpochWeight);
   });
   it("Should vote for a gauge", async function () {
     // Create a lock with the LE
@@ -197,32 +209,32 @@ describe("GaugeController", () => {
     );
     await addTradingGaugeTx.wait();
 
-    // Vote for the gauge with 50 % of the voting power of the lock
-    const voteTx = await gaugeController.vote(0, tradingGauge.address, 5000);
+    // Vote for the gauge with 100 % of the voting power of the lock
+    const voteTx = await gaugeController.vote(0, tradingGauge.address, 10000);
     await voteTx.wait();
 
     // The gauge weight should be 50 % of the lock weight
     expect(await gaugeController.getGaugeWeight(tradingGauge.address)).to.equal(
-      BigNumber.from(await votingEscrow.getLockWeight(0)).div(2)
+      BigNumber.from(await votingEscrow.getLockWeight(0))
     );
 
-    // Thhe total weight should be 50 % of the lock weight
+    // Thhe total weight should be 100 % of the lock weight
     expect(await gaugeController.getTotalWeight()).to.equal(
-      BigNumber.from(await votingEscrow.getLockWeight(0)).div(2)
+      BigNumber.from(await votingEscrow.getLockWeight(0))
     );
 
-    // the vote lock ratio should be 50 %
-    expect(await gaugeController.getLockVoteRatio(0)).to.equal(5000);
+    // the vote lock ratio should be 100 %
+    expect(await gaugeController.getLockVoteRatio(0)).to.equal(10000);
 
-    // the lock vote ratio for the gauge should be 50 %
+    // the lock vote ratio for the gauge should be 100 %
     expect(
       await gaugeController.getLockVoteRatioForGauge(0, tradingGauge.address)
-    ).to.equal(5000);
+    ).to.equal(10000);
 
-    // the lock vote weight for the gauge should be 50 of the lock weight
+    // the lock vote weight for the gauge should be 10000 of the lock weight
     expect(
       await gaugeController.getLockVoteWeightForGauge(0, tradingGauge.address)
-    ).to.equal(BigNumber.from(await votingEscrow.getLockWeight(0)).div(2));
+    ).to.equal(BigNumber.from(await votingEscrow.getLockWeight(0)));
   });
   it("Should set the lp maturity period", async function () {
     const newLPMaturityPeriod = 8;

@@ -90,7 +90,7 @@ describe("NFT Oracle And Lending Market", function () {
       testNFT.address,
       [0],
       "250000000000000", //Price of 0.025 ETH
-      Math.floor(Date.now() / 1000),
+      await time.latest(),
       nftOracle.address
     );
 
