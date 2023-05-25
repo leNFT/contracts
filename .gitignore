@@ -19,3 +19,6 @@ hardhat.config.js
 scripts/createTradingGauge.js
 scripts/createLendingGauge.js
 .openzeppelin/unknown-11155111.json
+
+# contracts
+contracts/protocol/Trading/YieldOptimizer.sol

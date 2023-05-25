@@ -128,8 +128,8 @@ let loadEnv = async function (isMainnetFork) {
     addressProvider.address,
     "leNFT Genesis",
     "LGEN",
-    "3333", // 3333 total supply
-    "350000000000000000", // 0.35 ETH Price
+    "1337", // 1337 total supply
+    "250000000000000000", // 0.25 ETH Price
     "250", // 2.5% LTV Boost for Genesis NFT
     12500000, // Native Token Mint Factor
     ONE_DAY * 180, // Max locktime (180 days in s)
