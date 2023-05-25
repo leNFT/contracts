@@ -84,6 +84,26 @@ describe("Borrow fuzzing", function () {
       if (borrowAmount <= maxAmount) {
         // should not revert if borrowAmount/price <= maxLTV
         await expect(borrowPromise).to.not.be.reverted;
+
+        // Get loan debt
+        const loanDebt = await loanCenter.getLoanDebt(0);
+
+        // Mint wETH to repay the loan
+        const depositWethTx = await weth.deposit({ value: loanDebt });
+        await depositWethTx.wait();
+
+        // Aprove the lending pool to spend the wETH
+        const approveTx = await weth.approve(
+          await lendingMarket.getLendingPool(testNFT.address, weth.address),
+          loanDebt
+        );
+        await approveTx.wait();
+
+        const repayPromise = lendingMarket.repay(0, loanDebt);
+        await expect(repayPromise).to.not.be.reverted;
+
+        // Check if the borrower received his NFT collateral back
+        expect(await testNFT.ownerOf(0)).to.equal(owner.address);
       } else {
         // should revert if borrowAmount/price > maxLTV
         await expect(borrowPromise).to.be.revertedWith(

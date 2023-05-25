@@ -4,14 +4,6 @@ pragma solidity 0.8.19;
 /// @title SafeCast library
 /// @notice Casting utilities
 library SafeCast {
-    /// @notice Cast a uint256 to a uint96, revert on overflow
-    /// @param value The uint256 value to be casted
-    /// @return The uint96 value casted from uint256
-    function toUint96(uint256 value) internal pure returns (uint96) {
-        require(value <= type(uint96).max, "SC:CAST_OVERFLOW");
-        return uint96(value);
-    }
-
     /// @notice Cast a uint256 to a uint40, revert on overflow
     /// @param value The uint256 value to be casted
     /// @return The uint40 value casted from uint256

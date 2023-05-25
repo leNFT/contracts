@@ -100,12 +100,7 @@ async function main() {
   console.log("Deployed LoanCenter");
 
   // Deploy and initialize the native token (different for mainnet and sepolia)
-  let NativeToken;
-  if (chainID == 1) {
-    NativeToken = await ethers.getContractFactory("NativeToken");
-  } else {
-    NativeToken = await ethers.getContractFactory("NativeTokenTest");
-  }
+  const NativeToken = await ethers.getContractFactory("NativeToken");
   const nativeToken = await upgrades.deployProxy(NativeToken, [
     addressProvider.address,
     "leNFT Token",
@@ -412,15 +407,6 @@ async function main() {
     true
   );
   await setLinearCurveTx.wait();
-
-  // If we are not on mainnet mint LE and fund the faucet
-  if (chainID != 1) {
-    const mintTx = await nativeToken.mint(
-      nativeTokenFaucet.address,
-      ethers.utils.parseEther("100000")
-    );
-    await mintTx.wait();
-  }
 }
 
 // We recommend this pattern to be able to use async/await everywhere

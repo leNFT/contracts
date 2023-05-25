@@ -5,7 +5,7 @@ console.log("chainID: ", chainID.toString());
 var addresses = contractAddresses[chainID.toString()];
 
 async function main() {
-  const Contract = await ethers.getContractFactory("NativeTokenTest");
+  const Contract = await ethers.getContractFactory("NativeToken");
   const contract = Contract.attach(addresses.NativeToken);
   console.log("Running Function...");
   const tx = await contract.mint(
