@@ -21,4 +21,4 @@ scripts/createLendingGauge.js
 .openzeppelin/unknown-11155111.json
 
 # contracts
-contracts/protocol/Trading/YieldOptimizer.sol
+contracts/protocol/SingleSideVault.sol

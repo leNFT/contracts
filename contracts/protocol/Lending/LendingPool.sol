@@ -16,7 +16,6 @@ import {ValidationLogic} from "../../libraries/logic/ValidationLogic.sol";
 /// @dev The LendingPool contract uses the ERC4626 contract to track the shares in a liquidity pool held by users
 contract LendingPool is ILendingPool, ERC4626, Ownable {
     IAddressProvider private immutable _addressProvider;
-    IERC20 private immutable _asset;
     uint256 private _debt;
     uint256 private _borrowRate;
     uint256 private _cumulativeDebtBorrowRate;
@@ -55,7 +54,6 @@ contract LendingPool is ILendingPool, ERC4626, Ownable {
             "LP:C:ONLY_MARKET"
         );
         _addressProvider = addressProvider;
-        _asset = IERC20(asset);
         _lendingPoolConfig = lendingPoolConfig;
         _updateBorrowRate();
         _transferOwnership(owner);
@@ -70,7 +68,7 @@ contract LendingPool is ILendingPool, ERC4626, Ownable {
     /// @notice Get the balance of the underlying asset held in the contract
     /// @return the balance of the underlying asset
     function getUnderlyingBalance() public view override returns (uint256) {
-        return _asset.balanceOf(address(this));
+        return IERC20(asset()).balanceOf(address(this));
     }
 
     /// @notice Get the total assets of the lending pool
@@ -120,8 +118,8 @@ contract LendingPool is ILendingPool, ERC4626, Ownable {
             _addressProvider,
             _lendingPoolConfig.maxUtilizationRate,
             _debt,
-            _asset.balanceOf(address(this)),
-            address(_asset),
+            IERC20(asset()).balanceOf(address(this)),
+            asset(),
             assets
         );
 
@@ -140,7 +138,7 @@ contract LendingPool is ILendingPool, ERC4626, Ownable {
         uint256 borrowRate
     ) external override onlyMarket poolNotPaused {
         // Send the underlying to user
-        _asset.safeTransfer(to, amount);
+        IERC20(asset()).safeTransfer(to, amount);
 
         // Update the cummulative borrow rate
         _updateCumulativeDebtBorrowRate(true, amount, borrowRate);
@@ -163,7 +161,11 @@ contract LendingPool is ILendingPool, ERC4626, Ownable {
         uint256 borrowRate,
         uint256 interest
     ) external override onlyMarket poolNotPaused {
-        _asset.safeTransferFrom(from, address(this), amount + interest);
+        IERC20(asset()).safeTransferFrom(
+            from,
+            address(this),
+            amount + interest
+        );
         _updateCumulativeDebtBorrowRate(false, amount, borrowRate);
         _debt -= amount;
         _updateBorrowRate();
@@ -181,7 +183,7 @@ contract LendingPool is ILendingPool, ERC4626, Ownable {
         uint256 borrowRate,
         uint256 defaultedDebt
     ) external override onlyMarket poolNotPaused {
-        _asset.safeTransferFrom(from, address(this), amount);
+        IERC20(asset()).safeTransferFrom(from, address(this), amount);
         _updateCumulativeDebtBorrowRate(false, defaultedDebt, borrowRate);
         _debt -= defaultedDebt;
         _updateBorrowRate();
@@ -197,7 +199,7 @@ contract LendingPool is ILendingPool, ERC4626, Ownable {
     function _updateBorrowRate() internal {
         _borrowRate = IInterestRate(
             IAddressProvider(_addressProvider).getInterestRate()
-        ).calculateBorrowRate(address(_asset), getUnderlyingBalance(), _debt);
+        ).calculateBorrowRate(asset(), getUnderlyingBalance(), _debt);
 
         emit UpdatedBorrowRate(_borrowRate);
     }
@@ -252,7 +254,7 @@ contract LendingPool is ILendingPool, ERC4626, Ownable {
         return
             IInterestRate(_addressProvider.getInterestRate())
                 .calculateUtilizationRate(
-                    address(_asset),
+                    asset(),
                     getUnderlyingBalance(),
                     _debt
                 );

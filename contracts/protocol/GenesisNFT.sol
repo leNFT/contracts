@@ -215,7 +215,7 @@ contract GenesisNFT is
                 "</feMerge>",
                 "</filter>",
                 "</defs>",
-                '<text x="50%" y="30%" text-anchor="middle" font-size="18" letter-spacing="2">',
+                '<text x="50%" y="25%" text-anchor="middle" font-size="16" stroke="black" letter-spacing="2">',
                 '<tspan dy="0">leNFT</tspan>',
                 '<animate attributeName="textLength" from="0" to="40%" dur="1.8s" fill="freeze"/>',
                 '<animate attributeName="lengthAdjust" to="spacing" dur="1.4s" fill="freeze"/>',
@@ -226,31 +226,61 @@ contract GenesisNFT is
         {
             _svg = abi.encodePacked(
                 _svg,
-                '<circle cx="50%" cy="60%" r="50" fill="none" stroke="#000" stroke-width="2" filter="url(#a)"/>',
-                '<text x="50%" text-anchor="middle" font-size="28">',
+                '<circle cx="50%" cy="60%" r="60" fill="none" stroke="#',
+                _getCircleColor(tokenId),
+                '" stroke-width="2" filter="url(#a)"/>',
+                '<text x="50%" y="17%" text-anchor="middle" font-size="28">',
                 '<tspan dy="180">',
                 Strings.toString(tokenId),
                 "</tspan>",
-                '<animate attributeName="y" values="-100;70;65;70" keyTimes="0;0.8;0.9;1" dur="1s" fill="freeze"/>',
                 "</text>",
-                '<text font-size="12" letter-spacing="4" rotate="180 180 180 180 180 180 180">',
-                '<textPath href="#b" startOffset="0%">',
-                "SISENEG",
-                '<animate attributeName="startOffset" from="100%" to="0%" dur="15s" repeatCount="indefinite"/>',
-                "</textPath>",
-                "</text>"
+                '<text font-size="16" fill="#',
+                _getCircleColor(tokenId),
+                '" stroke="#',
+                _getCircleColor(tokenId),
+                '" letter-spacing="4" rotate="180 180 180 180 180 180 180">'
             );
         }
 
         {
             _svg = abi.encodePacked(
                 _svg,
+                '<textPath href="#b" startOffset="0%">',
+                "SISENEG",
+                '<animate attributeName="startOffset" from="100%" to="0%" dur="15s" repeatCount="indefinite"/>',
+                "</textPath>",
+                "</text>",
                 "<defs>",
-                '<path id="b" d="M140 240a60 60 0 1 0 120 0 60 60 0 1 0-120 0"/>',
+                '<path id="b" d="M130 240a70 70 0 1 0 140 0 70 70 0 1 0-140 0"/>',
                 "</defs>",
                 "</svg>"
             );
         }
+    }
+
+    function _getCircleColor(
+        uint256 tokenId
+    ) internal view returns (string memory) {
+        if (_maxLocktime == 0) {
+            return "000000"; // return black
+        }
+
+        // Linear interpolation between black (0x000000) and gold (0xFFD700)
+        uint256 colorValue = (uint256(0xFFD700) *
+            _mintDetails[tokenId].locktime) / _maxLocktime;
+
+        // Convert to hexadecimal color value && Cast string to bytes
+        bytes memory b = bytes(Strings.toHexString(colorValue));
+
+        // Create a new bytes array to hold the string without the prefix
+        bytes memory result = new bytes(b.length - 2);
+
+        // remove the 0x prefix
+        for (uint i = 2; i < b.length; i++) {
+            result[i - 2] = b[i];
+        }
+        // Convert to hexadecimal color value
+        return string(result);
     }
 
     /// @notice Returns the maximum number of tokens that can be minted
