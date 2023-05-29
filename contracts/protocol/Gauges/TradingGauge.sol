@@ -187,6 +187,8 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
                 msg.sender,
                 amountToClaim
             );
+
+            emit Claim(msg.sender, amountToClaim);
         }
     }
 
@@ -314,13 +316,16 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
         // LP value must be greater than 0
         require(depositLpValue > 0, "TG:D:LP_VALUE_ZERO");
 
+        // Update state variables
         _ownerOf[lpId] = msg.sender;
         _lpValue[lpId] = depositLpValue;
         _userLPValue[msg.sender] += depositLpValue;
         _totalLPValue += depositLpValue;
 
+        // Transfer LP token to contract
         IERC721(_lpToken).safeTransferFrom(msg.sender, address(this), lpId);
 
+        // Update user balance balance
         uint256 lastTokenIndex = _balanceOf[msg.sender];
         _ownedTokens[msg.sender][lastTokenIndex] = lpId;
         _ownedTokensIndex[lpId] = lastTokenIndex;
@@ -345,6 +350,7 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
         delete _ownerOf[lpId];
         delete _lpValue[lpId];
 
+        // Transfer LP token to user
         IERC721(_lpToken).safeTransferFrom(address(this), msg.sender, lpId);
 
         uint256 lastTokenIndex = _balanceOf[msg.sender] - 1;
@@ -362,6 +368,7 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
         delete _ownedTokensIndex[lpId];
         delete _ownedTokens[msg.sender][lastTokenIndex];
 
+        // Update user balance
         _balanceOf[msg.sender] -= 1;
         _totalSupply -= 1;
 

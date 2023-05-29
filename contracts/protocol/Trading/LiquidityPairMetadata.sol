@@ -25,6 +25,7 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
     /// @notice Returns the metadata for a liquidity pair
     /// @param tradingPool The address of the trading pool of the liquidity pair.
     /// @param tokenId The liquidity pair's token ID.
+    /// @return The encoded metadata for the liquidity pair.
     function tokenURI(
         address tradingPool,
         uint256 tokenId
@@ -78,6 +79,7 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
     /// @notice Returns the attributes for a liquidity pair encoded as json.
     /// @param tradingPool The address of the trading pool of the liquidity pair.
     /// @param tokenId The liquidity pair's token ID.
+    /// @return The encoded attributes for the liquidity pair.
     function attributes(
         address tradingPool,
         uint256 tokenId
@@ -132,12 +134,19 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
     /// @notice Returns an svg image for a liquidity pair.
     /// @param tradingPool The address of the trading pool of the liquidity pair.
     /// @param tokenId The liquidity pair's token ID.
+    /// @return _svg The svg image for the liquidity pair.
     function svg(
         address tradingPool,
         uint256 tokenId
     ) public view lpExists(tradingPool, tokenId) returns (bytes memory _svg) {
         DataTypes.LiquidityPair memory lp = ITradingPool(tradingPool).getLP(
             tokenId
+        );
+        IERC721Metadata nft = IERC721Metadata(
+            ITradingPool(tradingPool).getNFT()
+        );
+        IERC20Metadata token = IERC20Metadata(
+            ITradingPool(tradingPool).getToken()
         );
 
         // break up svg building into multiple scopes to avoid stack too deep errors
@@ -147,8 +156,8 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" style="width:100%;background:#eaeaea;fill:black;font-family:monospace">',
                 '<text x="50%" y="24px" font-size="12" text-anchor="middle">',
                 "leNFT Trading Pair ",
-                IERC721Metadata(ITradingPool(tradingPool).getNFT()).symbol(),
-                IERC20Metadata(ITradingPool(tradingPool).getToken()).symbol(),
+                nft.symbol(),
+                token.symbol(),
                 " #",
                 Strings.toString(tokenId),
                 "</text>",
@@ -165,11 +174,11 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
                 "</text>",
                 '<text x="24px" y="90px" font-size="8">',
                 "NFT: ",
-                IERC721Metadata(ITradingPool(tradingPool).getNFT()).name(),
+                nft.name(),
                 "</text>",
                 '<text x="24px" y="108px" font-size="8">',
                 "Token: ",
-                IERC20Metadata(ITradingPool(tradingPool).getToken()).name(),
+                token.name(),
                 "</text>"
             );
         }
@@ -215,6 +224,7 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
     /// @notice Returns a trait encoded as json.
     /// @param traitType The trait type.
     /// @param value The trait value.
+    /// @return The encoded trait.
     function trait(
         string memory traitType,
         string memory value

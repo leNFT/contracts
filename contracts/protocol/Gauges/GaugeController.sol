@@ -70,6 +70,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @notice Initializes the contract by setting up the owner and the addresses provider contract.
     /// @param addressProvider Address provider contract.
     /// @param initialRewards The initial rewards rate for the token (after the loading period)
+    /// @param lpMaturityPeriod The maturity period for the LP tokens
     function initialize(
         IAddressProvider addressProvider,
         uint256 initialRewards,

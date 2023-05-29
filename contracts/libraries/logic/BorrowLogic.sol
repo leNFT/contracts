@@ -45,14 +45,14 @@ library BorrowLogic {
 
         // If a genesis NFT was used with this loan we need to lock it
         if (params.genesisNFTId != 0) {
-            // Lock genesis NFT to this loan
+            // Lock genesis NFT
             IGenesisNFT(addressProvider.getGenesisNFT()).setLockedState(
                 params.genesisNFTId,
                 true
             );
         }
 
-        // Get the borrow rate index
+        // Get the current borrow rate index
         uint256 borrowRate = ILendingPool(lendingPool).getBorrowRate();
 
         // Create the loan
@@ -97,23 +97,24 @@ library BorrowLogic {
         if (params.amount == loanDebt) {
             // If the loan was being liquidated we send the liquidators payment back with a fee
             if (loanData.state == DataTypes.LoanState.Auctioned) {
+                address asset = IERC4626(loanData.pool).asset();
+
                 DataTypes.LoanLiquidationData
                     memory liquidationData = loanCenter.getLoanLiquidationData(
                         params.loanId
                     );
 
                 // Give max bid back to liquidator
-                IERC20Upgradeable(IERC4626(loanData.pool).asset()).safeTransfer(
-                        liquidationData.liquidator,
-                        liquidationData.auctionMaxBid
-                    );
+                IERC20Upgradeable(asset).safeTransfer(
+                    liquidationData.liquidator,
+                    liquidationData.auctionMaxBid
+                );
                 // Get the fee from the user and give it to the auctioneer
-                IERC20Upgradeable(IERC4626(loanData.pool).asset())
-                    .safeTransferFrom(
-                        params.caller,
-                        liquidationData.auctioneer,
-                        loanCenter.getAuctioneerFee(params.loanId)
-                    );
+                IERC20Upgradeable(asset).safeTransferFrom(
+                    params.caller,
+                    liquidationData.auctioneer,
+                    loanCenter.getAuctioneerFee(params.loanId)
+                );
             }
 
             // Return the principal + interest
@@ -124,8 +125,10 @@ library BorrowLogic {
                 interest
             );
 
+            // Repay the loan through the loan center contract
             loanCenter.repayLoan(params.loanId);
 
+            // If a genesis NFT was used with this loan we need to unlock it
             if (loanData.genesisNFTId != 0) {
                 // Unlock Genesis NFT
                 IGenesisNFT(addressProvider.getGenesisNFT()).setLockedState(
@@ -145,7 +148,7 @@ library BorrowLogic {
         }
         // User is sending less than the total debt
         else {
-            // User is sending less than the interest
+            // User is sending less than interest or the interest entirely
             if (params.amount <= interest) {
                 ILendingPool(loanData.pool).receiveUnderlying(
                     params.caller,
@@ -178,7 +181,7 @@ library BorrowLogic {
                 );
                 loanCenter.updateLoanAmount(
                     params.loanId,
-                    loanData.amount - (params.amount - interest)
+                    loanData.amount - params.amount + interest
                 );
             }
         }

@@ -336,6 +336,10 @@ contract VotingEscrow is
         return _lockHistory[tokenId][index];
     }
 
+    /// @notice Returns the ratio of locked tokens for a certain epoch
+    /// @dev Multiplied by 10000 (e.g. 50% = 5000)
+    /// @param _epoch The epoch number for which to retrieve the ratio.
+    /// @return The ratio of locked tokens at the given epoch.
     function getLockedRatioAt(
         uint256 _epoch
     ) external override noFutureEpoch(_epoch) returns (uint256) {

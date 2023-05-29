@@ -30,6 +30,9 @@ contract LendingGauge is IGauge, ERC165 {
 
     using SafeERC20 for IERC20;
 
+    event Deposit(address indexed user, uint256 amount);
+    event Withdraw(address indexed user, uint256 amount);
+
     /// @notice Constructor function for LendingGauge
     /// @param addressProvider The address provider contract
     /// @param lpToken_ The address of the LendingPool token
@@ -53,7 +56,7 @@ contract LendingGauge is IGauge, ERC165 {
 
     /// @notice Returns the balance of staked LP tokens for a given user
     /// @param user The address of the user to check balance for
-    /// @return The balance of the userget
+    /// @return The balance of the user
     function getBalanceOf(address user) external view returns (uint256) {
         return _balanceOf[user];
     }
@@ -185,16 +188,19 @@ contract LendingGauge is IGauge, ERC165 {
             }
         }
 
+        // Claim the rewards if there are any
         if (amountToClaim > 0) {
             INativeToken(_addressProvider.getNativeToken()).mintGaugeRewards(
                 msg.sender,
                 amountToClaim
             );
+
+            emit Claim(msg.sender, amountToClaim);
         }
     }
 
     /// @notice Updates the total weight history by recording the current total weight for the current epoch and 128 previous epochs.
-    /// @dev This function will break if it is not used for 128 epochs.
+    /// @dev This function will break if it is not used for 128 epochs in a row.
     function writeTotalWeightHistory() public {
         // Update last saved weight checkpoint and record weight for epochs
         // Will break if is not used for 128 epochs
@@ -345,6 +351,8 @@ contract LendingGauge is IGauge, ERC165 {
         IERC20(_lpToken).safeTransferFrom(msg.sender, address(this), amount);
 
         _checkpoint(msg.sender);
+
+        emit Deposit(msg.sender, amount);
     }
 
     /// @notice Withdraws LP tokens from the contract and updates the user's balance and working balance.
@@ -361,6 +369,8 @@ contract LendingGauge is IGauge, ERC165 {
         IERC20(_lpToken).safeTransfer(msg.sender, amount);
 
         _checkpoint(msg.sender);
+
+        emit Withdraw(msg.sender, amount);
     }
 
     function supportsInterface(

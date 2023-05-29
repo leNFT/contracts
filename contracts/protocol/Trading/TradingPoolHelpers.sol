@@ -15,18 +15,25 @@ contract TradingPoolHelpers {
     // Address provider state variable
     IAddressProvider private immutable _addressProvider;
 
+    modifier validPool(address pool) {
+        _requireValidPool(pool);
+        _;
+    }
+
+    /// @notice Constructor
+    /// @param addressProvider Address of the address provider
     constructor(address addressProvider) {
         _addressProvider = IAddressProvider(addressProvider);
     }
 
     /// @notice Simulates a trading pool buy call
-    /// @param tradingPool The address of the trading pool
+    /// @param pool The address of the trading pool
     /// @param nftIds The array of NFT IDs to buy
     /// @return finalPrice The final price quote for the NFTs
     function simulateBuy(
-        address tradingPool,
+        address pool,
         uint256[] calldata nftIds
-    ) external view returns (uint256 finalPrice) {
+    ) external view validPool(pool) returns (uint256 finalPrice) {
         require(nftIds.length > 0, "TP:B:NFTS_0");
 
         // Create an array of liquidity pairs to keep track of the prices & token amounts
@@ -40,105 +47,99 @@ contract TradingPoolHelpers {
         uint256 lpIndex;
         uint256 lpCount;
         DataTypes.LiquidityPair memory lp;
-        bool lpFound;
-        for (uint i = 0; i < nftIds.length; i++) {
-            // Check for repeated NFTs (needed when simulation but would fail in buy)
-            for (uint j = i + 1; j < nftIds.length; j++) {
-                require(nftIds[i] != nftIds[j], "TP:B:REPEATED_NFT");
-            }
-
-            // Check if the pool contract owns the NFT
-            require(
-                IERC721(ITradingPool(tradingPool).getNFT()).ownerOf(
-                    nftIds[i]
-                ) == tradingPool,
-                "TP:B:NOT_OWNER"
-            );
-            lpIndex = ITradingPool(tradingPool).nftToLp(nftIds[i]);
-
-            // Add liquidity pair to array if not already there
-            for (uint j = 0; j < lpCount; j++) {
-                if (lpIds[j] == lpIndex) {
-                    lpFound = true;
-                    break;
-                }
-            }
-
-            // If it reaches the end of the array, it means it didn't find the liquidity pair
-            if (!lpFound) {
-                lpIds[lpCount] = lpIndex;
-                lp = ITradingPool(tradingPool).getLP(lpIndex);
-                // Can't buy from buy LP
-                require(lp.lpType != DataTypes.LPType.Buy, "TP:B:IS_BUY_LP");
-                liquidityPairsData[lpCount] = lp;
-                lpCount++;
-                delete lpFound;
-            }
-        }
-
         // scope vars to Avoid stack too deep errors
         {
-            // Simulate buying the NFTs
-            uint256 fee;
-            uint256 lpDataIndex;
-            uint256 protocolFee;
-            uint256 protocolFeePercentage = ITradingPoolFactory(
-                _addressProvider.getTradingPoolFactory()
-            ).getProtocolFeePercentage();
+            bool lpFound;
             for (uint i = 0; i < nftIds.length; i++) {
-                // Find the liquidity pair in the array
-                lpIndex = ITradingPool(tradingPool).nftToLp(nftIds[i]);
+                // Check for repeated NFTs (needed when simulation but would fail in buy)
+                for (uint j = i + 1; j < nftIds.length; j++) {
+                    require(nftIds[i] != nftIds[j], "TP:B:REPEATED_NFT");
+                }
+
+                // Check if the pool contract owns the NFT
+                require(
+                    IERC721(ITradingPool(pool).getNFT()).ownerOf(nftIds[i]) ==
+                        pool,
+                    "TP:B:NOT_OWNER"
+                );
+                lpIndex = ITradingPool(pool).nftToLp(nftIds[i]);
+
+                // Add liquidity pair to array if not already there
                 for (uint j = 0; j < lpCount; j++) {
                     if (lpIds[j] == lpIndex) {
-                        lpDataIndex = j;
-                        lp = liquidityPairsData[lpDataIndex];
+                        lpFound = true;
                         break;
                     }
                 }
 
-                fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
-                protocolFee = PercentageMath.percentMul(
-                    fee,
-                    protocolFeePercentage
-                );
-
-                liquidityPairsData[lpDataIndex].tokenAmount += (lp.spotPrice +
-                    fee -
-                    protocolFee);
-
-                // Increase total price and fee sum
-                finalPrice += (lp.spotPrice + fee);
-
-                // Update liquidity pair price
-                if (lp.lpType != DataTypes.LPType.TradeDown) {
-                    liquidityPairsData[lpDataIndex].spotPrice = IPricingCurve(
-                        lp.curve
-                    ).priceAfterBuy(lp.spotPrice, lp.delta, lp.fee);
+                // If it reaches the end of the array, it means it didn't find the liquidity pair
+                if (!lpFound) {
+                    lpIds[lpCount] = lpIndex;
+                    lp = ITradingPool(pool).getLP(lpIndex);
+                    // Can't buy from buy LP
+                    require(
+                        lp.lpType != DataTypes.LPType.Buy,
+                        "TP:B:IS_BUY_LP"
+                    );
+                    liquidityPairsData[lpCount] = lp;
+                    lpCount++;
+                    delete lpFound;
                 }
+            }
+        }
+
+        // Simulate buying the NFTs
+        uint256 fee;
+        uint256 lpDataIndex;
+        uint256 protocolFee;
+        uint256 protocolFeePercentage = ITradingPoolFactory(
+            _addressProvider.getTradingPoolFactory()
+        ).getProtocolFeePercentage();
+        for (uint i = 0; i < nftIds.length; i++) {
+            // Find the liquidity pair in the array
+            lpIndex = ITradingPool(pool).nftToLp(nftIds[i]);
+            for (uint j = 0; j < lpCount; j++) {
+                if (lpIds[j] == lpIndex) {
+                    lpDataIndex = j;
+                    lp = liquidityPairsData[lpDataIndex];
+                    break;
+                }
+            }
+
+            fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
+            protocolFee = PercentageMath.percentMul(fee, protocolFeePercentage);
+
+            liquidityPairsData[lpDataIndex].tokenAmount += (lp.spotPrice +
+                fee -
+                protocolFee);
+
+            // Increase total price and fee sum
+            finalPrice += (lp.spotPrice + fee);
+
+            // Update liquidity pair price
+            if (lp.lpType != DataTypes.LPType.TradeDown) {
+                liquidityPairsData[lpDataIndex].spotPrice = IPricingCurve(
+                    lp.curve
+                ).priceAfterBuy(lp.spotPrice, lp.delta, lp.fee);
             }
         }
     }
 
     /// @notice Simulates a trading pool sell call
-    /// @param tradingPool The address of the trading pool
+    /// @param pool The address of the trading pool
     /// @param nftIds The array of NFT IDs to sell
     /// @param liquidityPairs The array of liquidity pair IDs to sell
     /// @return finalPrice The final price quote for the sell operation
     function simulateSell(
-        address tradingPool,
+        address pool,
         uint256[] calldata nftIds,
         uint256[] calldata liquidityPairs
-    ) external view returns (uint256 finalPrice) {
+    ) external view validPool(pool) returns (uint256 finalPrice) {
         require(
             nftIds.length == liquidityPairs.length,
             "TPH:SS:NFT_LP_MISMATCH"
         );
         require(nftIds.length > 0, "TPH:SS:NFTS_0");
-
-        uint256 lpIndex;
-        uint256 lpCount;
-        bool lpFound;
-        DataTypes.LiquidityPair memory lp;
 
         // Create an array of liquidity pairs to keep track of the prices & token amounts
         DataTypes.LiquidityPair[]
@@ -148,82 +149,86 @@ contract TradingPoolHelpers {
         // Create an array of liquidity pair IDs to keep track of the liquidity pairs
         uint256[] memory lpIds = new uint256[](nftIds.length);
 
-        // Fill the array with the prices of the liquidity pairs
-        for (uint i = 0; i < liquidityPairs.length; i++) {
-            // Check for repeated NFTs (needed when simulation but would fail in sell)
-            for (uint j = i + 1; j < nftIds.length; j++) {
-                require(nftIds[i] != nftIds[j], "TP:B:REPEATED_NFT");
-            }
-
-            lpIndex = liquidityPairs[i];
-            require(
-                IERC721(tradingPool).ownerOf(lpIndex) != address(0),
-                "TPH:SS:LP_NOT_FOUND"
-            );
-
-            // Add liquidity pair to array if not already there
-            for (uint j = 0; j < lpCount; j++) {
-                if (lpIds[j] == lpIndex) {
-                    lpFound = true;
-                    break;
-                }
-            }
-
-            // If it reaches the end of the array, it means it didn't find the liquidity pair
-            if (!lpFound) {
-                lpIds[lpCount] = lpIndex;
-                lp = ITradingPool(tradingPool).getLP(lpIndex);
-                // Can't sell to sell LP
-                require(lp.lpType != DataTypes.LPType.Sell, "TP:S:IS_SELL_LP");
-                liquidityPairsData[lpCount] = lp;
-                lpCount++;
-                delete lpFound;
-            }
-        }
-
+        uint256 lpIndex;
+        uint256 lpCount;
+        DataTypes.LiquidityPair memory lp;
         // scope to avoid stack too deep errors
         {
-            // Simulate selling the NFTs
-            uint256 fee;
-            uint256 protocolFee;
-            uint256 lpDataIndex;
-            uint256 protocolFeePercentage = ITradingPoolFactory(
-                _addressProvider.getTradingPoolFactory()
-            ).getProtocolFeePercentage();
-            for (uint i = 0; i < nftIds.length; i++) {
-                // Find the liquidity pair in the array
+            bool lpFound;
+            // Fill the array with the prices of the liquidity pairs
+            for (uint i = 0; i < liquidityPairs.length; i++) {
+                // Check for repeated NFTs (needed when simulation but would fail in sell)
+                for (uint j = i + 1; j < nftIds.length; j++) {
+                    require(nftIds[i] != nftIds[j], "TP:B:REPEATED_NFT");
+                }
+
                 lpIndex = liquidityPairs[i];
+                require(
+                    IERC721(pool).ownerOf(lpIndex) != address(0),
+                    "TPH:SS:LP_NOT_FOUND"
+                );
+
+                // Add liquidity pair to array if not already there
                 for (uint j = 0; j < lpCount; j++) {
                     if (lpIds[j] == lpIndex) {
-                        lpDataIndex = j;
-                        lp = liquidityPairsData[lpDataIndex];
+                        lpFound = true;
                         break;
                     }
                 }
 
-                fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
-                protocolFee = PercentageMath.percentMul(
-                    fee,
-                    protocolFeePercentage
-                );
-
-                require(
-                    lp.tokenAmount >= lp.spotPrice - fee + protocolFee,
-                    "TP:S:INSUFFICIENT_TOKENS_IN_LP"
-                );
-                liquidityPairsData[lpDataIndex].tokenAmount -= (lp.spotPrice -
-                    fee +
-                    protocolFee);
-
-                // Update total price quote and fee sum
-                finalPrice += (lp.spotPrice - fee);
-
-                // Update liquidity pair price
-                if (lp.lpType != DataTypes.LPType.TradeUp) {
-                    liquidityPairsData[lpDataIndex].spotPrice = IPricingCurve(
-                        lp.curve
-                    ).priceAfterSell(lp.spotPrice, lp.delta, lp.fee);
+                // If it reaches the end of the array, it means it didn't find the liquidity pair
+                if (!lpFound) {
+                    lpIds[lpCount] = lpIndex;
+                    lp = ITradingPool(pool).getLP(lpIndex);
+                    // Can't sell to sell LP
+                    require(
+                        lp.lpType != DataTypes.LPType.Sell,
+                        "TP:S:IS_SELL_LP"
+                    );
+                    liquidityPairsData[lpCount] = lp;
+                    lpCount++;
+                    delete lpFound;
                 }
+            }
+        }
+
+        // Simulate selling the NFTs
+        uint256 fee;
+        uint256 protocolFee;
+        uint256 lpDataIndex;
+        uint256 protocolFeePercentage = ITradingPoolFactory(
+            _addressProvider.getTradingPoolFactory()
+        ).getProtocolFeePercentage();
+        for (uint i = 0; i < nftIds.length; i++) {
+            // Find the liquidity pair in the array
+            lpIndex = liquidityPairs[i];
+            for (uint j = 0; j < lpCount; j++) {
+                if (lpIds[j] == lpIndex) {
+                    lpDataIndex = j;
+                    lp = liquidityPairsData[lpDataIndex];
+                    break;
+                }
+            }
+
+            fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
+            protocolFee = PercentageMath.percentMul(fee, protocolFeePercentage);
+
+            require(
+                lp.tokenAmount >= lp.spotPrice - fee + protocolFee,
+                "TP:S:INSUFFICIENT_TOKENS_IN_LP"
+            );
+            liquidityPairsData[lpDataIndex].tokenAmount -= (lp.spotPrice -
+                fee +
+                protocolFee);
+
+            // Update total price quote and fee sum
+            finalPrice += (lp.spotPrice - fee);
+
+            // Update liquidity pair price
+            if (lp.lpType != DataTypes.LPType.TradeUp) {
+                liquidityPairsData[lpDataIndex].spotPrice = IPricingCurve(
+                    lp.curve
+                ).priceAfterSell(lp.spotPrice, lp.delta, lp.fee);
             }
         }
     }
@@ -235,7 +240,12 @@ contract TradingPoolHelpers {
     function getSellLiquidityPairs(
         address pool,
         uint256 amount
-    ) external view returns (uint256[] memory sellLiquidityPairs) {
+    )
+        external
+        view
+        validPool(pool)
+        returns (uint256[] memory sellLiquidityPairs)
+    {
         uint256 lpCount = ITradingPool(pool).getLpCount();
         uint256[] memory validLiquidityPairs = new uint256[](lpCount);
         uint256 validLiquidityPairsCount = 0;
@@ -243,9 +253,7 @@ contract TradingPoolHelpers {
         // Loop through all liquidity pairs
         uint256 fee;
         uint256 protocolFee;
-        uint256 protocolFeePercentage = ITradingPoolFactory(
-            _addressProvider.getTradingPoolFactory()
-        ).getProtocolFeePercentage();
+
         DataTypes.LiquidityPair memory lp;
         // Go through all liquidity pairs
         for (uint i = 0; i < lpCount; i++) {
@@ -258,7 +266,9 @@ contract TradingPoolHelpers {
                 fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
                 protocolFee = PercentageMath.percentMul(
                     fee,
-                    protocolFeePercentage
+                    ITradingPoolFactory(
+                        _addressProvider.getTradingPoolFactory()
+                    ).getProtocolFeePercentage()
                 );
 
                 // Check if the amount is enough to buy the asset
@@ -322,7 +332,11 @@ contract TradingPoolHelpers {
                 lp.fee
             );
             fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
-            protocolFee = PercentageMath.percentMul(fee, protocolFeePercentage);
+            protocolFee = PercentageMath.percentMul(
+                fee,
+                ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
+                    .getProtocolFeePercentage()
+            );
 
             // Replace the worst liquidity pair with the current one
             if (
@@ -383,5 +397,13 @@ contract TradingPoolHelpers {
         }
 
         return finalSellLiquidityPairs;
+    }
+
+    function _requireValidPool(address pool) internal view {
+        require(
+            ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
+                .isTradingPool(pool),
+            "TPH:INVALID_POOL"
+        );
     }
 }

@@ -186,7 +186,7 @@ contract TradingPool is
             require(nftIds.length > 0 && tokenAmount == 0, "TP:AL:NFTS_ONLY");
         }
 
-        // DIrectional LPs must have a positive delta in order for the price to move or else
+        // Directional LPs must have a positive delta in order for the price to move or else
         // they degenerate into a Trade LPs with delta = 0
         if (
             lpType == DataTypes.LPType.TradeUp ||
@@ -206,7 +206,7 @@ contract TradingPool is
         // Require that the curve conforms to the curve interface
         require(tradingPoolFactory.isPriceCurve(curve), "TP:AL:INVALID_CURVE");
 
-        // Validate lp params for chosen curve
+        // Validate LP params for chosen curve
         IPricingCurve(curve).validateLpParameters(spotPrice, delta, fee);
 
         // Add user nfts to the pool
@@ -425,10 +425,12 @@ contract TradingPool is
         }
 
         uint256 totalFee;
-        uint256 fee;
-        uint256 protocolFee;
+        uint256 fee; // We dont declare the protocol fee here to avoid stack too deep errors
         DataTypes.LiquidityPair memory lp;
         uint256 lpIndex;
+        uint256 protocolFeePercentage = ITradingPoolFactory(
+            _addressProvider.getTradingPoolFactory()
+        ).getProtocolFeePercentage();
         // Transfer the NFTs to the pool
         for (uint i = 0; i < nftIds.length; i++) {
             // Check if the LP exists
@@ -448,15 +450,14 @@ contract TradingPool is
             // Can't sell to sell LP
             require(lp.lpType != DataTypes.LPType.Sell, "TP:S:IS_SELL_LP");
 
+            // Calculate the fee and protocol fee for the sale
             fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
-            protocolFee = PercentageMath.percentMul(
-                fee,
-                ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                    .getProtocolFeePercentage()
-            );
 
             require(
-                lp.tokenAmount >= lp.spotPrice - fee + protocolFee,
+                lp.tokenAmount >=
+                    lp.spotPrice -
+                        fee +
+                        PercentageMath.percentMul(fee, protocolFeePercentage),
                 "TP:S:INSUFFICIENT_TOKENS_IN_LP"
             );
 
@@ -469,9 +470,10 @@ contract TradingPool is
                 index: _liquidityPairs[lpIndex].nftIds.length - 1
             });
 
+            // Update token amount in liquidity pair
             _liquidityPairs[lpIndex].tokenAmount -= (lp.spotPrice -
                 fee +
-                protocolFee);
+                PercentageMath.percentMul(fee, protocolFeePercentage));
 
             // Update total price quote and fee sum
             finalPrice += (lp.spotPrice - fee);
@@ -484,18 +486,16 @@ contract TradingPool is
             }
         }
 
+        // Make sure the final price is greater than or equal to the minimum price set by the user
         require(finalPrice >= minimumPrice, "TP:S:MINIMUM_PRICE_NOT_REACHED");
 
+        // Send tokens to user
         IERC20(_token).safeTransfer(msg.sender, finalPrice);
 
-        // Send protocol fee to protocol fee distributor
+        // Send protocol fee to protocol fee distributor and call a checkpoint
         IERC20(_token).safeTransfer(
             _addressProvider.getFeeDistributor(),
-            PercentageMath.percentMul(
-                totalFee,
-                ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                    .getProtocolFeePercentage()
-            )
+            PercentageMath.percentMul(totalFee, protocolFeePercentage)
         );
         IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
             _token

@@ -52,6 +52,9 @@ library LiquidationLogic {
         );
     }
 
+    /// @notice Bid on a liquidation auction
+    /// @param addressProvider The address of the addresses provider
+    /// @param params A struct with the parameters of the bid function
     function bidLiquidationAuction(
         IAddressProvider addressProvider,
         DataTypes.AuctionBidParams memory params
@@ -96,6 +99,9 @@ library LiquidationLogic {
         );
     }
 
+    /// @notice Claim a liquidation auction
+    /// @param addressProvider The address of the addresses provider
+    /// @param params A struct with the parameters of the claim function
     function claimLiquidation(
         IAddressProvider addressProvider,
         DataTypes.ClaimLiquidationParams memory params
@@ -130,8 +136,9 @@ library LiquidationLogic {
             );
 
             fundsLeft = 0;
-            // If we have funds to cover the whole debt associated with the loan
-        } else {
+        }
+        // If we have funds to cover the whole debt associated with the loan
+        else {
             ILendingPool(loanData.pool).receiveUnderlying(
                 address(this),
                 loanData.amount,
@@ -144,20 +151,25 @@ library LiquidationLogic {
 
         // ... then get the protocol liquidation fee (if there are still funds available) ...
         if (fundsLeft > 0) {
+            // Get the protocol fee
             uint256 protocolFee = PercentageMath.percentMul(
                 loanLiquidationData.auctionMaxBid,
                 ILendingPool(loanData.pool).getPoolConfig().liquidationFee
             );
+            // If the protocol fee is higher than the amount we have left, set the protocol fee to the amount we have left
             if (protocolFee > fundsLeft) {
                 protocolFee = fundsLeft;
             }
+            // Send the protocol fee to the fee distributor contract
             IERC20Upgradeable(poolAsset).safeTransfer(
                 addressProvider.getFeeDistributor(),
                 protocolFee
             );
+            // Checkpoint the fee distribution
             IFeeDistributor(addressProvider.getFeeDistributor()).checkpoint(
                 poolAsset
             );
+            // Subtract the protocol fee from the funds left
             fundsLeft -= protocolFee;
         }
 
@@ -181,7 +193,7 @@ library LiquidationLogic {
             );
         }
 
-        // Unlock Genesis NFT for use
+        // Unlock Genesis NFT if it was used with this loan
         if (loanData.genesisNFTId != 0) {
             // Unlock Genesis NFT
             IGenesisNFT(addressProvider.getGenesisNFT()).setLockedState(

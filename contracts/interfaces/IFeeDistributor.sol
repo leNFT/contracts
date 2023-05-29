@@ -8,7 +8,7 @@ interface IFeeDistributor {
         uint256 amount
     );
 
-    event ClaimBribes(
+    event ClaimFees(
         address indexed receiver,
         address indexed token,
         uint256 indexed tokenId,

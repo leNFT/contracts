@@ -3,10 +3,12 @@ pragma solidity 0.8.19;
 
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {IInterestRate} from "../../interfaces/IInterestRate.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ConfigTypes} from "../../libraries/types/ConfigTypes.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -14,7 +16,7 @@ import {ValidationLogic} from "../../libraries/logic/ValidationLogic.sol";
 
 /// @title LendingPool contract
 /// @dev The LendingPool contract uses the ERC4626 contract to track the shares in a liquidity pool held by users
-contract LendingPool is ILendingPool, ERC4626, Ownable {
+contract LendingPool is ERC165, ILendingPool, ERC4626, Ownable {
     IAddressProvider private immutable _addressProvider;
     uint256 private _debt;
     uint256 private _borrowRate;
@@ -282,6 +284,15 @@ contract LendingPool is ILendingPool, ERC4626, Ownable {
     /// @param paused Whether to pause the pool or not.
     function setPause(bool paused) external onlyOwner {
         _paused = paused;
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(ERC165) returns (bool) {
+        return
+            type(ILendingPool).interfaceId == interfaceId ||
+            type(IERC4626).interfaceId == interfaceId ||
+            ERC165.supportsInterface(interfaceId);
     }
 
     function _requirePoolNotPaused() internal view {

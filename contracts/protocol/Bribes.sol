@@ -123,13 +123,10 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
         address gauge,
         uint256 epoch
     ) external nonReentrant validGauge(gauge) noFutureEpoch(epoch) {
-        IGaugeController gaugeController = IGaugeController(
-            _addressProvider.getGaugeController()
-        );
-
         // Bribes are only salvageable if there were no votes for the gauge in the bribe's epoch
         require(
-            gaugeController.getGaugeWeightAt(gauge, epoch) == 0,
+            IGaugeController(_addressProvider.getGaugeController())
+                .getGaugeWeightAt(gauge, epoch) == 0,
             "B:SB:FUNDS_CLAIMABLE"
         );
 

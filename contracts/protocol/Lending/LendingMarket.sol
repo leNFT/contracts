@@ -197,6 +197,7 @@ contract LendingMarket is
     /// @notice Create a new lending vault for a certain collection
     /// @param collection The collection using this lending pool
     /// @param asset The address of the asset the lending pool controls
+    /// @return The address of the new lending pool
     function createLendingPool(
         address collection,
         address asset
@@ -284,6 +285,11 @@ contract LendingMarket is
         address asset,
         address pool
     ) external onlyOwner {
+        require(
+            pool.supportsInterface(type(ILendingPool).interfaceId) ||
+                pool == address(0),
+            "LM:SLP:NOT_POOL"
+        );
         _setLendingPool(collection, asset, pool);
     }
 

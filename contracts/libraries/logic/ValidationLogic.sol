@@ -64,13 +64,14 @@ library ValidationLogic {
         // Check if withdrawal amount is bigger than 0
         require(amount > 0, "VL:VW:AMOUNT_0");
 
-        uint256 updatedUtilizationRate = IInterestRate(
-            addressProvider.getInterestRate()
-        ).calculateUtilizationRate(asset, underlyingBalance - amount, debt);
-
         // Check if the utilization rate doesn't go above maximum
         require(
-            updatedUtilizationRate <= maxUtilizationRate,
+            IInterestRate(addressProvider.getInterestRate())
+                .calculateUtilizationRate(
+                    asset,
+                    underlyingBalance - amount,
+                    debt
+                ) <= maxUtilizationRate,
             "VL:VW:MAX_UTILIZATION_RATE"
         );
     }
@@ -87,10 +88,10 @@ library ValidationLogic {
         // Check if borrow amount is bigger than 0
         require(params.amount > 0, "VL:VB:AMOUNT_0");
 
-        // Check if theres at least one asset
+        // Check if theres at least one asset to use as collateral
         require(params.nftTokenIds.length > 0, "VL:VB:NO_NFTS");
 
-        // Check if the asset is supported
+        // Check if the lending pool exists
         require(lendingPool != address(0), "VL:VB:INVALID_LENDING_POOL");
 
         ITokenOracle tokenOracle = ITokenOracle(
@@ -191,11 +192,15 @@ library ValidationLogic {
     /// @notice Validates a liquidation of a loan
     /// @param addressProvider The address of the addresses provider
     /// @param params The liquidation params
+    /// @param loanState The state of the loan
+    /// @param lendingPool The address of the lending pool of the loan
+    /// @param loanNFTAsset The address of the NFT asset of the loan
+    /// @param loanNFTTokenIds The token ids of the NFTs of the loan
     function validateCreateLiquidationAuction(
         IAddressProvider addressProvider,
         DataTypes.CreateAuctionParams memory params,
         DataTypes.LoanState loanState,
-        address loanPool,
+        address lendingPool,
         address loanNFTAsset,
         uint256[] calldata loanNFTTokenIds
     ) external view {
@@ -210,9 +215,10 @@ library ValidationLogic {
             addressProvider.getTokenOracle()
         );
         uint256 assetETHPrice = tokenOracle.getTokenETHPrice(
-            IERC4626(loanPool).asset()
+            IERC4626(lendingPool).asset()
         );
         uint256 pricePrecision = tokenOracle.getPricePrecision();
+
         uint256 collateralETHPrice = INFTOracle(addressProvider.getNFTOracle())
             .getTokensETHPrice(
                 loanNFTAsset,
@@ -238,7 +244,7 @@ library ValidationLogic {
                 PercentageMath.percentMul(
                     collateralETHPrice,
                     (PercentageMath.PERCENTAGE_FACTOR -
-                        ILendingPool(loanPool)
+                        ILendingPool(lendingPool)
                             .getPoolConfig()
                             .maxLiquidatorDiscount)
                 ),
@@ -281,7 +287,7 @@ library ValidationLogic {
         DataTypes.LoanState loanState,
         uint256 loanAuctionStartTimestamp
     ) external view {
-        // Check if the auction exists
+        // Check if the loan is being auctioned
         require(
             loanState == DataTypes.LoanState.Auctioned,
             "VL:VCLA:AUCTION_NOT_FOUND"

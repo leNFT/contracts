@@ -161,20 +161,23 @@ contract LoanCenter is
     /// @dev Only the market contract can call this function
     /// @param loanId The ID of the loan to be liquidated
     function liquidateLoan(uint256 loanId) external override onlyMarket {
-        // Update state
+        // Update loan state
         _loans[loanId].state = DataTypes.LoanState.Liquidated;
         // Cache loan NFTs array
         uint256[] memory loanTokenIds = _loans[loanId].nftTokenIds;
         // Get loans nft mapping
         address loanCollection = _loans[loanId].nftAsset;
 
+        // Delete the mapping from NFT to loan ID
         for (uint256 i = 0; i < loanTokenIds.length; i++) {
             delete _nftToLoanId[loanCollection][loanTokenIds[i]];
         }
 
-        // Remove loan from user active loans
+        // Cache user active loans
         uint256[] memory userActiveLoans = _activeLoans[_loans[loanId].owner];
+        // Remove loan from user active loans
         for (uint256 i = 0; i < userActiveLoans.length; i++) {
+            // If the loan is found, replace it with the last loan in the array and pop the last element
             if (userActiveLoans[i] == loanId) {
                 _activeLoans[_loans[loanId].owner][i] = userActiveLoans[
                     userActiveLoans.length - 1

@@ -27,6 +27,9 @@ contract NativeTokenVesting is Ownable {
 
     using SafeERC20 for IERC20;
 
+    /// @notice Constructor
+    /// @param addressProvider Address of the addressProvider contract
+    /// @param vestingCap Maximum supply of the token that can be vested via this contract
     constructor(IAddressProvider addressProvider, uint256 vestingCap) {
         _addressProvider = addressProvider;
         _vestingCap = vestingCap;
@@ -59,7 +62,7 @@ contract NativeTokenVesting is Ownable {
         uint256 amount
     ) external onlyOwner {
         require(cliff >= MIN_CLIFF_PERIOD, "NTV:SV:CLIFF_TOO_LOW");
-        require(amount > 0, "NTV:SV:AMOUNT_TOO_LOW");
+        require(amount > 0, "NTV:SV:AMOUNT_0");
         _vestingParams[account] = DataTypes.VestingParams(
             block.timestamp,
             period,
@@ -107,20 +110,20 @@ contract NativeTokenVesting is Ownable {
     /// @param amount The amount of unvested tokens to withdraw
     function withdraw(uint256 amount) external {
         require(
-            getAvailableToWithdraw(_msgSender()) >= amount,
+            getAvailableToWithdraw(msg.sender) >= amount,
             "NTV:W:AMOUNT_TOO_HIGH"
         );
         require(
             _totalWithdrawn + amount <= _vestingCap,
             "NTV:W:VESTING_CAP_REACHED"
         );
-        _withdrawn[_msgSender()] += amount;
+        _withdrawn[msg.sender] += amount;
         _totalWithdrawn += amount;
         INativeToken(_addressProvider.getNativeToken()).mintVestingTokens(
-            _msgSender(),
+            msg.sender,
             amount
         );
 
-        emit VestingWithdrawn(_msgSender(), amount);
+        emit VestingWithdrawn(msg.sender, amount);
     }
 }

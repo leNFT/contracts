@@ -18,7 +18,7 @@ contract SwapRouter is ISwapRouter, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
 
-    /// @notice Initialize the market
+    /// @notice Constructor of the contract
     /// @param addressProvider The address of the addressProvider contract
     constructor(IAddressProvider addressProvider) {
         _addressProvider = addressProvider;
@@ -95,7 +95,7 @@ contract SwapRouter is ISwapRouter, ReentrancyGuard {
 
     /// @notice Approves a trading pool to spend an unlimited amount of tokens on behalf of this contract
     /// @param token The address of the token to approve
-    ///@param tradingPool The address of the trading pool to approve
+    /// @param tradingPool The address of the trading pool to approve
     function approveTradingPool(address token, address tradingPool) external {
         require(
             msg.sender == _addressProvider.getTradingPoolFactory(),

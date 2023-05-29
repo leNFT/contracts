@@ -40,7 +40,7 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
     /// @notice Retrieves the amount of fees for a given token in a given epoch
     /// @param token Token address
     /// @param epoch Epoch to retrieve fees from
-    /// @return uint256 Amount of fees in the specified epoch
+    /// @return Amount of fees in the specified epoch
     function getTotalFeesAt(
         address token,
         uint256 epoch
@@ -234,7 +234,7 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
                 amountToClaim
             );
 
-            emit ClaimBribes(msg.sender, token, tokenId, amountToClaim);
+            emit ClaimFees(msg.sender, token, tokenId, amountToClaim);
         }
     }
 
