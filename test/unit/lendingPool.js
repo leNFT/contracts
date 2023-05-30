@@ -91,6 +91,12 @@ describe("LendingPool", function () {
       ethers.utils.parseEther("1")
     );
     await approveTx.wait();
+
+    // Sould fail if the first  deposit is lower than the minimum (1e10)
+    await expect(lendingPool.deposit("10", owner.address)).to.be.revertedWith(
+      "VL:VD:MIN_DEPOSIT"
+    );
+
     // Deposit into the pool
     const depositTx2 = await lendingPool.deposit(
       ethers.utils.parseEther("1"),
@@ -98,9 +104,19 @@ describe("LendingPool", function () {
     );
     await depositTx2.wait();
 
+    // Sould fail to deposit the amount is 0
+    await expect(
+      lendingPool.deposit(ethers.utils.parseEther("0"), owner.address)
+    ).to.be.revertedWith("VL:VD:AMOUNT_0");
+
     // Check the balance of the user in the pool
     const balance = await lendingPool.maxWithdraw(owner.address);
     expect(balance).to.equal(ethers.utils.parseEther("1"));
+
+    // Should fail to deposit and exceed the safeguard
+    await expect(
+      lendingPool.deposit(await lendingMarket.getTVLSafeguard(), owner.address)
+    ).to.be.revertedWith("VL:VD:SAFEGUARD_EXCEEDED");
   });
   it("Withdraws from the pool", async function () {
     // Create a new lending pool through the market

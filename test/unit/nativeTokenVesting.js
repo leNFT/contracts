@@ -19,7 +19,10 @@ describe("NativeTokenVesting", () => {
     // Take a snapshot before the tests start
     snapshotId = await ethers.provider.send("evm_snapshot", []);
   });
-
+  it("Shoud get the vesting cap", async function () {
+    const vestingCap = await nativeTokenVesting.getVestingCap();
+    expect(vestingCap).to.equal(ethers.utils.parseEther("40000000"));
+  });
   it("Set vesting for an account", async function () {
     const period = 60 * 60 * 24 * 30; // 30 days period
     const cliff = 60 * 60 * 24 * 30; // 30 days cliff

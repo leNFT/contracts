@@ -10,7 +10,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract NativeTokenFaucet {
     uint public constant FAUCET_DRIP = 1000e18; // Drips 1000 LE tokens per request
 
-    IAddressProvider private _addressProvider;
+    IAddressProvider private immutable _addressProvider;
 
     constructor(IAddressProvider addressProvider) {
         _addressProvider = addressProvider;

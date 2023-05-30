@@ -14,6 +14,7 @@ import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import {IERC4626Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4626Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
@@ -290,6 +291,14 @@ contract LendingMarket is
                 pool == address(0),
             "LM:SLP:NOT_POOL"
         );
+
+        // If setting the pool to an existing pool, make sure it's the same asset
+        if (pool != address(0)) {
+            require(
+                IERC4626Upgradeable(pool).asset() == asset,
+                "LM:SLP:ASSET_MISMATCH"
+            );
+        }
         _setLendingPool(collection, asset, pool);
     }
 

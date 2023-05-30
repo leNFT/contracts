@@ -11,6 +11,13 @@ import {INativeToken} from "../interfaces/INativeToken.sol";
 /// @title NativeTokenVesting
 /// @notice Contract that allows to set vesting parameters for a specified account
 contract NativeTokenVesting is Ownable {
+    uint256 private constant MIN_CLIFF_PERIOD = 1 weeks;
+    IAddressProvider private immutable _addressProvider;
+    uint256 private immutable _vestingCap;
+    mapping(address => DataTypes.VestingParams) private _vestingParams;
+    mapping(address => uint256) private _withdrawn;
+    uint256 private _totalWithdrawn;
+
     event VestingWithdrawn(address indexed account, uint256 amount);
     event VestingAdded(
         address indexed account,
@@ -18,12 +25,6 @@ contract NativeTokenVesting is Ownable {
         uint256 cliff,
         uint256 amount
     );
-    uint256 private constant MIN_CLIFF_PERIOD = 1 weeks;
-    IAddressProvider private immutable _addressProvider;
-    uint256 private immutable _vestingCap;
-    mapping(address => DataTypes.VestingParams) private _vestingParams;
-    mapping(address => uint256) private _withdrawn;
-    uint256 private _totalWithdrawn;
 
     using SafeERC20 for IERC20;
 

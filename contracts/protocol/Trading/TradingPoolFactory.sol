@@ -127,6 +127,24 @@ contract TradingPoolFactory is
                 pool == address(0),
             "TPF:STP:NOT_POOL"
         );
+
+        // If not zero address, make sure the pool is for the correct nft and token
+        if (pool != address(0)) {
+            require(
+                ITradingPool(pool).getNFT() == nft &&
+                    ITradingPool(pool).getToken() == token,
+                "TPF:STP:INVALID_POOL"
+            );
+        }
+
+        _setTradingPool(nft, token, pool);
+    }
+
+    function _setTradingPool(
+        address nft,
+        address token,
+        address pool
+    ) internal {
         _pools[nft][token] = pool;
 
         emit SetTradingPool(pool, nft, token);
@@ -174,7 +192,7 @@ contract TradingPoolFactory is
             )
         );
 
-        _pools[nft][token] = address(newTradingPool);
+        _setTradingPool(nft, token, address(newTradingPool));
         _isTradingPool[address(newTradingPool)] = true;
 
         // Approve trading pool in swap router

@@ -231,4 +231,12 @@ describe("GenesisNFT", () => {
     // Check if the svg is valid
     expect(isValidSVG(decodedData)).to.equal(true);
   });
+  it("Should set the max LTV boost", async function () {
+    const maxLTVBoost = 5000; // 50%
+    const setMaxLTVBoostTx = await genesisNFT.setMaxLTVBoost(maxLTVBoost);
+    await setMaxLTVBoostTx.wait();
+
+    // Check if the max LTV boost was set
+    expect(await genesisNFT.getMaxLTVBoost()).to.equal(maxLTVBoost);
+  });
 });

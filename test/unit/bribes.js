@@ -57,7 +57,7 @@ describe("Bribes", function () {
 
     const epoch = (await votingEscrow.getEpoch(await time.latest())).toNumber();
 
-    // Owner should have 0 balance in bribes
+    // Owner and gauge should have 0 balance in bribes
     expect(
       await bribes.getUserBribes(
         weth.address,
@@ -65,6 +65,10 @@ describe("Bribes", function () {
         epoch + 1,
         owner.address
       )
+    ).to.equal(0);
+
+    expect(
+      await bribes.getGaugeBribes(weth.address, tradingGauge.address, epoch + 1)
     ).to.equal(0);
 
     // Should deposit the bribe
@@ -84,6 +88,10 @@ describe("Bribes", function () {
         epoch + 1,
         owner.address
       )
+    ).to.equal(ethers.utils.parseEther("1"));
+
+    expect(
+      await bribes.getGaugeBribes(weth.address, tradingGauge.address, epoch + 1)
     ).to.equal(ethers.utils.parseEther("1"));
   });
   it("Should withdraw a bribe", async function () {
@@ -115,13 +123,20 @@ describe("Bribes", function () {
     );
     await withdrawBribeTx.wait();
 
-    // Owner should have 0 bribe in bribes
+    // Owner and gauge should have 0 bribe in bribes
     expect(
       await bribes.getUserBribes(
         weth.address,
         tradingGauge.address,
         (await votingEscrow.getEpoch(await time.latest())).toNumber() + 1,
         owner.address
+      )
+    ).to.equal(0);
+    expect(
+      await bribes.getGaugeBribes(
+        weth.address,
+        tradingGauge.address,
+        (await votingEscrow.getEpoch(await time.latest())).toNumber() + 1
       )
     ).to.equal(0);
   });

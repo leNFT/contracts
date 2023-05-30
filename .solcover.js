@@ -3,7 +3,7 @@ module.exports = {
     "test/NativeTokenFaucet",
     "test/TestNFT",
     "test/WETH",
-    "protocol/NativeToken.sol",
+    "protocol/SingleSideVault.sol",
     "libraries/balancer/",
   ],
 };
