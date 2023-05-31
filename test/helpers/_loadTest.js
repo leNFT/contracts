@@ -115,9 +115,6 @@ let loadEnv = async function (isMainnetFork) {
   const NativeToken = await ethers.getContractFactory("NativeToken");
   nativeToken = await upgrades.deployProxy(NativeToken, [
     addressProvider.address,
-    "leNFT Token",
-    "LE",
-    "100000000000000000000000000", //100M Max Cap
   ]);
 
   console.log("Deployed NativeToken");
@@ -126,15 +123,8 @@ let loadEnv = async function (isMainnetFork) {
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
   genesisNFT = await upgrades.deployProxy(GenesisNFT, [
     addressProvider.address,
-    "leNFT Genesis",
-    "LGEN",
-    "1337", // 1337 total supply
-    "250000000000000000", // 0.25 ETH Price
     "250", // 2.5% LTV Boost for Genesis NFT
-    12500000, // Native Token Mint Factor
-    ONE_DAY * 180, // Max locktime (180 days in s)
-    ONE_DAY * 14, // Min locktime (14 days in s)
-    address1.address, // The dev address to receive the dev fee
+    owner.address,
   ]);
 
   console.log("Deployed GenesisNFT");

@@ -77,7 +77,7 @@ async function main() {
       "25000000000000000000", // TVL Safeguard for pools
       {
         maxLiquidatorDiscount: "2000", // maxLiquidatorDiscount
-        auctioneerFee: "100", // defaultauctioneerFee
+        auctioneerFee: "100", // defaultAuctioneerFee
         liquidationFee: "200", // defaultProtocolLiquidationFee
         maxUtilizationRate: "8500", // defaultmaxUtilizationRate
       },
@@ -103,9 +103,6 @@ async function main() {
   const NativeToken = await ethers.getContractFactory("NativeToken");
   const nativeToken = await upgrades.deployProxy(NativeToken, [
     addressProvider.address,
-    "leNFT Token",
-    "LE",
-    "100000000000000000000000000", //100M Max Cap
   ]);
   addresses["NativeToken"] = nativeToken.address;
 
@@ -115,15 +112,8 @@ async function main() {
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
   const genesisNFT = await upgrades.deployProxy(GenesisNFT, [
     addressProvider.address,
-    "leNFT Genesis",
-    "LGEN",
-    "1337", // 1337 total supply
-    "250000000000000000", // 0.25 ETH Price
     "250", // 2.5% LTV Boost for Genesis NFT
-    4000000, // Native Token Mint Factor
-    ONE_DAY * 180, // Max locktime (180 days in s)
-    ONE_DAY * 14, // Min locktime (14 days in s)
-    owner.address, // Genesis NFT funds receiver is the deployer
+    owner.address, // dev address
   ]);
   addresses["GenesisNFT"] = genesisNFT.address;
 

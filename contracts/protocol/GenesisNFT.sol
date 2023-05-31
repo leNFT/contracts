@@ -37,29 +37,26 @@ contract GenesisNFT is
 {
     uint256 private constant LP_LE_AMOUNT = 4000e18; // 4000 LE
     uint256 private constant LP_ETH_AMOUNT = 10e16; // 0.1 ETH
-
-    using CountersUpgradeable for CountersUpgradeable.Counter;
-    using SafeERC20Upgradeable for IERC20Upgradeable;
+    uint256 private constant MAX_CAP = 1337; // 1337 NFTs
+    uint256 private constant PRICE = 25e16; // 0.25 ETH
+    uint256 private constant MAX_LOCKTIME = 180 days; // 180 days
+    uint256 private constant MIN_LOCKTIME = 14 days; // 14 days
+    uint256 private constant NATIVE_TOKEN_FACTOR = 4000000;
 
     IAddressProvider private _addressProvider;
-    uint256 private _cap;
-    uint256 private _price;
-    uint256 private _maxLocktime;
-    uint256 private _minLocktime;
-    uint256 private _nativeTokenFactor;
-    DataTypes.BalancerDetails private _balancerDetails;
-    address private _balancerPoolId;
     address payable private _devAddress;
+    DataTypes.BalancerDetails private _balancerDetails;
     uint256 private _maxLTVBoost;
     CountersUpgradeable.Counter private _tokenIdCounter;
     // Mapping from owner to create loan operator approvals
     mapping(address => mapping(address => bool)) private _loanOperatorApprovals;
-
     // NFT token id to bool that's true if NFT is being used to increase a loan's max LTV
     mapping(uint256 => bool) private _locked;
-
     // NFT token id to information about its mint
     mapping(uint256 => DataTypes.MintDetails) private _mintDetails;
+
+    using CountersUpgradeable for CountersUpgradeable.Counter;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     modifier onlyMarket() {
         _requireOnlyMarket();
@@ -83,40 +80,20 @@ contract GenesisNFT is
 
     /// @notice Initializes the contract with the specified parameters
     /// @param addressProvider Address provider contract
-    /// @param name Name of the NFT
-    /// @param symbol Symbol of the NFT
-    /// @param cap Maximum number of tokens that can be minted
-    /// @param price Price of each NFT in wei
     /// @param maxLTVBoost max LTV boost factor
-    /// @param nativeTokenFactor Factor for calculating native token reward
-    /// @param maxLocktime Maximum lock time for staking in seconds
-    /// @param minLocktime Minimum lock time for staking in seconds
     /// @param devAddress Address of the developer
     function initialize(
         IAddressProvider addressProvider,
-        string calldata name,
-        string calldata symbol,
-        uint256 cap,
-        uint256 price,
         uint256 maxLTVBoost,
-        uint256 nativeTokenFactor,
-        uint256 maxLocktime,
-        uint256 minLocktime,
         address payable devAddress
     ) external initializer {
-        require(price >= LP_ETH_AMOUNT, "G:I:PRICE_TOO_LOW");
-        __ERC721_init(name, symbol);
+        __ERC721_init("leNFT Genesis", "LEGEN");
         __ERC721Enumerable_init();
         __ERC165_init();
         __Ownable_init();
         __ReentrancyGuard_init();
         _addressProvider = addressProvider;
-        _cap = cap;
-        _price = price;
         _maxLTVBoost = maxLTVBoost;
-        _nativeTokenFactor = nativeTokenFactor;
-        _maxLocktime = maxLocktime;
-        _minLocktime = minLocktime;
         _devAddress = devAddress;
 
         // Start from token_id 1 in order to reserve '0' for the null token
@@ -261,13 +238,13 @@ contract GenesisNFT is
     function _getCircleColor(
         uint256 tokenId
     ) internal view returns (string memory) {
-        if (_maxLocktime == 0) {
+        if (MAX_LOCKTIME == 0) {
             return "000000"; // return black
         }
 
         // Linear interpolation between black (0x000000) and gold (0xFFD700)
         uint256 colorValue = (uint256(0xFFD700) *
-            _mintDetails[tokenId].locktime) / _maxLocktime;
+            _mintDetails[tokenId].locktime) / MAX_LOCKTIME;
 
         // Convert to hexadecimal color value && Cast string to bytes
         bytes memory b = bytes(Strings.toHexString(colorValue));
@@ -285,8 +262,8 @@ contract GenesisNFT is
 
     /// @notice Returns the maximum number of tokens that can be minted
     /// @return The maximum number of tokens
-    function getCap() public view returns (uint256) {
-        return _cap;
+    function getCap() public pure returns (uint256) {
+        return MAX_CAP;
     }
 
     /// @notice Returns the max LTV boost factor
@@ -328,13 +305,13 @@ contract GenesisNFT is
         uint256 amount,
         uint256 locktime
     ) public view returns (uint256) {
-        require(_tokenIdCounter.current() <= _cap, "G:GNTR:MINT_OVER");
-        require(locktime >= _minLocktime, "G:GNTR:LOCKTIME_TOO_LOW");
-        require(locktime <= _maxLocktime, "G:GNTR:LOCKTIME_TOO_HIGH");
+        require(_tokenIdCounter.current() <= MAX_CAP, "G:GNTR:MINT_OVER");
+        require(locktime >= MIN_LOCKTIME, "G:GNTR:LOCKTIME_TOO_LOW");
+        require(locktime <= MAX_LOCKTIME, "G:GNTR:LOCKTIME_TOO_HIGH");
 
         return
-            ((amount * locktime * (_cap - (_tokenIdCounter.current() / 2))) /
-                _nativeTokenFactor) * 1e18;
+            ((amount * locktime * (MAX_CAP - (_tokenIdCounter.current() / 2))) /
+                NATIVE_TOKEN_FACTOR) * 1e18;
     }
 
     /// @notice Sets the details of the balancer subsidized trading pool
@@ -361,8 +338,8 @@ contract GenesisNFT is
         // Make sure amount is bigger than 0
         require(amount > 0, "G:M:AMOUNT_0");
         // Make sure locktimes are within limits
-        require(locktime >= _minLocktime, "G:M:LOCKTIME_TOO_LOW");
-        require(locktime <= _maxLocktime, "G:M:LOCKTIME_TOO_HIGH");
+        require(locktime >= MIN_LOCKTIME, "G:M:LOCKTIME_TOO_LOW");
+        require(locktime <= MAX_LOCKTIME, "G:M:LOCKTIME_TOO_HIGH");
 
         // Make sure there are enough tokens to mint
         require(
@@ -374,7 +351,7 @@ contract GenesisNFT is
         address nativeToken = _addressProvider.getNativeToken();
 
         // Make sure the user sent enough ETH
-        require(msg.value == _price * amount, "G:M:INSUFFICIENT_ETH");
+        require(msg.value == PRICE * amount, "G:M:INSUFFICIENT_ETH");
 
         // Get the amount of ETH to deposit to the pool
         uint256 ethAmount = LP_ETH_AMOUNT * amount;
@@ -462,9 +439,7 @@ contract GenesisNFT is
         );
 
         // Send the rest of the ETH to the dev address
-        (bool sent, ) = _devAddress.call{value: _price * amount - ethAmount}(
-            ""
-        );
+        (bool sent, ) = _devAddress.call{value: PRICE * amount - ethAmount}("");
         require(sent, "G:M:ETH_TRANSFER_FAIL");
 
         for (uint256 i = 0; i < amount; i++) {
@@ -488,7 +463,7 @@ contract GenesisNFT is
     /// @notice Get the current price for minting Genesis NFTs
     /// @return The current price in wei
     function getPrice() external view returns (uint256) {
-        return _price;
+        return PRICE;
     }
 
     /// @notice Get the unlock timestamp for a specific Genesis NFT
