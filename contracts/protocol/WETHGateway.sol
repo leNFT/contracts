@@ -133,7 +133,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         // If we are repaying an auctioned loan we also need to pay the auctineer fee
         uint256 auctioneerFee;
         if (loanCenter.getLoanState(loanId) == DataTypes.LoanState.Auctioned) {
-            auctioneerFee = loanCenter.getAuctioneerFee(loanId);
+            auctioneerFee = loanCenter.getLoanAuctioneerFee(loanId);
             require(auctioneerFee < msg.value, "ETHG:R:NO_AUCTIONEER_FEE");
             _weth.approve(address(market), auctioneerFee);
         }

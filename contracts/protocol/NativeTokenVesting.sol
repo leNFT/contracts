@@ -11,7 +11,7 @@ import {INativeToken} from "../interfaces/INativeToken.sol";
 /// @title NativeTokenVesting
 /// @notice Contract that allows to set vesting parameters for a specified account
 contract NativeTokenVesting is Ownable {
-    uint256 private constant MIN_CLIFF_PERIOD = 1 weeks;
+    uint256 private constant MIN_CLIFF_PERIOD = 0 weeks; // change to 1 weeks in production
     IAddressProvider private immutable _addressProvider;
     uint256 private immutable _vestingCap;
     mapping(address => DataTypes.VestingParams) private _vestingParams;

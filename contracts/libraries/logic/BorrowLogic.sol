@@ -113,7 +113,7 @@ library BorrowLogic {
                 IERC20Upgradeable(asset).safeTransferFrom(
                     params.caller,
                     liquidationData.auctioneer,
-                    loanCenter.getAuctioneerFee(params.loanId)
+                    loanCenter.getLoanAuctioneerFee(params.loanId)
                 );
             }
 

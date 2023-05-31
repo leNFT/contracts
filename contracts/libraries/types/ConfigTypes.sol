@@ -5,12 +5,14 @@ pragma solidity 0.8.19;
 /// @notice Defines the types used as configuration parameters of the protocol
 library ConfigTypes {
     /// @param maxLiquidatorDiscount The maximum discount liquidators can get when liquidating a certain collateral with a certain price
-    /// @param auctioneerFee The fee borrowers have to pay to the auctioneer when repaying a loan after liquidation
+    /// @param auctioneerFee The fee borrowers have to pay to the auctioneer when repaying a loan after liquidation (% of debt)
+    /// @param maxAuctioneerFee The maximum fee borrowers have to pay to the auctioneer when repaying a loan after liquidation (token amount)
     /// @param liquidationFee The fee liquidators have to pay to the protocol when liquidating a loan
     /// @param maxUtilizationRate The maximum utilization rate of the pool for withdraws
     struct LendingPoolConfig {
         uint256 maxLiquidatorDiscount;
         uint256 auctioneerFee;
+        uint256 maxAuctioneerFee;
         uint256 liquidationFee;
         uint256 maxUtilizationRate;
     }

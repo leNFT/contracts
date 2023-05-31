@@ -362,7 +362,7 @@ contract LoanCenter is
     /// @notice Get auctioner fee for a repayment of an auctioned loan
     /// @param loanId The ID of the loan
     /// @return The auctioner fee
-    function getAuctioneerFee(
+    function getLoanAuctioneerFee(
         uint256 loanId
     ) external view loanExists(loanId) loanAuctioned(loanId) returns (uint256) {
         return

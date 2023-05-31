@@ -77,7 +77,7 @@ async function main() {
       "25000000000000000000", // TVL Safeguard for pools
       {
         maxLiquidatorDiscount: "2000", // maxLiquidatorDiscount
-        auctioneerFee: "50", // defaultauctioneerFee
+        auctioneerFee: "100", // defaultauctioneerFee
         liquidationFee: "200", // defaultProtocolLiquidationFee
         maxUtilizationRate: "8500", // defaultmaxUtilizationRate
       },
@@ -120,7 +120,7 @@ async function main() {
     "1337", // 1337 total supply
     "250000000000000000", // 0.25 ETH Price
     "250", // 2.5% LTV Boost for Genesis NFT
-    12500000, // Native Token Mint Factor
+    4000000, // Native Token Mint Factor
     ONE_DAY * 180, // Max locktime (180 days in s)
     ONE_DAY * 14, // Min locktime (14 days in s)
     owner.address, // Genesis NFT funds receiver is the deployer

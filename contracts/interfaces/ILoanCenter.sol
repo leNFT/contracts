@@ -27,7 +27,9 @@ interface ILoanCenter {
         uint256 loanId
     ) external view returns (DataTypes.LoanLiquidationData memory);
 
-    function getAuctioneerFee(uint256 loanId) external view returns (uint256);
+    function getLoanAuctioneerFee(
+        uint256 loanId
+    ) external view returns (uint256);
 
     function repayLoan(uint256 loanId) external;
 

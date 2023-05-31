@@ -474,7 +474,7 @@ describe("LendingMarket", function () {
     await auctionTx.wait();
 
     // Get the auctioner Fee
-    const auctioneerFeeAmount = await loanCenter.getAuctioneerFee(0);
+    const auctioneerFeeAmount = await loanCenter.getLoanAuctioneerFee(0);
 
     console.log("auctioneerFeeAmount", auctioneerFeeAmount.toString());
 
