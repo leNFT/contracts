@@ -15,7 +15,7 @@ contract NativeToken is
     ReentrancyGuardUpgradeable
 {
     IAddressProvider private _addressProvider;
-    uint256 private constant MAX_CAP = 100000000e18; // 100 million
+    uint256 private constant MAX_CAP = 100e24; // 100 million tokens
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {

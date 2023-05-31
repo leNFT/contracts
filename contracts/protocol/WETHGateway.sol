@@ -394,7 +394,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         if (maximumBuyPrice > minimumSellPrice) {
             require(
                 msg.value == maximumBuyPrice - minimumSellPrice,
-                "ETHG:S:VALUE_NOT_PRICE_DIFFERENCE"
+                "ETHG:S:INVALID_VALUE"
             );
 
             // Deposit and approve WETH

@@ -41,7 +41,7 @@ contract GenesisNFT is
     uint256 private constant PRICE = 25e16; // 0.25 ETH
     uint256 private constant MAX_LOCKTIME = 180 days; // 180 days
     uint256 private constant MIN_LOCKTIME = 14 days; // 14 days
-    uint256 private constant NATIVE_TOKEN_FACTOR = 4000000;
+    uint256 private constant NATIVE_TOKEN_FACTOR = 4000000; // Controls the amount of native tokens minted per NFT
 
     IAddressProvider private _addressProvider;
     address payable private _devAddress;

@@ -47,6 +47,7 @@ contract WETH {
     }
 
     function withdraw(uint wad) public {
+        // solhint-disable-next-line reason-string
         require(balanceOf[msg.sender] >= wad);
         balanceOf[msg.sender] -= wad;
         msg.sender.transfer(wad);
@@ -72,9 +73,11 @@ contract WETH {
         address dst,
         uint wad
     ) public returns (bool) {
+        // solhint-disable-next-line reason-string
         require(balanceOf[src] >= wad);
 
         if (src != msg.sender && allowance[src][msg.sender] != uint(-1)) {
+            // solhint-disable-next-line reason-string
             require(allowance[src][msg.sender] >= wad);
             allowance[src][msg.sender] -= wad;
         }

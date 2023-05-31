@@ -113,7 +113,7 @@ async function main() {
   const genesisNFT = await upgrades.deployProxy(GenesisNFT, [
     addressProvider.address,
     "250", // 2.5% LTV Boost for Genesis NFT
-    owner.address, // dev address
+    owner.address, // TO:DO Set to dev address for Mainnet
   ]);
   addresses["GenesisNFT"] = genesisNFT.address;
 
