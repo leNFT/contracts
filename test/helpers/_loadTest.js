@@ -124,7 +124,7 @@ let loadEnv = async function (isMainnetFork) {
   genesisNFT = await upgrades.deployProxy(GenesisNFT, [
     addressProvider.address,
     "250", // 2.5% LTV Boost for Genesis NFT
-    owner.address,
+    address1.address,
   ]);
 
   console.log("Deployed GenesisNFT");
