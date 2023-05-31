@@ -9,7 +9,7 @@ import {SafeCast} from "../utils/SafeCast.sol";
 /// @notice Defines the logic for a loan data type
 library LoanLogic {
     /// @notice Initializes a loan
-    /// @param loanData The loan data to initialize
+    /// @param loanData A pointer to the loan data we want to initialize
     /// @param owner The owner of the loan
     /// @param pool The pool that the loan belongs to
     /// @param amount The amount borrowed

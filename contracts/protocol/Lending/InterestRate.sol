@@ -32,6 +32,7 @@ contract InterestRate is IInterestRate, Ownable {
         address token,
         ConfigTypes.InterestRateConfig memory interestRateConfig
     ) external onlyOwner {
+        require(_isSupported[token] == false, "IR:AT:TOKEN_ALREADY_SUPPORTED");
         _isSupported[token] = true;
         _interestRateConfigs[token] = interestRateConfig;
     }
@@ -64,6 +65,16 @@ contract InterestRate is IInterestRate, Ownable {
         returns (ConfigTypes.InterestRateConfig memory)
     {
         return _interestRateConfigs[token];
+    }
+
+    /// @notice Sets the interest rate parameters for a token
+    /// @param token The address of the token
+    /// @param interestRateConfig The interest rate parameters
+    function setInterestRateConfig(
+        address token,
+        ConfigTypes.InterestRateConfig memory interestRateConfig
+    ) external onlySupported(token) onlyOwner {
+        _interestRateConfigs[token] = interestRateConfig;
     }
 
     /// @notice Calculates the borrow rate based on the utilization rate
