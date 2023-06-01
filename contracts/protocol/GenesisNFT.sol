@@ -462,7 +462,7 @@ contract GenesisNFT is
 
     /// @notice Get the current price for minting Genesis NFTs
     /// @return The current price in wei
-    function getPrice() external view returns (uint256) {
+    function getPrice() external pure returns (uint256) {
         return PRICE;
     }
 

@@ -7,6 +7,7 @@ import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title InterestRate
+/// @author leNFT
 /// @notice A contract for calculating the borrow rate based on the utilization rate
 /// @dev This contract implements the IInterestRate interface
 /// @dev The borrow rate is calculated based on a utilization rate between 0 and 100%
@@ -78,6 +79,7 @@ contract InterestRate is IInterestRate, Ownable {
     }
 
     /// @notice Calculates the borrow rate based on the utilization rate
+    /// @param token The address of the token
     /// @param assets The total assets
     /// @param debt The total debt
     /// @return The borrow rate
@@ -109,6 +111,7 @@ contract InterestRate is IInterestRate, Ownable {
     }
 
     /// @notice Gets the optimal borrow rate
+    /// @param token The address of the token
     /// @return The optimal borrow rate
     function getOptimalBorrowRate(
         address token

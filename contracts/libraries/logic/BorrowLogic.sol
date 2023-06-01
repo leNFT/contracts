@@ -14,7 +14,9 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 /// @title BorrowLogic
+/// @author leNFT
 /// @notice Contains the logic for the borrow and repay functions
+/// @dev Library dealing with the logic for the borrow and repay functions
 library BorrowLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 

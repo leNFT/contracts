@@ -10,7 +10,9 @@ import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
 
 /// @title TradingPoolHelpers Contract
+/// @author leNFT
 /// @notice Helper functions for the TradingPool contract
+/// @dev Functions help build calls to the TradingPool contract
 contract TradingPoolHelpers {
     // Address provider state variable
     IAddressProvider private immutable _addressProvider;

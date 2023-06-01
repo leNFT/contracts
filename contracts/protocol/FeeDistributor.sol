@@ -11,7 +11,9 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /// @title FeeDistributor
+/// @author leNFT
 /// @notice This contract distributes fees from the protocol to LE stakers, using the VotingEscrow interface to check the user's staked amount
+/// @dev Every time new fees are accrued, the checkpoint function must be called to update the fees
 contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
     IAddressProvider private _addressProvider;
     // Token + Lock token id = Epoch

@@ -14,7 +14,8 @@ import {SafeCast} from "../../libraries/utils/SafeCast.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 
 /// @title LoanCenter contract
-/// @dev A smart contract managing loans with NFTs as collateral
+/// @author leNFT
+/// @notice Manages loans
 contract LoanCenter is
     ILoanCenter,
     ERC721HolderUpgradeable,
@@ -427,6 +428,7 @@ contract LoanCenter is
 
     /// @notice Changes the Risk Parameters for a collection.
     /// @param collection The address of the collection to change the max collaterization price for.
+    /// @param maxLTV The new max LTV to set (10000 = 100%).
     /// @param liquidationThreshold The new liquidation Threshold to set (10000 = 100%).
     function setCollectionRiskParameters(
         address collection,

@@ -12,11 +12,13 @@ import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/util
 import {IGauge} from "../../interfaces/IGauge.sol";
 
 /// @title Gauge Controller
+/// @author leNFT
+/// @notice Manages the different gauges
 /// @dev Contract that manages gauge vote weights, total vote weight, user vote power in each gauge, and user vote ratios.
 contract GaugeController is OwnableUpgradeable, IGaugeController {
-    uint256 public constant INFLATION_PERIOD = 52; // 52 epochs (1 year)
-    uint256 public constant MAX_INFLATION_PERIODS = 8; // Maximum 8 inflation periods (8 years) and then base emissions
-    uint256 public constant LOADING_PERIOD = 24; // 24 epochs (6 months)
+    uint256 private constant INFLATION_PERIOD = 52; // 52 epochs (1 year)
+    uint256 private constant MAX_INFLATION_PERIODS = 8; // Maximum 8 inflation periods (8 years) and then base emissions
+    uint256 private constant LOADING_PERIOD = 24; // 24 epochs (6 months)
 
     IAddressProvider private _addressProvider;
 
@@ -475,6 +477,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
 
     /// @notice Returns the maximum amount of tokens that can be distributed as rewards for the specified epoch.
     /// @param epoch The epoch for which to get the rewards.
+    /// @return The maximum amount of tokens that can be distributed as rewards for the specified epoch.
     function getRewardsCeiling(uint256 epoch) public view returns (uint256) {
         uint256 inflationEpoch;
         // If we are in the loading period, return smaller rewards

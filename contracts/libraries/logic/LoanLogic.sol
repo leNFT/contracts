@@ -6,7 +6,9 @@ import {PercentageMath} from "../utils/PercentageMath.sol";
 import {SafeCast} from "../utils/SafeCast.sol";
 
 /// @title LoanLogic library
+/// @author leNFT
 /// @notice Defines the logic for a loan data type
+/// @dev Library dealing with the logic for the loan data type
 library LoanLogic {
     /// @notice Initializes a loan
     /// @param loanData A pointer to the loan data we want to initialize

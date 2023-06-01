@@ -123,8 +123,6 @@ async function main() {
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   const votingEscrow = await upgrades.deployProxy(VotingEscrow, [
     addressProvider.address,
-    "Vote Escrowed LE",
-    "veLE",
   ]);
   addresses["VotingEscrow"] = votingEscrow.address;
 

@@ -6,6 +6,7 @@ import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title TokenOracle
+/// @author leNFT
 /// @notice A contract that provides the ETH price for a given token based on a data feed or previously set price
 /// @dev This contract implements the ITokenOracle interface and inherits from Ownable contract
 /// @dev The contract uses Chainlink's AggregatorV3Interface to get token prices from data feeds

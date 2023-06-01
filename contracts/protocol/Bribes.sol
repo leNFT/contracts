@@ -11,8 +11,10 @@ import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {IBribes} from "../interfaces/IBribes.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-/// @title Bribes contract
+/// @title Bribes
+/// @author leNFT
 /// @notice Allows users to bribe the veLE token holders in order to incentivize them to vote for a specific gauge
+/// @dev Bribes are always deposited for the next epoch
 contract Bribes is IBribes, ReentrancyGuardUpgradeable {
     IAddressProvider private _addressProvider;
     // Token + Gauge + Epoch = Amount
@@ -152,6 +154,7 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
     /// @param gauge The gauge to get the bribes for
     /// @param epoch The epoch to get the bribes for
     /// @param user The user to get the bribes for
+    /// @return The amount of bribes for the user
     function getUserBribes(
         address token,
         address gauge,
@@ -165,6 +168,7 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
     /// @param token The token to get the bribes for
     /// @param gauge The gauge to get the bribes for
     /// @param epoch The epoch to get the bribes for
+    /// @return The amount of bribes for the gauge
     function getGaugeBribes(
         address token,
         address gauge,
@@ -178,6 +182,7 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
     /// @param token The token to claim the bribes for
     /// @param gauge The gauge to claim the bribes for
     /// @param tokenId The tokenid of the lock to claim the bribes for
+    /// @return amountToClaim The amount of bribes claimed
     function claim(
         address token,
         address gauge,

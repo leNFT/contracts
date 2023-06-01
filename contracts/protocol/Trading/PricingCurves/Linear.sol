@@ -5,6 +5,10 @@ import {IPricingCurve} from "../../../interfaces/IPricingCurve.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {PercentageMath} from "../../../libraries/utils/PercentageMath.sol";
 
+/// @title LinearPriceCurve Contract
+/// @author leNFT
+/// @notice Calculates the price of a token based on a linear curve
+/// @dev Contract module using for linear price curve logic
 contract LinearPriceCurve is IPricingCurve, ERC165 {
     /// @notice Calculates the price after buying 1 token
     /// @param price The current price of the token

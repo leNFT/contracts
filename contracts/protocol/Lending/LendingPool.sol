@@ -15,6 +15,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ValidationLogic} from "../../libraries/logic/ValidationLogic.sol";
 
 /// @title LendingPool contract
+/// @author leNFT
+/// @notice Vault used to store lending liquidity and handle deposits and withdrawals
 /// @dev The LendingPool contract uses the ERC4626 contract to track the shares in a liquidity pool held by users
 contract LendingPool is ERC165, ILendingPool, ERC4626, Ownable {
     IAddressProvider private immutable _addressProvider;

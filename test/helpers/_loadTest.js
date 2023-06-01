@@ -140,8 +140,6 @@ let loadEnv = async function (isMainnetFork) {
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
   votingEscrow = await upgrades.deployProxy(VotingEscrow, [
     addressProvider.address,
-    "Vote Escrowed LE",
-    "veLE",
   ]);
 
   console.log("Deployed VotingEscrow");

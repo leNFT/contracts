@@ -6,6 +6,7 @@ import {PercentageMath} from "../../../libraries/utils/PercentageMath.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /// @title Exponential Price Curve Contract
+/// @author leNFT
 /// @notice This contract implements an exponential price curve
 contract ExponentialPriceCurve is IPricingCurve, ERC165 {
     /// @notice Calculates the price after buying 1 token

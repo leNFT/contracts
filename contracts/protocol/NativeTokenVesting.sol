@@ -9,6 +9,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {INativeToken} from "../interfaces/INativeToken.sol";
 
 /// @title NativeTokenVesting
+/// @author leNFT
 /// @notice Contract that allows to set vesting parameters for a specified account
 contract NativeTokenVesting is Ownable {
     uint256 private constant MIN_CLIFF_PERIOD = 0 weeks; // TO:DO Set to 1 week for Mainnet

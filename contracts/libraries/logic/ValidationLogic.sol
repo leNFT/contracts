@@ -14,7 +14,9 @@ import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 /// @title ValidationLogic
+/// @author leNFT
 /// @notice Contains the logic for the lending validation functions
+/// @dev Library dealing with the logic for the lending validation functions
 library ValidationLogic {
     uint256 private constant LIQUIDATION_AUCTION_PERIOD = 3600 * 24;
     uint256 private constant MININUM_DEPOSIT_EMPTY_VAULT = 1e10;

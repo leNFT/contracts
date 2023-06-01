@@ -5,6 +5,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {IAddressProvider} from "../interfaces/IAddressProvider.sol";
 
 /// @title AddressProvider
+/// @author leNFT
 /// @notice This contract is responsible for storing and providing all the protocol contract addresses
 // solhint-disable-next-line max-states-count
 contract AddressProvider is OwnableUpgradeable, IAddressProvider {

@@ -14,7 +14,7 @@ import {ILiquidityPairMetadata} from "../../interfaces/ILiquidityPairMetadata.so
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 
 /// @title LiquidityPair Metadata
-/// @author leNFT dev (thanks to out.eth (@outdoteth))
+/// @author leNFT (thanks to out.eth (@outdoteth))
 /// @notice This contract is used to generate a liquidity pair's metadata.
 contract LiquidityPairMetadata is ILiquidityPairMetadata {
     modifier lpExists(address tradingPool, uint256 tokenId) {

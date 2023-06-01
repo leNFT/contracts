@@ -19,6 +19,7 @@ import {PercentageMath} from "../libraries/utils/PercentageMath.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /// @title VotingEscrow
+/// @author leNFT
 /// @notice Provides functionality for locking LE tokens for a specified period of time and is the center of the epoch logic
 contract VotingEscrow is
     IVotingEscrow,
@@ -26,9 +27,9 @@ contract VotingEscrow is
     ERC721EnumerableUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    uint256 public constant MINLOCKTIME = 2 weeks;
-    uint256 public constant MAXLOCKTIME = 4 * 52 weeks;
-    uint256 public constant EPOCH_PERIOD = 1 weeks;
+    uint256 private constant MINLOCKTIME = 2 weeks;
+    uint256 private constant MAXLOCKTIME = 4 * 52 weeks;
+    uint256 private constant EPOCH_PERIOD = 1 weeks;
 
     IAddressProvider private _addressProvider;
     uint256 private _deployTimestamp;
@@ -81,12 +82,8 @@ contract VotingEscrow is
 
     /// @notice Initializes the VotingEscrow contract.
     /// @param addressProvider The address of the addressProvider contract.
-    function initialize(
-        IAddressProvider addressProvider,
-        string calldata name,
-        string calldata symbol
-    ) external initializer {
-        __ERC721_init(name, symbol);
+    function initialize(IAddressProvider addressProvider) external initializer {
+        __ERC721_init("Vote Escrowed LE", "veLE");
         __ERC721Enumerable_init();
         __ERC165_init();
         __ReentrancyGuard_init();

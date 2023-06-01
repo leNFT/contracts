@@ -7,7 +7,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Trustus} from "../Trustus/Trustus.sol";
 
 /// @title NFTOracle contract
-/// @dev This contract provides a mechanism for obtaining the ETH value of NFT tokens  using Trustus as the off-chain price oracle.
+/// @author leNFT
+/// @notice This contract provides a mechanism for obtaining the ETH value of NFT tokens  using Trustus as the off-chain price oracle.
 /// @dev Trustus provides a mechanism to sign, relay and verify off-chain data.
 contract NFTOracle is INFTOracle, Ownable, Trustus {
     /// @notice Returns the ETH value of a collection of NFT tokens.

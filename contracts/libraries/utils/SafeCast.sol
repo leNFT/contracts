@@ -2,7 +2,9 @@
 pragma solidity 0.8.19;
 
 /// @title SafeCast library
+/// @author leNFT
 /// @notice Casting utilities
+/// @dev This library is used to safely cast between uint256 and smaller sized unsigned integers
 library SafeCast {
     /// @notice Cast a uint256 to a uint40, revert on overflow
     /// @param value The uint256 value to be casted

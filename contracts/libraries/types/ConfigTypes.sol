@@ -2,7 +2,9 @@
 pragma solidity 0.8.19;
 
 /// @title ConfigTypes library
+/// @author leNFT
 /// @notice Defines the types used as configuration parameters of the protocol
+/// @dev Library with the types used as configuration parameters throughout the protocol
 library ConfigTypes {
     /// @param maxLiquidatorDiscount The maximum discount liquidators can get when liquidating a certain collateral with a certain price
     /// @param auctioneerFee The fee borrowers have to pay to the auctioneer when repaying a loan after liquidation (% of debt)

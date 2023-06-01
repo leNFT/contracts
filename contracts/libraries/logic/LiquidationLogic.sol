@@ -15,7 +15,9 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 /// @title LiquidationLogic
+/// @author leNFT
 /// @notice Contains the logic for the liquidate function
+/// @dev Library dealing with the logic for the function responsible for liquidating a loan
 library LiquidationLogic {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 

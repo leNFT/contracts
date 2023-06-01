@@ -47,7 +47,8 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     }
 
     /// @notice Withdraw ETH from a WETH lending pool
-    /// @param amount Amount of ETH to be withdrawn100
+    /// @param lendingPool Lending pool to withdraw from
+    /// @param amount Amount of ETH to be withdrawn
     function withdrawLendingPool(
         address lendingPool,
         uint256 amount
@@ -148,6 +149,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
 
     /// @notice Deposit ETH and/or NFTs into a trading pool to provide liquidity
     /// @param pool The trading pool address
+    /// @param lpType The type of LP
     /// @param nftIds Token ids of the NFTs to deposit
     /// @param initialPrice The initial price of the liquidity provider tokens
     /// @param curve The curve used to calculate the price of the LP tokens

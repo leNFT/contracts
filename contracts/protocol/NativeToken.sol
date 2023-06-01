@@ -8,6 +8,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 import {IGaugeController} from "../interfaces/IGaugeController.sol";
 
 /// @title NativeToken
+/// @author leNFT
 /// @notice Provides functionality distributing native tokens
 contract NativeToken is
     INativeToken,

@@ -15,6 +15,7 @@ import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /// @title LendingGauge contract
+/// @author leNFT
 /// @notice Liquidity Gauge contract. Distributes incentives to users who have deposited into the LendingPool.
 /// @dev The gauge tracks the balance and work done by users, which are then used to calculate rewards.
 contract LendingGauge is IGauge, ERC165 {
@@ -30,7 +31,13 @@ contract LendingGauge is IGauge, ERC165 {
 
     using SafeERC20 for IERC20;
 
+    /// @notice Emitted when a user deposits into the gauge
+    /// @param user The address of the user who deposited
+    /// @param amount The amount of tokens deposited
     event Deposit(address indexed user, uint256 amount);
+    /// @notice Emitted when a user withdraws from the gauge
+    /// @param user The address of the user who withdrew
+    /// @param amount The amount of tokens withdrawn
     event Withdraw(address indexed user, uint256 amount);
 
     /// @notice Constructor function for LendingGauge

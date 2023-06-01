@@ -21,6 +21,7 @@ import {ILiquidityPairMetadata} from "../../interfaces/ILiquidityPairMetadata.so
 import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 
 /// @title Trading Pool Contract
+/// @author leNFT
 /// @notice A contract that enables the creation of liquidity pools and the trading of NFTs and ERC20 tokens.
 /// @dev This contract manages liquidity pairs, each consisting of a set of NFTs and an ERC20 token, as well as the trading of these pairs.
 contract TradingPool is
