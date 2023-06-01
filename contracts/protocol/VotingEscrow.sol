@@ -20,7 +20,8 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 
 /// @title VotingEscrow
 /// @author leNFT
-/// @notice Provides functionality for locking LE tokens for a specified period of time and is the center of the epoch logic
+/// @notice Manages the locking of LE tokens
+/// @dev Provides functionality for locking LE tokens for a specified period of time and is the center of the epoch logic
 contract VotingEscrow is
     IVotingEscrow,
     ERC165Upgradeable,

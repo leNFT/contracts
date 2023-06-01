@@ -243,10 +243,7 @@ let loadEnv = async function (isMainnetFork) {
   const NativeTokenVesting = await ethers.getContractFactory(
     "NativeTokenVesting"
   );
-  nativeTokenVesting = await NativeTokenVesting.deploy(
-    addressProvider.address,
-    "40000000000000000000000000" // 40M Vesting Cap (17.5M Team + 17.5M Treasury + 5M Liquidity Mining)
-  );
+  nativeTokenVesting = await NativeTokenVesting.deploy(addressProvider.address);
   await nativeTokenVesting.deployed();
 
   console.log("Deployed Non-Proxies");

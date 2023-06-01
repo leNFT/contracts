@@ -9,7 +9,8 @@ import {IGaugeController} from "../interfaces/IGaugeController.sol";
 
 /// @title NativeToken
 /// @author leNFT
-/// @notice Provides functionality distributing native tokens
+/// @notice Token contract for the native token of the protocol
+/// @dev Provides functionality distributing native tokens
 contract NativeToken is
     INativeToken,
     ERC20Upgradeable,

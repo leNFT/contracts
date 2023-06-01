@@ -21,6 +21,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 /// @title Trading Gauge Contract
 /// @author leNFT
 /// @notice A contract for managing the distribution of rewards to Trading LPs
+/// @dev It's used to incentivize liquidity providers to provide liquidity to the trading pool
 contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
     IAddressProvider private immutable _addressProvider;
     address private immutable _lpToken;

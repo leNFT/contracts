@@ -16,6 +16,7 @@ import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 /// @title LoanCenter contract
 /// @author leNFT
 /// @notice Manages loans
+/// @dev Keeps the list of loans, their states and their liquidation data
 contract LoanCenter is
     ILoanCenter,
     ERC721HolderUpgradeable,

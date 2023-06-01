@@ -17,6 +17,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 /// @title TradingPoolFactory Contract
 /// @author leNFT
 /// @notice This contract is responsible for creating new trading pools
+/// @dev Trading pools are created for each collection + asset pair
 contract TradingPoolFactory is
     ITradingPoolFactory,
     OwnableUpgradeable,

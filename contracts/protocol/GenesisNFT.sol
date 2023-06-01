@@ -27,7 +27,9 @@ import {SafeCast} from "../libraries/utils/SafeCast.sol";
 import "../libraries/balancer/ERC20Helpers.sol"; // Custom (pragma ^0.8.0) ERC20 helpers for Balancer tokens
 
 /// @title GenesisNFT
+/// @author leNFT
 /// @notice This contract manages the creation and minting of Genesis NFTs
+/// @dev Interacts with a balancer pool to provide liquidty on mint
 contract GenesisNFT is
     ERC165Upgradeable,
     ERC721EnumerableUpgradeable,

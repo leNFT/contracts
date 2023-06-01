@@ -244,8 +244,7 @@ async function main() {
     "NativeTokenVesting"
   );
   const nativeTokenVesting = await NativeTokenVesting.deploy(
-    addressProvider.address,
-    "40000000000000000000000000" // 40M Vesting Cap (17.5M Team + 17.5M Treasury + 5M Liquidity Mining)
+    addressProvider.address
   );
   await nativeTokenVesting.deployed();
   addresses["NativeTokenVesting"] = nativeTokenVesting.address;

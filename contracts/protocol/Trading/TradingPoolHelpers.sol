@@ -14,7 +14,6 @@ import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
 /// @notice Helper functions for the TradingPool contract
 /// @dev Functions help build calls to the TradingPool contract
 contract TradingPoolHelpers {
-    // Address provider state variable
     IAddressProvider private immutable _addressProvider;
 
     modifier validPool(address pool) {

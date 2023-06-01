@@ -13,6 +13,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 /// @title SwapRouter Contract
 /// @author leNFT
 /// @notice This contract is responsible for swapping between assets in different pools
+/// @dev Coordenates a buy and sell between two different trading pools
 contract SwapRouter is ISwapRouter, ReentrancyGuard {
     IAddressProvider private immutable _addressProvider;
 

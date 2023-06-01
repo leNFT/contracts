@@ -16,6 +16,7 @@ import {DataTypes} from "../../libraries/types/DataTypes.sol";
 /// @title LiquidityPair Metadata
 /// @author leNFT (thanks to out.eth (@outdoteth))
 /// @notice This contract is used to generate a liquidity pair's metadata.
+/// @dev Fills the metadata with dynamic data from the liquidity pair.
 contract LiquidityPairMetadata is ILiquidityPairMetadata {
     modifier lpExists(address tradingPool, uint256 tokenId) {
         _requireLpExists(tradingPool, tokenId);

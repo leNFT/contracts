@@ -8,6 +8,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 /// @title Exponential Price Curve Contract
 /// @author leNFT
 /// @notice This contract implements an exponential price curve
+/// @dev Calculates the price after buying or selling tokens using the exponential price curve
 contract ExponentialPriceCurve is IPricingCurve, ERC165 {
     /// @notice Calculates the price after buying 1 token
     /// @param price The current price of the token

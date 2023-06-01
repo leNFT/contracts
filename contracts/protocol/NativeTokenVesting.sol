@@ -11,10 +11,11 @@ import {INativeToken} from "../interfaces/INativeToken.sol";
 /// @title NativeTokenVesting
 /// @author leNFT
 /// @notice Contract that allows to set vesting parameters for a specified account
+/// @dev Provides functionality for vesting tokens and defines a cap on the amount of tokens that can be vested
 contract NativeTokenVesting is Ownable {
     uint256 private constant MIN_CLIFF_PERIOD = 0 weeks; // TO:DO Set to 1 week for Mainnet
     IAddressProvider private immutable _addressProvider;
-    uint256 private immutable _vestingCap;
+    uint256 private constant VESTING_CAP = 40e24; // 40M Vesting Cap (17.5M Team + 17.5M Treasury + 5M Liquidity Mining)
     mapping(address => DataTypes.VestingParams) private _vestingParams;
     mapping(address => uint256) private _withdrawn;
     uint256 private _totalWithdrawn;
@@ -31,16 +32,14 @@ contract NativeTokenVesting is Ownable {
 
     /// @notice Constructor
     /// @param addressProvider Address of the addressProvider contract
-    /// @param vestingCap Maximum supply of the token that can be vested via this contract
-    constructor(IAddressProvider addressProvider, uint256 vestingCap) {
+    constructor(IAddressProvider addressProvider) {
         _addressProvider = addressProvider;
-        _vestingCap = vestingCap;
     }
 
     /// @notice Gets the maximum supply of the vesting token
     /// @return The maximum supply of the vesting token
-    function getVestingCap() public view returns (uint256) {
-        return _vestingCap;
+    function getVestingCap() public pure returns (uint256) {
+        return VESTING_CAP;
     }
 
     /// @notice Gets the vesting parameters for the specified account
@@ -116,7 +115,7 @@ contract NativeTokenVesting is Ownable {
             "NTV:W:AMOUNT_TOO_HIGH"
         );
         require(
-            _totalWithdrawn + amount <= _vestingCap,
+            _totalWithdrawn + amount <= VESTING_CAP,
             "NTV:W:VESTING_CAP_REACHED"
         );
         _withdrawn[msg.sender] += amount;
