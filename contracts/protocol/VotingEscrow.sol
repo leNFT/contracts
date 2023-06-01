@@ -30,7 +30,7 @@ contract VotingEscrow is
 {
     uint256 private constant MINLOCKTIME = 2 weeks;
     uint256 private constant MAXLOCKTIME = 4 * 52 weeks;
-    uint256 private constant EPOCH_PERIOD = 1 weeks;
+    uint256 private constant EPOCH_PERIOD = 1 weeks; // TESTNET: 1 day
 
     IAddressProvider private _addressProvider;
     uint256 private _deployTimestamp;

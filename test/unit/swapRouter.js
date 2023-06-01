@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const load = require("../helpers/_loadTest.js");
 const { ethers } = require("hardhat");
+const { BigNumber } = require("ethers");
 
 describe("SwapRouter", () => {
   load.loadTest(false);
@@ -287,5 +288,105 @@ describe("SwapRouter", () => {
     expect(await testNFT2.ownerOf(0)).to.equal(owner.address);
     expect(await testNFT.ownerOf(0)).to.equal(sellPoolAddress);
     expect(await weth.balanceOf(owner.address)).to.equal("10000000000000");
+  });
+  it("Should swap between two assets from the same pool", async function () {
+    // Create a pool
+    const createPoolTx = await tradingPoolFactory.createTradingPool(
+      testNFT.address,
+      weth.address
+    );
+
+    newPoolReceipt = await createPoolTx.wait();
+    const event1 = newPoolReceipt.events.find(
+      (event1) => event1.event === "CreateTradingPool"
+    );
+    const poolAddress = event1.args.pool;
+
+    console.log("Created new pool: ", poolAddress);
+
+    // Mint NFT to add liquidity
+    const mintTestNFTTx1 = await testNFT.mint(owner.address);
+    await mintTestNFTTx1.wait();
+
+    // Approve the token to be added to the pool
+    const approveNFTTx1 = await testNFT.setApprovalForAll(poolAddress, true);
+    await approveNFTTx1.wait();
+
+    // Deposit some ETH to add liquidity
+    const mintTestTokenTx1 = await weth.deposit({
+      value: ethers.utils.parseEther("0.1"),
+    });
+    await mintTestTokenTx1.wait();
+
+    // Approve the token to be added to the pool
+    const approveTokenTx1 = await weth.approve(
+      poolAddress,
+      ethers.utils.parseEther("0.1")
+    );
+    await approveTokenTx1.wait();
+    const depositTx1 = await tradingPool1.addLiquidity(
+      owner.address,
+      0,
+      [0],
+      ethers.utils.parseEther("0.1"),
+      ethers.utils.parseEther("0.01"),
+      exponentialCurve.address,
+      "50",
+      "500"
+    );
+    await depositTx1.wait();
+
+    // Approve the weth to be swapped
+    const approveTokenTx = await weth.approve(
+      swapRouter.address,
+      ethers.constants.MaxUint256
+    );
+    await approveTokenTx.wait();
+
+    // Mint NFT to add liquidity
+    const mintTestNFTTx2 = await testNFT.mint(owner.address);
+    await mintTestNFTTx2.wait();
+
+    // Approve the token to be added to the pool
+    const approveNFTTx2 = await testNFT.setApprovalForAll(
+      swapRouter.address,
+      true
+    );
+    await approveNFTTx2.wait();
+
+    // Approve change
+    const mintTestTokenTx2 = await weth.deposit({
+      value: ethers.utils.parseEther("0.003"),
+    });
+    await mintTestTokenTx2.wait();
+
+    // Approve the token to be used as change
+    const approveTokenTx2 = await weth.approve(
+      swapRouter.address,
+      ethers.utils.parseEther("0.003")
+    );
+    await approveTokenTx2.wait();
+
+    const swapTx = await swapRouter.swap(
+      poolAddress,
+      poolAddress,
+      [0],
+      ethers.utils.parseEther("0.012"), // effective price will be 10447761194029850
+      [1],
+      [0],
+      ethers.utils.parseEther("0.009") // effective price will be 9500000000000000
+    );
+    await swapTx.wait();
+
+    expect(await testNFT.ownerOf(0)).to.equal(owner.address);
+    expect(await testNFT.ownerOf(1)).to.equal(poolAddress);
+    expect(await weth.balanceOf(owner.address)).to.equal(
+      BigNumber.from(
+        ethers.utils
+          .parseEther("0.003")
+          .sub("10447761194029850")
+          .add("9500000000000000")
+      )
+    );
   });
 });

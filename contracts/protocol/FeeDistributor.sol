@@ -99,7 +99,7 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
         delete _epochFees[token][epoch];
     }
 
-    /// @notice Allows a user to claim their rewards from a lock for a specific token
+    /// @notice Allows a user to claim the rewards for a certain token in a certain lock
     /// @param token Token address
     /// @param tokenId the token id of the lock
     /// @return amountToClaim Amount of rewards claimed
