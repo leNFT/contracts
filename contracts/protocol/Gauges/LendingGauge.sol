@@ -31,13 +31,7 @@ contract LendingGauge is IGauge, ERC165 {
 
     using SafeERC20 for IERC20;
 
-    /// @notice Emitted when a user deposits into the gauge
-    /// @param user The address of the user who deposited
-    /// @param amount The amount of tokens deposited
     event Deposit(address indexed user, uint256 amount);
-    /// @notice Emitted when a user withdraws from the gauge
-    /// @param user The address of the user who withdrew
-    /// @param amount The amount of tokens withdrawn
     event Withdraw(address indexed user, uint256 amount);
 
     /// @notice Constructor function for LendingGauge

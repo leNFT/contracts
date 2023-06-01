@@ -42,13 +42,7 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
 
-    /// @notice Emitted when a user deposits an LP token into the gauge
-    /// @param user The address of the user
-    /// @param lpId The ID of the LP token
     event DepositLP(address indexed user, uint256 lpId);
-    /// @notice Emitted when a user withdraws an LP token from the gauge
-    /// @param user The address of the user
-    /// @param lpId The ID of the LP token
     event WithdrawLP(address indexed user, uint256 lpId);
 
     constructor(IAddressProvider addressProvider, address lpToken_) {

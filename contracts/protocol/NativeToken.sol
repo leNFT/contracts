@@ -16,8 +16,8 @@ contract NativeToken is
     ERC20Upgradeable,
     ReentrancyGuardUpgradeable
 {
-    IAddressProvider private _addressProvider;
     uint256 private constant MAX_CAP = 100e24; // 100 million tokens
+    IAddressProvider private _addressProvider;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
