@@ -19,7 +19,6 @@ let loadEnv = async function (isMainnetFork) {
     console.log("Resetted the local fork");
   }
 
-  const ONE_DAY = 86400;
   console.log("Setting up enviroment...");
 
   [owner, address1] = await ethers.getSigners();

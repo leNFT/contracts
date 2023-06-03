@@ -18,6 +18,7 @@ hardhat.config.js
 .solhint.json
 scripts/createTradingGauge.js
 scripts/createLendingGauge.js
+scripts/runFunction.js
 .openzeppelin/unknown-11155111.json
 
 # contracts

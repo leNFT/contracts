@@ -103,7 +103,6 @@ describe("Liquidate", function () {
     const createLiquidationAuctionTx =
       await lendingMarket.createLiquidationAuction(
         0,
-        //"700000000000000", //Bid of 0.07 ETH
         "700000000000000", //Bid of 0.07 tokens (worth 0.0007 eth) - audit
         priceSig.request,
         priceSig
