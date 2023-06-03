@@ -238,6 +238,89 @@ describe("WETHGateway", () => {
     // Check if the borrower received his NFT collateral back
     expect(await testNFT.ownerOf(0)).to.equal(owner.address);
   });
+  it("Should be able repay an auctioned loan", async function () {
+    // Create a lending pool
+    const tx = await lendingMarket.createLendingPool(
+      testNFT.address,
+      wethAddress
+    );
+    await tx.wait();
+    // Deposit ETH into the lending pool
+    const depositTx = await wethGateway.depositLendingPool(
+      await lendingMarket.getLendingPool(testNFT.address, weth.address),
+      { value: "1000000000000000000" } // 1 ETH
+    );
+    await depositTx.wait();
+
+    // Mint an NFT & approve it to be used by the lending market
+    const mintTx = await testNFT.mint(owner.address);
+    await mintTx.wait();
+    const approveNftTx = await testNFT.approve(lendingMarket.address, 0);
+    await approveNftTx.wait();
+
+    // Get the price signature for the NFT
+    const priceSig = getPriceSig(
+      testNFT.address,
+      [0],
+      "800000000000000", //Price of 0.08 ETH
+      await time.latest(),
+      nftOracle.address
+    );
+
+    // Borrow wETH using the NFT as collateral
+    const borrowTx = await lendingMarket.borrow(
+      owner.address,
+      weth.address,
+      "200000000000000", // 0.02 ETH
+      testNFT.address,
+      [0],
+      0,
+      priceSig.request,
+      priceSig
+    );
+    await borrowTx.wait();
+
+    const priceSig2 = getPriceSig(
+      testNFT.address,
+      [0],
+      "250000000000000", // Price of 0.025 ETH
+      await time.latest(),
+      nftOracle.address
+    );
+
+    const depositWethTx = await weth.deposit({
+      value: "220000000000000",
+    });
+    await depositWethTx.wait();
+    const approveTx = await weth.approve(
+      lendingMarket.address,
+      "220000000000000"
+    );
+    await approveTx.wait();
+
+    // Create a liquidation auction
+    const auctionTx = await lendingMarket.createLiquidationAuction(
+      0,
+      "220000000000000", // Bid of 0.022 ETH
+      priceSig2.request,
+      priceSig2
+    );
+    await auctionTx.wait();
+
+    //Get the acutioneer fee
+    const auctioneerFee = await loanCenter.getLoanAuctioneerFee(0);
+
+    // Get loan debt
+    const loanDebt = await loanCenter.getLoanDebt(0);
+
+    const repayTx = await wethGateway.repay(0, {
+      value: BigNumber.from(loanDebt).add(auctioneerFee),
+    });
+    await repayTx.wait();
+
+    // Check if the borrower received his NFT collateral back
+    expect(await testNFT.ownerOf(0)).to.equal(owner.address);
+  });
   it("Should be able to add liquidity to a trading pool", async function () {
     // Create a new trading pool
     const createPoolTx = await tradingPoolFactory.createTradingPool(

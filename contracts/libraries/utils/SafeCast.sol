@@ -10,7 +10,7 @@ library SafeCast {
     /// @param value The uint256 value to be casted
     /// @return The uint40 value casted from uint256
     function toUint40(uint256 value) internal pure returns (uint40) {
-        require(value <= type(uint40).max, "SC:CAST_OVERFLOW");
+        require(value <= type(uint40).max, "SC:CAST40_OVERFLOW");
         return uint40(value);
     }
 
@@ -18,7 +18,7 @@ library SafeCast {
     /// @param value The uint256 value to be casted
     /// @return The uint32 value casted from uint256
     function toUint16(uint256 value) internal pure returns (uint16) {
-        require(value <= type(uint16).max, "SC:CAST_OVERFLOW");
+        require(value <= type(uint16).max, "SC:CAST16_OVERFLOW");
         return uint16(value);
     }
 }

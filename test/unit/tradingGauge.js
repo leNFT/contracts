@@ -103,6 +103,10 @@ describe("TradingGauge", () => {
 
     // THe balance for the user should be 1
     expect(await tradingGauge.getBalanceOf(owner.address)).to.equal(1);
+
+    expect(await tradingGauge.getLPOfOwnerByIndex(owner.address, 0)).to.equal(
+      0
+    );
   });
   it("Should withdraw from  a trading gauge", async function () {
     const depositWETHTx = await weth.deposit({

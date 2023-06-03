@@ -150,6 +150,16 @@ describe("LendingPool", function () {
       owner.address
     );
     await depositTx2.wait();
+
+    // Should give an error when withdrawing 0
+    await expect(
+      lendingPool.withdraw(
+        ethers.utils.parseEther("0"),
+        owner.address,
+        owner.address
+      )
+    ).to.be.revertedWith("VL:VW:AMOUNT_0");
+
     // withdraw from the pool
     const withdrawTx = await lendingPool.withdraw(
       ethers.utils.parseEther("1"),

@@ -649,7 +649,7 @@ contract GenesisNFT is
         // Make sure there are only two assets in the pool
         require(tokens.length == 2, "G:M:INVALID_POOL_LENGTH");
         // Make sure those two assets are the native token and WETH
-        for (uint i = 0; i < tokens.length; i++) {
+        for (uint i = 0; i < 2; i++) {
             require(
                 tokens[i] == IERC20(_addressProvider.getNativeToken()) ||
                     tokens[i] == IERC20(_addressProvider.getWETH()),

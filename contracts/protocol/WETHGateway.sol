@@ -145,7 +145,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         _weth.approve(pool, msg.value - auctioneerFee);
 
         // Repay loan
-        market.repay(loanId, msg.value);
+        market.repay(loanId, msg.value - auctioneerFee);
     }
 
     /// @notice Deposit ETH and/or NFTs into a trading pool to provide liquidity

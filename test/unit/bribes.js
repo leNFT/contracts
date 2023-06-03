@@ -71,6 +71,16 @@ describe("Bribes", function () {
       await bribes.getGaugeBribes(weth.address, tradingGauge.address, epoch + 1)
     ).to.equal(0);
 
+    // Should throw an error when depositing in an gauge that doesn't exist
+    await expect(
+      bribes.depositBribe(
+        owner.address,
+        weth.address,
+        ethers.constants.AddressZero,
+        ethers.utils.parseEther("1")
+      )
+    ).to.be.revertedWith("B:INVALID_GAUGE");
+
     // Should deposit the bribe
     const depositBribeTx = await bribes.depositBribe(
       owner.address,

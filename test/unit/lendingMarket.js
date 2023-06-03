@@ -100,6 +100,34 @@ describe("LendingMarket", function () {
       nftOracle.address
     );
 
+    // Should throw an error if the borrowed amount is 0
+    await expect(
+      lendingMarket.borrow(
+        owner.address,
+        weth.address,
+        "0",
+        testNFT.address,
+        [0],
+        0,
+        priceSig.request,
+        priceSig
+      )
+    ).to.be.revertedWith("VL:VB:AMOUNT_0");
+
+    // Should throw an error if the NFT borrow list is empty
+    await expect(
+      lendingMarket.borrow(
+        owner.address,
+        weth.address,
+        "200000000000000", // 0.02 ETH
+        testNFT.address,
+        [],
+        0,
+        priceSig.request,
+        priceSig
+      )
+    ).to.be.revertedWith("VL:VB:NO_NFTS");
+
     // Borrow wETH using the NFT as collateral
     const borrowTx = await lendingMarket.borrow(
       owner.address,
@@ -246,6 +274,11 @@ describe("LendingMarket", function () {
       loanDebt
     );
     await approveTx.wait();
+
+    // Should throw an error if we repay 0
+    await expect(lendingMarket.repay(0, 0)).to.be.revertedWith(
+      "VL:VR:AMOUNT_0"
+    );
 
     const repayTx = await lendingMarket.repay(0, loanDebt);
     await repayTx.wait();
@@ -596,7 +629,7 @@ describe("LendingMarket", function () {
     await expect(
       lendingMarket.createLiquidationAuction(
         0,
-        "50000000000000", //Price of 0.005 ETH
+        "50000000000000", // Price of 0.005 ETH
         priceSig2.request,
         priceSig2
       )
@@ -605,7 +638,7 @@ describe("LendingMarket", function () {
     // Create a liquidation auction
     const auctionTx = await lendingMarket.createLiquidationAuction(
       0,
-      "220000000000000", //Price of 0.022 ETH
+      "220000000000000", // Bid of 0.022 ETH
       priceSig2.request,
       priceSig2
     );
