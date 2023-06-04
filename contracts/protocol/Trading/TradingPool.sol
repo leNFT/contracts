@@ -295,9 +295,7 @@ contract TradingPool is
 
     /// @notice Removes liquidity in batches by calling the removeLiquidity function for each LP token ID in the lpIds array
     /// @param lpIds The IDs of the LP tokens to remove liquidity from
-    function removeLiquidityBatch(
-        uint256[] calldata lpIds
-    ) external override poolNotPaused {
+    function removeLiquidityBatch(uint256[] calldata lpIds) external override {
         for (uint i = 0; i < lpIds.length; i++) {
             removeLiquidity(lpIds[i]);
         }
