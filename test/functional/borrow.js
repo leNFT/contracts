@@ -74,8 +74,8 @@ describe("Borrow", function () {
     //).to.be.eq("1000000000000000");
 
     // Find if the protocol received the asset
-    expect(await testNFT.ownerOf(tokenID1)).to.equal(loanCenter.address);
-    expect(await testNFT.ownerOf(tokenID2)).to.equal(loanCenter.address);
+    expect(await testNFT.ownerOf(tokenID1)).to.equal(lendingMarket.address);
+    expect(await testNFT.ownerOf(tokenID2)).to.equal(lendingMarket.address);
   });
   it("Repay borrowed amount", async function () {
     // Get loan debt
@@ -85,7 +85,6 @@ describe("Borrow", function () {
       value: loanDebt,
     });
     await repayTx.wait();
-    console.log("loanCenter.address", loanCenter.address);
     expect(await testNFT.ownerOf(tokenID1)).to.equal(owner.address);
     expect(await testNFT.ownerOf(tokenID2)).to.equal(owner.address);
   });
@@ -129,8 +128,8 @@ describe("Borrow", function () {
     //).to.be.eq("1000000000000000");
 
     // Find if the protocol received the asset
-    expect(await testNFT.ownerOf(tokenID1)).to.equal(loanCenter.address);
-    expect(await testNFT.ownerOf(tokenID2)).to.equal(loanCenter.address);
+    expect(await testNFT.ownerOf(tokenID1)).to.equal(lendingMarket.address);
+    expect(await testNFT.ownerOf(tokenID2)).to.equal(lendingMarket.address);
   });
   it("Repay 1st borrowed amount again", async function () {
     // Get loan debt

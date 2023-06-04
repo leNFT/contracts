@@ -246,6 +246,7 @@ describe("Genesis NFT & Lending Market", function () {
 
     const createLiquidationAuctionTx =
       await lendingMarket.createLiquidationAuction(
+        owner.address,
         0,
         ethers.utils.parseEther("0.07"),
         priceSig2.request,

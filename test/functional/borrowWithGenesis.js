@@ -198,8 +198,8 @@ describe("Borrow using Genesis NFT", function () {
     console.log("Gas used in ETH: ", gasUsedETH.toString());
 
     // Find if the protocol received the asset
-    expect(await testNFT.ownerOf(tokenID1)).to.equal(loanCenter.address);
-    expect(await testNFT.ownerOf(tokenID2)).to.equal(loanCenter.address);
+    expect(await testNFT.ownerOf(tokenID1)).to.equal(lendingMarket.address);
+    expect(await testNFT.ownerOf(tokenID2)).to.equal(lendingMarket.address);
 
     // Find if the Genesis NFT is locked
     expect(await genesisNFT.getLockedState(1)).to.equal(true);
@@ -241,7 +241,6 @@ describe("Borrow using Genesis NFT", function () {
       value: loanDebt,
     });
     await repayTx.wait();
-    console.log("loanCenter.address", loanCenter.address);
     expect(await testNFT.ownerOf(tokenID1)).to.equal(owner.address);
     expect(await testNFT.ownerOf(tokenID2)).to.equal(owner.address);
 

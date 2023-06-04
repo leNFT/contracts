@@ -328,6 +328,7 @@ describe("LoanCenter", function () {
 
     // Liquidate the loan
     const liquidateTx = await lendingMarket.createLiquidationAuction(
+      owner.address,
       0,
       ethers.utils.parseEther("0.025"),
       priceSig2.request,

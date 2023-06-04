@@ -78,6 +78,7 @@ describe("Token Oracle And Lending Market", function () {
     console.log("Creating liquidation auction");
     await expect(
       lendingMarket.createLiquidationAuction(
+        owner.address,
         0,
         "100000000000000", //Price of 0.01 ETH
         priceSig.request,
@@ -99,6 +100,7 @@ describe("Token Oracle And Lending Market", function () {
     // Create a liquidation auction
     await expect(
       lendingMarket.createLiquidationAuction(
+        owner.address,
         0,
         "220000000000000", //Price of 0.022 ETH
         priceSig.request,

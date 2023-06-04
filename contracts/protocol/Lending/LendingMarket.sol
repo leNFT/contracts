@@ -17,6 +17,7 @@ import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC7
 import {IERC4626Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC4626Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {ERC721HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {Trustus} from "../Trustus/Trustus.sol";
@@ -30,6 +31,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 contract LendingMarket is
     ILendingMarket,
     OwnableUpgradeable,
+    ERC721HolderUpgradeable,
     ReentrancyGuardUpgradeable
 {
     using ERC165CheckerUpgradeable for address;
@@ -61,6 +63,7 @@ contract LendingMarket is
         ConfigTypes.LendingPoolConfig calldata defaultLendingPoolConfig
     ) external initializer {
         __Ownable_init();
+        __ERC721Holder_init();
         __ReentrancyGuard_init();
         _addressProvider = addressProvider;
         _tvlSafeguard = tvlSafeguard;
@@ -103,7 +106,7 @@ contract LendingMarket is
             })
         );
 
-        emit Borrow(msg.sender, asset, nftAddress, nftTokenIds, amount);
+        emit Borrow(onBehalfOf, asset, nftAddress, nftTokenIds, amount);
     }
 
     /// @notice Repay an an active loan
@@ -132,6 +135,7 @@ contract LendingMarket is
     /// @param request ID of the collateral price request sent by the trusted server
     /// @param packet Signed collateral price request sent by the trusted server
     function createLiquidationAuction(
+        address onBehalfOf,
         uint256 loanId,
         uint256 bid,
         bytes32 request,
@@ -141,6 +145,7 @@ contract LendingMarket is
             _addressProvider,
             DataTypes.CreateAuctionParams({
                 caller: msg.sender,
+                onBehalfOf: onBehalfOf,
                 loanId: loanId,
                 bid: bid,
                 request: request,
@@ -148,7 +153,7 @@ contract LendingMarket is
             })
         );
 
-        emit CreateLiquidationAuction(msg.sender, loanId, bid);
+        emit CreateLiquidationAuction(onBehalfOf, loanId, bid);
     }
 
     /// @notice Bid on a liquidation auction
@@ -156,19 +161,21 @@ contract LendingMarket is
     /// @param loanId The ID of the loan to be paid
     /// @param bid The bid amount
     function bidLiquidationAuction(
+        address onBehalfOf,
         uint256 loanId,
         uint256 bid
     ) external override nonReentrant {
         LiquidationLogic.bidLiquidationAuction(
             _addressProvider,
-            DataTypes.AuctionBidParams({
+            DataTypes.BidAuctionParams({
                 caller: msg.sender,
+                onBehalfOf: onBehalfOf,
                 loanId: loanId,
                 bid: bid
             })
         );
 
-        emit BidLiquidationAuction(msg.sender, loanId, bid);
+        emit BidLiquidationAuction(onBehalfOf, loanId, bid);
     }
 
     /// @notice Claim the collateral of a liquidated loan
@@ -242,20 +249,8 @@ contract LendingMarket is
             _defaultLendingPoolConfig
         );
 
-        // Approve lending pool use of market balance
+        // Approve lending pool use of market balance (to receive funds from claimed liquidations)
         IERC20Upgradeable(asset).approve(address(newLendingPool), 2 ** 256 - 1);
-
-        // Approve Market use of loan center NFT's (for returning the collateral)
-        if (
-            IERC721Upgradeable(collection).isApprovedForAll(
-                _addressProvider.getLoanCenter(),
-                address(this)
-            ) == false
-        ) {
-            ILoanCenter(_addressProvider.getLoanCenter()).approveNFTCollection(
-                collection
-            );
-        }
 
         _setLendingPool(collection, asset, address(newLendingPool));
         _poolsCount[asset] += 1;

@@ -137,7 +137,7 @@ library DataTypes {
 
     /// @notice Stores the data for a loan auction
     /// @param auctioneer The address of the auctioneer (user who first auctioned the loan)
-    /// @param liquidator The address of the liquidator (user with the highes bid the)
+    /// @param liquidator The address of the liquidator (user with the highest bid)
     /// @param auctionStartTimestamp The timestamp for the start of the auction
     /// @param auctionMaxBid The maximum bid for the auction
     struct LoanLiquidationData {
@@ -191,12 +191,14 @@ library DataTypes {
 
     /// @notice Struct to store the parameters for a create auction (liquidate) call
     /// @param caller The caller of the create auction function
+    /// @param onBehalfOf The address of the user on whose behalf the caller is liquidating
     /// @param loanId The ID of the loan being liquidated
     /// @param bid The bid for the auction
     /// @param request The request ID for the liquidation
     /// @param packet The Trustus packet for the liquidation
     struct CreateAuctionParams {
         address caller;
+        address onBehalfOf;
         uint256 loanId;
         uint256 bid;
         bytes32 request;
@@ -205,10 +207,12 @@ library DataTypes {
 
     /// @notice Struct to store the parameters for an auction bid call
     /// @param caller The caller of the auction bid function
+    /// @param onBehalfOf The address of the user on whose behalf the caller is bidding
     /// @param loanId The ID of the loan being liquidated
     /// @param bid The bid for the auction
-    struct AuctionBidParams {
+    struct BidAuctionParams {
         address caller;
+        address onBehalfOf;
         uint256 loanId;
         uint256 bid;
     }

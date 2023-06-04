@@ -5,7 +5,6 @@ import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {LoanLogic} from "../../libraries/logic/LoanLogic.sol";
-import {ERC721HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
@@ -17,11 +16,7 @@ import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 /// @author leNFT
 /// @notice Manages loans
 /// @dev Keeps the list of loans, their states and their liquidation data
-contract LoanCenter is
-    ILoanCenter,
-    ERC721HolderUpgradeable,
-    OwnableUpgradeable
-{
+contract LoanCenter is ILoanCenter, OwnableUpgradeable {
     // NFT address + NFT ID to loan ID mapping
     mapping(address => mapping(uint256 => uint256)) private _nftToLoanId;
 
@@ -76,7 +71,6 @@ contract LoanCenter is
             calldata defaultCollectionsRiskParameters
     ) external initializer {
         __Ownable_init();
-        __ERC721Holder_init();
         _addressProvider = addressProvider;
         _defaultCollectionsRiskParameters = defaultCollectionsRiskParameters;
     }
@@ -442,17 +436,6 @@ contract LoanCenter is
                 maxLTV: SafeCast.toUint16(maxLTV),
                 liquidationThreshold: SafeCast.toUint16(liquidationThreshold)
             });
-    }
-
-    /// @notice Approves a lending market to use all NFTs from a collection.
-    /// @param collection The address of the collection to approve for lending.
-    function approveNFTCollection(
-        address collection
-    ) external override onlyMarket {
-        IERC721Upgradeable(collection).setApprovalForAll(
-            _addressProvider.getLendingMarket(),
-            true
-        );
     }
 
     function _requireOnlyMarket() internal view {

@@ -27,6 +27,12 @@ describe("NativeTokenVesting", () => {
     const period = 60 * 60 * 24 * 30; // 30 days period
     const cliff = 60 * 60 * 24 * 30; // 30 days cliff
     const amount = 1000; // 1000 tokens
+
+    // Should not be able to withdraw any tokens
+    expect(
+      await nativeTokenVesting.getAvailableToWithdraw(owner.address)
+    ).to.equal(0);
+
     const setVestingTx = await nativeTokenVesting.setVesting(
       owner.address,
       period, // 30 days period

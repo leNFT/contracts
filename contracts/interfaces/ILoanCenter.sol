@@ -85,6 +85,4 @@ interface ILoanCenter {
     function getCollectionMaxLTV(
         address collection
     ) external view returns (uint256);
-
-    function approveNFTCollection(address collection) external;
 }

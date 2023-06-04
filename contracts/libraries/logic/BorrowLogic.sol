@@ -33,14 +33,11 @@ library BorrowLogic {
         // Validate the movement
         ValidationLogic.validateBorrow(addressProvider, lendingPool, params);
 
-        // Get the loan center
-        ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
-
-        // Transfer the collateral to the loan center
+        // Transfer the collateral to the the lending market
         for (uint256 i = 0; i < params.nftTokenIds.length; i++) {
             IERC721Upgradeable(params.nftAddress).safeTransferFrom(
                 params.caller,
-                address(loanCenter),
+                address(this),
                 params.nftTokenIds[i]
             );
         }
@@ -56,6 +53,9 @@ library BorrowLogic {
 
         // Get the current borrow rate index
         uint256 borrowRate = ILendingPool(lendingPool).getBorrowRate();
+
+        // Get the loan center
+        ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
 
         // Create the loan
         loanId = loanCenter.createLoan(
@@ -142,7 +142,7 @@ library BorrowLogic {
             // Transfer the collateral back to the owner
             for (uint256 i = 0; i < loanData.nftTokenIds.length; i++) {
                 IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
-                    address(loanCenter),
+                    address(this),
                     loanData.owner,
                     loanData.nftTokenIds[i]
                 );

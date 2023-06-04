@@ -23,6 +23,21 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     IAddressProvider private immutable _addressProvider;
     IWETH private immutable _weth;
 
+    modifier lendingPoolETH(address lendingPool) {
+        _requireLendingPoolETH(lendingPool);
+        _;
+    }
+
+    modifier loanPoolETH(uint256 loanId) {
+        _requireLoanPoolETH(loanId);
+        _;
+    }
+
+    modifier tradingPoolETH(address tradingPool) {
+        _requireTradingPoolETH(tradingPool);
+        _;
+    }
+
     /// @notice Constructor for the WETHGateway contract
     /// @param addressProvider The address of the addressProvider contract
     constructor(IAddressProvider addressProvider, IWETH weth) {
@@ -34,12 +49,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     /// @param lendingPool Lending pool to deposit intoto
     function depositLendingPool(
         address lendingPool
-    ) external payable nonReentrant {
-        require(
-            IERC4626(lendingPool).asset() == address(_weth),
-            "ETHG:DLP:UNDERLYING_NOT_WETH"
-        );
-
+    ) external payable lendingPoolETH(lendingPool) nonReentrant {
         // Deposit and approve WETH
         _weth.deposit{value: msg.value}();
         _weth.approve(lendingPool, msg.value);
@@ -53,12 +63,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     function withdrawLendingPool(
         address lendingPool,
         uint256 amount
-    ) external nonReentrant {
-        require(
-            IERC4626(lendingPool).asset() == address(_weth),
-            "ETHG:WLP:UNDERLYING_NOT_WETH"
-        );
-
+    ) external lendingPoolETH(lendingPool) nonReentrant {
         IERC4626(lendingPool).withdraw(amount, address(this), msg.sender);
         _weth.withdraw(amount);
 
@@ -164,22 +169,18 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         address curve,
         uint256 delta,
         uint256 fee
-    ) external payable nonReentrant {
-        require(
-            ITradingPool(pool).getToken() == address(_weth),
-            "ETHG:DTP:UNDERLYING_NOT_WETH"
-        );
-
+    ) external payable tradingPoolETH(pool) nonReentrant {
         // Transfer the NFTs to the WETH Gateway and approve them for use
+        IERC721 tradingPoolNFT = IERC721(ITradingPool(pool).getNFT());
         if (nftIds.length > 0) {
             for (uint i = 0; i < nftIds.length; i++) {
-                IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
+                tradingPoolNFT.safeTransferFrom(
                     msg.sender,
                     address(this),
                     nftIds[i]
                 );
             }
-            IERC721(ITradingPool(pool).getNFT()).setApprovalForAll(pool, true);
+            tradingPoolNFT.setApprovalForAll(pool, true);
         }
 
         // Deposit and approve WETH
@@ -206,12 +207,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     function withdrawTradingPool(
         address pool,
         uint256 lpId
-    ) external nonReentrant {
-        require(
-            ITradingPool(pool).getToken() == address(_weth),
-            "ETHG:WTP:UNDERLYING_NOT_WETH"
-        );
-
+    ) external tradingPoolETH(pool) nonReentrant {
         // Send LP NFT to this contract
         IERC721(pool).safeTransferFrom(msg.sender, address(this), lpId);
 
@@ -222,8 +218,9 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         ITradingPool(pool).removeLiquidity(lpId);
 
         // Send NFTs back to the user
+        IERC721 tradingPoolNFT = IERC721(ITradingPool(pool).getNFT());
         for (uint i = 0; i < lp.nftIds.length; i++) {
-            IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
+            tradingPoolNFT.safeTransferFrom(
                 address(this),
                 msg.sender,
                 lp.nftIds[i]
@@ -243,14 +240,9 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     function withdrawBatchTradingPool(
         address pool,
         uint256[] calldata lpIds
-    ) external nonReentrant {
+    ) external tradingPoolETH(pool) nonReentrant {
         uint256 totalAmount;
         uint256[][] memory nftIds = new uint256[][](lpIds.length);
-
-        require(
-            ITradingPool(pool).getToken() == address(_weth),
-            "ETHG:WBTP:UNDERLYING_NOT_WETH"
-        );
 
         // Send LP NFTs to this contract
         for (uint i = 0; i < lpIds.length; i++) {
@@ -272,9 +264,10 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         ITradingPool(pool).removeLiquidityBatch(lpIds);
 
         // Send NFTs back to the user
+        IERC721 tradingPoolNFT = IERC721(ITradingPool(pool).getNFT());
         for (uint a = 0; a < nftIds.length; a++) {
             for (uint b = 0; b < nftIds[a].length; b++) {
-                IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
+                tradingPoolNFT.safeTransferFrom(
                     address(this),
                     msg.sender,
                     nftIds[a][b]
@@ -297,12 +290,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         address pool,
         uint256[] calldata nftIds,
         uint256 maximumPrice
-    ) external payable nonReentrant {
-        require(
-            ITradingPool(pool).getToken() == address(_weth),
-            "ETHG:B:UNDERLYING_NOT_WETH"
-        );
-
+    ) external payable tradingPoolETH(pool) nonReentrant {
         require(msg.value == maximumPrice, "ETHG:B:VALUE_NOT_MAXIMUM_PRICE");
 
         // Deposit and approve WETH
@@ -334,21 +322,17 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         uint256[] calldata nftIds,
         uint256[] calldata liquidityPairs,
         uint256 minimumPrice
-    ) external nonReentrant {
-        require(
-            ITradingPool(pool).getToken() == address(_weth),
-            "ETHG:S:UNDERLYING_NOT_WETH"
-        );
-
+    ) external tradingPoolETH(pool) nonReentrant {
         // Send NFTs to this contract and approve them for pool use
+        IERC721 tradingPoolNFT = IERC721(ITradingPool(pool).getNFT());
         for (uint i = 0; i < nftIds.length; i++) {
-            IERC721(ITradingPool(pool).getNFT()).safeTransferFrom(
+            tradingPoolNFT.safeTransferFrom(
                 msg.sender,
                 address(this),
                 nftIds[i]
             );
         }
-        IERC721(ITradingPool(pool).getNFT()).setApprovalForAll(pool, true);
+        tradingPoolNFT.setApprovalForAll(pool, true);
 
         // Sell NFTs
         uint256 finalPrice = ITradingPool(pool).sell(
@@ -374,8 +358,8 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     /// @param sellLps The array of liquidity pair to sell the NFTs against.
     /// @param minimumSellPrice The minimum amount of ETH to receive for the sale.
     function swap(
-        ITradingPool buyPool,
-        ITradingPool sellPool,
+        address buyPool,
+        address sellPool,
         uint256[] calldata buyNftIds,
         uint256 maximumBuyPrice,
         uint256[] calldata sellNftIds,
@@ -385,11 +369,11 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         ISwapRouter swapRouter = ISwapRouter(_addressProvider.getSwapRouter());
 
         require(
-            buyPool.getToken() == address(_weth),
+            ITradingPool(buyPool).getToken() == address(_weth),
             "ETHG:S:BUY_UNDERLYING_NOT_WETH"
         );
         require(
-            sellPool.getToken() == address(_weth),
+            ITradingPool(sellPool).getToken() == address(_weth),
             "ETHG:S:SELL_UNDERLYING_NOT_WETH"
         );
 
@@ -405,15 +389,19 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
             _weth.approve(address(swapRouter), msg.value);
         }
 
-        // Send NFTs to this contract and approve them for pool use
-        for (uint i = 0; i < sellNftIds.length; i++) {
-            IERC721(sellPool.getNFT()).safeTransferFrom(
-                msg.sender,
-                address(this),
-                sellNftIds[i]
-            );
+        // avoid stack too deep
+        {
+            // Send NFTs to this contract and approve them for pool use
+            IERC721 sellPoolNFT = IERC721(ITradingPool(sellPool).getNFT());
+            for (uint i = 0; i < sellNftIds.length; i++) {
+                sellPoolNFT.safeTransferFrom(
+                    msg.sender,
+                    address(this),
+                    sellNftIds[i]
+                );
+            }
+            sellPoolNFT.setApprovalForAll(sellPool, true);
         }
-        IERC721(sellPool.getNFT()).setApprovalForAll(address(sellPool), true);
 
         // Swap
         uint256 returnedAmount = swapRouter.swap(
@@ -427,8 +415,9 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         );
 
         // Send NFTs back to the user
+        IERC721 buyPoolNFT = IERC721(ITradingPool(buyPool).getNFT());
         for (uint i = 0; i < buyNftIds.length; i++) {
-            IERC721(buyPool.getNFT()).safeTransferFrom(
+            buyPoolNFT.safeTransferFrom(
                 address(this),
                 msg.sender,
                 buyNftIds[i]
@@ -447,9 +436,10 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     /// @dev Bribe is applied to the next epoch
     /// @param gauge The address of the gauge to bribe.
     function depositBribe(address gauge) external payable nonReentrant {
+        address bribes = _addressProvider.getBribes();
         _weth.deposit{value: msg.value}();
-        _weth.approve(address(_addressProvider.getBribes()), msg.value);
-        IBribes(_addressProvider.getBribes()).depositBribe(
+        _weth.approve(bribes, msg.value);
+        IBribes(bribes).depositBribe(
             msg.sender,
             address(_weth),
             gauge,
@@ -457,10 +447,77 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         );
     }
 
-    // Add receive ETH function
-    // Intended to receive ETH from WETH contract
+    /// @notice Liquidates a loan.
+    /// @param loanId The id of the loan to liquidate.
+    /// @param request The request id of the loan to liquidate.
+    /// @param packet The Trustus packet of the loan to liquidate.
+    function createLiquidationAuction(
+        uint256 loanId,
+        bytes32 request,
+        Trustus.TrustusPacket calldata packet
+    ) external payable loanPoolETH(loanId) nonReentrant {
+        address lendingMarket = _addressProvider.getLendingMarket();
+
+        // Deposit and approve WETH
+        _weth.deposit{value: msg.value}();
+        _weth.approve(lendingMarket, msg.value);
+
+        // Create auction
+        ILendingMarket(lendingMarket).createLiquidationAuction(
+            msg.sender,
+            loanId,
+            msg.value,
+            request,
+            packet
+        );
+    }
+
+    /// @notice Bids on a liquidation auction.
+    /// @param loanId The id of the loan to bid on.
+    function bidLiquidationAuction(
+        uint256 loanId
+    ) external payable loanPoolETH(loanId) nonReentrant {
+        address lendingMarket = _addressProvider.getLendingMarket();
+        // Deposit and approve WETH
+        _weth.deposit{value: msg.value}();
+        _weth.approve(lendingMarket, msg.value);
+
+        // Bid on auction
+        ILendingMarket(lendingMarket).bidLiquidationAuction(
+            msg.sender,
+            loanId,
+            msg.value
+        );
+    }
+
+    function _requireLendingPoolETH(address lendingPool) internal view {
+        require(
+            IERC4626(lendingPool).asset() == address(_weth),
+            "ETHG:UNDERLYING_NOT_WETH"
+        );
+    }
+
+    function _requireLoanPoolETH(uint256 loanId) internal view {
+        // Make sure the loan pool asset is WETH
+        require(
+            IERC4626(
+                ILoanCenter(_addressProvider.getLoanCenter())
+                    .getLoanLendingPool(loanId)
+            ).asset() == address(_weth),
+            "ETHG:UNDERLYING_NOT_WETH"
+        );
+    }
+
+    function _requireTradingPoolETH(address tradingPool) internal view {
+        require(
+            ITradingPool(tradingPool).getToken() == address(_weth),
+            "ETHG:UNDERLYING_NOT_WETH"
+        );
+    }
+
+    // Receive ETH function: Intended to receive ETH from WETH contract
     receive() external payable {
-        require(msg.sender == address(_weth), "ETHG:RECEIVE:INVALID_SENDER");
+        require(msg.sender == address(_weth), "ETHG:RECEIVE:NOT_WETH");
     }
 
     /**

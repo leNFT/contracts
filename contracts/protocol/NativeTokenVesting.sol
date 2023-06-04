@@ -102,9 +102,9 @@ contract NativeTokenVesting is Ownable {
                 unvestedTokens = vestingParams.amount;
             }
             return unvestedTokens - _withdrawn[account];
-        } else {
-            return 0;
         }
+
+        return 0;
     }
 
     /// @notice Withdraws the specified amount of unvested tokens

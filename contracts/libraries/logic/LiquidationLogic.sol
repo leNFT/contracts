@@ -44,9 +44,9 @@ library LiquidationLogic {
         );
 
         // Add auction to the loan
-        loanCenter.auctionLoan(params.loanId, params.caller, params.bid);
+        loanCenter.auctionLoan(params.loanId, params.onBehalfOf, params.bid);
 
-        // Get the payment from the bidder
+        // Get the payment from the caller
         IERC20Upgradeable(IERC4626(loanData.pool).asset()).safeTransferFrom(
             params.caller,
             address(this),
@@ -59,7 +59,7 @@ library LiquidationLogic {
     /// @param params A struct with the parameters of the bid function
     function bidLiquidationAuction(
         IAddressProvider addressProvider,
-        DataTypes.AuctionBidParams memory params
+        DataTypes.BidAuctionParams memory params
     ) external {
         // Get the loan center
         ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
@@ -89,11 +89,11 @@ library LiquidationLogic {
         // Update the auction bid
         loanCenter.updateLoanAuctionBid(
             params.loanId,
-            params.caller,
+            params.onBehalfOf,
             params.bid
         );
 
-        // Get the payment from the liquidator
+        // Get the payment from the caller
         IERC20Upgradeable(poolAsset).safeTransferFrom(
             params.caller,
             address(this),
@@ -189,7 +189,7 @@ library LiquidationLogic {
         // Send collateral to liquidator
         for (uint i = 0; i < loanData.nftTokenIds.length; i++) {
             IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
-                address(loanCenter),
+                address(this),
                 loanLiquidationData.liquidator,
                 loanData.nftTokenIds[i]
             );

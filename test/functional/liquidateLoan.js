@@ -76,8 +76,8 @@ describe("Liquidate", function () {
     ).to.be.eq("100000000000000000"); // - audit
 
     // Find if the protocol received the asset
-    expect(await testNFT.ownerOf(tokenID1)).to.equal(loanCenter.address);
-    expect(await testNFT.ownerOf(tokenID2)).to.equal(loanCenter.address);
+    expect(await testNFT.ownerOf(tokenID1)).to.equal(lendingMarket.address);
+    expect(await testNFT.ownerOf(tokenID2)).to.equal(lendingMarket.address);
   });
   it("Start the liquidation auction", async function () {
     const priceSig = getPriceSig(
@@ -102,6 +102,7 @@ describe("Liquidate", function () {
 
     const createLiquidationAuctionTx =
       await lendingMarket.createLiquidationAuction(
+        owner.address,
         0,
         "700000000000000", //Bid of 0.07 tokens (worth 0.0007 eth) - audit
         priceSig.request,

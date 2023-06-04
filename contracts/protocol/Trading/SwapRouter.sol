@@ -36,8 +36,8 @@ contract SwapRouter is ISwapRouter, ReentrancyGuard {
     /// @param minimumSellPrice The minimum price that the user is willing to accept for the NFTs
     /// @return change The amount of tokens returned to the user
     function swap(
-        ITradingPool buyPool,
-        ITradingPool sellPool,
+        address buyPool,
+        address sellPool,
         uint256[] calldata buyNftIds,
         uint256 maximumBuyPrice,
         uint256[] calldata sellNftIds,
@@ -47,23 +47,24 @@ contract SwapRouter is ISwapRouter, ReentrancyGuard {
         // Pools need to be registered in the factory
         require(
             ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                .isTradingPool(address(buyPool)),
+                .isTradingPool(buyPool),
             "SR:S:INVALID_BUY_POOL"
         );
-        if (address(buyPool) != address(sellPool)) {
+        address sellPoolToken = ITradingPool(sellPool).getToken();
+        if (buyPool != sellPool) {
             require(
                 ITradingPoolFactory(_addressProvider.getTradingPoolFactory())
-                    .isTradingPool(address(sellPool)),
+                    .isTradingPool(sellPool),
                 "SR:S:INVALID_SELL_POOL"
             );
             // Pools need to have the same underlying token
             require(
-                buyPool.getToken() == sellPool.getToken(),
+                ITradingPool(buyPool).getToken() == sellPoolToken,
                 "SR:S:DIFFERENT_TOKENS"
             );
         }
 
-        uint256 sellPrice = sellPool.sell(
+        uint256 sellPrice = ITradingPool(sellPool).sell(
             msg.sender,
             sellNftIds,
             sellLps,
@@ -74,7 +75,7 @@ contract SwapRouter is ISwapRouter, ReentrancyGuard {
         uint256 priceDiff;
         if (maximumBuyPrice > minimumSellPrice) {
             priceDiff = maximumBuyPrice - minimumSellPrice;
-            IERC20(sellPool.getToken()).safeTransferFrom(
+            IERC20(sellPoolToken).safeTransferFrom(
                 msg.sender,
                 address(this),
                 priceDiff
@@ -82,11 +83,15 @@ contract SwapRouter is ISwapRouter, ReentrancyGuard {
         }
 
         // Buy the NFTs
-        uint256 buyPrice = buyPool.buy(msg.sender, buyNftIds, maximumBuyPrice);
+        uint256 buyPrice = ITradingPool(buyPool).buy(
+            msg.sender,
+            buyNftIds,
+            maximumBuyPrice
+        );
 
         // If the price difference + sell price is greater than the buy price, return the difference to the user
         if (sellPrice + priceDiff > buyPrice) {
-            IERC20(sellPool.getToken()).safeTransfer(
+            IERC20(sellPoolToken).safeTransfer(
                 msg.sender,
                 sellPrice + priceDiff - buyPrice
             );

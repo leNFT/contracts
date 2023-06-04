@@ -146,7 +146,7 @@ describe("LendingMarket", function () {
       BigNumber.from("200000000000000")
     );
     // Check if the loan center received the NFT
-    expect(await testNFT.ownerOf(0)).to.equal(loanCenter.address);
+    expect(await testNFT.ownerOf(0)).to.equal(lendingMarket.address);
 
     // Get the loan from the loan center and check if it's valid
     const loan = await loanCenter.getLoan(0);
@@ -352,7 +352,7 @@ describe("LendingMarket", function () {
     await repayTx.wait();
 
     // Check if the collateral is still with the pool
-    expect(await testNFT.ownerOf(0)).to.equal(loanCenter.address);
+    expect(await testNFT.ownerOf(0)).to.equal(lendingMarket.address);
 
     // Aprove the lending pool to spend the wETH
     const loanDebt2 = await loanCenter.getLoanDebt(0);
@@ -433,7 +433,7 @@ describe("LendingMarket", function () {
     await repayTx.wait();
 
     // Check if the collateral is still with the pool
-    expect(await testNFT.ownerOf(0)).to.equal(loanCenter.address);
+    expect(await testNFT.ownerOf(0)).to.equal(lendingMarket.address);
   });
   it("Should be able repay an auctioned loan", async function () {
     // Create a lending pool
@@ -499,6 +499,7 @@ describe("LendingMarket", function () {
 
     // Create a liquidation auction
     const auctionTx = await lendingMarket.createLiquidationAuction(
+      owner.address,
       0,
       bid, //Price of 0.022 ETH
       priceSig2.request,
@@ -607,6 +608,7 @@ describe("LendingMarket", function () {
     console.log("Creating liquidation auction");
     await expect(
       lendingMarket.createLiquidationAuction(
+        owner.address,
         0,
         "100000000000000", //Price of 0.01 ETH
         priceSig.request,
@@ -628,6 +630,7 @@ describe("LendingMarket", function () {
     console.log("Creating liquidation auction");
     await expect(
       lendingMarket.createLiquidationAuction(
+        owner.address,
         0,
         "50000000000000", // Price of 0.005 ETH
         priceSig2.request,
@@ -637,6 +640,7 @@ describe("LendingMarket", function () {
 
     // Create a liquidation auction
     const auctionTx = await lendingMarket.createLiquidationAuction(
+      owner.address,
       0,
       "220000000000000", // Bid of 0.022 ETH
       priceSig2.request,
@@ -645,7 +649,7 @@ describe("LendingMarket", function () {
     await auctionTx.wait();
 
     // Save the timestamp of the auction
-    const auctionTimestamp = await time.latest();
+    const creationTimetamp = await time.latest();
 
     // Check if the auction was created
     const loanLiquidationData = await loanCenter.getLoanLiquidationData(0);
@@ -656,7 +660,7 @@ describe("LendingMarket", function () {
     );
     // Expect the auction starttime to have been in the last 5 minutes
     expect(loanLiquidationData.auctionStartTimestamp).to.equal(
-      auctionTimestamp
+      creationTimetamp
     );
   });
   it("Should bid on a liquidation auction", async function () {
@@ -722,12 +726,13 @@ describe("LendingMarket", function () {
     // Should revert if bidding on a liquidation auction that doesnt exist
     console.log("Bidding on liquidation auction");
     await expect(
-      lendingMarket.bidLiquidationAuction(0, "220000000000000")
+      lendingMarket.bidLiquidationAuction(owner.address, 0, "220000000000000")
     ).to.be.revertedWith("LC:NOT_AUCTIONED");
 
     // Create a liquidation auction
     // Should revert if the price of the bid is too low
     const auctionTx = await lendingMarket.createLiquidationAuction(
+      owner.address,
       0,
       "220000000000000", //Price of 0.022 ETH
       priceSig2.request,
@@ -741,11 +746,12 @@ describe("LendingMarket", function () {
     // Should make a lower bid than the current bid
     console.log("Bidding on liquidation auction");
     await expect(
-      lendingMarket.bidLiquidationAuction(0, "210000000000000")
+      lendingMarket.bidLiquidationAuction(owner.address, 0, "210000000000000")
     ).to.be.revertedWith("VL:VBLA:BID_TOO_LOW");
 
     // Should make a valid bid
     const bidTx = await lendingMarket.bidLiquidationAuction(
+      owner.address,
       0,
       "230000000000000"
     );
@@ -831,6 +837,7 @@ describe("LendingMarket", function () {
 
     // Create a liquidation auction
     const auctionTx = await lendingMarket.createLiquidationAuction(
+      owner.address,
       0,
       "220000000000000", //Price of 0.022 ETH
       priceSig2.request,
@@ -840,6 +847,7 @@ describe("LendingMarket", function () {
 
     // Should make a valid bid
     const bidTx = await lendingMarket.bidLiquidationAuction(
+      owner.address,
       0,
       "230000000000000"
     );

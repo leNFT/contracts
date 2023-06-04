@@ -260,7 +260,7 @@ library ValidationLogic {
     /// @param loanAuctionStartTimestamp The timestamp when the auction started
     /// @param loanAuctionMaxBid The current max bid of the auction
     function validateBidLiquidationAuction(
-        DataTypes.AuctionBidParams memory params,
+        DataTypes.BidAuctionParams memory params,
         DataTypes.LoanState loanState,
         uint256 loanAuctionStartTimestamp,
         uint256 loanAuctionMaxBid
