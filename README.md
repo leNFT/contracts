@@ -5,9 +5,9 @@ Create an `hardhat.config.js` configuration file:
 ```bash
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-ethers");
-require("@nomiclabs/hardhat-vyper");
 require("@nomiclabs/hardhat-solhint");
 require("@openzeppelin/hardhat-upgrades");
+require("solidity-coverage");
 require("dotenv").config();
 
 module.exports = {
