@@ -50,14 +50,14 @@ INFURA_API_KEY="YOUR_API_KEY"
 
 ```
 
-Then do:
+To run tests:
 
 ```bash
 npm install
 npx hardhat test
 ```
 
-...or run test coverage:
+...or to run test coverage:
 
 ```bash
 npm install
