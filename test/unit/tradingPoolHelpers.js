@@ -80,6 +80,11 @@ describe("TradingPoolHelpers", function () {
     expect(await weth.balanceOf(owner.address)).to.equal(
       balanceBefore.sub(buyQuote)
     );
+
+    // Should throw an error when simulating a buy with an invalid pool address
+    await expect(
+      tradingPoolHelpers.simulateBuy(ethers.constants.AddressZero, [0, 1])
+    ).to.be.revertedWith("TPH:INVALID_POOL");
   });
 
   it("Should get the right sell quote", async function () {
