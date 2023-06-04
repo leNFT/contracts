@@ -37,7 +37,6 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
         lpExists(tradingPool, tokenId)
         returns (string memory)
     {
-        // forgefmt: disable-next-item
         bytes memory metadata;
 
         {
@@ -89,7 +88,6 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
             tokenId
         );
 
-        // forgefmt: disable-next-item
         bytes memory _attributes;
 
         {
@@ -152,7 +150,6 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
 
         // break up svg building into multiple scopes to avoid stack too deep errors
         {
-            // forgefmt: disable-next-item
             _svg = abi.encodePacked(
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" style="width:100%;background:#eaeaea;fill:black;font-family:monospace">',
                 '<text x="50%" y="24px" font-size="12" text-anchor="middle">',
@@ -167,7 +164,6 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
         }
 
         {
-            // forgefmt: disable-next-item
             _svg = abi.encodePacked(
                 _svg,
                 "Trading pool: ",
@@ -230,7 +226,6 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
         string memory traitType,
         string memory value
     ) internal pure returns (string memory) {
-        // forgefmt: disable-next-item
         return
             string(
                 abi.encodePacked(
@@ -248,7 +243,9 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
         address tradingPool,
         uint256 tokenId
     ) internal view {
-        try IERC721(tradingPool).ownerOf(tokenId) {} catch {
+        try
+            IERC721(tradingPool).ownerOf(tokenId) // solhint-disable-next-line no-empty-blocks
+        {} catch {
             revert("LPM:LP_NOT_FOUND");
         }
     }

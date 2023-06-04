@@ -557,7 +557,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         try
             IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
                 tokenId
-            )
+            ) // solhint-disable-next-line no-empty-blocks
         {} catch {
             revert("GC:LOCK_NOT_FOUND");
         }
