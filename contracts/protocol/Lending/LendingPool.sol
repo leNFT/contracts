@@ -117,7 +117,7 @@ contract LendingPool is ERC165, ILendingPool, ERC4626, Ownable {
         address owner,
         uint256 assets,
         uint256 shares
-    ) internal override poolNotPaused {
+    ) internal override {
         ValidationLogic.validateWithdrawal(
             _addressProvider,
             _lendingPoolConfig.maxUtilizationRate,

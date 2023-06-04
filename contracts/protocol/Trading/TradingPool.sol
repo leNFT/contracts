@@ -263,9 +263,7 @@ contract TradingPool is
 
     /// @notice Removes liquidity, sending back deposited tokens and transferring the NFTs to the user
     /// @param lpId The ID of the LP token to remove
-    function removeLiquidity(
-        uint256 lpId
-    ) public override nonReentrant poolNotPaused {
+    function removeLiquidity(uint256 lpId) public override nonReentrant {
         //Require the caller owns LP
         require(msg.sender == ERC721.ownerOf(lpId), "TP:RL:NOT_OWNER");
 
