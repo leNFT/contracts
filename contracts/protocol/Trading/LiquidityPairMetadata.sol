@@ -248,9 +248,8 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
         address tradingPool,
         uint256 tokenId
     ) internal view {
-        require(
-            IERC721(tradingPool).ownerOf(tokenId) != address(0),
-            "LPM:LP_NOT_FOUND"
-        );
+        try IERC721(tradingPool).ownerOf(tokenId) {} catch {
+            revert("LPM:LP_NOT_FOUND");
+        }
     }
 }

@@ -72,6 +72,11 @@ describe("LiquidityPairMetadata", function () {
     const decodedData = Buffer.from(decodedDataBuffer).toString("utf-8"); // Convert ArrayBuffer to a UTF-8 string using Buffer.from()
 
     expect(isValidJSON(decodedData)).to.be.true;
+
+    // Should throw an error if the token ID is invalid
+    await expect(
+      liquidityPairMetadata.tokenURI(poolAddress, 1)
+    ).to.be.revertedWith("LPM:LP_NOT_FOUND");
   });
 
   it("Should get a valid SVG", async function () {
