@@ -554,12 +554,13 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     }
 
     function _requireLockExists(uint256 tokenId) internal view {
-        require(
+        try
             IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
                 tokenId
-            ) != address(0),
-            "GC:LOCK_NOT_FOUND"
-        );
+            )
+        {} catch {
+            revert("GC:LOCK_NOT_FOUND");
+        }
     }
 
     function _requireNoFutureEpoch(uint256 epoch) internal view {

@@ -287,7 +287,7 @@ contract LendingMarket is
             "LM:SLP:NOT_POOL"
         );
 
-        // If setting the pool to an existing pool, make sure it's the same asset
+        // If setting the pool to an existing pool, make sure it's the asset is the expected one
         if (pool != address(0)) {
             require(
                 IERC4626Upgradeable(pool).asset() == asset,

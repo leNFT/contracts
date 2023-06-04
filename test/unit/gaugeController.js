@@ -96,6 +96,11 @@ describe("GaugeController", () => {
       tradingGauge.address
     );
 
+    // Should throw an error if the address is not a gauge
+    await expect(
+      gaugeController.removeGauge(ethers.constants.AddressZero)
+    ).to.be.revertedWith("GC:INVALID_GAUGE");
+
     // Remove a trading gauge
     const removeGaugeTx = await gaugeController.removeGauge(
       tradingGauge.address
@@ -181,6 +186,7 @@ describe("GaugeController", () => {
       tradingGauge.address,
       epoch
     );
+
     // Use the point to calculate the weight of the user at the time of the nextblock (which will be the same as the total weight)
     const lockHistoryPoint = await votingEscrow.getLockHistoryPoint(0, 0);
     const epochTimestamp = await votingEscrow.getEpochTimestamp(epoch);
@@ -189,6 +195,14 @@ describe("GaugeController", () => {
     );
 
     expect(gaugeWeight).to.equal(userEpochWeight);
+
+    // Should throw an error if the epoch is in the future
+    await expect(
+      gaugeController.callStatic.getGaugeWeightAt(
+        tradingGauge.address,
+        epoch.add(1)
+      )
+    ).to.be.revertedWith("GC:FUTURE_EPOCH");
   });
   it("Should vote for a gauge", async function () {
     // Create a lock with the LE
@@ -235,6 +249,11 @@ describe("GaugeController", () => {
     expect(
       await gaugeController.getLockVoteWeightForGauge(0, tradingGauge.address)
     ).to.equal(BigNumber.from(await votingEscrow.getLockWeight(0)));
+
+    // Should throw an error if the lock does not exist
+    await expect(gaugeController.getLockVoteRatio(1)).to.be.revertedWith(
+      "GC:LOCK_NOT_FOUND"
+    );
   });
   it("Should set the lp maturity period", async function () {
     const newLPMaturityPeriod = 8;
@@ -245,6 +264,11 @@ describe("GaugeController", () => {
 
     expect(await gaugeController.getLPMaturityPeriod()).to.equal(
       newLPMaturityPeriod
+    );
+
+    // Should throw an error if setting the period to 0
+    await expect(gaugeController.setLPMaturityPeriod(0)).to.be.revertedWith(
+      "GC:SLPMP:INVALID_MATURITY_PERIOD"
     );
   });
   it("Should get the rewards for a certain epoch", async function () {

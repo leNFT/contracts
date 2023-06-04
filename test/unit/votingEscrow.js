@@ -68,6 +68,11 @@ describe("VotingEscrow", () => {
     const decodedData = Buffer.from(decodedDataBuffer).toString("utf-8"); // Convert ArrayBuffer to a UTF-8 string using Buffer.from()
 
     expect(isValidJSON(decodedData)).to.be.true;
+
+    // SHould throw if the token does not exist
+    await expect(votingEscrow.tokenURI(1)).to.be.revertedWith(
+      "VE:LOCK_NOT_FOUND"
+    );
   });
   it("Should get the correct SVG", async function () {
     // Create a lock with the LE
@@ -191,6 +196,11 @@ describe("VotingEscrow", () => {
     expect(await votingEscrow.callStatic.getTotalWeightAt(epoch)).to.equal(
       userEpochWeight
     );
+
+    // Should throw if the epoch is in the future
+    await expect(
+      votingEscrow.callStatic.getTotalWeightAt(epoch + 1)
+    ).to.be.revertedWith("VE:FUTURE_EPOCH");
   });
   it("Should get the total weight", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;
@@ -371,6 +381,14 @@ describe("VotingEscrow", () => {
     // Should have increased the amount in the lock
     const lock = await votingEscrow.getLock(0);
     expect(lock.amount).to.equal(ethers.utils.parseEther("20000"));
+
+    // Increase the time so that the lock expires
+    await time.increaseTo(unlockTime);
+
+    // Should throw out an error if the user tries to increase the amount
+    await expect(
+      votingEscrow.increaseAmount(0, ethers.utils.parseEther("10000"))
+    ).to.be.revertedWith("VE:LOCK_EXPIRED");
   });
   it("Should increase the unlockTime in a lock", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;
@@ -388,6 +406,13 @@ describe("VotingEscrow", () => {
       unlockTime
     );
     await lockTx.wait();
+
+    // Should throw out an error if another user tries to increase the unlock time
+    await expect(
+      votingEscrow
+        .connect(address1)
+        .increaseUnlockTime(0, unlockTime + 3600 * 24 * 30)
+    ).to.be.revertedWith("VE:NOT_OWNER");
 
     // Should increase the unlock time
     const increaseUnlockTimeTx = await votingEscrow.increaseUnlockTime(
