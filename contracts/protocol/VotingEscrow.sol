@@ -700,7 +700,7 @@ contract VotingEscrow is
     }
 
     function _requireLockOwner(uint256 tokenId) internal view {
-        require(ownerOf(tokenId) == msg.sender, "VE:NOT_OWNER");
+        require(_ownerOf(tokenId) == msg.sender, "VE:NOT_OWNER");
     }
 
     function _requireLockNotExpired(uint256 tokenId) internal view {
