@@ -130,25 +130,22 @@ library ValidationLogic {
         ITokenOracle tokenOracle = ITokenOracle(
             addressProvider.getTokenOracle()
         );
-        uint256 assetETHPrice = tokenOracle.getTokenETHPrice(params.asset);
-        uint256 pricePrecision = tokenOracle.getPricePrecision();
-        uint256 collateralETHPrice = INFTOracle(addressProvider.getNFTOracle())
-            .getTokensETHPrice(
-                params.nftAddress,
-                params.nftTokenIds,
-                params.request,
-                params.packet
-            );
 
         // Check if borrow amount exceeds allowed amount
         require(
             params.amount <=
                 (PercentageMath.percentMul(
-                    collateralETHPrice,
+                    INFTOracle(addressProvider.getNFTOracle())
+                        .getTokensETHPrice(
+                            params.nftAddress,
+                            params.nftTokenIds,
+                            params.request,
+                            params.packet
+                        ),
                     ILoanCenter(addressProvider.getLoanCenter())
                         .getCollectionMaxLTV(params.nftAddress) + maxLTVBoost
-                ) * pricePrecision) /
-                    assetETHPrice,
+                ) * tokenOracle.getPricePrecision()) /
+                    tokenOracle.getTokenETHPrice(params.asset),
             "VL:VB:MAX_LTV_EXCEEDED"
         );
 
