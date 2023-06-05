@@ -27,8 +27,8 @@ contract SwapRouter is ISwapRouter, ReentrancyGuard {
 
     /// @notice Swaps tokens between two different trading pools
     /// @dev The pools must have the same underlying token
-    /// @param buyPool The address of the trading pool where the user will buy NFTs
-    /// @param sellPool The address of the trading pool where the user will sell NFTs
+    /// @param buyPool The address of the trading pool from which the user will buy NFTs
+    /// @param sellPool The address of the trading pool fro which the user will sell NFTs
     /// @param buyNftIds The IDs of the NFTs that the user will buy
     /// @param maximumBuyPrice The maximum price that the user is willing to pay for the NFTs
     /// @param sellNftIds The IDs of the NFTs that the user will sell
