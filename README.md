@@ -57,9 +57,16 @@ npm install
 npx hardhat test
 ```
 
-...or to run test coverage:
+To run test coverage:
 
 ```bash
 npm install
 npx hardhat coverage
+```
+
+To run solhint:
+
+```bash
+npm install
+npx hardhat check
 ```
