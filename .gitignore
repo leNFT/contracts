@@ -15,7 +15,6 @@ hardhat.config.js
 .env*
 
 # solhint linter files
-.solhint.json
 scripts/createTradingGauge.js
 scripts/createLendingGauge.js
 scripts/runFunction.js
