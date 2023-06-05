@@ -96,12 +96,6 @@ library ValidationLogic {
         // Check if the lending pool exists
         require(lendingPool != address(0), "VL:VB:INVALID_LENDING_POOL");
 
-        ITokenOracle tokenOracle = ITokenOracle(
-            addressProvider.getTokenOracle()
-        );
-        uint256 assetETHPrice = tokenOracle.getTokenETHPrice(params.asset);
-        uint256 pricePrecision = tokenOracle.getPricePrecision();
-
         // Get boost from genesis NFTs
         uint256 maxLTVBoost;
         if (params.genesisNFTId != 0) {
@@ -133,6 +127,11 @@ library ValidationLogic {
         }
 
         // Get assets ETH price
+        ITokenOracle tokenOracle = ITokenOracle(
+            addressProvider.getTokenOracle()
+        );
+        uint256 assetETHPrice = tokenOracle.getTokenETHPrice(params.asset);
+        uint256 pricePrecision = tokenOracle.getPricePrecision();
         uint256 collateralETHPrice = INFTOracle(addressProvider.getNFTOracle())
             .getTokensETHPrice(
                 params.nftAddress,
