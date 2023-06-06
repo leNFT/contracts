@@ -515,7 +515,7 @@ contract GenesisNFT is
         IVault(_balancerDetails.vault).exitPool(
             _balancerDetails.poolId,
             address(this),
-            payable(this),
+            payable(address(this)),
             IVault.ExitPoolRequest({
                 assets: _asIAsset(tokens),
                 minAmountsOut: minAmountsOut,
@@ -656,10 +656,5 @@ contract GenesisNFT is
                 "G:B:INVALID_POOL_TOKENS"
             );
         }
-    }
-
-    // Function to receive Ether
-    receive() external payable {
-        revert("G:RECEIVE_NOT_ALLOWED");
     }
 }
