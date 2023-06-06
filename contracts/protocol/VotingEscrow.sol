@@ -48,7 +48,7 @@ contract VotingEscrow is
     uint256[] private _totalLockedHistory;
     // Last checkpoint for the total weight
     DataTypes.Point private _lastWeightCheckpoint;
-    // Slope Changes per timestamp
+    // Total weight slope Changes per timestamp
     mapping(uint256 => uint256) private _slopeChanges;
     CountersUpgradeable.Counter private _tokenIdCounter;
 
@@ -307,7 +307,7 @@ contract VotingEscrow is
         _lockHistory[tokenId].push(newPoint);
     }
 
-    /// @notice Returns the length of the history array for the specified user.
+    /// @notice Returns the length of the history array for the specified lock.
     /// @param tokenId The token id of the lock for which to retrieve the history length.
     /// @return The length of the user's history array.
     function getLockHistoryLength(
@@ -316,7 +316,7 @@ contract VotingEscrow is
         return _lockHistory[tokenId].length;
     }
 
-    /// @notice Returns the user's history point at a given index.
+    /// @notice Returns the lock's history point at a given index.
     /// @param tokenId The token id of the lock for which to retrieve the history point.
     /// @param index The index of the history point to retrieve.
     /// @return The user's history point at the given index.
@@ -365,9 +365,8 @@ contract VotingEscrow is
         return _totalWeightHistory[_epoch];
     }
 
-    /// @notice Returns the total weight of locked tokens.
-    /// @dev Might not return the most up-to-date value if the total weight has not been updated in the current epoch.
-    /// @return The total weight of locked tokens.
+    /// @notice Returns the total weight for all the locks at the current block timestamp
+    /// @return The total weight for all the locks.
     function getTotalWeight() public returns (uint256) {
         // Update total weight history
         writeTotalWeightHistory();
@@ -387,14 +386,14 @@ contract VotingEscrow is
         if (_lockedBalance[tokenId].end < block.timestamp) {
             return 0;
         }
-        DataTypes.Point memory lastUserPoint = _lockHistory[tokenId][
+        DataTypes.Point memory lastLockPoint = _lockHistory[tokenId][
             _lockHistory[tokenId].length - 1
         ];
 
         return
-            lastUserPoint.bias -
-            lastUserPoint.slope *
-            (block.timestamp - lastUserPoint.timestamp);
+            lastLockPoint.bias -
+            lastLockPoint.slope *
+            (block.timestamp - lastLockPoint.timestamp);
     }
 
     /// @notice Returns the weight of locked tokens for a given account.
@@ -409,10 +408,11 @@ contract VotingEscrow is
         }
     }
 
-    /// @dev Locks tokens into the voting escrow contract for a specified amount of time.
+    /// @notice Locks tokens into the voting escrow contract for a specified amount of time.
     /// @param receiver The address that will receive the locked tokens.
     /// @param amount The amount of tokens to be locked.
     /// @param unlockTime The timestamp at which the tokens will be unlocked.
+    /// @dev Calls a checkpoint event
     function createLock(
         address receiver,
         uint256 amount,
@@ -440,13 +440,14 @@ contract VotingEscrow is
         // Setup the next claimable rebate epoch
         _nextClaimableEpoch[tokenId] = getEpoch(block.timestamp) + 1;
 
-        // Save oldLocked and update the locked balance
+        // Update the locked balance
         DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
         _lockedBalance[tokenId].init(amount, roundedUnlockTime);
 
         // Call a checkpoint and update global tracking vars
         _checkpoint(tokenId, oldLocked, _lockedBalance[tokenId]);
 
+        // Transfer the locked tokens from the caller to this contract
         IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransferFrom(
             msg.sender,
             address(this),
@@ -523,10 +524,10 @@ contract VotingEscrow is
             "VE:IUT:LOCKTIME_TOO_HIGH"
         );
 
-        // Claim any existing rebates
+        // Claim any existing rebates so they are not lost
         claimRebates(tokenId);
 
-        // Save oldLocked and update the locked balance
+        // Cache oldLocked and update the locked balance
         DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
         _lockedBalance[tokenId].end = roundedUnlocktime;
 
@@ -559,7 +560,7 @@ contract VotingEscrow is
             "VE:W:HAS_ACTIVE_VOTES"
         );
 
-        // Claim any existing rebates
+        // Claim any existing rebates so they are not lost
         claimRebates(tokenId);
 
         // Save oldLocked and update the locked balance
@@ -592,6 +593,7 @@ contract VotingEscrow is
         lockOwner(tokenId)
         returns (uint256 amountToClaim)
     {
+        // Update total weight tracking vars
         writeTotalWeightHistory();
 
         // Claim all the available rebates for the lock

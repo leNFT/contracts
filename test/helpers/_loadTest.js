@@ -1,8 +1,8 @@
 const { ethers } = require("hardhat");
 const helpers = require("@nomicfoundation/hardhat-network-helpers");
-require("dotenv").config();
 const { priceSigner } = require("./getPriceSig.js");
 const { time } = require("@nomicfoundation/hardhat-network-helpers");
+require("dotenv").config();
 
 let loadEnv = async function (isMainnetFork) {
   //Reset the fork if it's genesis

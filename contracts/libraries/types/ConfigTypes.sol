@@ -9,7 +9,7 @@ library ConfigTypes {
     /// @param maxLiquidatorDiscount The maximum discount liquidators can get when liquidating a certain collateral with a certain price
     /// @param auctioneerFee The fee borrowers have to pay to the auctioneer when repaying a loan after liquidation (% of debt)
     /// @param liquidationFee The fee liquidators have to pay to the protocol when liquidating a loan
-    /// @param maxUtilizationRate The maximum utilization rate of the pool for withdraws
+    /// @param maxUtilizationRate The maximum utilization rate of the pool for withdrawals
     struct LendingPoolConfig {
         uint256 maxLiquidatorDiscount;
         uint256 auctioneerFee;
