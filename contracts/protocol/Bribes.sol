@@ -224,16 +224,9 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
         );
 
         // Iterate over a max of 50 epochs
-        uint256 epoch;
         uint256 gaugeWeightAtEpoch;
-
-        for (uint i = 0; i < 50; i++) {
-            // Break if we're at the current epoch or higher
-            epoch = _voteNextClaimableEpoch[token][gauge][tokenId];
-            if (epoch > currentEpoch) {
-                break;
-            }
-
+        uint256 epoch = _voteNextClaimableEpoch[token][gauge][tokenId];
+        for (uint i = 0; i < 50 && epoch <= currentEpoch; ) {
             gaugeWeightAtEpoch = gaugeController.getGaugeWeightAt(gauge, epoch);
             if (gaugeWeightAtEpoch > 0) {
                 // Increment amount to claim
@@ -248,8 +241,14 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
             }
 
             // Increment epoch
-            _voteNextClaimableEpoch[token][gauge][tokenId]++;
+            epoch++;
+
+            // Increment i
+            unchecked {
+                ++i;
+            }
         }
+        _voteNextClaimableEpoch[token][gauge][tokenId] = epoch;
 
         // Transfer claim to user
         if (amountToClaim > 0) {
