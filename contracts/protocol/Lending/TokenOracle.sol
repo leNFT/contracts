@@ -53,7 +53,7 @@ contract TokenOracle is ITokenOracle, Ownable {
 
             (, int price, , , ) = priceFeed.latestRoundData();
 
-            return uint256(price) * (PRICE_PRECISION / feedPrecision);
+            return (uint256(price) * PRICE_PRECISION) / feedPrecision;
         }
 
         // If there's no data feed we return the previously set price
