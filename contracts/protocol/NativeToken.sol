@@ -86,7 +86,7 @@ contract NativeToken is
 
     /// @notice Burns the specified amount of tokens for the Genesis contract.
     /// @dev The caller must be the Genesis NFT contract.
-    ///@param amount The amount of Genesis tokens to burn.
+    /// @param amount The amount of Genesis tokens to burn.
     function burnGenesisTokens(uint256 amount) external {
         require(
             msg.sender == _addressProvider.getGenesisNFT(),
@@ -112,6 +112,10 @@ contract NativeToken is
         _mint(receiver, amount);
     }
 
+    /// @notice Mints the specified amount of rebates to the specified receiver.
+    /// @dev The caller must be the voting escrow contract.
+    /// @param receiver The address to receive the rebates.
+    /// @param amount The amount of rebates to mint.
     function mintRebates(address receiver, uint256 amount) external override {
         require(
             msg.sender == _addressProvider.getVotingEscrow(),
