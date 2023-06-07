@@ -91,11 +91,8 @@ contract SwapRouter is ISwapRouter, ReentrancyGuard {
 
         // If the price difference + sell price is greater than the buy price, return the difference to the user
         if (sellPrice + priceDiff > buyPrice) {
-            IERC20(sellPoolToken).safeTransfer(
-                msg.sender,
-                sellPrice + priceDiff - buyPrice
-            );
             change = sellPrice + priceDiff - buyPrice;
+            IERC20(sellPoolToken).safeTransfer(msg.sender, change);
         }
     }
 
