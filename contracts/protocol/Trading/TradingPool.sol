@@ -327,8 +327,8 @@ contract TradingPool is
 
         uint256 lpIndex;
         uint256 fee;
-        uint256 totalFee;
         uint256 protocolFee;
+        uint256 totalProtocolFee;
         DataTypes.LiquidityPair memory lp;
         uint256 protocolFeePercentage = ITradingPoolFactory(
             _addressProvider.getTradingPoolFactory()
@@ -365,7 +365,7 @@ contract TradingPool is
 
             // Increase total price and fee sum
             finalPrice += (lp.spotPrice + fee);
-            totalFee += fee;
+            totalProtocolFee += protocolFee;
 
             // Update liquidity pair price
             if (lp.lpType != DataTypes.LPType.TradeDown) {
@@ -389,7 +389,7 @@ contract TradingPool is
         // Send protocol fee to protocol fee distributor
         IERC20(_token).safeTransfer(
             _addressProvider.getFeeDistributor(),
-            PercentageMath.percentMul(totalFee, protocolFeePercentage)
+            totalProtocolFee
         );
         IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
             _token
@@ -427,8 +427,8 @@ contract TradingPool is
             );
         }
 
-        uint256 totalFee;
-        uint256 fee; // We dont declare the protocol fee here to avoid stack too deep errors
+        uint256 totalProtocolFee;
+        uint256 fee;
         DataTypes.LiquidityPair memory lp;
         uint256 lpIndex;
         uint256 protocolFeePercentage = ITradingPoolFactory(
@@ -480,7 +480,10 @@ contract TradingPool is
 
             // Update total price quote and fee sum
             finalPrice += (lp.spotPrice - fee);
-            totalFee += fee;
+            totalProtocolFee += PercentageMath.percentMul(
+                fee,
+                protocolFeePercentage
+            );
 
             // Update liquidity pair price
             if (lp.lpType != DataTypes.LPType.TradeUp) {
@@ -498,7 +501,7 @@ contract TradingPool is
         // Send protocol fee to protocol fee distributor and call a checkpoint
         IERC20(_token).safeTransfer(
             _addressProvider.getFeeDistributor(),
-            PercentageMath.percentMul(totalFee, protocolFeePercentage)
+            totalProtocolFee
         );
         IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
             _token
