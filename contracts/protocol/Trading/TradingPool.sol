@@ -261,9 +261,23 @@ contract TradingPool is
         _lpCount++;
     }
 
-    /// @notice Removes liquidity, sending back deposited tokens and transferring the NFTs to the user
+    /// @notice Removes liquidity pair, sending back deposited tokens and transferring the NFTs to the user
     /// @param lpId The ID of the LP token to remove
     function removeLiquidity(uint256 lpId) public override nonReentrant {
+        _removeLiquidity(lpId);
+    }
+
+    /// @notice Removes liquidity pairs in batches by calling the removeLiquidity function for each LP token ID in the lpIds array
+    /// @param lpIds The IDs of the LP tokens to remove liquidity from
+    function removeLiquidityBatch(uint256[] calldata lpIds) external override {
+        for (uint i = 0; i < lpIds.length; i++) {
+            _removeLiquidity(lpIds[i]);
+        }
+    }
+
+    /// @notice Private function that removes a liquidity pair, sending back deposited tokens and transferring the NFTs to the user
+    /// @param lpId The ID of the LP token to remove
+    function _removeLiquidity(uint256 lpId) private {
         //Require the caller owns LP
         require(msg.sender == ERC721.ownerOf(lpId), "TP:RL:NOT_OWNER");
 
@@ -291,14 +305,6 @@ contract TradingPool is
         ERC721._burn(lpId);
 
         emit RemoveLiquidity(msg.sender, lpId);
-    }
-
-    /// @notice Removes liquidity in batches by calling the removeLiquidity function for each LP token ID in the lpIds array
-    /// @param lpIds The IDs of the LP tokens to remove liquidity from
-    function removeLiquidityBatch(uint256[] calldata lpIds) external override {
-        for (uint i = 0; i < lpIds.length; i++) {
-            removeLiquidity(lpIds[i]);
-        }
     }
 
     /// @notice Buys NFTs in exchange for pool tokens
