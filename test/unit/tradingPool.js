@@ -3,6 +3,7 @@ const { ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
 const load = require("../helpers/_loadTest.js");
 const { getPriceSig } = require("../helpers/getPriceSig.js");
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("TradingPool", function () {
   load.loadTest(false);
@@ -312,6 +313,9 @@ describe("TradingPool", function () {
     );
     await depositTx.wait();
 
+    // Get the token balance before
+    const tokenBalanceBefore = await weth.balanceOf(owner.address);
+
     // Buy the tokens
     const buyTx = await tradingPool.buy(owner.address, [0], "105000000000000");
     await buyTx.wait();
@@ -324,6 +328,31 @@ describe("TradingPool", function () {
     expect(lp.nftIds).to.deep.equal([]);
     expect(lp.tokenAmount).to.equal("204500000000000");
     expect(lp.spotPrice).to.equal("100500000000000");
+
+    // Get the token balance after
+    const tokenBalanceAfter = await weth.balanceOf(owner.address);
+    expect(tokenBalanceBefore.sub(tokenBalanceAfter)).to.equal(
+      "105000000000000"
+    );
+
+    // Get the protocol fee percentage so we can calculate the protocol fee
+    const protocolFeePercentage =
+      await tradingPoolFactory.getProtocolFeePercentage();
+    // Calculate the protocol fee
+    const protocolFee = BigNumber.from("100000000000000")
+      .mul("500")
+      .mul(protocolFeePercentage)
+      .div("10000")
+      .div("10000");
+    console.log(protocolFee.toString());
+
+    // The fee should be in the fee distribution contract
+    expect(
+      await feeDistributor.getTotalFeesAt(
+        weth.address,
+        votingEscrow.getEpoch(await time.latest())
+      )
+    ).to.equal(protocolFee);
   });
   it("Should be able to buy multiple tokens", async function () {
     // Create a new trading pool
@@ -429,6 +458,9 @@ describe("TradingPool", function () {
     );
     await depositTx.wait();
 
+    // Balance before
+    const tokenBalanceBefore = await weth.balanceOf(owner.address);
+
     // Buy the tokens
     const sellTx = await tradingPool.sell(
       owner.address,
@@ -446,6 +478,31 @@ describe("TradingPool", function () {
     expect(lp.nftIds).to.deep.equal([BigNumber.from(0)]);
     expect(lp.tokenAmount).to.equal("52250000000000");
     expect(lp.spotPrice).to.equal("49751243781095");
+
+    // Balance after
+    const tokenBalanceAfter = await weth.balanceOf(owner.address);
+    expect(tokenBalanceAfter.sub(tokenBalanceBefore)).to.equal(
+      "47500000000000"
+    );
+
+    // Get the protocol fee percentage so we can calculate the protocol fee
+    const protocolFeePercentage =
+      await tradingPoolFactory.getProtocolFeePercentage();
+    // Calculate the protocol fee
+    const protocolFee = BigNumber.from("50000000000000")
+      .mul("500")
+      .mul(protocolFeePercentage)
+      .div("10000")
+      .div("10000");
+    console.log(protocolFee.toString());
+
+    // The fee should be in the fee distribution contract
+    expect(
+      await feeDistributor.getTotalFeesAt(
+        weth.address,
+        votingEscrow.getEpoch(await time.latest())
+      )
+    ).to.equal(protocolFee);
   });
   it("Should be able to sell multiple tokens", async function () {
     // Create a new trading pool
