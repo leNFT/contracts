@@ -31,13 +31,13 @@ describe("GenesisNFT", () => {
       tokenWeights = ["200000000000000000", "800000000000000000"];
       maxAmountsIn = [
         BigNumber.from(ethers.utils.parseEther("0.5")),
-        BigNumber.from(ethers.utils.parseEther("20000")),
+        BigNumber.from(ethers.utils.parseEther("200000")),
       ];
     } else {
       tokenAddresses = [nativeToken.address, wethAddress];
       tokenWeights = ["800000000000000000", "200000000000000000"];
       maxAmountsIn = [
-        BigNumber.from(ethers.utils.parseEther("20000")),
+        BigNumber.from(ethers.utils.parseEther("200000")),
         BigNumber.from(ethers.utils.parseEther("0.5")),
       ];
     }
@@ -88,7 +88,7 @@ describe("GenesisNFT", () => {
 
     const approveLETx = await nativeToken.approve(
       vault.address,
-      ethers.utils.parseEther("20000")
+      ethers.utils.parseEther("200000")
     );
     await approveLETx.wait();
     const userData = ethers.utils.defaultAbiCoder.encode(
@@ -96,7 +96,7 @@ describe("GenesisNFT", () => {
       [0, maxAmountsIn]
     );
 
-    // Deposit in the vault so the genesis can operate normally
+    // Deposit in the vault so the genesis can have some funds to operate normally
     const depositPoolTx = await vault.joinPool(
       poolId,
       owner.address,
@@ -131,7 +131,7 @@ describe("GenesisNFT", () => {
 
     // Mint Genesis NFT
     const mintGenesisNFTTx = await genesisNFT.mint(locktime, 1, {
-      value: await genesisNFT.getPrice(), // 0.35 ETH
+      value: await genesisNFT.getPrice(), // 0.25 ETH
     });
     await mintGenesisNFTTx.wait();
 
@@ -160,8 +160,16 @@ describe("GenesisNFT", () => {
     // The mint count should be 1
     expect(await genesisNFT.mintCount()).to.equal(1);
 
-    // Find if the user received has a an LE lock
+    // Find if the user received an LE lock
     expect(await votingEscrow.balanceOf(owner.address)).to.equal(1);
+
+    console.log(
+      "Lock Amount: ",
+      ethers.utils.formatUnits(
+        (await votingEscrow.getLock(0)).amount.toString(),
+        18
+      )
+    );
 
     // Find if the received lock is for the right amount of LE
     expect((await votingEscrow.getLock(0)).amount).to.equal(nativeTokenReward);
@@ -170,7 +178,7 @@ describe("GenesisNFT", () => {
     const locktime = 60 * 60 * 24 * 120; // 120 days
     // Mint 2 Genesis NFT so the pool has enough liquidity to exit
     const mintGenesisNFTTx = await genesisNFT.mint(locktime, 1, {
-      value: await genesisNFT.getPrice(), // 0.35 ETH
+      value: await genesisNFT.getPrice(), // 0.25 ETH
     });
     await mintGenesisNFTTx.wait();
 
@@ -200,7 +208,7 @@ describe("GenesisNFT", () => {
 
     // Mint Genesis NFT
     const mintGenesisNFTTx = await genesisNFT.mint(locktime, 1, {
-      value: await genesisNFT.getPrice(), // 0.35 ETH * 10
+      value: await genesisNFT.getPrice(), // 0.25 ETH * 10
     });
     await mintGenesisNFTTx.wait();
 

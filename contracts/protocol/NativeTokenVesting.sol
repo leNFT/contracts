@@ -13,7 +13,7 @@ import {INativeToken} from "../interfaces/INativeToken.sol";
 /// @notice Contract that allows to set vesting parameters for a specified account
 /// @dev Provides functionality for vesting tokens and defines a cap on the amount of tokens that can be vested
 contract NativeTokenVesting is Ownable {
-    uint256 private constant VESTING_CAP = 40e24; // 40M Vesting Cap (17.5M Team + 17.5M Treasury + 5M Liquidity Mining)
+    uint256 private constant VESTING_CAP = 4e26; // 400M Vesting Cap (175M Team + 175M Treasury + 5M Liquidity Mining)
     uint256 private constant MIN_CLIFF_PERIOD = 1 weeks; // TESTNET: 0 weeks
     IAddressProvider private immutable _addressProvider;
     mapping(address => DataTypes.VestingParams) private _vestingParams;

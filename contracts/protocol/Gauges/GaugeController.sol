@@ -19,6 +19,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     uint256 private constant INFLATION_PERIOD = 52; // 52 epochs (1 year)
     uint256 private constant MAX_INFLATION_PERIODS = 8; // Maximum 8 inflation periods (8 years) and then base emissions
     uint256 private constant LOADING_PERIOD = 24; // 24 epochs (6 months)
+    uint256 private constant INITIAL_REWARDS = 28e23; // 2.8 million tokens per epoch
 
     IAddressProvider private _addressProvider;
 
@@ -44,7 +45,6 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         private _lockGaugeVotePoint;
     mapping(address => bool) private _isGauge;
     mapping(address => address) private _liquidityPoolToGauge;
-    uint256 private _initialRewards;
     uint256 private _lpMaturityPeriod; // in seconds
 
     using ERC165CheckerUpgradeable for address;
@@ -71,16 +71,13 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
 
     /// @notice Initializes the contract by setting up the owner and the addresses provider contract.
     /// @param addressProvider Address provider contract.
-    /// @param initialRewards The initial rewards rate for the token (after the loading period)
     /// @param lpMaturityPeriod The maturity period for the LP tokens
     function initialize(
         IAddressProvider addressProvider,
-        uint256 initialRewards,
         uint256 lpMaturityPeriod
     ) external initializer {
         __Ownable_init();
         _addressProvider = addressProvider;
-        _initialRewards = initialRewards;
         _lpMaturityPeriod = lpMaturityPeriod;
         _totalWeigthHistory.push(0);
         _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);
@@ -478,11 +475,11 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @notice Returns the maximum amount of tokens that can be distributed as rewards for the specified epoch.
     /// @param epoch The epoch for which to get the rewards.
     /// @return The maximum amount of tokens that can be distributed as rewards for the specified epoch.
-    function getRewardsCeiling(uint256 epoch) public view returns (uint256) {
+    function getRewardsCeiling(uint256 epoch) public pure returns (uint256) {
         uint256 inflationEpoch;
         // If we are in the loading period, return smaller rewards
         if (epoch < LOADING_PERIOD) {
-            return (_initialRewards * epoch) / LOADING_PERIOD;
+            return (INITIAL_REWARDS * epoch) / LOADING_PERIOD;
         } else if (inflationEpoch > MAX_INFLATION_PERIODS) {
             inflationEpoch = MAX_INFLATION_PERIODS;
         } else {
@@ -490,7 +487,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         }
 
         return
-            (_initialRewards * (3 ** inflationEpoch)) / (4 ** inflationEpoch);
+            (INITIAL_REWARDS * (3 ** inflationEpoch)) / (4 ** inflationEpoch);
     }
 
     /// @notice Returns the amount of tokens to distribute as rewards for the specified epoch.

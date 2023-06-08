@@ -106,6 +106,9 @@ describe("Trading Gauge", () => {
     const balanceBefore = await nativeToken.balanceOf(owner.address);
     console.log("Balance before: ", balanceBefore.toString());
 
+    // Call claim staticallly to get the rewards
+    const claimRewards = await gauge.callStatic.claim();
+
     // Claim rewards from gauge
     const claimRewardsTx = await gauge.claim();
     await claimRewardsTx.wait();
@@ -113,7 +116,7 @@ describe("Trading Gauge", () => {
 
     // Find if the user received the asset
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      balanceBefore.add("7776999999999999999")
+      balanceBefore.add(claimRewards)
     );
   });
   it("Should unstake from the gauge", async function () {

@@ -37,13 +37,13 @@ contract GenesisNFT is
     IGenesisNFT,
     ReentrancyGuardUpgradeable
 {
-    uint256 private constant LP_LE_AMOUNT = 4000e18; // 4000 LE
-    uint256 private constant LP_ETH_AMOUNT = 10e16; // 0.1 ETH
+    uint256 private constant LP_LE_AMOUNT = 4e22; // 40000 LE
+    uint256 private constant LP_ETH_AMOUNT = 1e17; // 0.1 ETH
     uint256 private constant MAX_CAP = 1337; // 1337 NFTs
     uint256 private constant PRICE = 25e16; // 0.25 ETH
     uint256 private constant MAX_LOCKTIME = 180 days;
     uint256 private constant MIN_LOCKTIME = 14 days;
-    uint256 private constant NATIVE_TOKEN_FACTOR = 4000000; // Controls the amount of native tokens minted per NFT
+    uint256 private constant NATIVE_TOKEN_FACTOR = 400000; // Controls the amount of native tokens minted per NFT
 
     IAddressProvider private _addressProvider;
     address payable private _devAddress;

@@ -21,7 +21,7 @@ describe("NativeTokenVesting", () => {
   });
   it("Shoud get the vesting cap", async function () {
     const vestingCap = await nativeTokenVesting.getVestingCap();
-    expect(vestingCap).to.equal(ethers.utils.parseEther("40000000"));
+    expect(vestingCap).to.equal(ethers.utils.parseEther("400000000"));
   });
   it("Set vesting for an account", async function () {
     const period = 60 * 60 * 24 * 30; // 30 days period

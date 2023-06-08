@@ -147,8 +147,7 @@ let loadEnv = async function (isMainnetFork) {
   const GaugeController = await ethers.getContractFactory("GaugeController");
   gaugeController = await upgrades.deployProxy(GaugeController, [
     addressProvider.address,
-    "280000000000000000000", // Initial epoch rewards
-    6 * 7 * 24 * 3600, // LP Maturation Period in seconds (set to 6 weeks)
+    6 * 7 * 24 * 3600, // Default LP Maturation Period in seconds (set to 6 weeks)
   ]);
 
   console.log("Deployed GaugeController");
@@ -358,16 +357,16 @@ let loadEnv = async function (isMainnetFork) {
     owner.address,
     0,
     7 * 24 * 60 * 60, // 7 days
-    ethers.utils.parseEther("10000000") // 10M tokens
+    ethers.utils.parseEther("100000000") // 100M tokens
   );
   await setVestingTx.wait();
 
   // Let 7 days pass
   await time.increase(7 * 24 * 60 * 60);
 
-  // Mint 10M tokens to the owner
+  // Mint 100M tokens to the owner
   const mintTx = await nativeTokenVesting.withdraw(
-    ethers.utils.parseEther("10000000") // 10M tokens
+    ethers.utils.parseEther("100000000") // 100M tokens
   );
   await mintTx.wait();
 

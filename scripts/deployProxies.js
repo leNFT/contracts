@@ -132,8 +132,7 @@ async function main() {
   const GaugeController = await ethers.getContractFactory("GaugeController");
   const gaugeController = await upgrades.deployProxy(GaugeController, [
     addressProvider.address,
-    "280000000000000000000000", // Initial epoch rewards (280k LE)
-    6 * 7 * 24 * 3600, // LP Maturation Period in seconds (set to 6 weeks)
+    6 * 7 * 24 * 3600, // Default LP Maturation Period in seconds (set to 6 weeks)
   ]);
   addresses["GaugeController"] = gaugeController.address;
 

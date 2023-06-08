@@ -113,9 +113,9 @@ describe("GaugeController", () => {
       ethers.constants.AddressZero
     );
   });
-  it("Should get the rewards for an epoch", async function () {
+  it("Should get the rewards ceiling for an epoch", async function () {
     const epochRewardCeiling = await gaugeController.getRewardsCeiling(1);
-    expect(epochRewardCeiling).to.equal("11666666666666666666");
+    expect(epochRewardCeiling).to.equal("116666666666666666666666"); // 117K tokens
   });
   it("Should get the current gauge weight", async function () {
     // Create a lock with the LE
@@ -308,7 +308,7 @@ describe("GaugeController", () => {
 
     // Get the rewards for the epoch 1
     expect(await gaugeController.callStatic.getEpochRewards(epoch)).to.equal(
-      "32941720000000000000"
+      "329417200000000000000000"
     );
   });
   it("Should get the gauge rewards for a certain epoch", async function () {

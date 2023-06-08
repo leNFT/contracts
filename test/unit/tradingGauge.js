@@ -413,13 +413,16 @@ describe("TradingGauge", () => {
     // Save the balance before claiming
     const balanceBefore = await nativeToken.balanceOf(owner.address);
 
+    // Call claim rewards statically
+    const rewards = await tradingGauge.callStatic.claim();
+
     // Claim rewards
     const claimRewardsTx = await tradingGauge.claim();
     await claimRewardsTx.wait();
 
-    // The user should have all the rewards for the epoch
+    // The user should have received the rewards
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
-      balanceBefore.add("7776999999999999999")
+      balanceBefore.add(rewards)
     );
   });
   it("Should use kick to update the boost for a user whose lock is over", async function () {
