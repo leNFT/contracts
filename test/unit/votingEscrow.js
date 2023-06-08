@@ -129,12 +129,12 @@ describe("VotingEscrow", () => {
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
-      ethers.utils.parseEther("10000000")
+      ethers.utils.parseEther("100000000")
     );
     await approveTx.wait();
     const lockTx = await votingEscrow.createLock(
       owner.address,
-      ethers.utils.parseEther("10000000"),
+      ethers.utils.parseEther("100000000"),
       unlockTime
     );
     await lockTx.wait();
@@ -476,12 +476,12 @@ describe("VotingEscrow", () => {
     // Create a lock with the LE
     const approveTx = await nativeToken.approve(
       votingEscrow.address,
-      ethers.utils.parseEther("10000")
+      ethers.utils.parseEther("100000")
     );
     await approveTx.wait();
     const lockTx = await votingEscrow.createLock(
       owner.address,
-      ethers.utils.parseEther("10000"),
+      ethers.utils.parseEther("100000"),
       unlockTime
     );
     await lockTx.wait();
@@ -522,23 +522,29 @@ describe("VotingEscrow", () => {
     // Save the balance of the owner
     const balanceBefore = await nativeToken.balanceOf(owner.address);
 
-    // Should claim the rebates for epoch 1
-    const claimTx = await votingEscrow.claimRebates(0);
-    await claimTx.wait();
-
     // Get the epoch rewards
     const epochRewards = await gaugeController.callStatic.getEpochRewards(
       epoch.toNumber() - 1
     );
+
     const epochTimestamp = await votingEscrow.getEpochTimestamp(
       epoch.toNumber() - 1
     );
 
+    const totalLocked = await nativeToken.balanceOf(votingEscrow.address);
+    const totalSupply = await nativeToken.totalSupply();
+    const epochRebates = epochRewards.mul(totalLocked).div(totalSupply);
+
+    // Should claim the rebates for epoch 1
+    const claimTx = await votingEscrow.claimRebates(0);
+    await claimTx.wait();
+
     const lock = await votingEscrow.getLock(0);
 
-    const rebates = BigNumber.from(epochRewards)
+    const rebates = epochRebates
+      .mul(lock.amount)
       .mul(lock.end.sub(epochTimestamp))
-      .div(4 * 52 * 7 * 24 * 60 * 60 * 1000);
+      .div(BigNumber.from(4 * 52 * 7 * 24 * 60 * 60).mul(totalLocked));
 
     // Should have the correct balance
     expect(await nativeToken.balanceOf(owner.address)).to.equal(
@@ -610,10 +616,6 @@ describe("VotingEscrow", () => {
     // Save the balance of the owner
     const balanceBefore = await nativeToken.balanceOf(owner.address);
 
-    // Should claim the rebates for epoch 1
-    const claimTx = await votingEscrow.claimRebatesBatch([0, 1]);
-    await claimTx.wait();
-
     const epochRewards = await gaugeController.callStatic.getEpochRewards(
       epoch.toNumber() - 1
     );
@@ -621,16 +623,26 @@ describe("VotingEscrow", () => {
       epoch.toNumber() - 1
     );
 
+    const totalLocked = await nativeToken.balanceOf(votingEscrow.address);
+    const totalSupply = await nativeToken.totalSupply();
+    const epochRebates = epochRewards.mul(totalLocked).div(totalSupply);
+
+    // Should claim the rebates for epoch 1
+    const claimTx = await votingEscrow.claimRebatesBatch([0, 1]);
+    await claimTx.wait();
+
     const lock1 = await votingEscrow.getLock(0);
     const lock2 = await votingEscrow.getLock(1);
 
-    const rebates1 = BigNumber.from(epochRewards)
+    const rebates1 = epochRebates
+      .mul(lock1.amount)
       .mul(lock1.end.sub(epochTimestamp))
-      .div(4 * 52 * 7 * 24 * 60 * 60 * 500 * 2);
+      .div(BigNumber.from(4 * 52 * 7 * 24 * 60 * 60).mul(totalLocked));
 
-    const rebates2 = BigNumber.from(epochRewards)
+    const rebates2 = epochRebates
+      .mul(lock2.amount)
       .mul(lock2.end.sub(epochTimestamp))
-      .div(4 * 52 * 7 * 24 * 60 * 60 * 500 * 2);
+      .div(BigNumber.from(4 * 52 * 7 * 24 * 60 * 60).mul(totalLocked));
 
     // Should have the correct balance
     expect(await nativeToken.balanceOf(owner.address)).to.equal(

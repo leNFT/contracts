@@ -308,7 +308,7 @@ describe("GaugeController", () => {
 
     // Get the rewards for the epoch 1
     expect(await gaugeController.callStatic.getEpochRewards(epoch)).to.equal(
-      "329417200000000000000000"
+      "347904197200000000000000"
     );
   });
   it("Should get the gauge rewards for a certain epoch", async function () {
