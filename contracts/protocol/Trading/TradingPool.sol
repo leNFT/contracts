@@ -18,7 +18,6 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {ILiquidityPairMetadata} from "../../interfaces/ILiquidityPairMetadata.sol";
-import {ITradingPool} from "../../interfaces/ITradingPool.sol";
 
 /// @title Trading Pool Contract
 /// @author leNFT
