@@ -76,6 +76,14 @@ contract InterestRate is IInterestRate, Ownable {
         ConfigTypes.InterestRateConfig memory interestRateConfig
     ) external onlySupported(token) onlyOwner {
         _interestRateConfigs[token] = interestRateConfig;
+
+        // Fill the optimal borrow rate
+        _interestRateConfigs[token].optimalBorrowRate =
+            PercentageMath.percentMul(
+                interestRateConfig.optimalUtilizationRate,
+                interestRateConfig.lowSlope
+            ) +
+            interestRateConfig.baseBorrowRate;
     }
 
     /// @notice Calculates the borrow rate based on the utilization rate
@@ -116,11 +124,7 @@ contract InterestRate is IInterestRate, Ownable {
     function getOptimalBorrowRate(
         address token
     ) public view onlySupported(token) returns (uint256) {
-        return
-            PercentageMath.percentMul(
-                _interestRateConfigs[token].optimalUtilizationRate,
-                _interestRateConfigs[token].lowSlope
-            ) + _interestRateConfigs[token].baseBorrowRate;
+        return _interestRateConfigs[token].optimalBorrowRate;
     }
 
     /// @notice Calculates the utilization rate based on the assets and debt
