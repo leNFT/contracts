@@ -330,7 +330,6 @@ contract VotingEscrow is
         lockExists(tokenId)
         returns (DataTypes.Point memory)
     {
-        require(index < _lockHistory[tokenId].length, "VE:GLHP:INDEX_TOO_HIGH");
         return _lockHistory[tokenId][index];
     }
 
