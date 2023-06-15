@@ -439,18 +439,13 @@ contract VotingEscrow is
         // Setup the next claimable rebate epoch
         _nextClaimableEpoch[tokenId] = getEpoch(block.timestamp) + 1;
 
-        // Update the locked balance
-        DataTypes.LockedBalance memory oldLocked = DataTypes.LockedBalance(
-            0,
-            0
-        );
         // Init the locked balance state variable
         _lockedBalance[tokenId].init(amount, roundedUnlockTime);
 
-        // Call a checkpoint and update global tracking vars
+        // Call a checkpoint and update global tracking vars (the old locked balance will be 0 since this is a new lock)
         _checkpoint(
             tokenId,
-            oldLocked,
+            DataTypes.LockedBalance(0, 0),
             DataTypes.LockedBalance(amount, roundedUnlockTime)
         );
 
