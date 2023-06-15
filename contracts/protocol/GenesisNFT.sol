@@ -240,10 +240,6 @@ contract GenesisNFT is
     function _getCircleColor(
         uint256 tokenId
     ) internal view returns (string memory) {
-        if (MAX_LOCKTIME == 0) {
-            return "000000"; // return black
-        }
-
         // Linear interpolation between black (0x000000) and gold (0xFFD700)
         uint256 colorValue = (uint256(0xFFD700) *
             _mintDetails[tokenId].locktime) / MAX_LOCKTIME;
