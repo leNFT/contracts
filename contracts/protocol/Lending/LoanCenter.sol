@@ -77,6 +77,7 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
 
     /// @notice Create a new loan with the specified parameters and add it to the loans list
     /// @dev Only the market contract can call this function
+    /// @param borrower The address of the borrower
     /// @param pool The address of the lending pool
     /// @param amount The amount of the lending pool token to be borrowed
     /// @param genesisNFTId The ID of the genesis NFT
@@ -85,7 +86,7 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
     /// @param borrowRate The interest rate for the loan
     /// @return The ID of the newly created loan
     function createLoan(
-        address owner,
+        address borrower,
         address pool,
         uint256 amount,
         uint256 genesisNFTId,
@@ -95,7 +96,7 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
     ) public override onlyMarket returns (uint256) {
         // Create the loan and add it to the list
         _loans[_loansCount].init(
-            owner,
+            borrower,
             pool,
             amount,
             genesisNFTId,
