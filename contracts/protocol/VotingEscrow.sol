@@ -440,11 +440,19 @@ contract VotingEscrow is
         _nextClaimableEpoch[tokenId] = getEpoch(block.timestamp) + 1;
 
         // Update the locked balance
-        DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
+        DataTypes.LockedBalance memory oldLocked = DataTypes.LockedBalance(
+            0,
+            0
+        );
+        // Init the locked balance state variable
         _lockedBalance[tokenId].init(amount, roundedUnlockTime);
 
         // Call a checkpoint and update global tracking vars
-        _checkpoint(tokenId, oldLocked, _lockedBalance[tokenId]);
+        _checkpoint(
+            tokenId,
+            oldLocked,
+            DataTypes.LockedBalance(amount, roundedUnlockTime)
+        );
 
         // Transfer the locked tokens from the caller to this contract
         IERC20Upgradeable(_addressProvider.getNativeToken()).safeTransferFrom(
