@@ -20,6 +20,7 @@ contract InterestRate is IInterestRate, Ownable {
     mapping(address => bool) private _isSupported;
     mapping(address => ConfigTypes.InterestRateConfig)
         private _interestRateConfigs;
+    mapping(address => uint256) private _optimalBorrowRates;
 
     modifier onlySupported(address token) {
         _requireOnlySupported(token);
@@ -35,7 +36,7 @@ contract InterestRate is IInterestRate, Ownable {
     ) external onlyOwner {
         require(_isSupported[token] == false, "IR:AT:TOKEN_ALREADY_SUPPORTED");
         _isSupported[token] = true;
-        _interestRateConfigs[token] = interestRateConfig;
+        setInterestRateConfig(token, interestRateConfig);
     }
 
     /// @notice Removes support for a token
@@ -45,6 +46,7 @@ contract InterestRate is IInterestRate, Ownable {
     ) external onlySupported(token) onlyOwner {
         delete _isSupported[token];
         delete _interestRateConfigs[token];
+        delete _optimalBorrowRates[token];
     }
 
     /// @notice Gets whether a token is supported
@@ -74,11 +76,11 @@ contract InterestRate is IInterestRate, Ownable {
     function setInterestRateConfig(
         address token,
         ConfigTypes.InterestRateConfig memory interestRateConfig
-    ) external onlySupported(token) onlyOwner {
+    ) public onlySupported(token) onlyOwner {
         _interestRateConfigs[token] = interestRateConfig;
 
         // Fill the optimal borrow rate
-        _interestRateConfigs[token].optimalBorrowRate =
+        _optimalBorrowRates[token] =
             PercentageMath.percentMul(
                 interestRateConfig.optimalUtilizationRate,
                 interestRateConfig.lowSlope
@@ -109,7 +111,7 @@ contract InterestRate is IInterestRate, Ownable {
                 );
         } else {
             return
-                getOptimalBorrowRate(token) +
+                _optimalBorrowRates[token] +
                 PercentageMath.percentMul(
                     utilizationRate -
                         _interestRateConfigs[token].optimalUtilizationRate,
@@ -124,7 +126,7 @@ contract InterestRate is IInterestRate, Ownable {
     function getOptimalBorrowRate(
         address token
     ) public view onlySupported(token) returns (uint256) {
-        return _interestRateConfigs[token].optimalBorrowRate;
+        return _optimalBorrowRates[token];
     }
 
     /// @notice Calculates the utilization rate based on the assets and debt

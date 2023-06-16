@@ -324,6 +324,8 @@ let loadEnv = async function (isMainnetFork) {
   );
   await setNativeTokenPriceTx.wait();
 
+  console.log("Set trusted price source");
+
   //Add a price to test token ( test token = 1 weth)
   const setTestTokenPriceTx = await tokenOracle.setTokenETHPrice(
     wethAddress,
@@ -339,6 +341,8 @@ let loadEnv = async function (isMainnetFork) {
     highSlope: 20000,
   });
   await setWETHInterestRateParamsTx.wait();
+
+  console.log("Set interest rate params");
 
   // Set price curves
   const setExponentialCurveTx = await tradingPoolFactory.setPriceCurve(

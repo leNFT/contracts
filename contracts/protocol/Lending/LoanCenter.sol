@@ -111,7 +111,7 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
         }
 
         // Add loan to active loans
-        _activeLoans[owner].push(_loansCount);
+        _activeLoans[borrower].push(_loansCount);
 
         // Increment the loans count and then return it
         return _loansCount++;
