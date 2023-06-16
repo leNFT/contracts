@@ -468,13 +468,7 @@ contract VotingEscrow is
     function increaseAmount(
         uint256 tokenId,
         uint256 amount
-    )
-        external
-        nonReentrant
-        lockExists(tokenId)
-        lockOwner(tokenId)
-        lockNotExpired(tokenId)
-    {
+    ) external nonReentrant lockOwner(tokenId) lockNotExpired(tokenId) {
         require(amount > 0, "VE:IA:AMOUNT_ZERO");
         // Claim any existing rebates
         claimRebates(tokenId);
@@ -505,13 +499,7 @@ contract VotingEscrow is
     function increaseUnlockTime(
         uint256 tokenId,
         uint256 newUnlockTime
-    )
-        external
-        nonReentrant
-        lockExists(tokenId)
-        lockOwner(tokenId)
-        lockNotExpired(tokenId)
-    {
+    ) external nonReentrant lockOwner(tokenId) lockNotExpired(tokenId) {
         // Round the locktime to whole epochs
         uint256 roundedUnlocktime = (newUnlockTime / EPOCH_PERIOD) *
             EPOCH_PERIOD;
@@ -546,9 +534,7 @@ contract VotingEscrow is
     /// @dev Transfers the native token from this contract to the caller
     /// @dev Calls a checkpoint event
     /// @dev User needs to claim fees before withdrawing or will lose them
-    function withdraw(
-        uint256 tokenId
-    ) external lockExists(tokenId) lockOwner(tokenId) {
+    function withdraw(uint256 tokenId) external lockOwner(tokenId) {
         require(_lockedBalance[tokenId].amount > 0, "VE:W:ZERO_BALANCE");
         require(
             block.timestamp > _lockedBalance[tokenId].end,
@@ -589,12 +575,7 @@ contract VotingEscrow is
     /// @return amountToClaim The amount of rebates claimed
     function claimRebates(
         uint256 tokenId
-    )
-        public
-        lockExists(tokenId)
-        lockOwner(tokenId)
-        returns (uint256 amountToClaim)
-    {
+    ) public lockOwner(tokenId) returns (uint256 amountToClaim) {
         // Update total weight tracking vars
         writeTotalWeightHistory();
 
