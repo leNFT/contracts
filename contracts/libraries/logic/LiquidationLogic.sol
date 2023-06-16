@@ -156,7 +156,7 @@ library LiquidationLogic {
             // Get the protocol fee
             uint256 protocolFee = PercentageMath.percentMul(
                 loanLiquidationData.auctionMaxBid,
-                ILendingPool(loanData.pool).getPoolConfig().liquidationFee
+                ILendingPool(loanData.pool).getPoolConfig().liquidationFeeRate
             );
             // If the protocol fee is higher than the amount we have left, set the protocol fee to the amount we have left
             if (protocolFee > fundsLeft) {

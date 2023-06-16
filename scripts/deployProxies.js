@@ -77,8 +77,8 @@ async function main() {
       "25000000000000000000", // TVL Safeguard for pools
       {
         maxLiquidatorDiscount: "2000", // maxLiquidatorDiscount
-        auctioneerFee: "100", // defaultAuctioneerFee
-        liquidationFee: "200", // defaultProtocolLiquidationFee
+        auctioneerFeeRate: "100", // defaultAuctioneerFee
+        liquidationFeeRate: "200", // defaultProtocolLiquidationFee
         maxUtilizationRate: "8500", // defaultmaxUtilizationRate
       },
     ],

@@ -258,15 +258,15 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
 
     /// @notice Get the maximum debt a loan can reach before entering the liquidation zone
     /// @param loanId The ID of the loan to be queried
-    /// @param tokensPrice The price of the tokens collateralizing the loan
+    /// @param collateralPrice The price of the tokens collateralizing the loan
     /// @return The maximum debt quoted in the same asset as the price of the collateral tokens
     function getLoanMaxDebt(
         uint256 loanId,
-        uint256 tokensPrice
+        uint256 collateralPrice
     ) external view override loanExists(loanId) returns (uint256) {
         return
             PercentageMath.percentMul(
-                tokensPrice,
+                collateralPrice,
                 getCollectionLiquidationThreshold(_loans[loanId].nftAsset)
             );
     }
@@ -353,7 +353,9 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
         return
             PercentageMath.percentMul(
                 getLoanDebt(loanId),
-                ILendingPool(_loans[loanId].pool).getPoolConfig().auctioneerFee
+                ILendingPool(_loans[loanId].pool)
+                    .getPoolConfig()
+                    .auctioneerFeeRate
             );
     }
 
