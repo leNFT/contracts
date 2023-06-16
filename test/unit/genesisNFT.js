@@ -174,6 +174,30 @@ describe("GenesisNFT", () => {
     // Find if the received lock is for the right amount of LE
     expect((await votingEscrow.getLock(0)).amount).to.equal(nativeTokenReward);
   });
+  it("Should only be able to mint MAX_CAP Genesis NFTs", async function () {
+    const cap = await genesisNFT.getCap();
+    const locktime = 60 * 60 * 24 * 120; // 120 days
+
+    // Mint MAX_CAP Genesis NFTs
+    for (let i = 0; i < Math.floor(cap / 100); i++) {
+      const mintGenesisNFTTx = await genesisNFT.mint(locktime, 100, {
+        value: BigNumber.from(await genesisNFT.getPrice()).mul(100),
+      });
+      await mintGenesisNFTTx.wait();
+    }
+    // Mint the remaining NFTs
+    const mintGenesisNFTTx = await genesisNFT.mint(locktime, cap % 100, {
+      value: BigNumber.from(await genesisNFT.getPrice()).mul(cap % 100),
+    });
+    await mintGenesisNFTTx.wait();
+
+    // Should not be able to mint another NFT
+    await expect(
+      genesisNFT.mint(locktime, 1, {
+        value: BigNumber.from(await genesisNFT.getPrice()).mul(1),
+      })
+    ).to.be.revertedWith("G:M:CAP_EXCEEDED");
+  });
   it("Should burn a Genesis NFT", async function () {
     const locktime = 60 * 60 * 24 * 120; // 120 days
     // Mint 2 Genesis NFT so the pool has enough liquidity to exit

@@ -341,7 +341,7 @@ contract GenesisNFT is
 
         // Make sure there are enough tokens to mint
         require(
-            _tokenIdCounter.current() + amount <= getCap(),
+            _tokenIdCounter.current() + amount <= getCap() + 1,
             "G:M:CAP_EXCEEDED"
         );
 
