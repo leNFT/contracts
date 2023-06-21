@@ -111,7 +111,7 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
         // Transfer the bribe tokens back to the user
         IERC20Upgradeable(token).safeTransfer(receiver, amount);
 
-        emit WithdrawBribe(receiver, token, gauge, amount);
+        emit WithdrawBribe(msg.sender, token, gauge, amount);
     }
 
     /// @notice Get deposited bribes back if no user voted for the gauge
