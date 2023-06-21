@@ -36,7 +36,7 @@ contract VotingEscrow is
     uint256 private _deployTimestamp;
     // Locked balance for each lock
     mapping(uint256 => DataTypes.LockedBalance) private _lockedBalance;
-    // Next calimable rebate epoch for each lock
+    // Next claimable rebate epoch for each lock
     mapping(uint256 => uint256) private _nextClaimableEpoch;
     // History of actions for each lock
     mapping(uint256 => DataTypes.Point[]) private _lockHistory;

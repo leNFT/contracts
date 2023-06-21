@@ -40,13 +40,14 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
 
     /// @notice Constructor for the WETHGateway contract
     /// @param addressProvider The address of the addressProvider contract
+    /// @param weth The address of the WETH contract
     constructor(IAddressProvider addressProvider, IWETH weth) {
         _addressProvider = addressProvider;
         _weth = weth;
     }
 
     /// @notice Deposit ETH in a wETH lending pool
-    /// @param lendingPool Lending pool to deposit intoto
+    /// @param lendingPool Lending pool to deposit into
     function depositLendingPool(
         address lendingPool
     ) external payable lendingPoolETH(lendingPool) nonReentrant {
@@ -76,6 +77,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     /// @param amount Amount of ETH to be borrowed
     /// @param nftAddress Address of the NFT collateral
     /// @param nftTokenIds Token ids of the NFT(s) collateral
+    /// @param genesisNFTId Token id of the genesis NFT to be used for the loan (0 if none)
     /// @param request ID of the collateral price request sent by the trusted server
     /// @param packet Signed collateral price request sent by the trusted server
     function borrow(
