@@ -269,11 +269,11 @@ contract LendingGauge is IGauge, ERC165 {
             );
         }
 
-        DataTypes.WorkingBalance memory oldWorkingBalance;
+        uint256 oldWorkingBalanceWeight;
         if (_workingBalanceHistory[user].length > 0) {
-            oldWorkingBalance = _workingBalanceHistory[user][
+            oldWorkingBalanceWeight = _workingBalanceHistory[user][
                 _workingBalanceHistory[user].length - 1
-            ];
+            ].weight;
         }
         DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
             .WorkingBalance({
@@ -285,7 +285,7 @@ contract LendingGauge is IGauge, ERC165 {
         _workingWeight =
             _workingWeight +
             newWorkingBalance.weight -
-            oldWorkingBalance.weight;
+            oldWorkingBalanceWeight;
 
         _workingBalanceHistory[user].push(newWorkingBalance);
     }
