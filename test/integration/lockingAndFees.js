@@ -81,6 +81,10 @@ describe("Voting & Fees", function () {
     );
     await lockTx.wait();
 
+    // Advance 1 epochs
+    const epochPeriod = await votingEscrow.getEpochPeriod();
+    await time.increase(epochPeriod.toNumber());
+
     // Do a buy operation so we can gather some fees
     const buyTx = await tradingPool.buy(
       owner.address,
@@ -88,10 +92,6 @@ describe("Voting & Fees", function () {
       ethers.utils.parseEther("1")
     );
     await buyTx.wait();
-
-    // Advance 1 epochs
-    const epochPeriod = await votingEscrow.getEpochPeriod();
-    await time.increase(epochPeriod.toNumber());
 
     // Claim the rewards - should have nothing to claim since the lock can only claim fees after 1 epoch
     expect(await feeDistributor.callStatic.claim(weth.address, 0)).to.be.equal(
@@ -111,10 +111,25 @@ describe("Voting & Fees", function () {
     // Advange 1 epochs
     await time.increase(epochPeriod.toNumber());
 
+    // The claimable should be the contract entire balance
+    expect(await feeDistributor.callStatic.claim(weth.address, 0)).to.be.equal(
+      await weth.balanceOf(feeDistributor.address)
+    );
+
     // Should now be able to claim the fees gathered in the last epoch
     expect(await feeDistributor.callStatic.claim(weth.address, 0)).to.be.equal(
       await feeDistributor.getTotalFeesAt(weth.address, epoch)
     );
+
+    // Claim the fees
+    const claimTx = await feeDistributor.claim(weth.address, 0);
+    await claimTx.wait();
+
+    // Claimable amount and balance should be 0
+    expect(await feeDistributor.callStatic.claim(weth.address, 0)).to.be.equal(
+      0
+    );
+    expect(await weth.balanceOf(feeDistributor.address)).to.be.equal(0);
   });
   it("2 locks should share fees in a pro rata vote weight basis", async function () {
     // Create a new trading pool through the market

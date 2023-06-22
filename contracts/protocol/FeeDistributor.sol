@@ -229,6 +229,7 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
         }
 
         if (amountToClaim > 0) {
+            _accountedFees[token] -= amountToClaim;
             IERC20Upgradeable(token).safeTransfer(lockOwner, amountToClaim);
 
             emit ClaimFees(msg.sender, token, tokenId, amountToClaim);
