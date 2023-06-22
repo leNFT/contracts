@@ -93,102 +93,101 @@ contract LendingGauge is IGauge, ERC165 {
                 1;
         }
         // Iterate over a max of 50 epochs and/or user epochs
-        uint256 nextClaimableEpoch;
+        uint256 nextClaimableEpoch = _userNextClaimableEpoch[msg.sender];
         uint256 currentEpoch = votingEscrow.getEpoch(block.timestamp);
-        for (uint256 i = 0; i < 50; i++) {
-            nextClaimableEpoch = _userNextClaimableEpoch[msg.sender];
+        for (uint256 i = 0; i < 50 && nextClaimableEpoch < currentEpoch; ) {
+            // Get the current user working Balance and its epoch
+            DataTypes.WorkingBalance
+                memory workingBalance = _workingBalanceHistory[msg.sender][
+                    _workingBalancePointer[msg.sender]
+                ];
 
-            // Break if the next claimable epoch is the one we are in
-            if (nextClaimableEpoch >= currentEpoch) {
-                break;
+            // Check if the user entire balance history has been iterated
+            // This should never be the case since the checkpoint function is called before this function and it pushes one working balance to the history
+            if (
+                _workingBalancePointer[msg.sender] ==
+                workingBalanceHistoryLength - 1
+            ) {
+                if (_workingWeightHistory[nextClaimableEpoch] > 0) {
+                    amountToClaim +=
+                        (gaugeController.getGaugeRewards(
+                            address(this),
+                            nextClaimableEpoch
+                        ) *
+                            workingBalance.weight *
+                            _maturityMultiplier(
+                                block.timestamp - workingBalance.timestamp
+                            )) /
+                        (_workingWeightHistory[nextClaimableEpoch] *
+                            PercentageMath.PERCENTAGE_FACTOR);
+                }
+
+                nextClaimableEpoch++;
             } else {
-                // Get the current user working Balance and its epoch
+                // We haven't iterated over the entire user history
                 DataTypes.WorkingBalance
-                    memory workingBalance = _workingBalanceHistory[msg.sender][
-                        _workingBalancePointer[msg.sender]
-                    ];
+                    memory nextWorkingBalance = _workingBalanceHistory[
+                        msg.sender
+                    ][_workingBalancePointer[msg.sender] + 1];
 
-                // Check if the user entire balance history has been iterated
-                // This should never be the case since the checkpoint function is called before this function and it pushes one working balance to the history
+                // Check if the next working balance is in the same epoch as the current working balance
                 if (
-                    _workingBalancePointer[msg.sender] ==
-                    workingBalanceHistoryLength - 1
+                    votingEscrow.getEpoch(nextWorkingBalance.timestamp) ==
+                    votingEscrow.getEpoch(workingBalance.timestamp)
                 ) {
+                    _workingBalancePointer[msg.sender]++;
+                }
+                // Check if the next working balance is in the next claimable epoch
+                else if (
+                    votingEscrow.getEpoch(nextWorkingBalance.timestamp) ==
+                    nextClaimableEpoch
+                ) {
+                    // If the next working balance has no decrease in balance we can claim the rewards
+                    if (
+                        _workingWeightHistory[nextClaimableEpoch] > 0 &&
+                        workingBalance.amount <= nextWorkingBalance.amount
+                    ) {
+                        amountToClaim +=
+                            (gaugeController.getGaugeRewards(
+                                address(this),
+                                nextClaimableEpoch
+                            ) *
+                                _maturityMultiplier(
+                                    nextWorkingBalance.timestamp -
+                                        workingBalance.timestamp
+                                ) *
+                                workingBalance.weight) /
+                            (_workingWeightHistory[nextClaimableEpoch] *
+                                PercentageMath.PERCENTAGE_FACTOR);
+                    }
+                    _workingBalancePointer[msg.sender]++;
+                    nextClaimableEpoch++;
+                } else {
+                    // THe next working balance is not in the next claimable epoch
                     if (_workingWeightHistory[nextClaimableEpoch] > 0) {
                         amountToClaim +=
                             (gaugeController.getGaugeRewards(
                                 address(this),
                                 nextClaimableEpoch
                             ) *
-                                workingBalance.weight *
                                 _maturityMultiplier(
-                                    block.timestamp - workingBalance.timestamp
-                                )) /
+                                    nextWorkingBalance.timestamp -
+                                        workingBalance.timestamp
+                                ) *
+                                workingBalance.weight) /
                             (_workingWeightHistory[nextClaimableEpoch] *
                                 PercentageMath.PERCENTAGE_FACTOR);
                     }
-
-                    _userNextClaimableEpoch[msg.sender]++;
-                } else {
-                    // We haven't iterated over the entire user history
-                    DataTypes.WorkingBalance
-                        memory nextWorkingBalance = _workingBalanceHistory[
-                            msg.sender
-                        ][_workingBalancePointer[msg.sender] + 1];
-
-                    // Check if the next working balance is in the same epoch as the current working balance
-                    if (
-                        votingEscrow.getEpoch(nextWorkingBalance.timestamp) ==
-                        votingEscrow.getEpoch(workingBalance.timestamp)
-                    ) {
-                        _workingBalancePointer[msg.sender]++;
-                    }
-                    // Check if the next working balance is in the next claimable epoch
-                    else if (
-                        votingEscrow.getEpoch(nextWorkingBalance.timestamp) ==
-                        nextClaimableEpoch
-                    ) {
-                        // If the next working balance has no decrease in balance we can claim the rewards
-                        if (
-                            _workingWeightHistory[nextClaimableEpoch] > 0 &&
-                            workingBalance.amount <= nextWorkingBalance.amount
-                        ) {
-                            amountToClaim +=
-                                (gaugeController.getGaugeRewards(
-                                    address(this),
-                                    nextClaimableEpoch
-                                ) *
-                                    _maturityMultiplier(
-                                        nextWorkingBalance.timestamp -
-                                            workingBalance.timestamp
-                                    ) *
-                                    workingBalance.weight) /
-                                (_workingWeightHistory[nextClaimableEpoch] *
-                                    PercentageMath.PERCENTAGE_FACTOR);
-                        }
-                        _workingBalancePointer[msg.sender]++;
-                        _userNextClaimableEpoch[msg.sender]++;
-                    } else {
-                        // THe next working balance is not in the next claimable epoch
-                        if (_workingWeightHistory[nextClaimableEpoch] > 0) {
-                            amountToClaim +=
-                                (gaugeController.getGaugeRewards(
-                                    address(this),
-                                    nextClaimableEpoch
-                                ) *
-                                    _maturityMultiplier(
-                                        nextWorkingBalance.timestamp -
-                                            workingBalance.timestamp
-                                    ) *
-                                    workingBalance.weight) /
-                                (_workingWeightHistory[nextClaimableEpoch] *
-                                    PercentageMath.PERCENTAGE_FACTOR);
-                        }
-                        _userNextClaimableEpoch[msg.sender]++;
-                    }
+                    nextClaimableEpoch++;
                 }
             }
+
+            unchecked {
+                ++i;
+            }
         }
+
+        _userNextClaimableEpoch[msg.sender] = nextClaimableEpoch;
 
         // Claim the rewards if there are any
         if (amountToClaim > 0) {

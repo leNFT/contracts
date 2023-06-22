@@ -584,14 +584,12 @@ contract VotingEscrow is
 
         // Claim all the available rebates for the lock
         uint256 maxEpochRebates;
-        uint256 nextClaimableEpoch;
+        uint256 nextClaimableEpoch = _nextClaimableEpoch[tokenId];
         uint256 currentEpoch = getEpoch(block.timestamp);
 
         // Claim a maximum of 50 epochs at a time
-        for (uint i = 0; i < 50; i++) {
-            nextClaimableEpoch = _nextClaimableEpoch[tokenId];
+        for (uint i = 0; i < 50 && nextClaimableEpoch < currentEpoch; ) {
             if (
-                nextClaimableEpoch >= currentEpoch ||
                 getEpochTimestamp(nextClaimableEpoch) >
                 _lockedBalance[tokenId].end
             ) {
@@ -617,8 +615,16 @@ contract VotingEscrow is
             }
 
             // Increase next claimable epoch
-            _nextClaimableEpoch[tokenId]++;
+            nextClaimableEpoch++;
+
+            // Increase the counter
+            unchecked {
+                ++i;
+            }
         }
+
+        // Update the next claimable epoch
+        _nextClaimableEpoch[tokenId] = nextClaimableEpoch;
 
         // Mint the rebates to the user's wallet
         if (amountToClaim > 0) {

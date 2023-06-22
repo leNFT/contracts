@@ -137,33 +137,61 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
             // Iterate over a max of 50 epochs and/or user epochs
             DataTypes.Point memory lockHistoryPoint;
             uint256 lockHistoryPointer;
-            uint256 nextClaimableEpoch;
+            uint256 nextClaimableEpoch = _lockNextClaimableEpoch[token][
+                tokenId
+            ];
             uint256 nextClaimableEpochTimestamp;
             uint256 nextPointEpoch;
             uint256 currentEpoch = votingEscrow.getEpoch(block.timestamp);
-            for (uint i = 0; i < 50; i++) {
-                nextClaimableEpoch = _lockNextClaimableEpoch[token][tokenId];
-                // Break if the next claimable epoch is the one we are in
-                if (nextClaimableEpoch >= currentEpoch) {
-                    break;
+            for (uint i = 0; i < 50 && nextClaimableEpoch < currentEpoch; ) {
+                // Get the current user history point
+                lockHistoryPointer = _lockHistoryPointer[token][tokenId];
+                lockHistoryPoint = votingEscrow.getLockHistoryPoint(
+                    tokenId,
+                    lockHistoryPointer
+                );
+
+                // Get the user's next claimable epoch and its timestamp
+                nextClaimableEpochTimestamp = votingEscrow.getEpochTimestamp(
+                    nextClaimableEpoch
+                );
+
+                // Check if the user entire activity history has been iterated
+                if (
+                    lockHistoryPointer ==
+                    votingEscrow.getLockHistoryLength(tokenId) - 1
+                ) {
+                    // Sum claimable amount if its the last activity
+                    if (votingEscrow.getTotalWeightAt(nextClaimableEpoch) > 0) {
+                        amountToClaim +=
+                            (_epochFees[token][nextClaimableEpoch] *
+                                (lockHistoryPoint.bias -
+                                    lockHistoryPoint.slope *
+                                    (nextClaimableEpochTimestamp -
+                                        lockHistoryPoint.timestamp))) /
+                            votingEscrow.getTotalWeightAt(nextClaimableEpoch);
+                    }
+
+                    // Increment next claimable epoch
+                    nextClaimableEpoch++;
                 } else {
-                    // Get the current user history point
-                    lockHistoryPointer = _lockHistoryPointer[token][tokenId];
-                    lockHistoryPoint = votingEscrow.getLockHistoryPoint(
-                        tokenId,
-                        lockHistoryPointer
+                    // Find the epoch of the next user history point
+                    nextPointEpoch = votingEscrow.getEpoch(
+                        votingEscrow
+                            .getLockHistoryPoint(
+                                tokenId,
+                                lockHistoryPointer + 1
+                            )
+                            .timestamp
                     );
-
-                    // Get the user's next claimable epoch and its timestamp
-                    nextClaimableEpochTimestamp = votingEscrow
-                        .getEpochTimestamp(nextClaimableEpoch);
-
-                    // Check if the user entire activity history has been iterated
                     if (
-                        lockHistoryPointer ==
-                        votingEscrow.getLockHistoryLength(tokenId) - 1
+                        nextPointEpoch ==
+                        votingEscrow.getEpoch(lockHistoryPoint.timestamp)
                     ) {
-                        // Sum claimable amount if its the last activity
+                        // If the next user activity is in the same epoch we increase the pointer
+                        _lockHistoryPointer[token][tokenId]++;
+                    } else {
+                        // If the next user activity is in a different epoch we sum the claimable amount for his epoch
                         if (
                             votingEscrow.getTotalWeightAt(nextClaimableEpoch) >
                             0
@@ -179,53 +207,23 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
                                 );
                         }
 
-                        // Increment next claimable epoch
-                        _lockNextClaimableEpoch[token][tokenId]++;
-                    } else {
-                        // Find the epoch of the next user history point
-                        nextPointEpoch = votingEscrow.getEpoch(
-                            votingEscrow
-                                .getLockHistoryPoint(
-                                    tokenId,
-                                    lockHistoryPointer + 1
-                                )
-                                .timestamp
-                        );
-                        if (
-                            nextPointEpoch ==
-                            votingEscrow.getEpoch(lockHistoryPoint.timestamp)
-                        ) {
-                            // If the next user activity is in the same epoch we increase the pointer
+                        // If the next user activity is in the next claimable epoch we increase the user history pointer
+                        if (nextPointEpoch == nextClaimableEpoch) {
                             _lockHistoryPointer[token][tokenId]++;
-                        } else {
-                            // If the next user activity is in a different epoch we sum the claimable amount for his epoch
-                            if (
-                                votingEscrow.getTotalWeightAt(
-                                    nextClaimableEpoch
-                                ) > 0
-                            ) {
-                                amountToClaim +=
-                                    (_epochFees[token][nextClaimableEpoch] *
-                                        (lockHistoryPoint.bias -
-                                            lockHistoryPoint.slope *
-                                            (nextClaimableEpochTimestamp -
-                                                lockHistoryPoint.timestamp))) /
-                                    votingEscrow.getTotalWeightAt(
-                                        nextClaimableEpoch
-                                    );
-                            }
-
-                            // If the next user activity is in the next claimable epoch we increase the user history pointer
-                            if (nextPointEpoch == nextClaimableEpoch) {
-                                _lockHistoryPointer[token][tokenId]++;
-                            }
-
-                            // Increment next claimable epoch
-                            _lockNextClaimableEpoch[token][tokenId]++;
                         }
+
+                        // Increment next claimable epoch
+                        nextClaimableEpoch++;
                     }
                 }
+
+                unchecked {
+                    ++i;
+                }
             }
+
+            // Update the next claimable epoch
+            _lockNextClaimableEpoch[token][tokenId] = nextClaimableEpoch;
         }
 
         if (amountToClaim > 0) {
