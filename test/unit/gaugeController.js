@@ -116,6 +116,15 @@ describe("GaugeController", () => {
   it("Should get the rewards ceiling for an epoch", async function () {
     const epochRewardCeiling = await gaugeController.getRewardsCeiling(1);
     expect(epochRewardCeiling).to.equal("116666666666666666666666"); // 117K tokens
+
+    // Rewards ceiling should be the same for all inflation epochs after max inflation epoch
+    console.log(
+      "getRewardsCeiling(52*8): ",
+      await gaugeController.getRewardsCeiling(52 * 8)
+    );
+    expect(await gaugeController.getRewardsCeiling(52 * 8)).to.equal(
+      await gaugeController.getRewardsCeiling(52 * 8 + 1)
+    );
   });
   it("Should get the current gauge weight", async function () {
     // Create a lock with the LE

@@ -476,14 +476,13 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     /// @param epoch The epoch for which to get the rewards.
     /// @return The maximum amount of tokens that can be distributed as rewards for the specified epoch.
     function getRewardsCeiling(uint256 epoch) public pure returns (uint256) {
-        uint256 inflationEpoch;
+        uint256 inflationEpoch = epoch / INFLATION_PERIOD;
         // If we are in the loading period, return smaller rewards
         if (epoch < LOADING_PERIOD) {
             return (INITIAL_REWARDS * epoch) / LOADING_PERIOD;
         } else if (inflationEpoch > MAX_INFLATION_PERIODS) {
+            // Cap the inflation epoch = stabilize rewards
             inflationEpoch = MAX_INFLATION_PERIODS;
-        } else {
-            inflationEpoch = epoch / INFLATION_PERIOD;
         }
 
         return
