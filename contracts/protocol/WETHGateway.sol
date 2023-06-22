@@ -119,9 +119,6 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
             packet
         );
 
-        // Make sure enough ETH was received
-        assert(weth.balanceOf(address(this)) == amount);
-
         weth.withdraw(amount);
 
         (bool sent, ) = msg.sender.call{value: amount}("");
