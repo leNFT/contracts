@@ -262,13 +262,15 @@ contract TradingPool is
 
     /// @notice Removes liquidity pair, sending back deposited tokens and transferring the NFTs to the user
     /// @param lpId The ID of the LP token to remove
-    function removeLiquidity(uint256 lpId) public override nonReentrant {
+    function removeLiquidity(uint256 lpId) external override nonReentrant {
         _removeLiquidity(lpId);
     }
 
     /// @notice Removes liquidity pairs in batches by calling the removeLiquidity function for each LP token ID in the lpIds array
     /// @param lpIds The IDs of the LP tokens to remove liquidity from
-    function removeLiquidityBatch(uint256[] calldata lpIds) external override {
+    function removeLiquidityBatch(
+        uint256[] calldata lpIds
+    ) external override nonReentrant {
         for (uint i = 0; i < lpIds.length; i++) {
             _removeLiquidity(lpIds[i]);
         }

@@ -108,7 +108,31 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
     function claim(
         address token,
         uint256 tokenId
-    ) public nonReentrant returns (uint256 amountToClaim) {
+    ) external nonReentrant returns (uint256 amountToClaim) {
+        amountToClaim = _claim(token, tokenId);
+    }
+
+    /// @notice Allows a user to claim their rewards from multiple locks for a specific token
+    /// @param token Token address
+    /// @param tokensIds the token ids of the locks
+    /// @return amountToClaim uint256 Amount of rewards claimed
+    function claimBatch(
+        address token,
+        uint256[] calldata tokensIds
+    ) external nonReentrant returns (uint256 amountToClaim) {
+        for (uint256 i = 0; i < tokensIds.length; i++) {
+            amountToClaim += _claim(token, tokensIds[i]);
+        }
+    }
+
+    /// @notice Private function to claim rewards for a specific lock
+    /// @param token Token address
+    /// @param tokenId the token id of the lock
+    /// @return amountToClaim uint256 Amount of rewards claimed
+    function _claim(
+        address token,
+        uint256 tokenId
+    ) private returns (uint256 amountToClaim) {
         IVotingEscrow votingEscrow = IVotingEscrow(
             _addressProvider.getVotingEscrow()
         );
@@ -231,19 +255,6 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
             IERC20Upgradeable(token).safeTransfer(lockOwner, amountToClaim);
 
             emit ClaimFees(msg.sender, token, tokenId, amountToClaim);
-        }
-    }
-
-    /// @notice Allows a user to claim their rewards from multiple locks for a specific token
-    /// @param token Token address
-    /// @param tokensIds the token ids of the locks
-    /// @return amountToClaim uint256 Amount of rewards claimed
-    function claimBatch(
-        address token,
-        uint256[] calldata tokensIds
-    ) external returns (uint256 amountToClaim) {
-        for (uint256 i = 0; i < tokensIds.length; i++) {
-            amountToClaim += claim(token, tokensIds[i]);
         }
     }
 }
