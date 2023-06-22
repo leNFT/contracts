@@ -5,9 +5,7 @@ import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
-import {Trustus} from "../../protocol/Trustus/Trustus.sol";
 import {SafeCast} from "../../libraries/utils/SafeCast.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 
