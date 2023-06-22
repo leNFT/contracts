@@ -73,24 +73,11 @@ library LiquidationLogic {
         DataTypes.LoanLiquidationData memory loanLiquidationData = loanCenter
             .getLoanLiquidationData(params.loanId);
 
-        // Check if the auction exists
-        require(
-            loanData.state == DataTypes.LoanState.Auctioned,
-            "VL:VBLA:AUCTION_NOT_FOUND"
-        );
-
-        // Check if the auction is still active
-        require(
-            block.timestamp <
-                loanLiquidationData.auctionStartTimestamp +
-                    LIQUIDATION_AUCTION_PERIOD,
-            "VL:VBLA:AUCTION_NOT_ACTIVE"
-        );
-
-        // Check if bid is higher than current bid
-        require(
-            params.bid > loanLiquidationData.auctionMaxBid,
-            "VL:VBLA:BID_TOO_LOW"
+        // validate the auction bid
+        _validateBidLiquidationAuction(
+            params.bid,
+            loanData.state,
+            loanLiquidationData
         );
 
         // Get the address of this asset's lending pool
@@ -132,18 +119,10 @@ library LiquidationLogic {
         DataTypes.LoanLiquidationData memory loanLiquidationData = loanCenter
             .getLoanLiquidationData(params.loanId);
 
-        // Check if the loan is being auctioned
-        require(
-            loanData.state == DataTypes.LoanState.Auctioned,
-            "VL:VCLA:AUCTION_NOT_FOUND"
-        );
-
-        // Check if the auction is still active
-        require(
-            block.timestamp >
-                loanLiquidationData.auctionStartTimestamp +
-                    LIQUIDATION_AUCTION_PERIOD,
-            "VL:VCLA:AUCTION_NOT_FINISHED"
+        // Validate the auction claim
+        _validateClaimLiquidation(
+            loanData.state,
+            loanLiquidationData.auctionStartTimestamp
         );
 
         // Get the address of this asset's pool
@@ -287,6 +266,54 @@ library LiquidationLogic {
                             .maxLiquidatorDiscount)
                 ),
             "VL:VCLA:BID_TOO_LOW"
+        );
+    }
+
+    /// @notice Validate the parameters of the bid liquidation auction function
+    /// @param currentBid The current bid of the auction
+    /// @param loanState The state of the loan
+    /// @param loanLiquidationData The liquidation data of the loan
+    function _validateBidLiquidationAuction(
+        uint256 currentBid,
+        DataTypes.LoanState loanState,
+        DataTypes.LoanLiquidationData memory loanLiquidationData
+    ) internal view {
+        // Check if the auction exists
+        require(
+            loanState == DataTypes.LoanState.Auctioned,
+            "VL:VBLA:AUCTION_NOT_FOUND"
+        );
+
+        // Check if the auction is still active
+        require(
+            block.timestamp <
+                loanLiquidationData.auctionStartTimestamp +
+                    LIQUIDATION_AUCTION_PERIOD,
+            "VL:VBLA:AUCTION_NOT_ACTIVE"
+        );
+
+        // Check if bid is higher than current bid
+        require(
+            currentBid > loanLiquidationData.auctionMaxBid,
+            "VL:VBLA:BID_TOO_LOW"
+        );
+    }
+
+    function _validateClaimLiquidation(
+        DataTypes.LoanState loanState,
+        uint256 loanAuctionStartTimestamp
+    ) internal view {
+        // Check if the loan is being auctioned
+        require(
+            loanState == DataTypes.LoanState.Auctioned,
+            "VL:VCLA:AUCTION_NOT_FOUND"
+        );
+
+        // Check if the auction is still active
+        require(
+            block.timestamp >
+                loanAuctionStartTimestamp + LIQUIDATION_AUCTION_PERIOD,
+            "VL:VCLA:AUCTION_NOT_FINISHED"
         );
     }
 }

@@ -97,27 +97,8 @@ library BorrowLogic {
         uint256 interest = loanCenter.getLoanInterest(params.loanId);
         uint256 loanDebt = interest + loanData.amount;
 
-        // Validate the movement
-        // Check if borrow amount is bigger than 0
-        require(params.amount > 0, "VL:VR:AMOUNT_0");
-
-        //Require that loan exists
-        require(
-            loanData.state == DataTypes.LoanState.Active ||
-                loanData.state == DataTypes.LoanState.Auctioned,
-            "VL:VR:LOAN_NOT_FOUND"
-        );
-
-        // Check if user is over-paying
-        require(params.amount <= loanDebt, "VL:VR:AMOUNT_EXCEEDS_DEBT");
-
-        // Can only do partial repayments if the loan is not being auctioned
-        if (params.amount < loanDebt) {
-            require(
-                loanData.state != DataTypes.LoanState.Auctioned,
-                "VL:VR:PARTIAL_REPAY_AUCTIONED"
-            );
-        }
+        // Validate the repay parameters
+        _validateRepay(params.amount, loanData.state, loanDebt);
 
         // If we are paying the entire loan debt
         if (params.amount == loanDebt) {
@@ -291,5 +272,37 @@ library BorrowLogic {
             params.amount <= ILendingPool(lendingPool).getUnderlyingBalance(),
             "VL:VB:INSUFFICIENT_UNDERLYING"
         );
+    }
+
+    /// @notice Validates the parameters of the repay function
+    /// @param repayAmount The amount to repay
+    /// @param loanState The state of the loan
+    /// @param loanDebt The debt of the loan
+    function _validateRepay(
+        uint256 repayAmount,
+        DataTypes.LoanState loanState,
+        uint256 loanDebt
+    ) internal pure {
+        // Validate the movement
+        // Check if borrow amount is bigger than 0
+        require(repayAmount > 0, "VL:VR:AMOUNT_0");
+
+        //Require that loan exists
+        require(
+            loanState == DataTypes.LoanState.Active ||
+                loanState == DataTypes.LoanState.Auctioned,
+            "VL:VR:LOAN_NOT_FOUND"
+        );
+
+        // Check if user is over-paying
+        require(repayAmount <= loanDebt, "VL:VR:AMOUNT_EXCEEDS_DEBT");
+
+        // Can only do partial repayments if the loan is not being auctioned
+        if (repayAmount < loanDebt) {
+            require(
+                loanState != DataTypes.LoanState.Auctioned,
+                "VL:VR:PARTIAL_REPAY_AUCTIONED"
+            );
+        }
     }
 }
