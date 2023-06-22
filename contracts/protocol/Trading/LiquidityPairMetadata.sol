@@ -78,7 +78,7 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
 
     /// @notice Returns the attributes for a liquidity pair encoded as json.
     /// @param tradingPool The address of the trading pool of the liquidity pair.
-    /// @param tokenId The liquidity pair's token ID.trait(
+    /// @param tokenId The liquidity pair's token ID.
     /// @return The encoded attributes for the liquidity pair.
     function attributes(
         address tradingPool,
