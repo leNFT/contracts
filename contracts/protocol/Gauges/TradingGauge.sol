@@ -353,9 +353,6 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
         delete _ownerOf[lpId];
         delete _lpValue[lpId];
 
-        // Transfer LP token to user
-        IERC721(_lpToken).safeTransferFrom(address(this), msg.sender, lpId);
-
         uint256 lastTokenIndex = _balanceOf[msg.sender] - 1;
         uint256 tokenIndex = _ownedTokensIndex[lpId];
 
@@ -376,6 +373,9 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
         _totalSupply -= 1;
 
         _checkpoint(msg.sender);
+
+        // Transfer LP token to user
+        IERC721(_lpToken).safeTransferFrom(address(this), msg.sender, lpId);
 
         emit WithdrawLP(msg.sender, lpId);
     }

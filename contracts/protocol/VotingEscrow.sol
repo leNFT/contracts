@@ -431,7 +431,6 @@ contract VotingEscrow is
 
         // Mint a veNFT to represent the lock and increase the token id counter
         uint256 tokenId = _tokenIdCounter.current();
-        _safeMint(receiver, tokenId);
         _tokenIdCounter.increment();
 
         // Setup the next claimable rebate epoch
@@ -456,6 +455,9 @@ contract VotingEscrow is
             address(this),
             amount
         );
+
+        // Mint the veNFT
+        _safeMint(receiver, tokenId);
 
         emit CreateLock(receiver, tokenId, amount, roundedUnlockTime);
     }

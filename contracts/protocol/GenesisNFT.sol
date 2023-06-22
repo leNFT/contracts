@@ -433,10 +433,9 @@ contract GenesisNFT is
         (bool sent, ) = _devAddress.call{value: PRICE * amount - ethAmount}("");
         require(sent, "G:M:ETH_TRANSFER_FAIL");
 
+        uint256 tokenId;
         for (uint256 i = 0; i < amount; i++) {
-            uint256 tokenId = _tokenIdCounter.current();
-            // Mint genesis NFT
-            _safeMint(msg.sender, tokenId);
+            tokenId = _tokenIdCounter.current();
 
             // Add mint details
             _mintDetails[tokenId] = DataTypes.MintDetails(
@@ -445,10 +444,13 @@ contract GenesisNFT is
                 lpAmount / amount
             );
 
-            emit Mint(msg.sender, tokenId);
-
             //Increase supply
             _tokenIdCounter.increment();
+
+            // Mint genesis NFT
+            _safeMint(msg.sender, tokenId);
+
+            emit Mint(msg.sender, tokenId);
         }
     }
 
