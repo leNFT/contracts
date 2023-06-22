@@ -39,7 +39,7 @@ contract TokenOracle is ITokenOracle, Ownable {
     /// @dev If there's no data feed we return the previously set price on the mapping _tokenPrices[] set by the function setTokenETHPrice()
     function getTokenETHPrice(
         address token
-    ) external view override returns (uint256) {
+    ) external view override returns (uint256, uint256) {
         // Make sure the token price is available in the contract
         require(_isTokenSupported(token), "TO:GTEP:TOKEN_NOT_SUPPORTED");
 
@@ -53,11 +53,14 @@ contract TokenOracle is ITokenOracle, Ownable {
 
             (, int price, , , ) = priceFeed.latestRoundData();
 
-            return (uint256(price) * PRICE_PRECISION) / feedPrecision;
+            return (
+                (uint256(price) * PRICE_PRECISION) / feedPrecision,
+                PRICE_PRECISION
+            );
         }
 
         // If there's no data feed we return the previously set price
-        return _tokenPrices[token];
+        return (_tokenPrices[token], PRICE_PRECISION);
     }
 
     /// @notice Set a data feed for a token
@@ -79,11 +82,5 @@ contract TokenOracle is ITokenOracle, Ownable {
         uint256 price
     ) external override onlyOwner {
         _tokenPrices[token] = price;
-    }
-
-    /// @notice Get the constant PRICE_PRECISION
-    /// @return The value of PRICE_PRECISION
-    function getPricePrecision() external pure override returns (uint256) {
-        return PRICE_PRECISION;
     }
 }

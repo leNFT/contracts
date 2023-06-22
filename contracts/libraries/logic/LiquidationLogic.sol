@@ -44,13 +44,9 @@ library LiquidationLogic {
         );
 
         // Check if collateral / debt relation allows for liquidation
-        ITokenOracle tokenOracle = ITokenOracle(
+        (uint256 ethPrice, uint256 precision) = ITokenOracle(
             addressProvider.getTokenOracle()
-        );
-        uint256 assetETHPrice = tokenOracle.getTokenETHPrice(
-            IERC4626(loanData.pool).asset()
-        );
-        uint256 pricePrecision = tokenOracle.getPricePrecision();
+        ).getTokenETHPrice(IERC4626(loanData.pool).asset());
 
         uint256 collateralETHPrice = INFTOracle(addressProvider.getNFTOracle())
             .getTokensETHPrice(
@@ -62,15 +58,15 @@ library LiquidationLogic {
 
         require(
             (loanCenter.getLoanMaxDebt(params.loanId, collateralETHPrice) *
-                pricePrecision) /
-                assetETHPrice <
+                precision) /
+                ethPrice <
                 loanCenter.getLoanDebt(params.loanId),
             "VL:VCLA:MAX_DEBT_NOT_EXCEEDED"
         );
 
         // Check if bid is large enough
         require(
-            (assetETHPrice * params.bid) / pricePrecision >=
+            (ethPrice * params.bid) / precision >=
                 PercentageMath.percentMul(
                     collateralETHPrice,
                     (PercentageMath.PERCENTAGE_FACTOR -

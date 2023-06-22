@@ -71,9 +71,9 @@ library BorrowLogic {
         }
 
         // Check if borrow amount exceeds allowed amount
-        ITokenOracle tokenOracle = ITokenOracle(
+        (uint256 ethPrice, uint256 precision) = ITokenOracle(
             addressProvider.getTokenOracle()
-        );
+        ).getTokenETHPrice(params.asset);
 
         ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
         require(
@@ -88,8 +88,8 @@ library BorrowLogic {
                         ),
                     loanCenter.getCollectionMaxLTV(params.nftAddress) +
                         maxLTVBoost
-                ) * tokenOracle.getPricePrecision()) /
-                    tokenOracle.getTokenETHPrice(params.asset),
+                ) * precision) /
+                    ethPrice,
             "VL:VB:MAX_LTV_EXCEEDED"
         );
 
