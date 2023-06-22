@@ -78,7 +78,7 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
 
     /// @notice Returns the attributes for a liquidity pair encoded as json.
     /// @param tradingPool The address of the trading pool of the liquidity pair.
-    /// @param tokenId The liquidity pair's token ID.
+    /// @param tokenId The liquidity pair's token ID.trait(
     /// @return The encoded attributes for the liquidity pair.
     function attributes(
         address tradingPool,
@@ -93,21 +93,21 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
         {
             // scope to avoid stack too deep errors
             _attributes = abi.encodePacked(
-                trait("Pool address", Strings.toHexString(tradingPool)),
+                _trait("Pool address", Strings.toHexString(tradingPool)),
                 ",",
-                trait(
+                _trait(
                     "Token",
                     Strings.toHexString(ITradingPool(tradingPool).getToken())
                 ),
                 ",",
-                trait(
+                _trait(
                     "NFT",
                     Strings.toHexString(ITradingPool(tradingPool).getNFT())
                 ),
                 ",",
-                trait("Price", Strings.toString(lp.spotPrice)),
+                _trait("Price", Strings.toString(lp.spotPrice)),
                 ",",
-                trait("Token balance", Strings.toString(lp.tokenAmount)),
+                _trait("Token balance", Strings.toString(lp.tokenAmount)),
                 ","
             );
         }
@@ -115,15 +115,15 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
         {
             _attributes = abi.encodePacked(
                 _attributes,
-                trait("NFT balance", Strings.toString(lp.nftIds.length)),
+                _trait("NFT balance", Strings.toString(lp.nftIds.length)),
                 ",",
-                trait("Curve", Strings.toHexString(lp.curve)),
+                _trait("Curve", Strings.toHexString(lp.curve)),
                 ",",
-                trait("Delta", Strings.toString(lp.delta)),
+                _trait("Delta", Strings.toString(lp.delta)),
                 ",",
-                trait("Fee", Strings.toString(lp.fee)),
+                _trait("Fee", Strings.toString(lp.fee)),
                 ",",
-                trait("Type", Strings.toString(uint256(lp.lpType)))
+                _trait("Type", Strings.toString(uint256(lp.lpType)))
             );
         }
 
@@ -222,7 +222,7 @@ contract LiquidityPairMetadata is ILiquidityPairMetadata {
     /// @param traitType The trait type.
     /// @param value The trait value.
     /// @return The encoded trait.
-    function trait(
+    function _trait(
         string memory traitType,
         string memory value
     ) internal pure returns (string memory) {
