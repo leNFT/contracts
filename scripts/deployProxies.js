@@ -27,26 +27,13 @@ async function main() {
   They will then be linked to the contracts that use them
   ******************************************************************/
 
-  // Deploy validation logic lib
-  ValidationLogicLib = await ethers.getContractFactory("ValidationLogic");
-  validationLogicLib = await ValidationLogicLib.deploy();
-  addresses["ValidationLogicLib"] = validationLogicLib.address;
-
   // Deploy borrow logic lib
-  BorrowLogicLib = await ethers.getContractFactory("BorrowLogic", {
-    libraries: {
-      ValidationLogic: validationLogicLib.address,
-    },
-  });
+  BorrowLogicLib = await ethers.getContractFactory("BorrowLogic");
   borrowLogicLib = await BorrowLogicLib.deploy();
   addresses["BorrowLogicLib"] = borrowLogicLib.address;
 
   // Deploy liquidation logic lib
-  LiquidationLogicLib = await ethers.getContractFactory("LiquidationLogic", {
-    libraries: {
-      ValidationLogic: validationLogicLib.address,
-    },
-  });
+  LiquidationLogicLib = await ethers.getContractFactory("LiquidationLogic");
   liquidationLogicLib = await LiquidationLogicLib.deploy();
   addresses["LiquidationLogicLib"] = liquidationLogicLib.address;
 
@@ -67,7 +54,6 @@ async function main() {
     libraries: {
       BorrowLogic: borrowLogicLib.address,
       LiquidationLogic: liquidationLogicLib.address,
-      ValidationLogic: validationLogicLib.address,
     },
   });
   const lendingMarket = await upgrades.deployProxy(

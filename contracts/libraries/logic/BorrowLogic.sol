@@ -3,9 +3,10 @@ pragma solidity 0.8.19;
 
 import {DataTypes} from "../types/DataTypes.sol";
 import {PercentageMath} from "../utils/PercentageMath.sol";
-import {ValidationLogic} from "./ValidationLogic.sol";
 import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
+import {ITokenOracle} from "../../interfaces/ITokenOracle.sol";
+import {INFTOracle} from "../../interfaces/INFTOracle.sol";
 import {ILendingPool} from "../../interfaces/ILendingPool.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IGenesisNFT} from "../../interfaces/IGenesisNFT.sol";
@@ -30,8 +31,73 @@ library BorrowLogic {
         address lendingPool,
         DataTypes.BorrowParams memory params
     ) external returns (uint256 loanId) {
-        // Validate the movement
-        ValidationLogic.validateBorrow(addressProvider, lendingPool, params);
+        // Check if borrow amount is bigger than 0
+        require(params.amount > 0, "VL:VB:AMOUNT_0");
+
+        // Check if theres at least one asset to use as collateral
+        require(params.nftTokenIds.length > 0, "VL:VB:NO_NFTS");
+
+        // Check if the lending pool exists
+        require(lendingPool != address(0), "VL:VB:INVALID_LENDING_POOL");
+
+        // Get boost from genesis NFTs
+        uint256 maxLTVBoost;
+        if (params.genesisNFTId != 0) {
+            IGenesisNFT genesisNFT = IGenesisNFT(
+                addressProvider.getGenesisNFT()
+            );
+
+            // If the caller is not the user we are borrowing on behalf Of, check if the caller is approved
+            if (params.onBehalfOf != params.caller) {
+                require(
+                    genesisNFT.isLoanOperatorApproved(
+                        params.onBehalfOf,
+                        params.caller
+                    ),
+                    "VL:VB:GENESIS_NOT_AUTHORIZED"
+                );
+            }
+            require(
+                genesisNFT.ownerOf(params.genesisNFTId) == params.onBehalfOf,
+                "VL:VB:GENESIS_NOT_OWNED"
+            );
+            //Require that the NFT is not being used
+            require(
+                genesisNFT.getLockedState(params.genesisNFTId) == false,
+                "VL:VB:GENESIS_LOCKED"
+            );
+
+            maxLTVBoost = genesisNFT.getMaxLTVBoost();
+        }
+
+        // Check if borrow amount exceeds allowed amount
+        ITokenOracle tokenOracle = ITokenOracle(
+            addressProvider.getTokenOracle()
+        );
+
+        ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
+        require(
+            params.amount <=
+                (PercentageMath.percentMul(
+                    INFTOracle(addressProvider.getNFTOracle())
+                        .getTokensETHPrice(
+                            params.nftAddress,
+                            params.nftTokenIds,
+                            params.request,
+                            params.packet
+                        ),
+                    loanCenter.getCollectionMaxLTV(params.nftAddress) +
+                        maxLTVBoost
+                ) * tokenOracle.getPricePrecision()) /
+                    tokenOracle.getTokenETHPrice(params.asset),
+            "VL:VB:MAX_LTV_EXCEEDED"
+        );
+
+        // Check if the pool has enough underlying to borrow
+        require(
+            params.amount <= ILendingPool(lendingPool).getUnderlyingBalance(),
+            "VL:VB:INSUFFICIENT_UNDERLYING"
+        );
 
         // Transfer the collateral to the the lending market
         for (uint256 i = 0; i < params.nftTokenIds.length; i++) {
@@ -53,9 +119,6 @@ library BorrowLogic {
 
         // Get the current borrow rate index
         uint256 borrowRate = ILendingPool(lendingPool).getBorrowRate();
-
-        // Get the loan center
-        ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
 
         // Create the loan
         loanId = loanCenter.createLoan(
@@ -93,7 +156,26 @@ library BorrowLogic {
         uint256 loanDebt = interest + loanData.amount;
 
         // Validate the movement
-        ValidationLogic.validateRepay(params, loanData.state, loanDebt);
+        // Check if borrow amount is bigger than 0
+        require(params.amount > 0, "VL:VR:AMOUNT_0");
+
+        //Require that loan exists
+        require(
+            loanData.state == DataTypes.LoanState.Active ||
+                loanData.state == DataTypes.LoanState.Auctioned,
+            "VL:VR:LOAN_NOT_FOUND"
+        );
+
+        // Check if user is over-paying
+        require(params.amount <= loanDebt, "VL:VR:AMOUNT_EXCEEDS_DEBT");
+
+        // Can only do partial repayments if the loan is not being auctioned
+        if (params.amount < loanDebt) {
+            require(
+                loanData.state != DataTypes.LoanState.Auctioned,
+                "VL:VR:PARTIAL_REPAY_AUCTIONED"
+            );
+        }
 
         // If we are paying the entire loan debt
         if (params.amount == loanDebt) {

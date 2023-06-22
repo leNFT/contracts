@@ -465,9 +465,7 @@ describe("VotingEscrow", () => {
     );
 
     // Should throw an error if we try to withdraw again
-    await expect(votingEscrow.withdraw(0)).to.be.revertedWith(
-      "VE:LOCK_NOT_FOUND"
-    );
+    await expect(votingEscrow.withdraw(0)).to.be.revertedWith("VE:NOT_OWNER");
   });
   it("Should claim rebates for a lock", async function () {
     const unlockTime = Math.floor(Date.now() / 1000) + 3600 * 24 * 30;

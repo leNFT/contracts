@@ -10,7 +10,6 @@ import {IGaugeController} from "../interfaces/IGaugeController.sol";
 import {INativeToken} from "../interfaces/INativeToken.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
-import {LockLogic} from "../libraries/logic/LockLogic.sol";
 import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -54,7 +53,6 @@ contract VotingEscrow is
 
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using SafeERC20Upgradeable for IERC20Upgradeable;
-    using LockLogic for DataTypes.LockedBalance;
 
     modifier lockExists(uint256 lockId) {
         _requireLockExists(lockId);
@@ -440,7 +438,10 @@ contract VotingEscrow is
         _nextClaimableEpoch[tokenId] = getEpoch(block.timestamp) + 1;
 
         // Init the locked balance state variable
-        _lockedBalance[tokenId].init(amount, roundedUnlockTime);
+        _lockedBalance[tokenId] = DataTypes.LockedBalance(
+            amount,
+            roundedUnlockTime
+        );
 
         // Call a checkpoint and update global tracking vars (the old locked balance will be 0 since this is a new lock)
         _checkpoint(

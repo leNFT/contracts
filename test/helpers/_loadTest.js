@@ -44,21 +44,11 @@ let loadEnv = async function (isMainnetFork) {
   }
 
   //Deploy libraries
-  ValidationLogicLib = await ethers.getContractFactory("ValidationLogic");
-  validationLogicLib = await ValidationLogicLib.deploy();
-  console.log("Validation Logic Lib Address:", validationLogicLib.address);
-  BorrowLogicLib = await ethers.getContractFactory("BorrowLogic", {
-    libraries: {
-      ValidationLogic: validationLogicLib.address,
-    },
-  });
+
+  BorrowLogicLib = await ethers.getContractFactory("BorrowLogic");
   borrowLogicLib = await BorrowLogicLib.deploy();
   console.log("Borrow Logic Lib Address:", borrowLogicLib.address);
-  LiquidationLogicLib = await ethers.getContractFactory("LiquidationLogic", {
-    libraries: {
-      ValidationLogic: validationLogicLib.address,
-    },
-  });
+  LiquidationLogicLib = await ethers.getContractFactory("LiquidationLogic");
   liquidationLogicLib = await LiquidationLogicLib.deploy();
   console.log("Liquidation Logic Lib Address:", liquidationLogicLib.address);
 
@@ -78,7 +68,6 @@ let loadEnv = async function (isMainnetFork) {
     libraries: {
       BorrowLogic: borrowLogicLib.address,
       LiquidationLogic: liquidationLogicLib.address,
-      ValidationLogic: validationLogicLib.address,
     },
   });
   lendingMarket = await upgrades.deployProxy(

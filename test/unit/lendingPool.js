@@ -22,11 +22,7 @@ describe("LendingPool", function () {
   });
 
   it("Should fail to directly create a new lending pool", async function () {
-    const LendingPool = await ethers.getContractFactory("LendingPool", {
-      libraries: {
-        ValidationLogic: validationLogicLib.address,
-      },
-    });
+    const LendingPool = await ethers.getContractFactory("LendingPool");
 
     // Should fail on deployment from non-market address
     await expect(

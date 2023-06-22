@@ -4,7 +4,6 @@ pragma solidity 0.8.19;
 import {ILoanCenter} from "../../interfaces/ILoanCenter.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
-import {LoanLogic} from "../../libraries/logic/LoanLogic.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
@@ -40,8 +39,6 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
 
     // Mapping from address to active loans
     mapping(address => uint256[]) private _activeLoans;
-
-    using LoanLogic for DataTypes.LoanData;
 
     modifier onlyMarket() {
         _requireOnlyMarket();
@@ -97,16 +94,18 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
         uint256[] calldata nftTokenIds,
         uint256 borrowRate
     ) public override onlyMarket returns (uint256) {
-        // Create the loan and add it to the list
-        _loans[_loansCount].init(
-            borrower,
-            pool,
-            amount,
-            genesisNFTId,
-            nftAddress,
-            nftTokenIds,
-            borrowRate
-        );
+        _loans[_loansCount] = DataTypes.LoanData({
+            owner: borrower,
+            amount: amount,
+            nftTokenIds: nftTokenIds,
+            nftAsset: nftAddress,
+            borrowRate: SafeCast.toUint16(borrowRate),
+            initTimestamp: SafeCast.toUint40(block.timestamp),
+            debtTimestamp: SafeCast.toUint40(block.timestamp),
+            pool: pool,
+            genesisNFTId: SafeCast.toUint16(genesisNFTId),
+            state: DataTypes.LoanState.Created
+        });
 
         // Add NFT to loanId mapping
         for (uint256 i = 0; i < nftTokenIds.length; i++) {
@@ -291,7 +290,7 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
     /// @return The total amount of debt owed on the loan
     function _getLoanDebt(uint256 loanId) internal view returns (uint256) {
         return
-            _loans[loanId].getInterest(block.timestamp) + _loans[loanId].amount;
+            _getLoanInterest(loanId, block.timestamp) + _loans[loanId].amount;
     }
 
     /// @notice Get the debt owed on a loan
@@ -303,13 +302,29 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
         return _getLoanDebt(loanId);
     }
 
+    function _getLoanInterest(
+        uint256 loanId,
+        uint256 timestamp
+    ) internal view returns (uint256) {
+        //Interest increases every 30 minutes
+        uint256 incrementalTimestamp = (((timestamp - 1) / (30 * 60)) + 1) *
+            (30 * 60);
+        DataTypes.LoanData memory loan = _loans[loanId];
+
+        return
+            (loan.amount *
+                uint256(loan.borrowRate) *
+                (incrementalTimestamp - uint256(loan.debtTimestamp))) /
+            (PercentageMath.PERCENTAGE_FACTOR * 365 days);
+    }
+
     /// @notice Get the interest owed on a loan
     /// @param loanId The ID of the loan
     /// @return The amount of interest owed on the loan
     function getLoanInterest(
         uint256 loanId
     ) external view override loanExists(loanId) returns (uint256) {
-        return _loans[loanId].getInterest(block.timestamp);
+        return _getLoanInterest(loanId, block.timestamp);
     }
 
     /// @notice Get the NFT token IDs associated with a loan

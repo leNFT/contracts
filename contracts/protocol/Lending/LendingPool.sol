@@ -11,14 +11,15 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ConfigTypes} from "../../libraries/types/ConfigTypes.sol";
+import {ILendingMarket} from "../../interfaces/ILendingMarket.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ValidationLogic} from "../../libraries/logic/ValidationLogic.sol";
 
 /// @title LendingPool contract
 /// @author leNFT
 /// @notice Vault used to store lending liquidity and handle deposits and withdrawals
 /// @dev The LendingPool contract uses the ERC4626 contract to track the shares in a liquidity pool held by users
 contract LendingPool is ERC165, ILendingPool, ERC4626, Ownable {
+    uint256 private constant MININUM_DEPOSIT_EMPTY_VAULT = 1e10;
     IAddressProvider private immutable _addressProvider;
     uint256 private _debt;
     uint256 private _borrowRate;
@@ -93,11 +94,19 @@ contract LendingPool is ERC165, ILendingPool, ERC4626, Ownable {
         uint256 assets,
         uint256 shares
     ) internal override poolNotPaused {
-        ValidationLogic.validateDeposit(
-            _addressProvider,
-            totalAssets(),
-            totalSupply(),
-            assets
+        // Check deposit amount. Minimum deposit is 1e10 if the vault is empty to avoid inflation attacks
+        if (totalSupply() == 0) {
+            require(assets >= MININUM_DEPOSIT_EMPTY_VAULT, "VL:VD:MIN_DEPOSIT");
+        } else {
+            require(assets > 0, "VL:VD:AMOUNT_0");
+        }
+
+        // Check if pool will exceed maximum permitted amount
+        require(
+            assets + totalAssets() <
+                ILendingMarket(_addressProvider.getLendingMarket())
+                    .getTVLSafeguard(),
+            "VL:VD:SAFEGUARD_EXCEEDED"
         );
 
         ERC4626._deposit(caller, receiver, assets, shares);
@@ -118,13 +127,18 @@ contract LendingPool is ERC165, ILendingPool, ERC4626, Ownable {
         uint256 assets,
         uint256 shares
     ) internal override {
-        ValidationLogic.validateWithdrawal(
-            _addressProvider,
-            _lendingPoolConfig.maxUtilizationRate,
-            _debt,
-            IERC20(asset()).balanceOf(address(this)),
-            asset(),
-            assets
+        // Check if withdrawal amount is bigger than 0
+        require(assets > 0, "VL:VW:AMOUNT_0");
+
+        // Check if the utilization rate doesn't go above maximum
+        require(
+            IInterestRate(_addressProvider.getInterestRate())
+                .calculateUtilizationRate(
+                    asset(),
+                    IERC20(asset()).balanceOf(address(this)) - assets,
+                    _debt
+                ) <= _lendingPoolConfig.maxUtilizationRate,
+            "VL:VW:MAX_UTILIZATION_RATE"
         );
 
         ERC4626._withdraw(caller, receiver, owner, assets, shares);

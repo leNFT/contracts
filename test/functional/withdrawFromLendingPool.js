@@ -17,11 +17,7 @@ describe("Withdraw from Lengin Pool", function () {
   });
   it("Should withdraw the underlying from the lending pool", async function () {
     // Approve assets to be used by the weth gateway
-    const LendingPool = await ethers.getContractFactory("LendingPool", {
-      libraries: {
-        ValidationLogic: validationLogicLib.address,
-      },
-    });
+    const LendingPool = await ethers.getContractFactory("LendingPool");
     lendingPool = LendingPool.attach(
       await lendingMarket.getLendingPool(testNFT.address, weth.address)
     );
