@@ -31,7 +31,7 @@ contract VotingEscrow is
     uint256 private constant MAXLOCKTIME = 4 * 52 weeks;
     uint256 private constant EPOCH_PERIOD = 1 weeks; // TESTNET: 1 day
 
-    IAddressProvider private _addressProvider;
+    IAddressProvider private immutable _addressProvider;
     uint256 private _deployTimestamp;
     // Locked balance for each lock
     mapping(uint256 => DataTypes.LockedBalance) private _lockedBalance;
@@ -75,18 +75,17 @@ contract VotingEscrow is
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(IAddressProvider addressProvider) {
+        _addressProvider = addressProvider;
         _disableInitializers();
     }
 
     /// @notice Initializes the VotingEscrow contract.
-    /// @param addressProvider The address of the addressProvider contract.
-    function initialize(IAddressProvider addressProvider) external initializer {
+    function initialize() external initializer {
         __ERC721_init("Vote Escrowed LE", "veLE");
         __ERC721Enumerable_init();
         __ERC165_init();
         __ReentrancyGuard_init();
-        _addressProvider = addressProvider;
         _deployTimestamp = block.timestamp;
         _totalWeightHistory.push(0);
         _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);

@@ -34,6 +34,8 @@ contract LendingMarket is
 {
     using ERC165CheckerUpgradeable for address;
 
+    IAddressProvider private immutable _addressProvider;
+
     // collection + asset = pool
     mapping(address => mapping(address => address)) private _pools;
 
@@ -43,27 +45,25 @@ contract LendingMarket is
     // The TVL safeguard for the lending pools
     uint256 private _tvlSafeguard;
 
-    IAddressProvider private _addressProvider;
+    // The default lending pool configuration
     ConfigTypes.LendingPoolConfig private _defaultLendingPoolConfig;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(IAddressProvider addressProvider) {
+        _addressProvider = addressProvider;
         _disableInitializers();
     }
 
     /// @notice Initialize the LendingMarket contract
-    /// @param addressProvider Address of the addresses provider contract
     /// @param tvlSafeguard The TVL safeguard for the lending pools
     /// @param defaultLendingPoolConfig The default lending pool configuration
     function initialize(
-        IAddressProvider addressProvider,
         uint256 tvlSafeguard,
         ConfigTypes.LendingPoolConfig calldata defaultLendingPoolConfig
     ) external initializer {
         __Ownable_init();
         __ERC721Holder_init();
         __ReentrancyGuard_init();
-        _addressProvider = addressProvider;
         _tvlSafeguard = tvlSafeguard;
         _defaultLendingPoolConfig = defaultLendingPoolConfig;
     }

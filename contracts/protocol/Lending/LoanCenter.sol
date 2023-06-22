@@ -25,7 +25,7 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
         private _loansLiquidationData;
 
     uint256 private _loansCount;
-    IAddressProvider private _addressProvider;
+    IAddressProvider private immutable _addressProvider;
 
     // Collection to CollectionRiskParameters (max LTV and liquidation threshold)
     mapping(address => DataTypes.CollectionRiskParameters)
@@ -54,21 +54,19 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(IAddressProvider addressProvider) {
+        _addressProvider = addressProvider;
         _disableInitializers();
     }
 
     /// @notice Initializes the contract
-    /// @param addressProvider The address of the addressProvider contract
     /// @param defaultLiquidationThreshold The default liquidation threshold
     /// @param defaultMaxLTV The default max LTV
     function initialize(
-        IAddressProvider addressProvider,
         uint256 defaultLiquidationThreshold,
         uint256 defaultMaxLTV
     ) external initializer {
         __Ownable_init();
-        _addressProvider = addressProvider;
         _defaultLiquidationThreshold = defaultLiquidationThreshold;
         _defaultMaxLTV = defaultMaxLTV;
     }

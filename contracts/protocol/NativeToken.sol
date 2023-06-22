@@ -17,19 +17,18 @@ contract NativeToken is
     ReentrancyGuardUpgradeable
 {
     uint256 private constant MAX_CAP = 1e27; // 1 billion tokens max cap
-    IAddressProvider private _addressProvider;
+    IAddressProvider private immutable _addressProvider;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(IAddressProvider addressProvider) {
+        _addressProvider = addressProvider;
         _disableInitializers();
     }
 
     /// @notice Initializes the contract with the specified parameters
-    /// @param addressProvider The address provider contract
-    function initialize(IAddressProvider addressProvider) external initializer {
+    function initialize() external initializer {
         __ERC20_init("leNFT Token", "LE");
         __ReentrancyGuard_init();
-        _addressProvider = addressProvider;
     }
 
     /// @notice Gets the maximum supply of the token

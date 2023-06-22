@@ -21,7 +21,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     uint256 private constant LOADING_PERIOD = 24; // 24 epochs (6 months)
     uint256 private constant INITIAL_REWARDS = 28e23; // 2.8 million tokens per epoch
 
-    IAddressProvider private _addressProvider;
+    IAddressProvider private immutable _addressProvider;
 
     // Epoch history of gauge vote weight
     mapping(address => uint256[]) private _gaugeWeightHistory;
@@ -65,19 +65,15 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(IAddressProvider addressProvider) {
+        _addressProvider = addressProvider;
         _disableInitializers();
     }
 
     /// @notice Initializes the contract by setting up the owner and the addresses provider contract.
-    /// @param addressProvider Address provider contract.
     /// @param lpMaturityPeriod The maturity period for the LP tokens
-    function initialize(
-        IAddressProvider addressProvider,
-        uint256 lpMaturityPeriod
-    ) external initializer {
+    function initialize(uint256 lpMaturityPeriod) external initializer {
         __Ownable_init();
-        _addressProvider = addressProvider;
         _lpMaturityPeriod = lpMaturityPeriod;
         _totalWeigthHistory.push(0);
         _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);

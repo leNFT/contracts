@@ -16,7 +16,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 /// @notice Allows users to bribe the veLE token holders in order to incentivize them to vote for a specific gauge
 /// @dev Bribes are always deposited for the next epoch
 contract Bribes is IBribes, ReentrancyGuardUpgradeable {
-    IAddressProvider private _addressProvider;
+    IAddressProvider private immutable _addressProvider;
     // Token + Gauge + Epoch = Amount
     mapping(address => mapping(address => mapping(uint256 => uint256)))
         private _gaugeBribes;
@@ -40,15 +40,14 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(IAddressProvider addressProvider) {
+        _addressProvider = addressProvider;
         _disableInitializers();
     }
 
     /// @notice Initializes the contract with an addressProvider
-    /// @param addressProvider addressProvider contract address
-    function initialize(IAddressProvider addressProvider) external initializer {
+    function initialize() external initializer {
         __ReentrancyGuard_init();
-        _addressProvider = addressProvider;
     }
 
     /// @notice Deposits a bribe for a specific gauge for the next epoch

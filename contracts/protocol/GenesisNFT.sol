@@ -44,7 +44,7 @@ contract GenesisNFT is
     uint256 private constant MIN_LOCKTIME = 14 days;
     uint256 private constant NATIVE_TOKEN_FACTOR = 400000; // Controls the amount of native tokens minted per NFT
 
-    IAddressProvider private _addressProvider;
+    IAddressProvider private immutable _addressProvider;
     address payable private _devAddress;
     DataTypes.BalancerDetails private _balancerDetails;
     uint256 private _maxLTVBoost;
@@ -75,16 +75,15 @@ contract GenesisNFT is
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(IAddressProvider addressProvider) {
+        _addressProvider = addressProvider;
         _disableInitializers();
     }
 
     /// @notice Initializes the contract with the specified parameters
-    /// @param addressProvider Address provider contract
     /// @param maxLTVBoost max LTV boost factor
     /// @param devAddress Address of the developer
     function initialize(
-        IAddressProvider addressProvider,
         uint256 maxLTVBoost,
         address payable devAddress
     ) external initializer {
@@ -93,7 +92,6 @@ contract GenesisNFT is
         __ERC165_init();
         __Ownable_init();
         __ReentrancyGuard_init();
-        _addressProvider = addressProvider;
         _maxLTVBoost = maxLTVBoost;
         _devAddress = devAddress;
 

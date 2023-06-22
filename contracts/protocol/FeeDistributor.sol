@@ -15,7 +15,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/se
 /// @notice This contract distributes fees from the protocol to LE stakers, using the VotingEscrow interface to check the user's staked amount
 /// @dev Every time new fees are accrued, the checkpoint function must be called to update the fees
 contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
-    IAddressProvider private _addressProvider;
+    IAddressProvider private immutable _addressProvider;
     // Token + Lock token id = Epoch
     mapping(address => mapping(uint256 => uint256)) private _lockHistoryPointer;
     // Token + Epoch = Amount
@@ -28,15 +28,14 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(IAddressProvider addressProvider) {
+        _addressProvider = addressProvider;
         _disableInitializers();
     }
 
-    /// @notice Initializes the contract with an addressProvider
-    /// @param addressProvider addressProvider contract address
-    function initialize(IAddressProvider addressProvider) external initializer {
+    /// @notice Initializes the contract
+    function initialize() external initializer {
         __ReentrancyGuard_init();
-        _addressProvider = addressProvider;
     }
 
     /// @notice Retrieves the amount of fees for a given token in a given epoch

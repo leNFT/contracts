@@ -73,7 +73,6 @@ let loadEnv = async function (isMainnetFork) {
   lendingMarket = await upgrades.deployProxy(
     LendingMarket,
     [
-      addressProvider.address,
       "25000000000000000000", // TVLSafeguard
       {
         maxLiquidatorDiscount: "2000", // maxLiquidatorDiscount
@@ -82,68 +81,95 @@ let loadEnv = async function (isMainnetFork) {
         maxUtilizationRate: "8500", // defaultmaxUtilizationRate
       },
     ],
-    { unsafeAllow: ["external-library-linking"], timeout: 0 }
+    {
+      unsafeAllow: ["external-library-linking", "state-variable-immutable"],
+      timeout: 0,
+      constructorArgs: [addressProvider.address],
+    }
   );
 
   console.log("Deployed LendingMarket");
 
   // Deploy and initialize loan center provider proxy
   const LoanCenter = await ethers.getContractFactory("LoanCenter");
-  loanCenter = await upgrades.deployProxy(LoanCenter, [
-    addressProvider.address,
-    "3000", // Default Max LTV for loans - 30%
-    "6000", // Default Liquidation Threshold for loanss - 60%
-  ]);
+  loanCenter = await upgrades.deployProxy(
+    LoanCenter,
+    [
+      "3000", // Default Max LTV for loans - 30%
+      "6000", // Default Liquidation Threshold for loanss - 60%
+    ],
+    {
+      unsafeAllow: ["state-variable-immutable"],
+      constructorArgs: [addressProvider.address],
+    }
+  );
 
   console.log("Deployed LoanCenter");
 
   // Deploy and initialize the native token
   const NativeToken = await ethers.getContractFactory("NativeToken");
-  nativeToken = await upgrades.deployProxy(NativeToken, [
-    addressProvider.address,
-  ]);
+  nativeToken = await upgrades.deployProxy(NativeToken, [], {
+    unsafeAllow: ["state-variable-immutable"],
+    constructorArgs: [addressProvider.address],
+  });
 
   console.log("Deployed NativeToken");
 
   // Deploy and initialize Genesis NFT
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
-  genesisNFT = await upgrades.deployProxy(GenesisNFT, [
-    addressProvider.address,
-    "250", // 2.5% LTV Boost for Genesis NFT
-    address1.address,
-  ]);
+  genesisNFT = await upgrades.deployProxy(
+    GenesisNFT,
+    [
+      "250", // 2.5% LTV Boost for Genesis NFT
+      address1.address,
+    ],
+    {
+      unsafeAllow: ["state-variable-immutable"],
+      constructorArgs: [addressProvider.address],
+    }
+  );
 
   console.log("Deployed GenesisNFT");
 
   // Deploy and initialize the Bribes contract
   const Bribes = await ethers.getContractFactory("Bribes");
-  bribes = await upgrades.deployProxy(Bribes, [addressProvider.address]);
+  bribes = await upgrades.deployProxy(Bribes, [], {
+    unsafeAllow: ["state-variable-immutable"],
+    constructorArgs: [addressProvider.address],
+  });
 
   console.log("Deployed Bribes");
 
   // Deploy and initialize Voting Escrow contract
-  console.log("addressProvider.address", addressProvider.address);
   const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
-  votingEscrow = await upgrades.deployProxy(VotingEscrow, [
-    addressProvider.address,
-  ]);
+  votingEscrow = await upgrades.deployProxy(VotingEscrow, [], {
+    unsafeAllow: ["state-variable-immutable"],
+    constructorArgs: [addressProvider.address],
+  });
 
   console.log("Deployed VotingEscrow");
 
   // Deploy and initialize Gauge Controller
   const GaugeController = await ethers.getContractFactory("GaugeController");
-  gaugeController = await upgrades.deployProxy(GaugeController, [
-    addressProvider.address,
-    6 * 7 * 24 * 3600, // Default LP Maturation Period in seconds (set to 6 weeks)
-  ]);
+  gaugeController = await upgrades.deployProxy(
+    GaugeController,
+    [
+      6 * 7 * 24 * 3600, // Default LP Maturation Period in seconds (set to 6 weeks)
+    ],
+    {
+      unsafeAllow: ["state-variable-immutable"],
+      constructorArgs: [addressProvider.address],
+    }
+  );
 
   console.log("Deployed GaugeController");
 
   // Deploy and initialize Fee distributor
   const FeeDistributor = await ethers.getContractFactory("FeeDistributor");
-  feeDistributor = await upgrades.deployProxy(FeeDistributor, [
-    addressProvider.address,
-  ]);
+  feeDistributor = await upgrades.deployProxy(FeeDistributor, [], {
+    unsafeAllow: ["state-variable-immutable"],
+    constructorArgs: [addressProvider.address],
+  });
 
   console.log("Deployed FeeDistributor");
 
@@ -151,11 +177,17 @@ let loadEnv = async function (isMainnetFork) {
   const TradingPoolFactory = await ethers.getContractFactory(
     "TradingPoolFactory"
   );
-  tradingPoolFactory = await upgrades.deployProxy(TradingPoolFactory, [
-    addressProvider.address,
-    "1000", // Default protocol fee (10%)
-    "25000000000000000000", // TVLSafeguard
-  ]);
+  tradingPoolFactory = await upgrades.deployProxy(
+    TradingPoolFactory,
+    [
+      "1000", // Default protocol fee (10%)
+      "25000000000000000000", // TVLSafeguard
+    ],
+    {
+      unsafeAllow: ["state-variable-immutable"],
+      constructorArgs: [addressProvider.address],
+    }
+  );
 
   console.log("Deployed TradingPoolFactory");
 

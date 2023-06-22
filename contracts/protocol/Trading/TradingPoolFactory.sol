@@ -22,7 +22,7 @@ contract TradingPoolFactory is
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    IAddressProvider private _addressProvider;
+    IAddressProvider private immutable _addressProvider;
 
     // collection + asset = pool
     mapping(address => mapping(address => address)) private _pools;
@@ -39,22 +39,20 @@ contract TradingPoolFactory is
     using ERC165CheckerUpgradeable for address;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(IAddressProvider addressProvider) {
+        _addressProvider = addressProvider;
         _disableInitializers();
     }
 
     /// @notice Initialize the contract
-    /// @param addressProvider Address of the addressProvider contract
     /// @param protocolFeePercentage Protocol fee percentage charged on lp trade fees
     /// @param tvlSafeguard default TVL safeguard for pools
     function initialize(
-        IAddressProvider addressProvider,
         uint256 protocolFeePercentage,
         uint256 tvlSafeguard
     ) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
-        _addressProvider = addressProvider;
         _protocolFeePercentage = protocolFeePercentage;
         _tvlSafeguard = tvlSafeguard;
     }
