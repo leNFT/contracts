@@ -36,45 +36,15 @@ library LiquidationLogic {
         // Get the loan
         DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
 
-        // Verify if liquidation conditions are met
-        //Require the loan exists
-        require(
-            loanData.state == DataTypes.LoanState.Active,
-            "VL:VCLA:LOAN_NOT_FOUND"
-        );
-
-        // Check if collateral / debt relation allows for liquidation
-        (uint256 ethPrice, uint256 precision) = ITokenOracle(
-            addressProvider.getTokenOracle()
-        ).getTokenETHPrice(IERC4626(loanData.pool).asset());
-
-        uint256 collateralETHPrice = INFTOracle(addressProvider.getNFTOracle())
-            .getTokensETHPrice(
-                loanData.nftAsset,
-                loanData.nftTokenIds,
-                params.request,
-                params.packet
-            );
-
-        require(
-            (loanCenter.getLoanMaxDebt(params.loanId, collateralETHPrice) *
-                precision) /
-                ethPrice <
-                loanCenter.getLoanDebt(params.loanId),
-            "VL:VCLA:MAX_DEBT_NOT_EXCEEDED"
-        );
-
-        // Check if bid is large enough
-        require(
-            (ethPrice * params.bid) / precision >=
-                PercentageMath.percentMul(
-                    collateralETHPrice,
-                    (PercentageMath.PERCENTAGE_FACTOR -
-                        ILendingPool(loanData.pool)
-                            .getPoolConfig()
-                            .maxLiquidatorDiscount)
-                ),
-            "VL:VCLA:BID_TOO_LOW"
+        // Validate the auction creation
+        _validateCreateLiquidationAuction(
+            addressProvider,
+            address(loanCenter),
+            params,
+            loanData.state,
+            loanData.pool,
+            loanData.nftAsset,
+            loanData.nftTokenIds
         );
 
         // Add auction to the loan
@@ -257,5 +227,66 @@ library LiquidationLogic {
                 false
             );
         }
+    }
+
+    /// @notice Validate the parameters of the create liquidation auction function
+    /// @param addressProvider The address of the addresses provider
+    /// @param loanCenter The loan center
+    /// @param params A struct with the parameters of the create liquidation auction function
+    /// @param loanState The state of the loan
+    /// @param lendingPool The address of the lending pool
+    /// @param loanNFTAsset The address of the loan NFT asset
+    /// @param loanNFTTokenIds The token ids of the loan NFT
+    function _validateCreateLiquidationAuction(
+        IAddressProvider addressProvider,
+        address loanCenter,
+        DataTypes.CreateAuctionParams memory params,
+        DataTypes.LoanState loanState,
+        address lendingPool,
+        address loanNFTAsset,
+        uint256[] memory loanNFTTokenIds
+    ) internal view {
+        // Verify if liquidation conditions are met
+        //Require the loan exists
+        require(
+            loanState == DataTypes.LoanState.Active,
+            "VL:VCLA:LOAN_NOT_FOUND"
+        );
+
+        // Check if collateral / debt relation allows for liquidation
+        (uint256 ethPrice, uint256 precision) = ITokenOracle(
+            addressProvider.getTokenOracle()
+        ).getTokenETHPrice(IERC4626(lendingPool).asset());
+
+        uint256 collateralETHPrice = INFTOracle(addressProvider.getNFTOracle())
+            .getTokensETHPrice(
+                loanNFTAsset,
+                loanNFTTokenIds,
+                params.request,
+                params.packet
+            );
+
+        require(
+            (ILoanCenter(loanCenter).getLoanMaxDebt(
+                params.loanId,
+                collateralETHPrice
+            ) * precision) /
+                ethPrice <
+                ILoanCenter(loanCenter).getLoanDebt(params.loanId),
+            "VL:VCLA:MAX_DEBT_NOT_EXCEEDED"
+        );
+
+        // Check if bid is large enough
+        require(
+            (ethPrice * params.bid) / precision >=
+                PercentageMath.percentMul(
+                    collateralETHPrice,
+                    (PercentageMath.PERCENTAGE_FACTOR -
+                        ILendingPool(lendingPool)
+                            .getPoolConfig()
+                            .maxLiquidatorDiscount)
+                ),
+            "VL:VCLA:BID_TOO_LOW"
+        );
     }
 }

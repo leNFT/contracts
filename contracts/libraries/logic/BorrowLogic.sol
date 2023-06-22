@@ -31,72 +31,14 @@ library BorrowLogic {
         address lendingPool,
         DataTypes.BorrowParams memory params
     ) external returns (uint256 loanId) {
-        // Check if borrow amount is bigger than 0
-        require(params.amount > 0, "VL:VB:AMOUNT_0");
-
-        // Check if theres at least one asset to use as collateral
-        require(params.nftTokenIds.length > 0, "VL:VB:NO_NFTS");
-
-        // Check if the lending pool exists
-        require(lendingPool != address(0), "VL:VB:INVALID_LENDING_POOL");
-
-        // Get boost from genesis NFTs
-        uint256 maxLTVBoost;
-        if (params.genesisNFTId != 0) {
-            IGenesisNFT genesisNFT = IGenesisNFT(
-                addressProvider.getGenesisNFT()
-            );
-
-            // If the caller is not the user we are borrowing on behalf Of, check if the caller is approved
-            if (params.onBehalfOf != params.caller) {
-                require(
-                    genesisNFT.isLoanOperatorApproved(
-                        params.onBehalfOf,
-                        params.caller
-                    ),
-                    "VL:VB:GENESIS_NOT_AUTHORIZED"
-                );
-            }
-            require(
-                genesisNFT.ownerOf(params.genesisNFTId) == params.onBehalfOf,
-                "VL:VB:GENESIS_NOT_OWNED"
-            );
-            //Require that the NFT is not being used
-            require(
-                genesisNFT.getLockedState(params.genesisNFTId) == false,
-                "VL:VB:GENESIS_LOCKED"
-            );
-
-            maxLTVBoost = genesisNFT.getMaxLTVBoost();
-        }
-
-        // Check if borrow amount exceeds allowed amount
-        (uint256 ethPrice, uint256 precision) = ITokenOracle(
-            addressProvider.getTokenOracle()
-        ).getTokenETHPrice(params.asset);
-
         ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
-        require(
-            params.amount <=
-                (PercentageMath.percentMul(
-                    INFTOracle(addressProvider.getNFTOracle())
-                        .getTokensETHPrice(
-                            params.nftAddress,
-                            params.nftTokenIds,
-                            params.request,
-                            params.packet
-                        ),
-                    loanCenter.getCollectionMaxLTV(params.nftAddress) +
-                        maxLTVBoost
-                ) * precision) /
-                    ethPrice,
-            "VL:VB:MAX_LTV_EXCEEDED"
-        );
 
-        // Check if the pool has enough underlying to borrow
-        require(
-            params.amount <= ILendingPool(lendingPool).getUnderlyingBalance(),
-            "VL:VB:INSUFFICIENT_UNDERLYING"
+        // Validate the borrow parameters
+        _validateBorrow(
+            addressProvider,
+            lendingPool,
+            address(loanCenter),
+            params
         );
 
         // Transfer the collateral to the the lending market
@@ -269,5 +211,85 @@ library BorrowLogic {
                 );
             }
         }
+    }
+
+    /// @notice Validates the parameters of the borrow function
+    /// @param addressProvider The address of the addresses provider
+    /// @param lendingPool The address of the lending pool
+    /// @param loanCenter The address loan center
+    /// @param params A struct with the parameters of the borrow function
+    function _validateBorrow(
+        IAddressProvider addressProvider,
+        address lendingPool,
+        address loanCenter,
+        DataTypes.BorrowParams memory params
+    ) internal view {
+        // Check if borrow amount is bigger than 0
+        require(params.amount > 0, "VL:VB:AMOUNT_0");
+
+        // Check if theres at least one asset to use as collateral
+        require(params.nftTokenIds.length > 0, "VL:VB:NO_NFTS");
+
+        // Check if the lending pool exists
+        require(lendingPool != address(0), "VL:VB:INVALID_LENDING_POOL");
+
+        // Get boost from genesis NFTs
+        uint256 maxLTVBoost;
+        if (params.genesisNFTId != 0) {
+            IGenesisNFT genesisNFT = IGenesisNFT(
+                addressProvider.getGenesisNFT()
+            );
+
+            // If the caller is not the user we are borrowing on behalf Of, check if the caller is approved
+            if (params.onBehalfOf != params.caller) {
+                require(
+                    genesisNFT.isLoanOperatorApproved(
+                        params.onBehalfOf,
+                        params.caller
+                    ),
+                    "VL:VB:GENESIS_NOT_AUTHORIZED"
+                );
+            }
+            require(
+                genesisNFT.ownerOf(params.genesisNFTId) == params.onBehalfOf,
+                "VL:VB:GENESIS_NOT_OWNED"
+            );
+            //Require that the NFT is not being used
+            require(
+                genesisNFT.getLockedState(params.genesisNFTId) == false,
+                "VL:VB:GENESIS_LOCKED"
+            );
+
+            maxLTVBoost = genesisNFT.getMaxLTVBoost();
+        }
+
+        // Check if borrow amount exceeds allowed amount
+        (uint256 ethPrice, uint256 precision) = ITokenOracle(
+            addressProvider.getTokenOracle()
+        ).getTokenETHPrice(params.asset);
+
+        require(
+            params.amount <=
+                (PercentageMath.percentMul(
+                    INFTOracle(addressProvider.getNFTOracle())
+                        .getTokensETHPrice(
+                            params.nftAddress,
+                            params.nftTokenIds,
+                            params.request,
+                            params.packet
+                        ),
+                    ILoanCenter(loanCenter).getCollectionMaxLTV(
+                        params.nftAddress
+                    ) + maxLTVBoost
+                ) * precision) /
+                    ethPrice,
+            "VL:VB:MAX_LTV_EXCEEDED"
+        );
+
+        // Check if the pool has enough underlying to borrow
+        require(
+            params.amount <= ILendingPool(lendingPool).getUnderlyingBalance(),
+            "VL:VB:INSUFFICIENT_UNDERLYING"
+        );
     }
 }
