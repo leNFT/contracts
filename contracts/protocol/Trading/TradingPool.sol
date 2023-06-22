@@ -329,6 +329,7 @@ contract TradingPool is
         uint256 lpIndex;
         uint256 fee;
         uint256 totalProtocolFee;
+        uint256 protocolFee;
         DataTypes.LiquidityPair memory lp;
         uint256 protocolFeePercentage = ITradingPoolFactory(
             _addressProvider.getTradingPoolFactory()
@@ -346,6 +347,7 @@ contract TradingPool is
             require(lp.lpType != DataTypes.LPType.Buy, "TP:B:IS_BUY_LP");
 
             fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
+            protocolFee = PercentageMath.percentMul(fee, protocolFeePercentage);
 
             // Remove nft from liquidity pair nft list
             _liquidityPairs[lpIndex].nftIds[_nftToLp[nftIds[i]].index] = lp
@@ -360,14 +362,11 @@ contract TradingPool is
 
             _liquidityPairs[lpIndex].tokenAmount += (lp.spotPrice +
                 fee -
-                PercentageMath.percentMul(fee, protocolFeePercentage));
+                protocolFee);
 
             // Increase total price and fee sum
             finalPrice += (lp.spotPrice + fee);
-            totalProtocolFee += PercentageMath.percentMul(
-                fee,
-                protocolFeePercentage
-            );
+            totalProtocolFee += protocolFee;
 
             // Update liquidity pair price
             if (lp.lpType != DataTypes.LPType.TradeDown) {
