@@ -91,7 +91,7 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
         address nftAddress,
         uint256[] calldata nftTokenIds,
         uint256 borrowRate
-    ) public override onlyMarket returns (uint256) {
+    ) external override onlyMarket returns (uint256) {
         _loans[_loansCount] = DataTypes.LoanData({
             owner: borrower,
             amount: amount,
@@ -147,33 +147,6 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
         _closeLoan(loanId);
     }
 
-    /// @notice Auxiliary function to close the loan
-    /// @param loanId The ID of the loan to close
-    function _closeLoan(uint256 loanId) internal {
-        // Cache loan NFTs array
-        uint256[] memory loanTokenIds = _loans[loanId].nftTokenIds;
-        // Get loans nft mapping
-        address loanCollection = _loans[loanId].nftAsset;
-
-        // Remove nft to loan id mapping
-        for (uint256 i = 0; i < loanTokenIds.length; i++) {
-            delete _nftToLoanId[loanCollection][loanTokenIds[i]];
-        }
-
-        // Remove loan from user active loans
-        address loanOwner = _loans[loanId].owner;
-        uint256[] memory userActiveLoans = _activeLoans[loanOwner];
-        for (uint256 i = 0; i < userActiveLoans.length; i++) {
-            if (userActiveLoans[i] == loanId) {
-                _activeLoans[loanOwner][i] = userActiveLoans[
-                    userActiveLoans.length - 1
-                ];
-                _activeLoans[loanOwner].pop();
-                break;
-            }
-        }
-    }
-
     /// @notice Start an auction for a loan
     /// @dev Sets its state to Auctioned and creates the liquidation data
     /// @dev Only the market contract can call this function
@@ -210,6 +183,43 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
         // Update the liquidation data
         _loansLiquidationData[loanId].liquidator = user;
         _loansLiquidationData[loanId].auctionMaxBid = bid;
+    }
+
+    /// @notice Changes the Risk Parameters for a collection.
+    /// @param collection The address of the collection to change the max collaterization price for.
+    /// @param maxLTV The new max LTV to set (10000 = 100%).
+    /// @param liquidationThreshold The new liquidation Threshold to set (10000 = 100%).
+    function setCollectionRiskParameters(
+        address collection,
+        uint256 maxLTV,
+        uint256 liquidationThreshold
+    ) external onlyOwner {
+        //Set the max collaterization
+        _collectionsRiskParameters[collection] = DataTypes
+            .CollectionRiskParameters({
+                maxLTV: SafeCast.toUint16(maxLTV),
+                liquidationThreshold: SafeCast.toUint16(liquidationThreshold)
+            });
+    }
+
+    /// @notice Updates the debt timestamp of a loan.
+    /// @param loanId The ID of the loan to update.
+    /// @param newDebtTimestamp The new debt timestamp to set.
+    function updateLoanDebtTimestamp(
+        uint256 loanId,
+        uint256 newDebtTimestamp
+    ) external override onlyMarket {
+        _loans[loanId].debtTimestamp = uint40(newDebtTimestamp);
+    }
+
+    /// @notice Updates the amount of a loan.
+    /// @param loanId The ID of the loan to update.
+    /// @param newAmount The new amount to set.
+    function updateLoanAmount(
+        uint256 loanId,
+        uint256 newAmount
+    ) external override onlyMarket {
+        _loans[loanId].amount = newAmount;
     }
 
     /// @notice Get the number of loans in the loans list
@@ -283,37 +293,13 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
         return _nftToLoanId[nftAddress][nftTokenId];
     }
 
-    /// @notice Internal function to get the debt owed on a loan
-    /// @param loanId The ID of the loan
-    /// @return The total amount of debt owed on the loan
-    function _getLoanDebt(uint256 loanId) internal view returns (uint256) {
-        return
-            _getLoanInterest(loanId, block.timestamp) + _loans[loanId].amount;
-    }
-
     /// @notice Get the debt owed on a loan
     /// @param loanId The ID of the loan
     /// @return The total amount of debt owed on the loan quoted in the same asset of the loan's lending pool
     function getLoanDebt(
         uint256 loanId
-    ) public view override loanExists(loanId) returns (uint256) {
+    ) external view override loanExists(loanId) returns (uint256) {
         return _getLoanDebt(loanId);
-    }
-
-    function _getLoanInterest(
-        uint256 loanId,
-        uint256 timestamp
-    ) internal view returns (uint256) {
-        //Interest increases every 30 minutes
-        uint256 incrementalTimestamp = (((timestamp - 1) / (30 * 60)) + 1) *
-            (30 * 60);
-        DataTypes.LoanData memory loan = _loans[loanId];
-
-        return
-            (loan.amount *
-                uint256(loan.borrowRate) *
-                (incrementalTimestamp - uint256(loan.debtTimestamp))) /
-            (PercentageMath.PERCENTAGE_FACTOR * 365 days);
     }
 
     /// @notice Get the interest owed on a loan
@@ -369,7 +355,7 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
     ) external view loanExists(loanId) loanAuctioned(loanId) returns (uint256) {
         return
             PercentageMath.percentMul(
-                getLoanDebt(loanId),
+                _getLoanDebt(loanId),
                 ILendingPool(_loans[loanId].pool)
                     .getPoolConfig()
                     .auctioneerFeeRate
@@ -385,24 +371,16 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
         return _loans[loanId].owner;
     }
 
-    /// @notice Updates the debt timestamp of a loan.
-    /// @param loanId The ID of the loan to update.
-    /// @param newDebtTimestamp The new debt timestamp to set.
-    function updateLoanDebtTimestamp(
-        uint256 loanId,
-        uint256 newDebtTimestamp
-    ) external override onlyMarket {
-        _loans[loanId].debtTimestamp = uint40(newDebtTimestamp);
-    }
-
-    /// @notice Updates the amount of a loan.
-    /// @param loanId The ID of the loan to update.
-    /// @param newAmount The new amount to set.
-    function updateLoanAmount(
-        uint256 loanId,
-        uint256 newAmount
-    ) external override onlyMarket {
-        _loans[loanId].amount = newAmount;
+    /// @notice Gets the Max LTV for a collection, this is the maximum amount of debt that can be taken out against a collection in a borrow operation.
+    /// @param collection The address of the collection to get the max collaterization price for.
+    /// @return The Max LTV for the collection (10000 = 100%).
+    function getCollectionMaxLTV(
+        address collection
+    ) external view override returns (uint256) {
+        if (_collectionsRiskParameters[collection].maxLTV == 0) {
+            return _defaultMaxLTV;
+        }
+        return _collectionsRiskParameters[collection].maxLTV;
     }
 
     /// @notice Gets the Liquidation Threshold for a collection.
@@ -417,33 +395,59 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
         return _collectionsRiskParameters[collection].liquidationThreshold;
     }
 
-    /// @notice Gets the Max LTV for a collection, this is the maximum amount of debt that can be taken out against a collection in a borrow operation.
-    /// @param collection The address of the collection to get the max collaterization price for.
-    /// @return The Max LTV for the collection (10000 = 100%).
-    function getCollectionMaxLTV(
-        address collection
-    ) external view override returns (uint256) {
-        if (_collectionsRiskParameters[collection].maxLTV == 0) {
-            return _defaultMaxLTV;
+    /// @notice Auxiliary function to close the loan
+    /// @param loanId The ID of the loan to close
+    function _closeLoan(uint256 loanId) internal {
+        // Cache loan NFTs array
+        uint256[] memory loanTokenIds = _loans[loanId].nftTokenIds;
+        // Get loans nft mapping
+        address loanCollection = _loans[loanId].nftAsset;
+
+        // Remove nft to loan id mapping
+        for (uint256 i = 0; i < loanTokenIds.length; i++) {
+            delete _nftToLoanId[loanCollection][loanTokenIds[i]];
         }
-        return _collectionsRiskParameters[collection].maxLTV;
+
+        // Remove loan from user active loans
+        address loanOwner = _loans[loanId].owner;
+        uint256[] memory userActiveLoans = _activeLoans[loanOwner];
+        for (uint256 i = 0; i < userActiveLoans.length; i++) {
+            if (userActiveLoans[i] == loanId) {
+                _activeLoans[loanOwner][i] = userActiveLoans[
+                    userActiveLoans.length - 1
+                ];
+                _activeLoans[loanOwner].pop();
+                break;
+            }
+        }
     }
 
-    /// @notice Changes the Risk Parameters for a collection.
-    /// @param collection The address of the collection to change the max collaterization price for.
-    /// @param maxLTV The new max LTV to set (10000 = 100%).
-    /// @param liquidationThreshold The new liquidation Threshold to set (10000 = 100%).
-    function setCollectionRiskParameters(
-        address collection,
-        uint256 maxLTV,
-        uint256 liquidationThreshold
-    ) external onlyOwner {
-        //Set the max collaterization
-        _collectionsRiskParameters[collection] = DataTypes
-            .CollectionRiskParameters({
-                maxLTV: SafeCast.toUint16(maxLTV),
-                liquidationThreshold: SafeCast.toUint16(liquidationThreshold)
-            });
+    /// @notice GEts the loan interest for a given timestamp
+    /// @param loanId The ID of the loan
+    /// @param timestamp The timestamp to get the interest for
+    /// @return The amount of interest owed on the loan
+    function _getLoanInterest(
+        uint256 loanId,
+        uint256 timestamp
+    ) internal view returns (uint256) {
+        //Interest increases every 30 minutes
+        uint256 incrementalTimestamp = (((timestamp - 1) / (30 * 60)) + 1) *
+            (30 * 60);
+        DataTypes.LoanData memory loan = _loans[loanId];
+
+        return
+            (loan.amount *
+                uint256(loan.borrowRate) *
+                (incrementalTimestamp - uint256(loan.debtTimestamp))) /
+            (PercentageMath.PERCENTAGE_FACTOR * 365 days);
+    }
+
+    /// @notice Internal function to get the debt owed on a loan
+    /// @param loanId The ID of the loan
+    /// @return The total amount of debt owed on the loan
+    function _getLoanDebt(uint256 loanId) internal view returns (uint256) {
+        return
+            _getLoanInterest(loanId, block.timestamp) + _loans[loanId].amount;
     }
 
     function _requireOnlyMarket() internal view {
