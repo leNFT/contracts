@@ -30,12 +30,13 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
     uint256 private _loansCount;
     IAddressProvider private _addressProvider;
 
-    // Collection to liquidation threshold
+    // Collection to CollectionRiskParameters (max LTV and liquidation threshold)
     mapping(address => DataTypes.CollectionRiskParameters)
         private _collectionsRiskParameters;
 
-    DataTypes.CollectionRiskParameters
-        private _defaultCollectionsRiskParameters;
+    // Default values for Collection Risk Parameters
+    uint256 private _defaultLiquidationThreshold;
+    uint256 private _defaultMaxLTV;
 
     // Mapping from address to active loans
     mapping(address => uint256[]) private _activeLoans;
@@ -64,15 +65,17 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
 
     /// @notice Initializes the contract
     /// @param addressProvider The address of the addressProvider contract
-    /// @param defaultCollectionsRiskParameters The default collection Risk Parameters
+    /// @param defaultLiquidationThreshold The default liquidation threshold
+    /// @param defaultMaxLTV The default max LTV
     function initialize(
         IAddressProvider addressProvider,
-        DataTypes.CollectionRiskParameters
-            calldata defaultCollectionsRiskParameters
+        uint256 defaultLiquidationThreshold,
+        uint256 defaultMaxLTV
     ) external initializer {
         __Ownable_init();
         _addressProvider = addressProvider;
-        _defaultCollectionsRiskParameters = defaultCollectionsRiskParameters;
+        _defaultLiquidationThreshold = defaultLiquidationThreshold;
+        _defaultMaxLTV = defaultMaxLTV;
     }
 
     /// @notice Create a new loan with the specified parameters and add it to the loans list
@@ -396,7 +399,7 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
         address collection
     ) public view override returns (uint256) {
         if (_collectionsRiskParameters[collection].maxLTV == 0) {
-            return _defaultCollectionsRiskParameters.liquidationThreshold;
+            return _defaultLiquidationThreshold;
         }
         return _collectionsRiskParameters[collection].liquidationThreshold;
     }
@@ -408,7 +411,7 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
         address collection
     ) external view override returns (uint256) {
         if (_collectionsRiskParameters[collection].maxLTV == 0) {
-            return _defaultCollectionsRiskParameters.maxLTV;
+            return _defaultMaxLTV;
         }
         return _collectionsRiskParameters[collection].maxLTV;
     }

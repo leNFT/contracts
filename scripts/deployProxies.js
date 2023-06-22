@@ -90,10 +90,8 @@ async function main() {
   const LoanCenter = await ethers.getContractFactory("LoanCenter");
   const loanCenter = await upgrades.deployProxy(LoanCenter, [
     addressProvider.address,
-    {
-      maxLTV: "3000", // Default Max LTV for loans - 30%
-      liquidationThreshold: "6000", // Default Liquidation Threshold for loanss - 60%
-    },
+    "3000", // Default Max LTV for loans - 30%
+    "6000", // Default Liquidation Threshold for loanss - 60%
   ]);
   addresses["LoanCenter"] = loanCenter.address;
 
