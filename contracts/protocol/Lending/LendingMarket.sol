@@ -214,14 +214,15 @@ contract LendingMarket is
             collection.supportsInterface(type(IERC721Upgradeable).interfaceId),
             "LM:CLP:COLLECTION_NOT_NFT"
         );
+        IAddressProvider addressProvider = _addressProvider;
         require(
-            ITokenOracle(_addressProvider.getTokenOracle()).isTokenSupported(
+            ITokenOracle(addressProvider.getTokenOracle()).isTokenSupported(
                 asset
             ),
             "LM:CLP:ASSET_NOT_SUPPORTED_TO"
         );
         require(
-            IInterestRate(_addressProvider.getInterestRate()).isTokenSupported(
+            IInterestRate(addressProvider.getInterestRate()).isTokenSupported(
                 asset
             ),
             "LM:CLP:ASSET_NOT_SUPPORTED_IR"
@@ -230,21 +231,22 @@ contract LendingMarket is
             _pools[collection][asset] == address(0),
             "LM:CLP:LENDING_POOL_EXISTS"
         );
+        uint256 poolsCount = _poolsCount[asset];
         ILendingPool newLendingPool = new LendingPool(
-            _addressProvider,
+            addressProvider,
             owner(),
             asset,
             string.concat(
                 "leNFT ",
                 IERC20MetadataUpgradeable(asset).symbol(),
                 " Lending #",
-                Strings.toString(_poolsCount[asset])
+                Strings.toString(poolsCount)
             ),
             string.concat(
                 "leL",
                 IERC20MetadataUpgradeable(asset).symbol(),
                 "-",
-                Strings.toString(_poolsCount[asset])
+                Strings.toString(poolsCount)
             ),
             _defaultLendingPoolConfig
         );

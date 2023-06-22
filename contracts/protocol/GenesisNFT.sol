@@ -360,17 +360,15 @@ contract GenesisNFT is
         INativeToken(nativeToken).mintGenesisTokens(leAmount + totalRewards);
 
         // Mint WETH tokens
-        IWETH(_addressProvider.getWETH()).deposit{value: ethAmount}();
+        address weth = _addressProvider.getWETH();
+        IWETH(weth).deposit{value: ethAmount}();
 
         // Approve the vault to spend LE & WETH tokens
         IERC20Upgradeable(nativeToken).approve(
             _balancerDetails.vault,
             leAmount
         );
-        IERC20Upgradeable(_addressProvider.getWETH()).approve(
-            _balancerDetails.vault,
-            ethAmount
-        );
+        IERC20Upgradeable(weth).approve(_balancerDetails.vault, ethAmount);
 
         // Deposit tokens to the pool and get the LP amount
         uint256 oldLPBalance = IERC20Upgradeable(_balancerDetails.pool)
@@ -386,9 +384,7 @@ contract GenesisNFT is
             amountsToEncode[
                 _findTokenIndex(tokens, IERC20(nativeToken))
             ] = leAmount;
-            amountsToEncode[
-                _findTokenIndex(tokens, IERC20(_addressProvider.getWETH()))
-            ] = ethAmount;
+            amountsToEncode[_findTokenIndex(tokens, IERC20(weth))] = ethAmount;
             maxAmountsIn[0] = type(uint256).max;
             maxAmountsIn[1] = type(uint256).max;
             bytes memory userData;
@@ -425,12 +421,10 @@ contract GenesisNFT is
         ) - oldLPBalance;
 
         // Approve the voting escrow to spend LE tokens so they can be locked
-        IERC20Upgradeable(nativeToken).approve(
-            _addressProvider.getVotingEscrow(),
-            totalRewards
-        );
+        address votingEscrow = _addressProvider.getVotingEscrow();
+        IERC20Upgradeable(nativeToken).approve(votingEscrow, totalRewards);
 
-        IVotingEscrow(_addressProvider.getVotingEscrow()).createLock(
+        IVotingEscrow(votingEscrow).createLock(
             msg.sender,
             totalRewards,
             block.timestamp + locktime
@@ -441,17 +435,18 @@ contract GenesisNFT is
         require(sent, "G:M:ETH_TRANSFER_FAIL");
 
         for (uint256 i = 0; i < amount; i++) {
+            uint256 tokenId = _tokenIdCounter.current();
             // Mint genesis NFT
-            _safeMint(msg.sender, _tokenIdCounter.current());
+            _safeMint(msg.sender, tokenId);
 
             // Add mint details
-            _mintDetails[_tokenIdCounter.current()] = DataTypes.MintDetails(
+            _mintDetails[tokenId] = DataTypes.MintDetails(
                 SafeCast.toUint40(block.timestamp),
                 SafeCast.toUint40(locktime),
                 lpAmount / amount
             );
 
-            emit Mint(msg.sender, _tokenIdCounter.current());
+            emit Mint(msg.sender, tokenId);
 
             //Increase supply
             _tokenIdCounter.increment();
@@ -645,10 +640,11 @@ contract GenesisNFT is
         // Make sure there are only two assets in the pool
         require(tokens.length == 2, "G:M:INVALID_POOL_LENGTH");
         // Make sure those two assets are the native token and WETH
+        IERC20 nativeToken = IERC20(_addressProvider.getNativeToken());
+        IERC20 weth = IERC20(_addressProvider.getWETH());
         for (uint i = 0; i < 2; i++) {
             require(
-                tokens[i] == IERC20(_addressProvider.getNativeToken()) ||
-                    tokens[i] == IERC20(_addressProvider.getWETH()),
+                tokens[i] == nativeToken || tokens[i] == weth,
                 "G:B:INVALID_POOL_TOKENS"
             );
         }

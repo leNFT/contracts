@@ -524,13 +524,14 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         returns (uint256 rewards)
     {
         // If there are no votes in any gauge, return 0
-        if (getTotalWeightAt(epoch) == 0) {
+        uint256 totalWeight = getTotalWeightAt(epoch);
+        if (totalWeight == 0) {
             return 0;
         }
 
         return
             (getEpochRewards(epoch) * getGaugeWeightAt(gauge, epoch)) /
-            getTotalWeightAt(epoch);
+            totalWeight;
     }
 
     /// @notice Sets the maturity period for LP tokens

@@ -326,7 +326,6 @@ contract TradingPool is
 
         uint256 lpIndex;
         uint256 fee;
-        uint256 protocolFee;
         uint256 totalProtocolFee;
         DataTypes.LiquidityPair memory lp;
         uint256 protocolFeePercentage = ITradingPoolFactory(
@@ -345,7 +344,6 @@ contract TradingPool is
             require(lp.lpType != DataTypes.LPType.Buy, "TP:B:IS_BUY_LP");
 
             fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
-            protocolFee = PercentageMath.percentMul(fee, protocolFeePercentage);
 
             // Remove nft from liquidity pair nft list
             _liquidityPairs[lpIndex].nftIds[_nftToLp[nftIds[i]].index] = lp
@@ -360,11 +358,14 @@ contract TradingPool is
 
             _liquidityPairs[lpIndex].tokenAmount += (lp.spotPrice +
                 fee -
-                protocolFee);
+                PercentageMath.percentMul(fee, protocolFeePercentage));
 
             // Increase total price and fee sum
             finalPrice += (lp.spotPrice + fee);
-            totalProtocolFee += protocolFee;
+            totalProtocolFee += PercentageMath.percentMul(
+                fee,
+                protocolFeePercentage
+            );
 
             // Update liquidity pair price
             if (lp.lpType != DataTypes.LPType.TradeDown) {
@@ -386,13 +387,9 @@ contract TradingPool is
         IERC20(_token).safeTransferFrom(msg.sender, address(this), finalPrice);
 
         // Send protocol fee to protocol fee distributor
-        IERC20(_token).safeTransfer(
-            _addressProvider.getFeeDistributor(),
-            totalProtocolFee
-        );
-        IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
-            _token
-        );
+        address feeDistributor = _addressProvider.getFeeDistributor();
+        IERC20(_token).safeTransfer(feeDistributor, totalProtocolFee);
+        IFeeDistributor(feeDistributor).checkpoint(_token);
 
         emit Buy(onBehalfOf, nftIds, finalPrice);
     }
@@ -498,13 +495,9 @@ contract TradingPool is
         IERC20(_token).safeTransfer(msg.sender, finalPrice);
 
         // Send protocol fee to protocol fee distributor and call a checkpoint
-        IERC20(_token).safeTransfer(
-            _addressProvider.getFeeDistributor(),
-            totalProtocolFee
-        );
-        IFeeDistributor(_addressProvider.getFeeDistributor()).checkpoint(
-            _token
-        );
+        address feeDistributor = _addressProvider.getFeeDistributor();
+        IERC20(_token).safeTransfer(feeDistributor, totalProtocolFee);
+        IFeeDistributor(feeDistributor).checkpoint(_token);
 
         emit Sell(onBehalfOf, nftIds, finalPrice);
     }

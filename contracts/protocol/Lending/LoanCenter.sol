@@ -161,13 +161,14 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
         }
 
         // Remove loan from user active loans
-        uint256[] memory userActiveLoans = _activeLoans[_loans[loanId].owner];
+        address loanOwner = _loans[loanId].owner;
+        uint256[] memory userActiveLoans = _activeLoans[loanOwner];
         for (uint256 i = 0; i < userActiveLoans.length; i++) {
             if (userActiveLoans[i] == loanId) {
-                _activeLoans[_loans[loanId].owner][i] = userActiveLoans[
+                _activeLoans[loanOwner][i] = userActiveLoans[
                     userActiveLoans.length - 1
                 ];
-                _activeLoans[_loans[loanId].owner].pop();
+                _activeLoans[loanOwner].pop();
                 break;
             }
         }

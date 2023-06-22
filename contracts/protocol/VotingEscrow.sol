@@ -106,8 +106,9 @@ contract VotingEscrow is
     /// @param timestamp The timestamp for which to retrieve the epoch number.
     /// @return The epoch number.
     function getEpoch(uint256 timestamp) public view returns (uint256) {
-        require(timestamp > _deployTimestamp, "VE:E:FUTURE_TIMESTAMP");
-        return (timestamp / EPOCH_PERIOD) - (_deployTimestamp / EPOCH_PERIOD);
+        uint256 deployTimestamp = _deployTimestamp;
+        require(timestamp > deployTimestamp, "VE:E:FUTURE_TIMESTAMP");
+        return (timestamp / EPOCH_PERIOD) - (deployTimestamp / EPOCH_PERIOD);
     }
 
     /// @notice Returns the timestamp of the start of an epoch.
@@ -214,16 +215,15 @@ contract VotingEscrow is
             _lastWeightCheckpoint.timestamp = epochTimestampPointer;
             _lastWeightCheckpoint.slope -= _slopeChanges[epochTimestampPointer];
 
+            // Get native token address inside loop because most transactions will break on the first iteration
+            address nativeToken = _addressProvider.getNativeToken();
             // Update total locked and total supply histories
             // Will always be accurate since its called eveytime there's a change in total or locked supply
             _totalLockedHistory.push(
-                IERC20Upgradeable(_addressProvider.getNativeToken()).balanceOf(
-                    address(this)
-                )
+                IERC20Upgradeable(nativeToken).balanceOf(address(this))
             );
             _totalSupplyHistory.push(
-                IERC20Upgradeable(_addressProvider.getNativeToken())
-                    .totalSupply()
+                IERC20Upgradeable(nativeToken).totalSupply()
             );
 
             //Increase epoch timestamp

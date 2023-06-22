@@ -94,11 +94,12 @@ contract LendingGauge is IGauge, ERC165 {
         }
         // Iterate over a max of 50 epochs and/or user epochs
         uint256 nextClaimableEpoch;
+        uint256 currentEpoch = votingEscrow.getEpoch(block.timestamp);
         for (uint256 i = 0; i < 50; i++) {
             nextClaimableEpoch = _userNextClaimableEpoch[msg.sender];
 
             // Break if the next claimable epoch is the one we are in
-            if (nextClaimableEpoch >= votingEscrow.getEpoch(block.timestamp)) {
+            if (nextClaimableEpoch >= currentEpoch) {
                 break;
             } else {
                 // Get the current user working Balance and its epoch

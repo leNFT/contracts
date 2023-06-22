@@ -99,14 +99,16 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
             .getEpoch(block.timestamp) + 1;
 
         // Make sure there are enough funds to withdraw
-        require(
-            _userBribes[token][gauge][nextEpoch][msg.sender] >= amount,
-            "B:WB:NOT_ENOUGH_FUNDS"
-        );
+        uint256 nextEpochUserBribes = _userBribes[token][gauge][nextEpoch][
+            msg.sender
+        ];
+        require(nextEpochUserBribes >= amount, "B:WB:NOT_ENOUGH_FUNDS");
 
         // Subtract the amount from the bribes
         _gaugeBribes[token][gauge][nextEpoch] -= amount;
-        _userBribes[token][gauge][nextEpoch][msg.sender] -= amount;
+        _userBribes[token][gauge][nextEpoch][msg.sender] =
+            nextEpochUserBribes -
+            amount;
 
         // Transfer the bribe tokens back to the user
         IERC20Upgradeable(token).safeTransfer(receiver, amount);
@@ -209,13 +211,18 @@ contract Bribes is IBribes, ReentrancyGuardUpgradeable {
         }
 
         // Bring the next claimable epoch up to date if needed
-        if (
-            _voteNextClaimableEpoch[token][gauge][tokenId] <=
-            IVotingEscrow(votingEscrow).getEpoch(lockLastPoint.timestamp)
-        ) {
-            _voteNextClaimableEpoch[token][gauge][tokenId] =
-                IVotingEscrow(votingEscrow).getEpoch(lockLastPoint.timestamp) +
-                1;
+        {
+            uint256 lockLastPointEpoch = IVotingEscrow(votingEscrow).getEpoch(
+                lockLastPoint.timestamp
+            );
+            if (
+                _voteNextClaimableEpoch[token][gauge][tokenId] <=
+                lockLastPointEpoch
+            ) {
+                _voteNextClaimableEpoch[token][gauge][tokenId] =
+                    lockLastPointEpoch +
+                    1;
+            }
         }
 
         // Find epoch we're in

@@ -88,14 +88,16 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
             votingEscrow.getTotalWeightAt(epoch) == 0,
             "FD:SV:CLAIMABLE_FUNDS"
         );
+        uint256 epochFees = _epochFees[token][epoch];
         // There needs to be funds to salvage
-        require(_epochFees[token][epoch] > 0, "FD:SV:NO_FUNDS");
+        require(epochFees > 0, "FD:SV:NO_FUNDS");
 
         // Transfer rewards to current epoch
-        _epochFees[token][currentEpoch] += _epochFees[token][epoch];
+        _epochFees[token][currentEpoch] += epochFees;
 
-        emit SalvageFees(token, epoch, _epochFees[token][epoch]);
+        emit SalvageFees(token, epoch, epochFees);
 
+        // Delete the salvaged epoch fees
         delete _epochFees[token][epoch];
     }
 
@@ -112,11 +114,10 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
         );
 
         // Make sure the lock exists
-        require(
-            IERC721Upgradeable(address(votingEscrow)).ownerOf(tokenId) !=
-                address(0),
-            "FD:C:LOCK_NOT_FOUND"
+        address lockOwner = IERC721Upgradeable(address(votingEscrow)).ownerOf(
+            tokenId
         );
+        require(lockOwner != address(0), "FD:C:LOCK_NOT_FOUND");
 
         // Check if user has any user actions and therefore possibly something to claim
         if (votingEscrow.getLockHistoryLength(tokenId) == 0) {
@@ -139,12 +140,11 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
             uint256 nextClaimableEpoch;
             uint256 nextClaimableEpochTimestamp;
             uint256 nextPointEpoch;
+            uint256 currentEpoch = votingEscrow.getEpoch(block.timestamp);
             for (uint i = 0; i < 50; i++) {
                 nextClaimableEpoch = _lockNextClaimableEpoch[token][tokenId];
                 // Break if the next claimable epoch is the one we are in
-                if (
-                    nextClaimableEpoch >= votingEscrow.getEpoch(block.timestamp)
-                ) {
+                if (nextClaimableEpoch >= currentEpoch) {
                     break;
                 } else {
                     // Get the current user history point
@@ -229,12 +229,7 @@ contract FeeDistributor is IFeeDistributor, ReentrancyGuardUpgradeable {
         }
 
         if (amountToClaim > 0) {
-            IERC20Upgradeable(token).safeTransfer(
-                IERC721Upgradeable(_addressProvider.getVotingEscrow()).ownerOf(
-                    tokenId
-                ),
-                amountToClaim
-            );
+            IERC20Upgradeable(token).safeTransfer(lockOwner, amountToClaim);
 
             emit ClaimFees(msg.sender, token, tokenId, amountToClaim);
         }

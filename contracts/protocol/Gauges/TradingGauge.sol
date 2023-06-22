@@ -345,8 +345,9 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
         require(_ownerOf[lpId] == msg.sender, "TG:W:NOT_OWNER_OF_LP_TOKEN");
 
         // remove token value
-        _userLPValue[msg.sender] -= _lpValue[lpId];
-        _totalLPValue -= _lpValue[lpId];
+        uint256 lpValue = _lpValue[lpId];
+        _userLPValue[msg.sender] -= lpValue;
+        _totalLPValue -= lpValue;
 
         // Update balance
         delete _ownerOf[lpId];
