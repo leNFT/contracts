@@ -27,7 +27,11 @@ interface ILendingMarket {
 
     event ClaimLiquidation(address indexed user, uint256 indexed loanId);
 
-    event CreateLendingPool(address indexed lendingPool);
+    event CreateLendingPool(
+        address indexed lendingPool,
+        address indexed colletction,
+        address indexed asset
+    );
 
     event SetLendingPool(
         address indexed collection,

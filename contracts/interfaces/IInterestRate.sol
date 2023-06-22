@@ -2,6 +2,15 @@
 pragma solidity 0.8.19;
 
 interface IInterestRate {
+    event TokenAdded(
+        address indexed token,
+        uint256 optimalUtilizationRate,
+        uint256 baseBorrowRate,
+        uint256 lowSlope,
+        uint256 highSlope
+    );
+    event TokenRemoved(address indexed token);
+
     function calculateBorrowRate(
         address token,
         uint256 assets,

@@ -37,6 +37,14 @@ contract InterestRate is IInterestRate, Ownable {
         require(_isSupported[token] == false, "IR:AT:TOKEN_ALREADY_SUPPORTED");
         _isSupported[token] = true;
         setInterestRateConfig(token, interestRateConfig);
+
+        emit TokenAdded(
+            token,
+            interestRateConfig.optimalUtilizationRate,
+            interestRateConfig.baseBorrowRate,
+            interestRateConfig.lowSlope,
+            interestRateConfig.highSlope
+        );
     }
 
     /// @notice Removes support for a token
@@ -47,6 +55,8 @@ contract InterestRate is IInterestRate, Ownable {
         delete _isSupported[token];
         delete _interestRateConfigs[token];
         delete _optimalBorrowRates[token];
+
+        emit TokenRemoved(token);
     }
 
     /// @notice Gets whether a token is supported

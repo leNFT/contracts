@@ -255,7 +255,7 @@ contract LendingMarket is
         _setLendingPool(collection, asset, address(newLendingPool));
         _poolsCount[asset] += 1;
 
-        emit CreateLendingPool(address(newLendingPool));
+        emit CreateLendingPool(address(newLendingPool), collection, asset);
 
         return address(newLendingPool);
     }
