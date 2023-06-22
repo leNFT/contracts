@@ -14,11 +14,17 @@ describe("TradingPoolFactory", function () {
     addressProvider = await upgrades.deployProxy(AddressProvider);
     TradingPoolFactory = await ethers.getContractFactory("TradingPoolFactory");
     [owner] = await ethers.getSigners();
-    tradingPoolFactory = await upgrades.deployProxy(TradingPoolFactory, [
-      addressProvider.address,
-      "1000", // Default protocol fee (10%)
-      "25000000000000000000", // TVLSafeguard
-    ]);
+    tradingPoolFactory = await upgrades.deployProxy(
+      TradingPoolFactory,
+      [
+        "1000", // Default protocol fee (10%)
+        "25000000000000000000", // TVLSafeguard
+      ],
+      {
+        unsafeAllow: ["state-variable-immutable"],
+        constructorArgs: [addressProvider.address],
+      }
+    );
 
     // Set the address in the address provider contract
     await addressProvider.setTradingPoolFactory(tradingPoolFactory.address);

@@ -92,7 +92,7 @@ describe("TokenOracle", function () {
     await tx.wait();
 
     // Get the token from the saved prices
-    expect(await tokenOracle.getTokenETHPrice(testTokenAddress)).to.equal(
+    expect((await tokenOracle.getTokenETHPrice(testTokenAddress))[0]).to.equal(
       ethers.utils.parseEther("1")
     );
 
@@ -103,13 +103,10 @@ describe("TokenOracle", function () {
     );
     await tx2.wait();
 
-    // GEt the type of the answer
-    console.log(typeof (await tokenOracle.getTokenETHPrice(testTokenAddress)));
-
     // Get the price from the datafeed
-    expect(await tokenOracle.getTokenETHPrice(testTokenAddress)).to.be.above(
-      ethers.utils.parseEther("1")
-    );
+    expect(
+      (await tokenOracle.getTokenETHPrice(testTokenAddress))[0]
+    ).to.be.above(ethers.utils.parseEther("1"));
 
     // Remove the token's DATA feed
     const tx3 = await tokenOracle.setTokenETHDataFeed(
@@ -119,7 +116,7 @@ describe("TokenOracle", function () {
     await tx3.wait();
 
     // Get the token from the saved prices
-    expect(await tokenOracle.getTokenETHPrice(testTokenAddress)).to.equal(
+    expect((await tokenOracle.getTokenETHPrice(testTokenAddress))[0]).to.equal(
       ethers.utils.parseEther("1")
     );
 
