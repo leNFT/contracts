@@ -5,6 +5,7 @@ import {IInterestRate} from "../../interfaces/IInterestRate.sol";
 import {ConfigTypes} from "../../libraries/types/ConfigTypes.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {SafeCast} from "../../libraries/utils/SafeCast.sol";
 
 /// @title InterestRate
 /// @author leNFT
@@ -20,7 +21,6 @@ contract InterestRate is IInterestRate, Ownable {
     mapping(address => bool) private _isSupported;
     mapping(address => ConfigTypes.InterestRateConfig)
         private _interestRateConfigs;
-    mapping(address => uint256) private _optimalBorrowRates;
 
     modifier onlySupported(address token) {
         _requireOnlySupported(token);
@@ -29,21 +29,33 @@ contract InterestRate is IInterestRate, Ownable {
 
     /// @notice Sets the interest rate parameters for a token
     /// @param token The address of the token
-    /// @param interestRateConfig The interest rate parameters
+    /// @param optimalUtilizationRate The optimal utilization rate for the market (10000 = 100%)
+    /// @param baseBorrowRate The market's base borrow rate (10000 = 100%)
+    /// @param lowSlope The slope of the interest rate model when utilization rate is below the optimal utilization rate (10000 = 100%)
+    /// @param highSlope The slope of the interest rate model when utilization rate is above the optimal utilization rate (10000 = 100%)
     function addToken(
         address token,
-        ConfigTypes.InterestRateConfig memory interestRateConfig
+        uint256 optimalUtilizationRate,
+        uint256 baseBorrowRate,
+        uint256 lowSlope,
+        uint256 highSlope
     ) external onlyOwner {
         require(_isSupported[token] == false, "IR:AT:TOKEN_ALREADY_SUPPORTED");
         _isSupported[token] = true;
-        setInterestRateConfig(token, interestRateConfig);
+        setInterestRateConfig(
+            token,
+            optimalUtilizationRate,
+            baseBorrowRate,
+            lowSlope,
+            highSlope
+        );
 
         emit TokenAdded(
             token,
-            interestRateConfig.optimalUtilizationRate,
-            interestRateConfig.baseBorrowRate,
-            interestRateConfig.lowSlope,
-            interestRateConfig.highSlope
+            optimalUtilizationRate,
+            baseBorrowRate,
+            lowSlope,
+            highSlope
         );
     }
 
@@ -54,7 +66,6 @@ contract InterestRate is IInterestRate, Ownable {
     ) external onlySupported(token) onlyOwner {
         delete _isSupported[token];
         delete _interestRateConfigs[token];
-        delete _optimalBorrowRates[token];
 
         emit TokenRemoved(token);
     }
@@ -80,24 +91,6 @@ contract InterestRate is IInterestRate, Ownable {
         return _interestRateConfigs[token];
     }
 
-    /// @notice Sets the interest rate parameters for a token
-    /// @param token The address of the token
-    /// @param interestRateConfig The interest rate parameters
-    function setInterestRateConfig(
-        address token,
-        ConfigTypes.InterestRateConfig memory interestRateConfig
-    ) public onlySupported(token) onlyOwner {
-        _interestRateConfigs[token] = interestRateConfig;
-
-        // Fill the optimal borrow rate
-        _optimalBorrowRates[token] =
-            PercentageMath.percentMul(
-                interestRateConfig.optimalUtilizationRate,
-                interestRateConfig.lowSlope
-            ) +
-            interestRateConfig.baseBorrowRate;
-    }
-
     /// @notice Calculates the borrow rate based on the utilization rate
     /// @param token The address of the token
     /// @param assets The total assets
@@ -121,7 +114,7 @@ contract InterestRate is IInterestRate, Ownable {
                 );
         } else {
             return
-                _optimalBorrowRates[token] +
+                _getOptimalBorrowRate(_interestRateConfigs[token]) +
                 PercentageMath.percentMul(
                     utilizationRate -
                         _interestRateConfigs[token].optimalUtilizationRate,
@@ -130,13 +123,10 @@ contract InterestRate is IInterestRate, Ownable {
         }
     }
 
-    /// @notice Gets the optimal borrow rate
-    /// @param token The address of the token
-    /// @return The optimal borrow rate
     function getOptimalBorrowRate(
         address token
-    ) public view onlySupported(token) returns (uint256) {
-        return _optimalBorrowRates[token];
+    ) external view onlySupported(token) returns (uint256) {
+        return _getOptimalBorrowRate(_interestRateConfigs[token]);
     }
 
     /// @notice Calculates the utilization rate based on the assets and debt
@@ -149,6 +139,53 @@ contract InterestRate is IInterestRate, Ownable {
         uint256 debt
     ) external view override onlySupported(token) returns (uint256) {
         return _calculateUtilizationRate(assets, debt);
+    }
+
+    /// @notice Sets the interest rate parameters for a token
+    /// @param token The address of the token
+    /// @param optimalUtilizationRate The optimal utilization rate for the market (10000 = 100%)
+    /// @param baseBorrowRate The market's base borrow rate (10000 = 100%)
+    /// @param lowSlope The slope of the interest rate model when utilization rate is below the optimal utilization rate (10000 = 100%)
+    /// @param highSlope The slope of the interest rate model when utilization rate is above the optimal utilization rate (10000 = 100%)
+    function setInterestRateConfig(
+        address token,
+        uint256 optimalUtilizationRate,
+        uint256 baseBorrowRate,
+        uint256 lowSlope,
+        uint256 highSlope
+    ) public onlySupported(token) onlyOwner {
+        _interestRateConfigs[token] = ConfigTypes.InterestRateConfig({
+            optimalUtilizationRate: SafeCast.toUint64(optimalUtilizationRate),
+            baseBorrowRate: SafeCast.toUint64(baseBorrowRate),
+            lowSlope: SafeCast.toUint64(lowSlope),
+            highSlope: SafeCast.toUint64(highSlope),
+            optimalBorrowRate: 0
+        });
+        uint64 optimalBorrowRate = SafeCast.toUint64(
+            PercentageMath.percentMul(optimalUtilizationRate, lowSlope) +
+                baseBorrowRate
+        );
+
+        // Set the optimal borrow rate
+        _interestRateConfigs[token].optimalBorrowRate = optimalBorrowRate;
+
+        emit InterestRateConfigSet(
+            token,
+            optimalUtilizationRate,
+            baseBorrowRate,
+            lowSlope,
+            highSlope,
+            optimalBorrowRate
+        );
+    }
+
+    /// @notice Internal function to get the optimal borrow rate
+    /// @param interestRateConfig The interest rate parameters
+    /// @return The optimal borrow rate
+    function _getOptimalBorrowRate(
+        ConfigTypes.InterestRateConfig memory interestRateConfig
+    ) internal pure returns (uint256) {
+        return interestRateConfig.optimalBorrowRate;
     }
 
     /// @notice Internal function to calculate the utilization rate based on the assets and debt

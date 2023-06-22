@@ -11,6 +11,15 @@ interface IInterestRate {
     );
     event TokenRemoved(address indexed token);
 
+    event InterestRateConfigSet(
+        address indexed token,
+        uint256 optimalUtilizationRate,
+        uint256 baseBorrowRate,
+        uint256 lowSlope,
+        uint256 highSlope,
+        uint256 optimalBorrowRate
+    );
+
     function calculateBorrowRate(
         address token,
         uint256 assets,

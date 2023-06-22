@@ -11,10 +11,10 @@ library ConfigTypes {
     /// @param liquidationFee The fee liquidators have to pay to the protocol when liquidating a loan (10000 = 100%)
     /// @param maxUtilizationRate The maximum utilization rate of the pool for withdrawals
     struct LendingPoolConfig {
-        uint256 maxLiquidatorDiscount;
-        uint256 auctioneerFeeRate;
-        uint256 liquidationFeeRate;
-        uint256 maxUtilizationRate;
+        uint64 maxLiquidatorDiscount;
+        uint64 auctioneerFeeRate;
+        uint64 liquidationFeeRate;
+        uint64 maxUtilizationRate;
     }
 
     /// @param optimalUtilization The optimal utilization rate for the market (10000 = 100%)
@@ -22,9 +22,10 @@ library ConfigTypes {
     /// @param lowSlope The slope of the interest rate model when utilization rate is below the optimal utilization rate (10000 = 100%)
     /// @param highSlope The slope of the interest rate model when utilization rate is above the optimal utilization rate (10000 = 100%)
     struct InterestRateConfig {
-        uint256 optimalUtilizationRate;
-        uint256 baseBorrowRate;
-        uint256 lowSlope;
-        uint256 highSlope;
+        uint64 optimalUtilizationRate;
+        uint64 optimalBorrowRate;
+        uint64 baseBorrowRate;
+        uint64 lowSlope;
+        uint64 highSlope;
     }
 }

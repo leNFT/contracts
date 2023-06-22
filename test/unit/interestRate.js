@@ -6,13 +6,11 @@ describe("InterestRate", function () {
   let InterestRate, interestRate, owner;
   const tokenAddress = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"; // Example token address
   // Example interest rate config
-  const interestRateConfig = {
-    optimalUtilizationRate: 8000,
-    baseBorrowRate: 1000,
-    lowSlope: 2000,
-    highSlope: 3000,
-  };
 
+  let optimalUtilizationRate = 8000;
+  let baseBorrowRate = 1000;
+  let lowSlope = 2000;
+  let highSlope = 3000;
   beforeEach(async () => {
     InterestRate = await ethers.getContractFactory("InterestRate");
     [owner] = await ethers.getSigners();
@@ -21,26 +19,36 @@ describe("InterestRate", function () {
   });
 
   it("Should add a token with correct interest rate config", async function () {
-    const tx = await interestRate.addToken(tokenAddress, interestRateConfig);
+    const tx = await interestRate.addToken(
+      tokenAddress,
+      optimalUtilizationRate,
+      baseBorrowRate,
+      lowSlope,
+      highSlope
+    );
     await tx.wait();
 
     console.log("Getting config");
 
     const storedConfig = await interestRate.getInterestRateConfig(tokenAddress);
     expect(storedConfig.optimalUtilizationRate).to.equal(
-      interestRateConfig.optimalUtilizationRate
+      optimalUtilizationRate
     );
-    expect(storedConfig.baseBorrowRate).to.equal(
-      interestRateConfig.baseBorrowRate
-    );
-    expect(storedConfig.lowSlope).to.equal(interestRateConfig.lowSlope);
-    expect(storedConfig.highSlope).to.equal(interestRateConfig.highSlope);
+    expect(storedConfig.baseBorrowRate).to.equal(baseBorrowRate);
+    expect(storedConfig.lowSlope).to.equal(lowSlope);
+    expect(storedConfig.highSlope).to.equal(highSlope);
     expect(await interestRate.isTokenSupported(tokenAddress)).to.equal(true);
   });
 
   it("Should remove a token and its interest rate config", async function () {
-    const addTx = await interestRate.addToken(tokenAddress, interestRateConfig);
-    await addTx.wait();
+    const tx = await interestRate.addToken(
+      tokenAddress,
+      optimalUtilizationRate,
+      baseBorrowRate,
+      lowSlope,
+      highSlope
+    );
+    await tx.wait();
 
     const removeTx = await interestRate.removeToken(tokenAddress);
     await removeTx.wait();
@@ -56,29 +64,34 @@ describe("InterestRate", function () {
   it("Should return correct supported status for a token", async function () {
     expect(await interestRate.isTokenSupported(tokenAddress)).to.equal(false);
 
-    await interestRate.addToken(tokenAddress, {
-      optimalUtilizationRate: 8000,
-      baseBorrowRate: 1000,
-      lowSlope: 2000,
-      highSlope: 3000,
-    });
+    await interestRate.addToken(
+      tokenAddress,
+      optimalUtilizationRate,
+      baseBorrowRate,
+      lowSlope,
+      highSlope
+    );
 
     const isSupportedAfter = await interestRate.isTokenSupported(tokenAddress);
     expect(isSupportedAfter).to.equal(true);
   });
   it("Should return the correct interest rate config", async function () {
-    const addTx = await interestRate.addToken(tokenAddress, interestRateConfig);
-    await addTx.wait();
+    const tx = await interestRate.addToken(
+      tokenAddress,
+      optimalUtilizationRate,
+      baseBorrowRate,
+      lowSlope,
+      highSlope
+    );
+    await tx.wait();
 
     const storedConfig = await interestRate.getInterestRateConfig(tokenAddress);
     expect(storedConfig.optimalUtilizationRate).to.equal(
-      interestRateConfig.optimalUtilizationRate
+      optimalUtilizationRate
     );
-    expect(storedConfig.baseBorrowRate).to.equal(
-      interestRateConfig.baseBorrowRate
-    );
-    expect(storedConfig.lowSlope).to.equal(interestRateConfig.lowSlope);
-    expect(storedConfig.lowSlope).to.equal(interestRateConfig.lowSlope);
+    expect(storedConfig.baseBorrowRate).to.equal(baseBorrowRate);
+    expect(storedConfig.lowSlope).to.equal(lowSlope);
+    expect(storedConfig.lowSlope).to.equal(lowSlope);
 
     const removeTx = await interestRate.removeToken(tokenAddress);
     await removeTx.wait();
@@ -90,8 +103,14 @@ describe("InterestRate", function () {
   });
 
   it("Should calculate the correct borrow rate", async function () {
-    const addTx = await interestRate.addToken(tokenAddress, interestRateConfig);
-    await addTx.wait();
+    const tx = await interestRate.addToken(
+      tokenAddress,
+      optimalUtilizationRate,
+      baseBorrowRate,
+      lowSlope,
+      highSlope
+    );
+    await tx.wait();
 
     const assets = BigNumber.from("800000000000000000"); // 0.8 ETH
     const debt = BigNumber.from("200000000000000000"); // 0.2 ETH
@@ -126,8 +145,14 @@ describe("InterestRate", function () {
   });
 
   it("Should calculate the correct utilization rate", async function () {
-    const addTx = await interestRate.addToken(tokenAddress, interestRateConfig);
-    await addTx.wait();
+    const tx = await interestRate.addToken(
+      tokenAddress,
+      optimalUtilizationRate,
+      baseBorrowRate,
+      lowSlope,
+      highSlope
+    );
+    await tx.wait();
 
     const assets = BigNumber.from("800000000000000000"); // 0.8 ETH
     const debt = BigNumber.from("200000000000000000"); // 0.2 ETH
@@ -150,8 +175,14 @@ describe("InterestRate", function () {
   });
 
   it("Should return the correct optimal borrow rate", async function () {
-    const addTx = await interestRate.addToken(tokenAddress, interestRateConfig);
-    await addTx.wait();
+    const tx = await interestRate.addToken(
+      tokenAddress,
+      optimalUtilizationRate,
+      baseBorrowRate,
+      lowSlope,
+      highSlope
+    );
+    await tx.wait();
 
     const expectedOptimalBorrowRate = 2600; // from 8000 optimal utilization rate
 

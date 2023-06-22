@@ -321,12 +321,13 @@ let loadEnv = async function (isMainnetFork) {
   await setTestTokenPriceTx.wait();
 
   // Add WETH parameters to interest rate contract
-  const setWETHInterestRateParamsTx = await interestRate.addToken(wethAddress, {
-    optimalUtilizationRate: 7000,
-    baseBorrowRate: 500,
-    lowSlope: 2000,
-    highSlope: 20000,
-  });
+  const setWETHInterestRateParamsTx = await interestRate.addToken(
+    wethAddress,
+    7000, // optimalUtilizationRate
+    500, // baseBorrowRate
+    2000, // slopeRate1
+    20000 // slopeRate2
+  );
   await setWETHInterestRateParamsTx.wait();
 
   console.log("Set interest rate params");

@@ -21,4 +21,12 @@ library SafeCast {
         require(value <= type(uint16).max, "SC:CAST16_OVERFLOW");
         return uint16(value);
     }
+
+    /// @notice Cast a uint256 to a uint64, revert on overflow
+    /// @param value The uint256 value to be casted
+    /// @return The uint64 value casted from uint256
+    function toUint64(uint256 value) internal pure returns (uint64) {
+        require(value <= type(uint64).max, "SC:CAST64_OVERFLOW");
+        return uint64(value);
+    }
 }
