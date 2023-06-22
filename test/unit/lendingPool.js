@@ -34,8 +34,8 @@ describe("LendingPool", function () {
         "LPT",
         {
           maxLiquidatorDiscount: "2000", // maxLiquidatorDiscount
-          auctioneerFee: "50", // defaultauctioneerFee
-          liquidationFee: "200", // defaultProtocolLiquidationFee
+          auctioneerFeeRate: "50", // defaultauctioneerFee
+          liquidationFeeRate: "200", // defaultProtocolLiquidationFee
           maxUtilizationRate: "8500", // defaultmaxUtilizationRate
         }
       )
@@ -186,8 +186,8 @@ describe("LendingPool", function () {
     // Define the new pool configuration
     const newPoolConfig = {
       maxLiquidatorDiscount: "300",
-      auctioneerFee: "50",
-      liquidationFee: "350",
+      auctioneerFeeRate: "50",
+      liquidationFeeRate: "350",
       maxUtilizationRate: "8500",
     };
 

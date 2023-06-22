@@ -58,8 +58,8 @@ describe("LendingMarket", function () {
   it("Should set the default pool config", async function () {
     const tx = await lendingMarket.setDefaultPoolConfig({
       maxLiquidatorDiscount: "1000", // maxLiquidatorDiscount
-      auctioneerFee: "60", // defaultauctioneerFee
-      liquidationFee: "300", // defaultProtocolLiquidationFee
+      auctioneerFeeRate: "60", // defaultauctioneerFee
+      liquidationFeeRate: "300", // defaultProtocolLiquidationFee
       maxUtilizationRate: "8000", // defaultmaxUtilizationRate
     });
     await tx.wait();
@@ -67,8 +67,8 @@ describe("LendingMarket", function () {
     // Get the default pool config
     const defaultPoolConfig = await lendingMarket.getDefaultPoolConfig();
     expect(defaultPoolConfig.maxLiquidatorDiscount).to.equal("1000");
-    expect(defaultPoolConfig.auctioneerFee).to.equal("60");
-    expect(defaultPoolConfig.liquidationFee).to.equal("300");
+    expect(defaultPoolConfig.auctioneerFeeRate).to.equal("60");
+    expect(defaultPoolConfig.liquidationFeeRate).to.equal("300");
     expect(defaultPoolConfig.maxUtilizationRate).to.equal("8000");
   });
   it("Should borrow an asset from a lending pool using an NFT as collateral", async function () {
