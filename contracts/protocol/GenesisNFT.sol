@@ -114,7 +114,7 @@ contract GenesisNFT is
     function isLoanOperatorApproved(
         address owner,
         address operator
-    ) external view returns (bool) {
+    ) public view returns (bool) {
         return _loanOperatorApprovals[owner][operator];
     }
 
@@ -263,7 +263,7 @@ contract GenesisNFT is
 
     /// @notice Returns the max LTV boost factor
     /// @return The max LTV boost factor
-    function getMaxLTVBoost() external view override returns (uint256) {
+    function getMaxLTVBoost() external view returns (uint256) {
         return _maxLTVBoost;
     }
 
@@ -278,18 +278,41 @@ contract GenesisNFT is
     /// @return The active state
     function getLockedState(
         uint256 tokenId
-    ) external view override tokenExists(tokenId) returns (bool) {
+    ) external view tokenExists(tokenId) returns (bool) {
         return _locked[tokenId];
     }
 
-    /// @notice Sets the active state of the specified Genesis NFT
+    /// @notice Sets the active state of the specified Genesis NFT to true
     /// @param tokenId ID of the token
-    /// @param newState The new active state
-    function setLockedState(
-        uint256 tokenId,
-        bool newState
+    function lockGenesisNFT(
+        address onBehalfOf,
+        address caller,
+        uint256 tokenId
+    ) external override tokenExists(tokenId) onlyMarket returns (uint256) {
+        // If the caller is not the user we are borrowing on behalf Of, check if the caller is approved
+        if (onBehalfOf != caller) {
+            require(
+                isLoanOperatorApproved(onBehalfOf, caller),
+                "VL:VB:GENESIS_NOT_AUTHORIZED"
+            );
+        }
+
+        // Require that the NFT is owned by the user we are locking on behalf of
+        require(ownerOf(tokenId) == onBehalfOf, "VL:VB:GENESIS_NOT_OWNED");
+
+        //Require that the NFT is not being used
+        require(_locked[tokenId] == false, "VL:VB:GENESIS_LOCKED");
+
+        // Set the NFT to be locked
+        _locked[tokenId] = true;
+
+        return _maxLTVBoost;
+    }
+
+    function unlockGenesisNFT(
+        uint256 tokenId
     ) external override tokenExists(tokenId) onlyMarket {
-        _locked[tokenId] = newState;
+        delete _locked[tokenId];
     }
 
     /// @notice Calculates the native token reward for a given amount and lock time

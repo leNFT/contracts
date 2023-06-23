@@ -7,14 +7,11 @@ interface IGenesisNFT is IERC721Upgradeable {
     event Mint(address owner, uint256 tokenId);
     event Burn(uint256 tokenId);
 
-    function getMaxLTVBoost() external view returns (uint256);
+    function lockGenesisNFT(
+        address onBehalfOf,
+        address caller,
+        uint256 tokenId
+    ) external returns (uint256);
 
-    function setLockedState(uint256 tokenId, bool newState) external;
-
-    function getLockedState(uint256 tokenId) external view returns (bool);
-
-    function isLoanOperatorApproved(
-        address owner,
-        address operator
-    ) external view returns (bool);
+    function unlockGenesisNFT(uint256 tokenId) external;
 }

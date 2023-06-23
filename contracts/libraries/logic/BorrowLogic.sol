@@ -33,11 +33,23 @@ library BorrowLogic {
     ) external returns (uint256 loanId) {
         ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
 
+        // If a genesis NFT was used with this loan we need to lock it
+        uint256 maxLTVBoost;
+        if (params.genesisNFTId != 0) {
+            maxLTVBoost = IGenesisNFT(addressProvider.getGenesisNFT())
+                .lockGenesisNFT(
+                    params.onBehalfOf,
+                    params.caller,
+                    params.genesisNFTId
+                );
+        }
+
         // Validate the borrow parameters
         _validateBorrow(
             addressProvider,
             lendingPool,
             address(loanCenter),
+            maxLTVBoost,
             params
         );
 
@@ -47,15 +59,6 @@ library BorrowLogic {
                 params.caller,
                 address(this),
                 params.nftTokenIds[i]
-            );
-        }
-
-        // If a genesis NFT was used with this loan we need to lock it
-        if (params.genesisNFTId != 0) {
-            // Lock genesis NFT
-            IGenesisNFT(addressProvider.getGenesisNFT()).setLockedState(
-                params.genesisNFTId,
-                true
             );
         }
 
@@ -138,9 +141,8 @@ library BorrowLogic {
             // If a genesis NFT was used with this loan we need to unlock it
             if (loanData.genesisNFTId != 0) {
                 // Unlock Genesis NFT
-                IGenesisNFT(addressProvider.getGenesisNFT()).setLockedState(
-                    uint256(loanData.genesisNFTId),
-                    false
+                IGenesisNFT(addressProvider.getGenesisNFT()).unlockGenesisNFT(
+                    uint256(loanData.genesisNFTId)
                 );
             }
 
@@ -203,6 +205,7 @@ library BorrowLogic {
         IAddressProvider addressProvider,
         address lendingPool,
         address loanCenter,
+        uint256 maxLTVBoost,
         DataTypes.BorrowParams memory params
     ) internal view {
         // Check if borrow amount is bigger than 0
@@ -213,36 +216,6 @@ library BorrowLogic {
 
         // Check if the lending pool exists
         require(lendingPool != address(0), "VL:VB:INVALID_LENDING_POOL");
-
-        // Get boost from genesis NFTs
-        uint256 maxLTVBoost;
-        if (params.genesisNFTId != 0) {
-            IGenesisNFT genesisNFT = IGenesisNFT(
-                addressProvider.getGenesisNFT()
-            );
-
-            // If the caller is not the user we are borrowing on behalf Of, check if the caller is approved
-            if (params.onBehalfOf != params.caller) {
-                require(
-                    genesisNFT.isLoanOperatorApproved(
-                        params.onBehalfOf,
-                        params.caller
-                    ),
-                    "VL:VB:GENESIS_NOT_AUTHORIZED"
-                );
-            }
-            require(
-                genesisNFT.ownerOf(params.genesisNFTId) == params.onBehalfOf,
-                "VL:VB:GENESIS_NOT_OWNED"
-            );
-            //Require that the NFT is not being used
-            require(
-                genesisNFT.getLockedState(params.genesisNFTId) == false,
-                "VL:VB:GENESIS_LOCKED"
-            );
-
-            maxLTVBoost = genesisNFT.getMaxLTVBoost();
-        }
 
         // Check if borrow amount exceeds allowed amount
         (uint256 ethPrice, uint256 precision) = ITokenOracle(
