@@ -68,7 +68,8 @@ library LiquidationLogic {
         // Get the loan center
         ILoanCenter loanCenter = ILoanCenter(addressProvider.getLoanCenter());
         // Get the loan
-        DataTypes.LoanData memory loanData = loanCenter.getLoan(params.loanId);
+        DataTypes.LoanState loanState = loanCenter.getLoanState(params.loanId);
+        address loanLendingPool = loanCenter.getLoanLendingPool(params.loanId);
         // Get the loan liquidation data
         DataTypes.LoanLiquidationData memory loanLiquidationData = loanCenter
             .getLoanLiquidationData(params.loanId);
@@ -76,12 +77,12 @@ library LiquidationLogic {
         // validate the auction bid
         _validateBidLiquidationAuction(
             params.bid,
-            loanData.state,
+            loanState,
             loanLiquidationData
         );
 
         // Get the address of this asset's lending pool
-        address poolAsset = IERC4626(loanData.pool).asset();
+        address poolAsset = IERC4626(loanLendingPool).asset();
 
         // Send the old liquidator their funds back
         IERC20Upgradeable(poolAsset).safeTransfer(
