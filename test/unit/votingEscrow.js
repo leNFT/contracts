@@ -541,7 +541,7 @@ describe("VotingEscrow", () => {
 
     const rebates = epochRebates
       .mul(lock.amount)
-      .mul(lock.end.sub(epochTimestamp))
+      .mul(BigNumber.from(lock.end).sub(epochTimestamp))
       .div(BigNumber.from(4 * 52 * 7 * 24 * 60 * 60).mul(totalLocked));
 
     // Should have the correct balance
@@ -634,12 +634,12 @@ describe("VotingEscrow", () => {
 
     const rebates1 = epochRebates
       .mul(lock1.amount)
-      .mul(lock1.end.sub(epochTimestamp))
+      .mul(BigNumber.from(lock1.end).sub(epochTimestamp))
       .div(BigNumber.from(4 * 52 * 7 * 24 * 60 * 60).mul(totalLocked));
 
     const rebates2 = epochRebates
       .mul(lock2.amount)
-      .mul(lock2.end.sub(epochTimestamp))
+      .mul(BigNumber.from(lock2.end).sub(epochTimestamp))
       .div(BigNumber.from(4 * 52 * 7 * 24 * 60 * 60).mul(totalLocked));
 
     // Should have the correct balance

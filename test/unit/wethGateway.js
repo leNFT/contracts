@@ -372,7 +372,7 @@ describe("WETHGateway", () => {
     expect(lp.spotPrice).to.equal("100000000000000");
     expect(lp.curve).to.equal(exponentialCurve.address);
     expect(lp.delta).to.equal("50");
-    expect(lp.fee).to.equal("500");
+    expect(lp.fee).to.equal(500);
   });
   it("Should be able to remove liquidity from a trading pool", async function () {
     // Create a new trading pool
