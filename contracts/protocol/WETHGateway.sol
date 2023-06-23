@@ -3,7 +3,6 @@ pragma solidity 0.8.19;
 
 import {IWETH} from "../interfaces/IWETH.sol";
 import {ILendingMarket} from "../interfaces/ILendingMarket.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {ILoanCenter} from "../interfaces/ILoanCenter.sol";
 import {IBribes} from "../interfaces/IBribes.sol";
@@ -19,7 +18,7 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 /// @author leNFT
 /// @notice This contract is the proxy for ETH interactions with the leNFT protocol
 /// @dev Interacts with the WETH in order to wrap and unwrap ETH
-contract WETHGateway is ReentrancyGuard, ERC721Holder {
+contract WETHGateway is ERC721Holder {
     IAddressProvider private immutable _addressProvider;
     IWETH private immutable _weth;
 
@@ -50,7 +49,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     /// @param lendingPool Lending pool to deposit into
     function depositLendingPool(
         address lendingPool
-    ) external payable lendingPoolETH(lendingPool) nonReentrant {
+    ) external payable lendingPoolETH(lendingPool) {
         IWETH weth = _weth;
         // Deposit and approve WETH
         weth.deposit{value: msg.value}();
@@ -65,7 +64,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     function withdrawLendingPool(
         address lendingPool,
         uint256 amount
-    ) external lendingPoolETH(lendingPool) nonReentrant {
+    ) external lendingPoolETH(lendingPool) {
         IERC4626(lendingPool).withdraw(amount, address(this), msg.sender);
         _weth.withdraw(amount);
 
@@ -88,7 +87,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         uint256 genesisNFTId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
-    ) external nonReentrant {
+    ) external {
         ILendingMarket market = ILendingMarket(
             _addressProvider.getLendingMarket()
         );
@@ -127,7 +126,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
 
     /// @notice Repay an an active loan with ETH
     /// @param loanId The ID of the loan to be paid
-    function repay(uint256 loanId) external payable nonReentrant {
+    function repay(uint256 loanId) external payable {
         ILoanCenter loanCenter = ILoanCenter(_addressProvider.getLoanCenter());
         address pool = loanCenter.getLoanLendingPool(loanId);
 
@@ -175,7 +174,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         address curve,
         uint256 delta,
         uint256 fee
-    ) external payable tradingPoolETH(pool) nonReentrant {
+    ) external payable tradingPoolETH(pool) {
         // Transfer the NFTs to the WETH Gateway and approve them for use
         IERC721 tradingPoolNFT = IERC721(ITradingPool(pool).getNFT());
         if (nftIds.length > 0) {
@@ -216,7 +215,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     function withdrawTradingPool(
         address pool,
         uint256 lpId
-    ) external tradingPoolETH(pool) nonReentrant {
+    ) external tradingPoolETH(pool) {
         // Send LP NFT to this contract
         IERC721(pool).safeTransferFrom(msg.sender, address(this), lpId);
 
@@ -249,7 +248,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     function withdrawBatchTradingPool(
         address pool,
         uint256[] calldata lpIds
-    ) external tradingPoolETH(pool) nonReentrant {
+    ) external tradingPoolETH(pool) {
         uint256 totalAmount;
         uint256[][] memory nftIds = new uint256[][](lpIds.length);
 
@@ -299,7 +298,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         address pool,
         uint256[] calldata nftIds,
         uint256 maximumPrice
-    ) external payable tradingPoolETH(pool) nonReentrant {
+    ) external payable tradingPoolETH(pool) {
         require(msg.value == maximumPrice, "ETHG:B:VALUE_NOT_MAXIMUM_PRICE");
 
         // SLOAD the WETH address to save gas
@@ -334,7 +333,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         uint256[] calldata nftIds,
         uint256[] calldata liquidityPairs,
         uint256 minimumPrice
-    ) external tradingPoolETH(pool) nonReentrant {
+    ) external tradingPoolETH(pool) {
         // Send NFTs to this contract and approve them for pool use
         IERC721 tradingPoolNFT = IERC721(ITradingPool(pool).getNFT());
         for (uint i = 0; i < nftIds.length; i++) {
@@ -377,7 +376,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         uint256[] calldata sellNftIds,
         uint256[] calldata sellLps,
         uint256 minimumSellPrice
-    ) external payable nonReentrant {
+    ) external payable {
         // SLOAD the WETH address to save gas
         IWETH weth = _weth;
 
@@ -448,7 +447,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     /// @notice Deposits ETH into the bribe contract to be used for bribing.
     /// @dev Bribe is applied to the next epoch
     /// @param gauge The address of the gauge to bribe.
-    function depositBribe(address gauge) external payable nonReentrant {
+    function depositBribe(address gauge) external payable {
         address bribes = _addressProvider.getBribes();
         // SLOAD the WETH address to save gas
         IWETH weth = _weth;
@@ -470,7 +469,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
         uint256 loanId,
         bytes32 request,
         Trustus.TrustusPacket calldata packet
-    ) external payable loanPoolETH(loanId) nonReentrant {
+    ) external payable loanPoolETH(loanId) {
         address lendingMarket = _addressProvider.getLendingMarket();
         // SLOAD the WETH address to save gas
         IWETH weth = _weth;
@@ -492,7 +491,7 @@ contract WETHGateway is ReentrancyGuard, ERC721Holder {
     /// @param loanId The id of the loan to bid on.
     function bidLiquidationAuction(
         uint256 loanId
-    ) external payable loanPoolETH(loanId) nonReentrant {
+    ) external payable loanPoolETH(loanId) {
         address lendingMarket = _addressProvider.getLendingMarket();
         // SLOAD the WETH address to save gas
         IWETH weth = _weth;

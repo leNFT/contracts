@@ -8,13 +8,12 @@ import {ISwapRouter} from "../../interfaces/ISwapRouter.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @title SwapRouter Contract
 /// @author leNFT
 /// @notice This contract is responsible for swapping between assets in different pools
 /// @dev Coordenates a buy and sell between two different trading pools
-contract SwapRouter is ISwapRouter, ReentrancyGuard {
+contract SwapRouter is ISwapRouter {
     IAddressProvider private immutable _addressProvider;
 
     using SafeERC20 for IERC20;
@@ -43,7 +42,7 @@ contract SwapRouter is ISwapRouter, ReentrancyGuard {
         uint256[] calldata sellNftIds,
         uint256[] calldata sellLps,
         uint256 minimumSellPrice
-    ) external nonReentrant returns (uint256 change) {
+    ) external returns (uint256 change) {
         // Pools need to be registered in the factory
         address sellPoolToken;
         {
