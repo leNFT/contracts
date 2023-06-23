@@ -24,7 +24,7 @@ contract SwapRouter is ISwapRouter {
         _addressProvider = addressProvider;
     }
 
-    /// @notice Swaps tokens between two different trading pools
+    /// @notice Swaps tokens between two trading pools
     /// @dev The pools must have the same underlying token
     /// @param buyPool The address of the trading pool from which the user will buy NFTs
     /// @param sellPool The address of the trading pool from which the user will sell NFTs
