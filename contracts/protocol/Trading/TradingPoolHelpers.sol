@@ -8,6 +8,7 @@ import {IPricingCurve} from "../../interfaces/IPricingCurve.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {ITradingPoolFactory} from "../../interfaces/ITradingPoolFactory.sol";
+import {SafeCast} from "../../libraries/utils/SafeCast.sol";
 
 /// @title TradingPoolHelpers Contract
 /// @author leNFT
@@ -110,18 +111,22 @@ contract TradingPoolHelpers {
             fee = PercentageMath.percentMul(lp.spotPrice, lp.fee);
             protocolFee = PercentageMath.percentMul(fee, protocolFeePercentage);
 
-            liquidityPairsData[lpDataIndex].tokenAmount += (lp.spotPrice +
-                fee -
-                protocolFee);
+            liquidityPairsData[lpDataIndex].tokenAmount += SafeCast.toUint128(
+                (lp.spotPrice + fee - protocolFee)
+            );
 
             // Increase total price and fee sum
             finalPrice += (lp.spotPrice + fee);
 
             // Update liquidity pair price
             if (lp.lpType != DataTypes.LPType.TradeDown) {
-                liquidityPairsData[lpDataIndex].spotPrice = IPricingCurve(
-                    lp.curve
-                ).priceAfterBuy(lp.spotPrice, lp.delta, lp.fee);
+                liquidityPairsData[lpDataIndex].spotPrice = SafeCast.toUint128(
+                    IPricingCurve(lp.curve).priceAfterBuy(
+                        lp.spotPrice,
+                        lp.delta,
+                        lp.fee
+                    )
+                );
             }
         }
     }
@@ -218,18 +223,22 @@ contract TradingPoolHelpers {
                 lp.tokenAmount >= lp.spotPrice - fee + protocolFee,
                 "TP:S:INSUFFICIENT_TOKENS_IN_LP"
             );
-            liquidityPairsData[lpDataIndex].tokenAmount -= (lp.spotPrice -
-                fee +
-                protocolFee);
+            liquidityPairsData[lpDataIndex].tokenAmount -= SafeCast.toUint128(
+                (lp.spotPrice - fee + protocolFee)
+            );
 
             // Update total price quote and fee sum
             finalPrice += (lp.spotPrice - fee);
 
             // Update liquidity pair price
             if (lp.lpType != DataTypes.LPType.TradeUp) {
-                liquidityPairsData[lpDataIndex].spotPrice = IPricingCurve(
-                    lp.curve
-                ).priceAfterSell(lp.spotPrice, lp.delta, lp.fee);
+                liquidityPairsData[lpDataIndex].spotPrice = SafeCast.toUint128(
+                    IPricingCurve(lp.curve).priceAfterSell(
+                        lp.spotPrice,
+                        lp.delta,
+                        lp.fee
+                    )
+                );
             }
         }
     }
@@ -349,9 +358,10 @@ contract TradingPoolHelpers {
                 priceSellLiquidityPairs[amount - 1] = nextSpotPrice - fee;
                 sellLiquidityPairsData[amount - 1] = lp;
                 // Update token amount and spot price for lp
-                sellLiquidityPairsData[amount - 1]
-                    .tokenAmount -= (nextSpotPrice - fee + protocolFee);
-                sellLiquidityPairsData[amount - 1].spotPrice = nextSpotPrice;
+                sellLiquidityPairsData[amount - 1].tokenAmount -= SafeCast
+                    .toUint128((nextSpotPrice - fee + protocolFee));
+                sellLiquidityPairsData[amount - 1].spotPrice = SafeCast
+                    .toUint128(nextSpotPrice);
 
                 // Sort the array
                 for (uint j = amount - 1; j > 0; j--) {

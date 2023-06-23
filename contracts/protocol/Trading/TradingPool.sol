@@ -18,6 +18,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {ILiquidityPairMetadata} from "../../interfaces/ILiquidityPairMetadata.sol";
+import {SafeCast} from "../../libraries/utils/SafeCast.sol";
 
 /// @title Trading Pool Contract
 /// @author leNFT
@@ -217,8 +218,8 @@ contract TradingPool is
                 nftIds[i]
             );
             _nftToLp[nftIds[i]] = DataTypes.NftToLp({
-                liquidityPair: _lpCount,
-                index: i
+                liquidityPair: SafeCast.toUint128(_lpCount),
+                index: SafeCast.toUint128(i)
             });
         }
 
@@ -235,11 +236,11 @@ contract TradingPool is
         _liquidityPairs[_lpCount] = DataTypes.LiquidityPair({
             lpType: lpType,
             nftIds: nftIds,
-            tokenAmount: tokenAmount,
-            spotPrice: spotPrice,
+            tokenAmount: SafeCast.toUint128(tokenAmount),
+            spotPrice: SafeCast.toUint128(spotPrice),
             curve: curve,
-            delta: delta,
-            fee: fee
+            delta: SafeCast.toUint128(delta),
+            fee: SafeCast.toUint16(fee)
         });
 
         // Mint liquidity position NFT
@@ -360,9 +361,9 @@ contract TradingPool is
             delete _nftToLp[nftIds[i]];
             _liquidityPairs[lpIndex].nftIds.pop();
 
-            _liquidityPairs[lpIndex].tokenAmount += (lp.spotPrice +
-                fee -
-                protocolFee);
+            _liquidityPairs[lpIndex].tokenAmount += SafeCast.toUint128(
+                (lp.spotPrice + fee - protocolFee)
+            );
 
             // Increase total price and fee sum
             finalPrice += (lp.spotPrice + fee);
@@ -370,8 +371,13 @@ contract TradingPool is
 
             // Update liquidity pair price
             if (lp.lpType != DataTypes.LPType.TradeDown) {
-                _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
-                    .priceAfterBuy(lp.spotPrice, lp.delta, lp.fee);
+                _liquidityPairs[lpIndex].spotPrice = SafeCast.toUint128(
+                    IPricingCurve(lp.curve).priceAfterBuy(
+                        lp.spotPrice,
+                        lp.delta,
+                        lp.fee
+                    )
+                );
             }
 
             // Send NFT to user
@@ -466,14 +472,18 @@ contract TradingPool is
 
             //Update NFT tracker
             _nftToLp[nftIds[i]] = DataTypes.NftToLp({
-                liquidityPair: lpIndex,
-                index: _liquidityPairs[lpIndex].nftIds.length - 1
+                liquidityPair: SafeCast.toUint128(lpIndex),
+                index: SafeCast.toUint128(
+                    _liquidityPairs[lpIndex].nftIds.length - 1
+                )
             });
 
             // Update token amount in liquidity pair
-            _liquidityPairs[lpIndex].tokenAmount -= (lp.spotPrice -
-                fee +
-                PercentageMath.percentMul(fee, protocolFeePercentage));
+            _liquidityPairs[lpIndex].tokenAmount -= SafeCast.toUint128(
+                (lp.spotPrice -
+                    fee +
+                    PercentageMath.percentMul(fee, protocolFeePercentage))
+            );
 
             // Update total price quote and fee sum
             finalPrice += (lp.spotPrice - fee);
@@ -484,8 +494,13 @@ contract TradingPool is
 
             // Update liquidity pair price
             if (lp.lpType != DataTypes.LPType.TradeUp) {
-                _liquidityPairs[lpIndex].spotPrice = IPricingCurve(lp.curve)
-                    .priceAfterSell(lp.spotPrice, lp.delta, lp.fee);
+                _liquidityPairs[lpIndex].spotPrice = SafeCast.toUint128(
+                    IPricingCurve(lp.curve).priceAfterSell(
+                        lp.spotPrice,
+                        lp.delta,
+                        lp.fee
+                    )
+                );
             }
         }
 

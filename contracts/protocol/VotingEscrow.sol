@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
+import {SafeCast} from "../libraries/utils/SafeCast.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IAddressProvider} from "../interfaces/IAddressProvider.sol";
 import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
@@ -88,7 +89,11 @@ contract VotingEscrow is
         __ReentrancyGuard_init();
         _deployTimestamp = block.timestamp;
         _totalWeightHistory.push(0);
-        _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);
+        _lastWeightCheckpoint = DataTypes.Point(
+            0,
+            0,
+            SafeCast.toUint40(block.timestamp)
+        );
         _totalSupplyHistory.push(0);
         _totalLockedHistory.push(0);
     }
@@ -208,9 +213,13 @@ contract VotingEscrow is
             _totalWeightHistory.push(epochTotalWeight);
 
             // Update last weight checkpoint
-            _lastWeightCheckpoint.bias = epochTotalWeight;
-            _lastWeightCheckpoint.timestamp = epochTimestampPointer;
-            _lastWeightCheckpoint.slope -= _slopeChanges[epochTimestampPointer];
+            _lastWeightCheckpoint.bias = SafeCast.toUint128(epochTotalWeight);
+            _lastWeightCheckpoint.timestamp = SafeCast.toUint40(
+                epochTimestampPointer
+            );
+            _lastWeightCheckpoint.slope -= SafeCast.toUint128(
+                _slopeChanges[epochTimestampPointer]
+            );
 
             // Get native token address inside loop because most transactions will break on the first iteration
             address nativeToken = _addressProvider.getNativeToken();
@@ -268,27 +277,35 @@ contract VotingEscrow is
 
         // Calculate slopes and bias
         if (oldBalance.end > block.timestamp && oldBalance.amount > 0) {
-            oldPoint.slope = oldBalance.amount / MAXLOCKTIME;
-            oldPoint.bias = oldPoint.slope * (oldBalance.end - block.timestamp);
+            oldPoint.slope = SafeCast.toUint128(
+                oldBalance.amount / MAXLOCKTIME
+            );
+            oldPoint.bias = SafeCast.toUint128(
+                oldPoint.slope * (oldBalance.end - block.timestamp)
+            );
         }
         if (newBalance.end > block.timestamp && newBalance.amount > 0) {
-            newPoint.slope = newBalance.amount / MAXLOCKTIME;
-            newPoint.bias = newPoint.slope * (newBalance.end - block.timestamp);
-            newPoint.timestamp = block.timestamp;
+            newPoint.slope = SafeCast.toUint128(
+                newBalance.amount / MAXLOCKTIME
+            );
+            newPoint.bias = SafeCast.toUint128(
+                newPoint.slope * (newBalance.end - block.timestamp)
+            );
+            newPoint.timestamp = SafeCast.toUint40(block.timestamp);
         }
 
         // Update last saved total weight
-        _lastWeightCheckpoint.bias =
+        _lastWeightCheckpoint.bias = SafeCast.toUint128(
             _lastWeightCheckpoint.bias -
-            _lastWeightCheckpoint.slope *
-            (block.timestamp - _lastWeightCheckpoint.timestamp) +
-            newPoint.bias -
-            oldPoint.bias;
-        _lastWeightCheckpoint.slope =
-            _lastWeightCheckpoint.slope +
-            newPoint.slope -
-            oldPoint.slope;
-        _lastWeightCheckpoint.timestamp = block.timestamp;
+                _lastWeightCheckpoint.slope *
+                (block.timestamp - _lastWeightCheckpoint.timestamp) +
+                newPoint.bias -
+                oldPoint.bias
+        );
+        _lastWeightCheckpoint.slope = SafeCast.toUint128(
+            _lastWeightCheckpoint.slope + newPoint.slope - oldPoint.slope
+        );
+        _lastWeightCheckpoint.timestamp = SafeCast.toUint40(block.timestamp);
 
         // Read and update slope changes in accordance
         if (oldBalance.end > block.timestamp) {
@@ -437,15 +454,18 @@ contract VotingEscrow is
 
         // Init the locked balance state variable
         _lockedBalance[tokenId] = DataTypes.LockedBalance(
-            amount,
-            roundedUnlockTime
+            SafeCast.toUint128(amount),
+            SafeCast.toUint40(roundedUnlockTime)
         );
 
         // Call a checkpoint and update global tracking vars (the old locked balance will be 0 since this is a new lock)
         _checkpoint(
             tokenId,
             DataTypes.LockedBalance(0, 0),
-            DataTypes.LockedBalance(amount, roundedUnlockTime)
+            DataTypes.LockedBalance(
+                SafeCast.toUint128(amount),
+                SafeCast.toUint40(roundedUnlockTime)
+            )
         );
 
         // Transfer the locked tokens from the caller to this contract
@@ -477,7 +497,7 @@ contract VotingEscrow is
 
         // Save oldLocked and update the locked balance
         DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
-        _lockedBalance[tokenId].amount += amount;
+        _lockedBalance[tokenId].amount += SafeCast.toUint128(amount);
 
         // Call a checkpoint and update global tracking vars
         _checkpoint(tokenId, oldLocked, _lockedBalance[tokenId]);
@@ -521,7 +541,7 @@ contract VotingEscrow is
 
         // Cache oldLocked and update the locked balance
         DataTypes.LockedBalance memory oldLocked = _lockedBalance[tokenId];
-        _lockedBalance[tokenId].end = roundedUnlocktime;
+        _lockedBalance[tokenId].end = SafeCast.toUint40(roundedUnlocktime);
 
         // Call a checkpoint and update global tracking vars
         _checkpoint(tokenId, oldLocked, _lockedBalance[tokenId]);

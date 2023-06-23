@@ -13,6 +13,7 @@ import {IGauge} from "../../interfaces/IGauge.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {PercentageMath} from "../../libraries/utils/PercentageMath.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {SafeCast} from "../../libraries/utils/SafeCast.sol";
 
 /// @title LendingGauge contract
 /// @author leNFT
@@ -277,9 +278,9 @@ contract LendingGauge is IGauge, ERC165 {
         }
         DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
             .WorkingBalance({
-                amount: _balanceOf[user],
-                weight: newWeight,
-                timestamp: block.timestamp
+                amount: SafeCast.toUint128(_balanceOf[user]),
+                weight: SafeCast.toUint128(newWeight),
+                timestamp: SafeCast.toUint40(block.timestamp)
             });
 
         _workingWeight =

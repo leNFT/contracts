@@ -17,6 +17,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {SafeCast} from "../../libraries/utils/SafeCast.sol";
 
 /// @title Trading Gauge Contract
 /// @author leNFT
@@ -269,9 +270,9 @@ contract TradingGauge is IGauge, ERC165, ERC721Holder, ReentrancyGuard {
         }
         DataTypes.WorkingBalance memory newWorkingBalance = DataTypes
             .WorkingBalance({
-                amount: _userLPValue[user],
-                weight: newWeight,
-                timestamp: block.timestamp
+                amount: SafeCast.toUint128(_userLPValue[user]),
+                weight: SafeCast.toUint128(newWeight),
+                timestamp: SafeCast.toUint40(block.timestamp)
             });
 
         // Update global working supply and working balance history if there were any changes

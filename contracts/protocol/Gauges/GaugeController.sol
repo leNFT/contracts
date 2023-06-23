@@ -10,6 +10,7 @@ import {IGaugeController} from "../../interfaces/IGaugeController.sol";
 import {IAddressProvider} from "../../interfaces/IAddressProvider.sol";
 import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import {IGauge} from "../../interfaces/IGauge.sol";
+import {SafeCast} from "../../libraries/utils/SafeCast.sol";
 
 /// @title Gauge Controller
 /// @author leNFT
@@ -76,7 +77,11 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         __Ownable_init();
         _lpMaturityPeriod = lpMaturityPeriod;
         _totalWeigthHistory.push(0);
-        _lastWeightCheckpoint = DataTypes.Point(0, 0, block.timestamp);
+        _lastWeightCheckpoint = DataTypes.Point(
+            0,
+            0,
+            SafeCast.toUint40(block.timestamp)
+        );
     }
 
     /// @notice Adds a gauge contract to the list of registered gauges.
@@ -278,11 +283,13 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             _totalWeigthHistory.push(epochTotalWeight);
 
             // Update last weight checkpoint
-            _lastWeightCheckpoint.bias = epochTotalWeight;
-            _lastWeightCheckpoint.timestamp = epochTimestampPointer;
-            _lastWeightCheckpoint.slope -= _totalWeightSlopeChanges[
+            _lastWeightCheckpoint.bias = SafeCast.toUint128(epochTotalWeight);
+            _lastWeightCheckpoint.timestamp = SafeCast.toUint40(
                 epochTimestampPointer
-            ];
+            );
+            _lastWeightCheckpoint.slope -= SafeCast.toUint128(
+                _totalWeightSlopeChanges[epochTimestampPointer]
+            );
 
             //Increase epoch timestamp
             epochTimestampPointer += epochPeriod;
@@ -302,7 +309,7 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             _lastGaugeWeigthCheckpoint[gauge] = DataTypes.Point(
                 0,
                 0,
-                votingEscrow.getEpochTimestamp(0)
+                SafeCast.toUint40(votingEscrow.getEpochTimestamp(0))
             );
         }
 
@@ -326,11 +333,15 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             _gaugeWeightHistory[gauge].push(epochGaugeWeight);
 
             // Update last weight checkpoint
-            _lastGaugeWeigthCheckpoint[gauge].bias = epochGaugeWeight;
-            _lastGaugeWeigthCheckpoint[gauge].timestamp = epochTimestampPointer;
-            _lastGaugeWeigthCheckpoint[gauge].slope -= _gaugeWeightSlopeChanges[
-                gauge
-            ][epochTimestampPointer];
+            _lastGaugeWeigthCheckpoint[gauge].bias = SafeCast.toUint128(
+                epochGaugeWeight
+            );
+            _lastGaugeWeigthCheckpoint[gauge].timestamp = SafeCast.toUint40(
+                epochTimestampPointer
+            );
+            _lastGaugeWeigthCheckpoint[gauge].slope -= SafeCast.toUint128(
+                _gaugeWeightSlopeChanges[gauge][epochTimestampPointer]
+            );
 
             epochTimestampPointer += epochPeriod;
         }
@@ -391,18 +402,19 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         DataTypes.Point memory newGaugeVoteWeight;
 
         // Get the updated gauge vote weight
-        newGaugeVoteWeight.bias = PercentageMath.percentMul(
-            lockLastPoint.bias -
-                (lockLastPoint.slope *
-                    (block.timestamp - lockLastPoint.timestamp)),
-            ratio
+        newGaugeVoteWeight.bias = SafeCast.toUint128(
+            PercentageMath.percentMul(
+                lockLastPoint.bias -
+                    (lockLastPoint.slope *
+                        (block.timestamp - lockLastPoint.timestamp)),
+                ratio
+            )
         );
-        newGaugeVoteWeight.slope = PercentageMath.percentMul(
-            lockLastPoint.slope,
-            ratio
+        newGaugeVoteWeight.slope = SafeCast.toUint128(
+            PercentageMath.percentMul(lockLastPoint.slope, ratio)
         );
 
-        newGaugeVoteWeight.timestamp = block.timestamp;
+        newGaugeVoteWeight.timestamp = SafeCast.toUint40(block.timestamp);
 
         // If we already have valid votes in this gauge
         if (
@@ -410,13 +422,15 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
             block.timestamp < lockedBalance.end
         ) {
             // Get the updated old gauge vote weight
-            oldGaugeVoteWeight.bias =
+            oldGaugeVoteWeight.bias = SafeCast.toUint128(
                 _lockGaugeVotePoint[tokenId][gauge].slope *
-                (block.timestamp -
-                    _lockGaugeVotePoint[tokenId][gauge].timestamp);
-            oldGaugeVoteWeight.slope = _lockGaugeVotePoint[tokenId][gauge]
-                .slope;
-            oldGaugeVoteWeight.timestamp = block.timestamp;
+                    (block.timestamp -
+                        _lockGaugeVotePoint[tokenId][gauge].timestamp)
+            );
+            oldGaugeVoteWeight.slope = SafeCast.toUint128(
+                _lockGaugeVotePoint[tokenId][gauge].slope
+            );
+            oldGaugeVoteWeight.timestamp = SafeCast.toUint40(block.timestamp);
 
             _gaugeWeightSlopeChanges[gauge][
                 lockedBalance.end
@@ -432,30 +446,34 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
         _totalWeightSlopeChanges[lockedBalance.end] += newGaugeVoteWeight.slope;
 
         // Update checkpoints
-        _lastGaugeWeigthCheckpoint[gauge].bias =
+        _lastGaugeWeigthCheckpoint[gauge].bias = SafeCast.toUint128(
             _lastGaugeWeigthCheckpoint[gauge].bias -
-            (_lastGaugeWeigthCheckpoint[gauge].slope *
-                (block.timestamp -
-                    _lastGaugeWeigthCheckpoint[gauge].timestamp)) +
-            newGaugeVoteWeight.bias -
-            oldGaugeVoteWeight.bias;
+                (_lastGaugeWeigthCheckpoint[gauge].slope *
+                    (block.timestamp -
+                        _lastGaugeWeigthCheckpoint[gauge].timestamp)) +
+                newGaugeVoteWeight.bias -
+                oldGaugeVoteWeight.bias
+        );
         _lastGaugeWeigthCheckpoint[gauge].slope =
             _lastGaugeWeigthCheckpoint[gauge].slope +
             newGaugeVoteWeight.slope -
             oldGaugeVoteWeight.slope;
-        _lastGaugeWeigthCheckpoint[gauge].timestamp = block.timestamp;
+        _lastGaugeWeigthCheckpoint[gauge].timestamp = SafeCast.toUint40(
+            block.timestamp
+        );
 
-        _lastWeightCheckpoint.bias =
+        _lastWeightCheckpoint.bias = SafeCast.toUint128(
             _lastWeightCheckpoint.bias -
-            (_lastWeightCheckpoint.slope *
-                (block.timestamp - _lastWeightCheckpoint.timestamp)) +
-            newGaugeVoteWeight.bias -
-            oldGaugeVoteWeight.bias;
+                (_lastWeightCheckpoint.slope *
+                    (block.timestamp - _lastWeightCheckpoint.timestamp)) +
+                newGaugeVoteWeight.bias -
+                oldGaugeVoteWeight.bias
+        );
         _lastWeightCheckpoint.slope =
             _lastWeightCheckpoint.slope +
             newGaugeVoteWeight.slope -
             oldGaugeVoteWeight.slope;
-        _lastWeightCheckpoint.timestamp = block.timestamp;
+        _lastWeightCheckpoint.timestamp = SafeCast.toUint40(block.timestamp);
 
         // Update user vote info
         _lockVoteRatio[tokenId] =

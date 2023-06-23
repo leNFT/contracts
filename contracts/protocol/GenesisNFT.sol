@@ -439,7 +439,7 @@ contract GenesisNFT is
             _mintDetails[tokenId] = DataTypes.MintDetails(
                 SafeCast.toUint40(block.timestamp),
                 SafeCast.toUint40(locktime),
-                lpAmount / amount
+                SafeCast.toUint128(lpAmount / amount)
             );
 
             //Increase supply

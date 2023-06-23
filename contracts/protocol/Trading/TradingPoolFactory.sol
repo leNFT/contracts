@@ -162,32 +162,23 @@ contract TradingPoolFactory is
         address nft,
         address token
     ) external nonReentrant {
-        require(
-            _pools[nft][token] == address(0),
-            "TPF:CTP:POOL_ALREADY_EXISTS"
-        );
+        require(_pools[nft][token] == address(0), "TPF:CTP:POOL_EXISTS");
         require(
             nft.supportsInterface(type(IERC721MetadataUpgradeable).interfaceId),
-            "TPF:CTP:NFT_NOT_ERC721"
+            "TPF:CTP:NOT_ERC721"
         );
+
+        // Get the symbols of the NFT and token
+        string memory nftSymbol = IERC721MetadataUpgradeable(nft).symbol();
+        string memory tokenSymbol = IERC20MetadataUpgradeable(token).symbol();
 
         ITradingPool newTradingPool = new TradingPool(
             _addressProvider,
             owner(),
             token,
             nft,
-            string.concat(
-                "leNFT Trading Pool ",
-                IERC721MetadataUpgradeable(nft).symbol(),
-                " - ",
-                IERC20MetadataUpgradeable(token).symbol()
-            ),
-            string.concat(
-                "leT",
-                IERC721MetadataUpgradeable(nft).symbol(),
-                "-",
-                IERC20MetadataUpgradeable(token).symbol()
-            )
+            string.concat("leNFT Trading Pool ", nftSymbol, " - ", tokenSymbol),
+            string.concat("leT", nftSymbol, "-", tokenSymbol)
         );
 
         _setTradingPool(nft, token, address(newTradingPool));

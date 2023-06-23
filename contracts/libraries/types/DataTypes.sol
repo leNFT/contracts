@@ -41,29 +41,29 @@ library DataTypes {
     }
 
     /// @notice Struct to store the liquidity pair data
-    /// @param lpType The type of liquidity pair
     /// @param nftIds The tokenIds of the assets
     /// @param tokenAmount The amount of tokens in the liquidity pair
     /// @param spotPrice The spot price of the liquidity pair
     /// @param curve The address of the curve
     /// @param delta The delta of the curve
     /// @param fee The fee for the buy/sell trades
+    /// @param lpType The type of liquidity pair
     struct LiquidityPair {
-        LPType lpType;
         uint256[] nftIds;
-        uint256 tokenAmount;
-        uint256 spotPrice;
+        uint128 tokenAmount;
+        uint128 spotPrice;
+        uint128 delta;
         address curve;
-        uint256 delta;
-        uint256 fee;
+        uint16 fee;
+        LPType lpType;
     }
 
     /// @notice Struct serving as a pointer from an NFT to a liquidity pair
     /// @param liquidityPair The index of the liquidity pair
     /// @param index The index of the NFT in the liquidity pair
     struct NftToLp {
-        uint256 liquidityPair;
-        uint256 index;
+        uint128 liquidityPair;
+        uint128 index;
     }
 
     /// @notice Struct to store the working balance in gauges
@@ -71,17 +71,17 @@ library DataTypes {
     /// @param weight The weight of the tokens
     /// @param timestamp The timestamp of the update
     struct WorkingBalance {
-        uint256 amount;
-        uint256 weight;
-        uint256 timestamp;
+        uint128 amount;
+        uint128 weight;
+        uint40 timestamp;
     }
 
     /// @notice Struct to store the locked balance in the voting escrow
     /// @param amount The amount of tokens
     /// @param end The timestamp of the end of the lock
     struct LockedBalance {
-        uint256 amount;
-        uint256 end;
+        uint128 amount;
+        uint40 end;
     }
 
     /// @notice Struct to store an abstract point in a weight curve
@@ -89,9 +89,9 @@ library DataTypes {
     /// @param slope The slope of the point
     /// @param timestamp The timestamp of the point
     struct Point {
-        uint256 bias;
-        uint256 slope;
-        uint256 timestamp;
+        uint128 bias;
+        uint128 slope;
+        uint40 timestamp;
     }
 
     /// @notice Enum of all the states a loan can be in
@@ -154,7 +154,7 @@ library DataTypes {
     struct MintDetails {
         uint40 timestamp;
         uint40 locktime;
-        uint256 lpAmount;
+        uint128 lpAmount;
     }
 
     /// @notice Struct to store the parameters for a borrow call
