@@ -154,20 +154,18 @@ contract InterestRate is IInterestRate, Ownable {
         uint256 lowSlope,
         uint256 highSlope
     ) public onlySupported(token) onlyOwner {
-        _interestRateConfigs[token] = ConfigTypes.InterestRateConfig({
-            optimalUtilizationRate: SafeCast.toUint64(optimalUtilizationRate),
-            baseBorrowRate: SafeCast.toUint64(baseBorrowRate),
-            lowSlope: SafeCast.toUint64(lowSlope),
-            highSlope: SafeCast.toUint64(highSlope),
-            optimalBorrowRate: 0
-        });
         uint64 optimalBorrowRate = SafeCast.toUint64(
             PercentageMath.percentMul(optimalUtilizationRate, lowSlope) +
                 baseBorrowRate
         );
 
-        // Set the optimal borrow rate
-        _interestRateConfigs[token].optimalBorrowRate = optimalBorrowRate;
+        _interestRateConfigs[token] = ConfigTypes.InterestRateConfig({
+            optimalUtilizationRate: SafeCast.toUint64(optimalUtilizationRate),
+            baseBorrowRate: SafeCast.toUint64(baseBorrowRate),
+            lowSlope: SafeCast.toUint64(lowSlope),
+            highSlope: SafeCast.toUint64(highSlope),
+            optimalBorrowRate: optimalBorrowRate
+        });
 
         emit InterestRateConfigSet(
             token,
