@@ -114,7 +114,7 @@ contract InterestRate is IInterestRate, Ownable {
                 );
         } else {
             return
-                _getOptimalBorrowRate(_interestRateConfigs[token]) +
+                _interestRateConfigs[token].optimalBorrowRate +
                 PercentageMath.percentMul(
                     utilizationRate -
                         _interestRateConfigs[token].optimalUtilizationRate,
@@ -126,7 +126,7 @@ contract InterestRate is IInterestRate, Ownable {
     function getOptimalBorrowRate(
         address token
     ) external view onlySupported(token) returns (uint256) {
-        return _getOptimalBorrowRate(_interestRateConfigs[token]);
+        return _interestRateConfigs[token].optimalBorrowRate;
     }
 
     /// @notice Calculates the utilization rate based on the assets and debt
@@ -175,15 +175,6 @@ contract InterestRate is IInterestRate, Ownable {
             highSlope,
             optimalBorrowRate
         );
-    }
-
-    /// @notice Internal function to get the optimal borrow rate
-    /// @param interestRateConfig The interest rate parameters
-    /// @return The optimal borrow rate
-    function _getOptimalBorrowRate(
-        ConfigTypes.InterestRateConfig memory interestRateConfig
-    ) internal pure returns (uint256) {
-        return interestRateConfig.optimalBorrowRate;
     }
 
     /// @notice Internal function to calculate the utilization rate based on the assets and debt
