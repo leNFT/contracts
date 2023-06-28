@@ -76,9 +76,6 @@ library BorrowLogic {
             borrowRate
         );
 
-        // Activate the loan
-        loanCenter.activateLoan(loanId);
-
         // Send the principal to the borrower
         ILendingPool(lendingPool).transferUnderlying(
             params.caller,

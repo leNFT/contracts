@@ -95,16 +95,14 @@ library DataTypes {
     }
 
     /// @notice Enum of all the states a loan can be in
-    /// @dev State change flow: None -> Created -> Active -> Repaid -> Auction -> Liquidated
-    /// @dev None (Default Value): We need a default that is not 'Created' - this is the zero value
-    /// @dev Created: The loan data is stored; but not initiated yet.
+    /// @dev State change flow: None -> Active -> Repaid -> Auction -> Liquidated
+    /// @dev None (Default Value): We need a default that is not 'Active' - this is the zero value
     /// @dev Active: The loan has been initialized; funds have been delivered to the borrower and the collateral is held.
     /// @dev Repaid: The loan has been repaid; and the collateral has been returned to the borrower.
     /// @dev Auctioned: The loan's collateral has been auctioned off and its in the process of being liquidated.
     /// @dev Liquidated: The loan's collateral was claimed by the liquidator.
     enum LoanState {
         None,
-        Created,
         Active,
         Repaid,
         Auctioned,

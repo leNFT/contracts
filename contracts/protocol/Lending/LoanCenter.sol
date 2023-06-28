@@ -100,7 +100,7 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
             debtTimestamp: SafeCast.toUint40(block.timestamp),
             pool: pool,
             genesisNFTId: SafeCast.toUint16(genesisNFTId),
-            state: DataTypes.LoanState.Created
+            state: DataTypes.LoanState.Active
         });
 
         // Add NFT to loanId mapping
@@ -113,14 +113,6 @@ contract LoanCenter is ILoanCenter, OwnableUpgradeable {
 
         // Increment the loans count and then return it
         return _loansCount++;
-    }
-
-    /// @notice Activate a loan by setting its state to Active
-    /// @dev Only the market contract can call this function
-    /// @param loanId The ID of the loan to be activated
-    function activateLoan(uint256 loanId) external override onlyMarket {
-        // Update loan state
-        _loans[loanId].state = DataTypes.LoanState.Active;
     }
 
     /// @notice Repay a loan by setting its state to Repaid

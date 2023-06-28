@@ -166,7 +166,7 @@ describe("WETHGateway", () => {
     expect(loan.nftTokenIds[0]).to.equal(BigNumber.from(0));
     expect(loan.amount).to.equal(BigNumber.from("200000000000000"));
     expect(loan.genesisNFTId).to.equal(0);
-    expect(loan.state).to.equal(2);
+    expect(loan.state).to.equal(1);
     expect(loan.pool).to.equal(
       await lendingMarket.getLendingPool(testNFT.address, weth.address)
     );

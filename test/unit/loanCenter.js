@@ -230,8 +230,8 @@ describe("LoanCenter", function () {
     // The loan should have the correct values
     expect(loan.owner).to.equal(owner.address);
     expect(await loanCenter.getLoanOwner(0)).to.equal(owner.address);
-    expect(loan.state).to.equal(BigNumber.from(2));
-    expect(await loanCenter.getLoanState(0)).to.equal(BigNumber.from(2));
+    expect(loan.state).to.equal(BigNumber.from(1));
+    expect(await loanCenter.getLoanState(0)).to.equal(BigNumber.from(1));
     expect(loan.amount).to.equal(ethers.utils.parseEther("0.02"));
     expect(loan.borrowRate).to.equal(borrowRate);
     expect(loan.genesisNFTId).to.equal(0);
@@ -340,7 +340,7 @@ describe("LoanCenter", function () {
     const evmTime = await time.latest();
 
     // Check if the loan state is 'auctioned'
-    expect(await loanCenter.getLoanState(0)).to.equal(BigNumber.from(4));
+    expect(await loanCenter.getLoanState(0)).to.equal(BigNumber.from(3));
 
     // Get the loan liquidation data
     const loanLiquidationData2 = await loanCenter.getLoanLiquidationData(0);
