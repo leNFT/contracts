@@ -32,11 +32,11 @@ abstract contract Trustus {
 
     /// @notice The chain ID used by EIP-712
     // solhint-disable-next-line var-name-mixedcase
-    uint256 internal INITIAL_CHAIN_ID;
+    uint256 internal immutable INITIAL_CHAIN_ID;
 
     /// @notice The domain separator used by EIP-712
     // solhint-disable-next-line var-name-mixedcase
-    bytes32 internal INITIAL_DOMAIN_SEPARATOR;
+    bytes32 internal immutable INITIAL_DOMAIN_SEPARATOR;
 
     /// -----------------------------------------------------------------------
     /// Storage variables
