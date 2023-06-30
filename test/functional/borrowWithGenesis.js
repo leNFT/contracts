@@ -53,7 +53,8 @@ describe("Borrow using Genesis NFT", function () {
       tokenWeights,
       [ethers.constants.AddressZero, ethers.constants.AddressZero],
       "2500000000000000",
-      "0xba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1b"
+      "0xba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1b",
+      ethers.utils.formatBytes32String("leNFT")
     );
     const createTxReceipt = await createTx.wait();
     const poolId = createTxReceipt.logs[1].topics[1];

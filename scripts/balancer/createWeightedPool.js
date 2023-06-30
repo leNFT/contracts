@@ -21,9 +21,13 @@ async function main() {
   let chainID = hre.network.config.chainId;
   console.log("chainID: ", chainID);
   var addresses = contractAddresses[chainID.toString(16)];
-  const poolFactoryAddress = "0x26575A44755E0aaa969FDda1E4291Df22C5624Ea";
+  const poolFactoryAddress = "0x897888115Ada5773E02aA29F775430BFB5F34c51";
   const vaultAddress = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
   const queryAddress = "0xE39B5e3B6D74016b2F6A9673D7d7493B6DF549d5";
+  const nativeTokenAddress = addresses.NativeToken;
+  console.log("nativeTokenAddress: ", nativeTokenAddress);
+  const wethAddress = addresses.ETH.address;
+  console.log("wethAddress: ", wethAddress);
 
   const factoryContract = await ethers.getContractAt(
     weightedPoolFactoryABI,
@@ -31,16 +35,16 @@ async function main() {
   );
 
   console.log("Deploying Balancer pool...");
-  console.log("LE address: ", addresses.NativeToken);
-  console.log("WETH address: ", addresses.ETH.address);
+
   const createTx = await factoryContract.create(
-    "Balancer Pool 80 LE 20 WETH",
+    "Balancer 80 LE 20 WETH",
     "B-80LE-20WETH",
-    [addresses.ETH.address, addresses.NativeToken],
-    ["200000000000000000", "800000000000000000"],
+    [nativeTokenAddress, wethAddress],
+    ["800000000000000000", "200000000000000000"],
     [ethers.constants.AddressZero, ethers.constants.AddressZero],
     "2500000000000000",
-    "0xba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1b"
+    "0xba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1b",
+    ethers.utils.formatBytes32String("leNFT")
   );
   const createTxReceipt = await createTx.wait();
   const poolId = createTxReceipt.logs[1].topics[1];
