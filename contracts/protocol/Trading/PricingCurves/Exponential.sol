@@ -2,6 +2,8 @@
 pragma solidity 0.8.19;
 
 import {IPricingCurve} from "../../../interfaces/IPricingCurve.sol";
+import {ITradingPoolFactory} from "../../../interfaces/ITradingPoolFactory.sol";
+import {IAddressProvider} from "../../../interfaces/IAddressProvider.sol";
 import {PercentageMath} from "../../../libraries/utils/PercentageMath.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
@@ -10,6 +12,12 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 /// @notice This contract implements an exponential price curve
 /// @dev Calculates the price after buying or selling tokens using the exponential price curve
 contract ExponentialPriceCurve is IPricingCurve, ERC165 {
+    IAddressProvider private immutable _addressProvider;
+
+    constructor(IAddressProvider addressProvider) {
+        _addressProvider = addressProvider;
+    }
+
     /// @notice Calculates the price after buying 1 token
     /// @param price The current price of the token
     /// @param delta The delta factor to increase the price
@@ -17,8 +25,33 @@ contract ExponentialPriceCurve is IPricingCurve, ERC165 {
     function priceAfterBuy(
         uint256 price,
         uint256 delta,
-        uint256
-    ) external pure override returns (uint256) {
+        uint256 fee
+    ) external view override returns (uint256) {
+        if (fee > 0 && delta > 0) {
+            uint256 userFeePercentage = PercentageMath.percentMul(
+                fee,
+                PercentageMath.PERCENTAGE_FACTOR -
+                    ITradingPoolFactory(
+                        _addressProvider.getTradingPoolFactory()
+                    ).getProtocolFeePercentage()
+            );
+
+            if (
+                PercentageMath.PERCENTAGE_FACTOR *
+                    (PercentageMath.PERCENTAGE_FACTOR + userFeePercentage) >
+                (PercentageMath.PERCENTAGE_FACTOR + delta) *
+                    (PercentageMath.PERCENTAGE_FACTOR - userFeePercentage)
+            ) {
+                return
+                    PercentageMath.percentMul(
+                        price,
+                        PercentageMath.PERCENTAGE_FACTOR + delta
+                    );
+            } else {
+                return price;
+            }
+        }
+
         return
             PercentageMath.percentMul(
                 price,
@@ -33,8 +66,32 @@ contract ExponentialPriceCurve is IPricingCurve, ERC165 {
     function priceAfterSell(
         uint256 price,
         uint256 delta,
-        uint256
-    ) external pure override returns (uint256) {
+        uint256 fee
+    ) external view override returns (uint256) {
+        if (fee > 0 && delta > 0) {
+            uint256 userFeePercentage = PercentageMath.percentMul(
+                fee,
+                PercentageMath.PERCENTAGE_FACTOR -
+                    ITradingPoolFactory(
+                        _addressProvider.getTradingPoolFactory()
+                    ).getProtocolFeePercentage()
+            );
+            if (
+                PercentageMath.PERCENTAGE_FACTOR *
+                    (PercentageMath.PERCENTAGE_FACTOR + userFeePercentage) >
+                (PercentageMath.PERCENTAGE_FACTOR + delta) *
+                    (PercentageMath.PERCENTAGE_FACTOR - userFeePercentage)
+            ) {
+                return
+                    PercentageMath.percentDiv(
+                        price,
+                        PercentageMath.PERCENTAGE_FACTOR + delta
+                    );
+            } else {
+                return price;
+            }
+        }
+
         return
             PercentageMath.percentDiv(
                 price,
@@ -50,19 +107,28 @@ contract ExponentialPriceCurve is IPricingCurve, ERC165 {
         uint256 spotPrice,
         uint256 delta,
         uint256 fee
-    ) external pure override {
+    ) external view override {
         require(spotPrice > 0, "EPC:VLPP:INVALID_PRICE");
         require(
             delta < PercentageMath.PERCENTAGE_FACTOR,
             "EPC:VLPP:INVALID_DELTA"
         );
+
         if (fee > 0 && delta > 0) {
+            uint256 userFeePercentage = PercentageMath.percentMul(
+                fee,
+                PercentageMath.PERCENTAGE_FACTOR -
+                    ITradingPoolFactory(
+                        _addressProvider.getTradingPoolFactory()
+                    ).getProtocolFeePercentage()
+            );
+
             // If this doesn't happen then a user would be able to profitably buy and sell from the same LP and drain its funds
             require(
                 PercentageMath.PERCENTAGE_FACTOR *
-                    (PercentageMath.PERCENTAGE_FACTOR + fee) >
+                    (PercentageMath.PERCENTAGE_FACTOR + userFeePercentage) >
                     (PercentageMath.PERCENTAGE_FACTOR + delta) *
-                        (PercentageMath.PERCENTAGE_FACTOR - fee),
+                        (PercentageMath.PERCENTAGE_FACTOR - userFeePercentage),
                 "EPC:VLPP:INVALID_FEE_DELTA_RATIO"
             );
         }

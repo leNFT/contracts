@@ -250,10 +250,10 @@ let loadEnv = async function (isMainnetFork) {
   const ExponentialCurve = await ethers.getContractFactory(
     "ExponentialPriceCurve"
   );
-  exponentialCurve = await ExponentialCurve.deploy();
+  exponentialCurve = await ExponentialCurve.deploy(addressProvider.address);
   await exponentialCurve.deployed();
   const LinearCurve = await ethers.getContractFactory("LinearPriceCurve");
-  linearCurve = await LinearCurve.deploy();
+  linearCurve = await LinearCurve.deploy(addressProvider.address);
   await linearCurve.deployed();
 
   // Deploy the vesting contract

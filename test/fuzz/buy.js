@@ -98,11 +98,15 @@ describe("Buy fuzzing", function () {
       );
 
       if (lpType != 4) {
+        const userFeePercentage =
+          (fee *
+            (10000 - (await tradingPoolFactory.getProtocolFeePercentage()))) /
+          10000;
         if (curveAddress == linearCurve.address) {
           if (
             delta < initialPrice &&
-            (initialPrice - delta) * (10000 + fee) >
-              initialPrice * (10000 - fee)
+            (initialPrice - delta) * (10000 + userFeePercentage) >
+              initialPrice * (10000 - userFeePercentage)
           ) {
             // should not revert
             await expect(depositPromise).to.not.be.reverted;
@@ -115,7 +119,10 @@ describe("Buy fuzzing", function () {
             );
           }
         } else {
-          if (10000 * (10000 + fee) > (10000 + delta) * (10000 - fee)) {
+          if (
+            10000 * (10000 + userFeePercentage) >
+            (10000 + delta) * (10000 - userFeePercentage)
+          ) {
             // should not revert
             await expect(depositPromise).to.not.be.reverted;
             buyTokens();

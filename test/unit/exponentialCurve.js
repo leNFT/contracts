@@ -1,16 +1,13 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const load = require("../helpers/_loadTest.js");
 
-describe("ExponentialPriceCurve", function () {
-  let ExponentialPriceCurve, exponentialPriceCurve, owner;
+describe("exponentialCurve", function () {
+  load.loadTest(false);
 
-  beforeEach(async () => {
-    ExponentialPriceCurve = await ethers.getContractFactory(
-      "ExponentialPriceCurve"
-    );
-    [owner] = await ethers.getSigners();
-    exponentialPriceCurve = await ExponentialPriceCurve.deploy();
-    await exponentialPriceCurve.deployed();
+  before(async function () {
+    // Take a snapshot before the tests start
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
   });
 
   it("Should calculate the correct price after buying", async function () {
@@ -18,7 +15,7 @@ describe("ExponentialPriceCurve", function () {
     const delta = 500;
     const expectedPrice = ethers.utils.parseEther("1.05");
 
-    const newPrice = await exponentialPriceCurve.priceAfterBuy(price, delta, 0);
+    const newPrice = await exponentialCurve.priceAfterBuy(price, delta, 0);
     expect(newPrice).to.equal(expectedPrice);
   });
 
@@ -27,17 +24,13 @@ describe("ExponentialPriceCurve", function () {
     const delta = 500;
     const expectedPrice = ethers.utils.parseEther("0.952380952380952381");
 
-    const newPrice = await exponentialPriceCurve.priceAfterSell(
-      price,
-      delta,
-      0
-    );
+    const newPrice = await exponentialCurve.priceAfterSell(price, delta, 0);
     expect(newPrice).to.equal(expectedPrice);
   });
 
   it("Should revert when validating LP parameters with invalid price", async function () {
     await expect(
-      exponentialPriceCurve.validateLpParameters(0, 1, 1)
+      exponentialCurve.validateLpParameters(0, 1, 1)
     ).to.be.revertedWith("EPC:VLPP:INVALID_PRICE");
   });
 
@@ -47,7 +40,7 @@ describe("ExponentialPriceCurve", function () {
     const fee = 1;
 
     await expect(
-      exponentialPriceCurve.validateLpParameters(price, invalidDelta, fee)
+      exponentialCurve.validateLpParameters(price, invalidDelta, fee)
     ).to.be.revertedWith("EPC:VLPP:INVALID_DELTA");
   });
 
@@ -57,7 +50,7 @@ describe("ExponentialPriceCurve", function () {
     const invalidFee = 20;
 
     await expect(
-      exponentialPriceCurve.validateLpParameters(price, delta, invalidFee)
+      exponentialCurve.validateLpParameters(price, delta, invalidFee)
     ).to.be.revertedWith("EPC:VLPP:INVALID_FEE_DELTA_RATIO");
   });
 });
