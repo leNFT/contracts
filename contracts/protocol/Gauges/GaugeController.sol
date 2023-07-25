@@ -19,7 +19,6 @@ import {SafeCast} from "../../libraries/utils/SafeCast.sol";
 contract GaugeController is OwnableUpgradeable, IGaugeController {
     uint256 private constant INFLATION_PERIOD = 52; // 52 epochs (1 year)
     uint256 private constant MAX_INFLATION_PERIODS = 8; // Maximum 8 inflation periods (8 years) and then base emissions
-    uint256 private constant LOADING_PERIOD = 24; // 24 epochs (6 months)
     uint256 private constant INITIAL_REWARDS = 28e23; // 2.8 million tokens per epoch
 
     IAddressProvider private immutable _addressProvider;
@@ -492,8 +491,8 @@ contract GaugeController is OwnableUpgradeable, IGaugeController {
     function getRewardsCeiling(uint256 epoch) public pure returns (uint256) {
         uint256 inflationEpoch = epoch / INFLATION_PERIOD;
         // If we are in the loading period, return smaller rewards
-        if (epoch < LOADING_PERIOD) {
-            return (INITIAL_REWARDS * epoch) / LOADING_PERIOD;
+        if (inflationEpoch == 0) {
+            return (INITIAL_REWARDS * epoch) / INFLATION_PERIOD;
         } else if (inflationEpoch > MAX_INFLATION_PERIODS) {
             // Cap the inflation epoch = stabilize rewards
             inflationEpoch = MAX_INFLATION_PERIODS;

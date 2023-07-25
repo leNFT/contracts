@@ -13,7 +13,7 @@ describe("Genesis NFT & Lending Market", function () {
   before(async function () {
     const vaultAddress = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
     const queryAddress = "0xE39B5e3B6D74016b2F6A9673D7d7493B6DF549d5";
-    const poolFactoryAddress = "0x5Dd94Da3644DDD055fcf6B3E1aa310Bb7801EB8b";
+    const poolFactoryAddress = "0x897888115Ada5773E02aA29F775430BFB5F34c51";
 
     const factoryContract = await ethers.getContractAt(
       weightedPoolFactoryABI,

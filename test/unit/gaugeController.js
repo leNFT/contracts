@@ -3,6 +3,7 @@ const load = require("../helpers/_loadTest.js");
 const { ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
 const { time } = require("@nomicfoundation/hardhat-network-helpers");
+const { parse } = require("dotenv");
 
 describe("GaugeController", () => {
   load.loadTest(false);
@@ -115,7 +116,9 @@ describe("GaugeController", () => {
   });
   it("Should get the rewards ceiling for an epoch", async function () {
     const epochRewardCeiling = await gaugeController.getRewardsCeiling(1);
-    expect(epochRewardCeiling).to.equal("116666666666666666666666"); // 117K tokens
+    expect(epochRewardCeiling).to.equal(
+      BigNumber.from(ethers.utils.parseEther("2800000")).div(52)
+    );
 
     // Rewards ceiling should be the same for all inflation epochs after max inflation epoch
     console.log(
@@ -317,7 +320,7 @@ describe("GaugeController", () => {
 
     // Get the rewards for the epoch 1
     expect(await gaugeController.callStatic.getEpochRewards(epoch)).to.equal(
-      "347904197200000000000000"
+      "160571167938461538461538"
     );
   });
   it("Should get the gauge rewards for a certain epoch", async function () {
